@@ -1,0 +1,218 @@
+.wizard-card {
+  position: relative;
+  display: flex;
+  min-height: 584px;
+  flex-direction: column;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 32px 28px 24px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.wizard-card--selected {
+  border-color: #c79a3b;
+  box-shadow: 0 0 0 1px rgba(199, 154, 59, 0.35), 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.wizard-card__popular {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  display: inline-flex;
+  height: 32px;
+  align-items: center;
+  gap: 4px;
+  border-radius: 9999px;
+  background: #c79a3b;
+  padding: 0 12px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 24px;
+  box-shadow: 0 4px 8px rgba(13, 27, 42, 0.12);
+}
+
+.wizard-card__popular svg {
+  fill: #ffffff;
+}
+
+.wizard-card__count-badge {
+  position: absolute;
+  top: -9px;
+  right: -10px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 9999px;
+  background: #c79a3b;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 24px;
+  box-shadow: 0 4px 8px rgba(13, 27, 42, 0.15);
+}
+
+.wizard-card__icon {
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  margin: 0 auto;
+  border-radius: 9999px;
+  background: #c79a3b;
+  color: #ffffff;
+}
+
+.wizard-card__intro {
+  display: flex;
+  min-height: 144px;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-top: 16px;
+}
+
+.wizard-card__title {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
+}
+
+.wizard-card__description {
+  margin-top: 8px;
+  color: #4a5565;
+  font-size: 14px;
+  line-height: 26px;
+}
+
+.wizard-card__facts {
+  margin-top: 16px;
+}
+
+.wizard-card__fact-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  color: #4a5565;
+  font-size: 14px;
+  line-height: 24px;
+  text-align: left;
+}
+
+.wizard-card__fact-row + .wizard-card__fact-row {
+  margin-top: 8px;
+}
+
+.wizard-card__fact-row span {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+}
+
+.wizard-card__fact-row strong {
+  color: #0d1b2a;
+  font-weight: 700;
+  text-align: right;
+}
+
+.wizard-card__included {
+  flex: 1;
+  margin-top: 24px;
+}
+
+.wizard-card__included p {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.wizard-card__included div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.wizard-card__included span {
+  border-radius: 4px;
+  background: #fcf3dc;
+  padding: 4px 8px;
+  color: #9f7629;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.wizard-card__select {
+  display: inline-flex;
+  width: 100%;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  border-radius: 12px;
+  background: #c79a3b;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background-color 160ms ease;
+}
+
+.wizard-card__select:hover {
+  background: #b88a31;
+}
+
+.wizard-card__stepper {
+  display: grid;
+  grid-template-columns: 40px 60px 40px;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 28px;
+}
+
+.wizard-card__stepper-button,
+.wizard-card__stepper-count {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 9999px;
+}
+
+.wizard-card__stepper-button {
+  color: #ffffff;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.wizard-card__stepper-button:hover {
+  filter: brightness(0.96);
+  transform: translateY(-1px);
+}
+
+.wizard-card__stepper-button--minus {
+  background: #ef4444;
+}
+
+.wizard-card__stepper-button--plus {
+  background: #c79a3b;
+}
+
+.wizard-card__stepper-count {
+  width: 60px;
+  border-radius: 12px;
+  background: #f3f4f4;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 24px;
+}

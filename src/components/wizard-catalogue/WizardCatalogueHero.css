@@ -1,0 +1,79 @@
+.wizard-hero {
+  background: #07192b;
+  color: #ffffff;
+  padding: 48px 20px 64px;
+}
+
+.wizard-hero__inner {
+  max-width: 1184px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.wizard-hero__breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 24px;
+}
+
+.wizard-hero__breadcrumb-item,
+.wizard-hero__badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wizard-hero__dot {
+  color: #c79a3b;
+  fill: #c79a3b;
+}
+
+.wizard-hero__chevron {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.wizard-hero__title {
+  margin-top: 16px;
+  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.wizard-hero__copy {
+  max-width: 768px;
+  margin: 16px auto 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.wizard-hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 36px;
+  margin-top: 32px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.wizard-hero__badges svg {
+  color: #c79a3b;
+}
+
+@media (max-width: 640px) {
+  .wizard-hero {
+    padding: 40px 20px 56px;
+  }
+
+  .wizard-hero__title {
+    font-size: 36px;
+  }
+}
