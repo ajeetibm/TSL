@@ -8,6 +8,9 @@ const Features = lazy(() => import('../pages/Features'))
 const Pricing = lazy(() => import('../pages/Pricing'))
 const Contact = lazy(() => import('../pages/Contact'))
 const Dashboard = lazy(() => import('../pages/Dashboard'))
+const DashboardCounsel = lazy(() => import('../pages/DashboardCounsel'))
+const DashboardWizards = lazy(() => import('../pages/DashboardWizards'))
+const DashboardWizardDetails = lazy(() => import('../pages/DashboardWizardDetails'))
 const WizardCatalogue = lazy(() => import('../pages/WizardCatalogue'))
 const WizardDetails = lazy(() => import('../pages/WizardDetails'))
 
@@ -28,6 +31,9 @@ export function AppRoutes() {
           <Route path="pricing" element={<Pricing />} />
           <Route path="contact" element={<Contact />} />
           <Route path="dashboard" element={<Dashboard />} />
+          <Route path="dashboard/counsel" element={<DashboardCounsel />} />
+          <Route path="dashboard/wizards" element={<DashboardWizards />} />
+          <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
           <Route path="wizard-catalogue" element={<WizardCatalogue />} />
           <Route path="wizard-details" element={<WizardDetails />} />
         </Route>

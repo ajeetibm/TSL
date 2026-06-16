@@ -6,7 +6,8 @@ import { Navbar } from '../components/layout/Navbar'
 
 export function RootLayout() {
   const { pathname } = useLocation()
-  const isFocusedAppFlow = pathname === '/dashboard' || pathname === '/wizard-catalogue' || pathname === '/wizard-details'
+  const isFocusedAppFlow =
+    pathname.startsWith('/dashboard') || pathname === '/wizard-catalogue' || pathname === '/wizard-details'
 
   useEffect(() => {
     window.requestAnimationFrame(() => {

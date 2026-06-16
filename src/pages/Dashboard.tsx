@@ -1,6 +1,5 @@
 import {
   ArrowRight,
-  Bell,
   BookOpen,
   Box,
   Calendar,
@@ -8,28 +7,15 @@ import {
   ChevronRight,
   FileText,
   Gauge,
-  LayoutDashboard,
-  LogOut,
   Play,
   Scale,
-  Settings,
   Shield,
-  UserRound,
-  WandSparkles,
   Zap,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { DashboardShell } from '../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../services/metadata'
 import './Dashboard.css'
-
-const sidebarItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
-  { label: 'Wizards', icon: WandSparkles, path: '/wizard-catalogue' },
-  { label: 'Counsel', icon: Scale },
-  { label: 'Playbooks', icon: BookOpen },
-  { label: 'Notifications', icon: Bell, badge: '5' },
-  { label: 'Settings', icon: Settings },
-]
 
 const quickStartCards = [
   {
@@ -107,50 +93,11 @@ export default function Dashboard() {
   )
 
   const browseWizards = () => {
-    navigate('/wizard-catalogue')
-  }
-
-  const signOut = () => {
-    localStorage.removeItem('tsl-authenticated')
-    navigate('/')
+    navigate('/dashboard/wizards')
   }
 
   return (
-    <div className="user-dashboard">
-      <aside className="user-dashboard__sidebar">
-        <div className="user-dashboard__brand">
-          <h1>The Startup Legal</h1>
-          <p>Legal Workflow Platform</p>
-        </div>
-
-        <nav className="user-dashboard__nav" aria-label="Dashboard navigation">
-          {sidebarItems.map(({ label, icon: Icon, active, badge, path }) => (
-            <button
-              key={label}
-              type="button"
-              className={active ? 'user-dashboard__nav-item user-dashboard__nav-item--active' : 'user-dashboard__nav-item'}
-              onClick={() => path && navigate(path)}
-            >
-              <Icon size={18} />
-              <span>{label}</span>
-              {badge && <b>{badge}</b>}
-            </button>
-          ))}
-        </nav>
-
-        <div className="user-dashboard__sidebar-footer">
-          <button type="button" className="user-dashboard__nav-item">
-            <UserRound size={18} />
-            <span>Profile</span>
-          </button>
-          <button type="button" className="user-dashboard__nav-item" onClick={signOut}>
-            <LogOut size={18} />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      <section className="user-dashboard__main">
+    <DashboardShell activeSection="Dashboard">
         <header className="user-dashboard__hero">
           <div>
             <h2>Welcome to The Startup Legal!</h2>
@@ -284,7 +231,6 @@ export default function Dashboard() {
             </section>
           </aside>
         </div>
-      </section>
-    </div>
+    </DashboardShell>
   )
 }
