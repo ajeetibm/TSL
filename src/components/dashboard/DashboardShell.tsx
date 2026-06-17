@@ -11,7 +11,7 @@ import {
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 
-type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings'
+type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
 interface DashboardShellProps {
   activeSection: DashboardSection
@@ -22,9 +22,9 @@ const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Wizards', icon: WandSparkles, path: '/dashboard/wizards' },
   { label: 'Counsel', icon: Scale, path: '/dashboard/counsel' },
-  { label: 'Playbooks', icon: BookOpen },
-  { label: 'Notifications', icon: Bell, badge: '5' },
-  { label: 'Settings', icon: Settings },
+  { label: 'Playbooks', icon: BookOpen, path: '/dashboard/playbooks' },
+  { label: 'Notifications', icon: Bell, path: '/dashboard/notifications', badge: '5' },
+  { label: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ] satisfies Array<{
   label: DashboardSection
   icon: typeof LayoutDashboard
@@ -68,7 +68,15 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
         </nav>
 
         <div className="user-dashboard__sidebar-footer">
-          <button type="button" className="user-dashboard__nav-item">
+          <button
+            type="button"
+            className={
+              activeSection === 'Profile'
+                ? 'user-dashboard__nav-item user-dashboard__nav-item--active'
+                : 'user-dashboard__nav-item'
+            }
+            onClick={() => navigate('/dashboard/profile')}
+          >
             <UserRound size={18} />
             <span>Profile</span>
           </button>

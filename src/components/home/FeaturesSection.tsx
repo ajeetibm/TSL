@@ -19,6 +19,7 @@ const features = [
       'Automatic Company Snapshot sync',
     ],
     buttonText: 'Start a Wizard',
+    buttonHref: '/wizard-catalogue',
     buttonStyle: 'bg-navy-primary hover:bg-navy-primary/90 text-white',
     borderStyle: 'border-l-[6px] border-navy-primary',
   },
@@ -36,6 +37,7 @@ const features = [
       'Review Gates & Quality Checks',
     ],
     buttonText: 'Learn About Counsel',
+    buttonHref: '#pricing',
     buttonStyle: 'bg-gold hover:bg-gold/90 text-white',
     borderStyle: 'border-l-[6px] border-gold',
   },
@@ -53,6 +55,7 @@ const features = [
       'Quarterly compliance updates',
     ],
     buttonText: 'View Playbooks',
+    buttonHref: '#pricing',
     buttonStyle: 'bg-[#303030] hover:bg-[#222222] text-white',
     borderStyle: 'border-l-[6px] border-[#303030]',
   },
@@ -131,7 +134,7 @@ export function FeaturesSection() {
                 </ul>
 
                 <a
-                  href="#pricing"
+                  href={feature.buttonHref}
                   className={`mt-auto inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full px-6 text-lg font-black transition-all ${feature.buttonStyle} shadow-xl hover:scale-[1.02]`}
                 >
                   {feature.buttonText}

@@ -124,13 +124,12 @@ describe('FeaturesSection', () => {
       expect(screen.getByRole('link', { name: /View Playbooks/i })).toBeInTheDocument()
     })
 
-    it('should link buttons to pricing section', () => {
+    it('should link CTAs to the right destination', () => {
       render(<FeaturesSection />)
-      
-      const buttons = screen.getAllByRole('link')
-      buttons.forEach(button => {
-        expect(button).toHaveAttribute('href', '#pricing')
-      })
+
+      expect(screen.getByRole('link', { name: /Start a Wizard/i })).toHaveAttribute('href', '/wizard-catalogue')
+      expect(screen.getByRole('link', { name: /Learn About Counsel/i })).toHaveAttribute('href', '#pricing')
+      expect(screen.getByRole('link', { name: /View Playbooks/i })).toHaveAttribute('href', '#pricing')
     })
 
     it('should have arrow icons in buttons', () => {

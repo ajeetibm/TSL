@@ -1,0 +1,307 @@
+.profile-page {
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+.profile-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 40px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
+}
+
+.profile-page__header-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-page__header h1 {
+  margin: 0;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.2;
+}
+
+.profile-page__badges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-page__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  border-radius: 999px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-page__badge--member {
+  background: #e8f4f8;
+  color: #0b7da8;
+}
+
+.profile-page__badge--plan {
+  background: linear-gradient(135deg, #d3a038, #e0b64f);
+  color: #ffffff;
+}
+
+.profile-page__status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.profile-page__tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 40px;
+  background: #ffffff;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.profile-page__tab {
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  padding: 0 20px;
+  background: transparent;
+  color: #6d6d6d;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.profile-page__tab:hover {
+  color: #0b1c2f;
+}
+
+.profile-page__tab--active {
+  border-bottom-color: #d3a038;
+  color: #0b1c2f;
+}
+
+.profile-page__content {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.profile-page__form-section {
+  border: 1px solid #dfdfdf;
+  border-radius: 28px;
+  padding: 40px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(7, 25, 43, 0.08);
+}
+
+.profile-page__company-header {
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.profile-page__company-header h2 {
+  margin: 0;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.3;
+}
+
+.profile-page__form-section > h2 {
+  margin: 0 0 12px;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.profile-page__section-description {
+  margin: 0 0 32px;
+  color: #6d6d6d;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.profile-page__form {
+  display: grid;
+  gap: 24px;
+}
+
+.profile-page__form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.profile-page__form-group {
+  display: grid;
+  gap: 10px;
+}
+
+.profile-page__form-group--full {
+  grid-column: 1 / -1;
+}
+
+.profile-page__form-group label {
+  color: #0b1c2f;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-page__form-group input,
+.profile-page__form-group textarea {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid #d0d0d0;
+  border-radius: 12px;
+  padding: 0 16px;
+  background: #ffffff;
+  color: #0b1c2f;
+  font-family: inherit;
+  font-size: 15px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.profile-page__form-group textarea {
+  padding: 14px 16px;
+  resize: vertical;
+}
+
+.profile-page__form-group input:focus,
+.profile-page__form-group textarea:focus {
+  outline: none;
+  border-color: #d3a038;
+  box-shadow: 0 0 0 3px rgba(211, 160, 56, 0.1);
+}
+
+.profile-page__form-group input::placeholder,
+.profile-page__form-group textarea::placeholder {
+  color: #9ba7b6;
+}
+
+.profile-page__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.profile-page__button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 28px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.profile-page__button:hover {
+  transform: translateY(-1px);
+}
+
+.profile-page__button:active {
+  transform: translateY(0);
+}
+
+.profile-page__button--secondary {
+  background: #f4f4f4;
+  color: #6d6d6d;
+}
+
+.profile-page__button--secondary:hover {
+  background: #e8e8e8;
+  color: #0b1c2f;
+}
+
+.profile-page__button--primary {
+  background: linear-gradient(135deg, #d3a038, #e0b64f);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(211, 160, 56, 0.3);
+}
+
+.profile-page__button--primary:hover {
+  box-shadow: 0 6px 16px rgba(211, 160, 56, 0.4);
+}
+
+@media (max-width: 820px) {
+  .profile-page__header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px 20px;
+  }
+
+  .profile-page__header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .profile-page__tabs {
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+
+  .profile-page__tab {
+    white-space: nowrap;
+  }
+
+  .profile-page__content {
+    padding: 24px 20px;
+  }
+
+  .profile-page__form-section {
+    padding: 24px 20px;
+  }
+
+  .profile-page__form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-page__actions {
+    flex-direction: column-reverse;
+  }
+
+  .profile-page__button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-page__header h1 {
+    font-size: 24px;
+  }
+
+  .profile-page__badges {
+    flex-wrap: wrap;
+  }
+
+  .profile-page__company-header h2 {
+    font-size: 22px;
+  }
+}
+
+/* Made with Bob */
