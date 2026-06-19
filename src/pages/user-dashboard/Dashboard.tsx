@@ -14,11 +14,11 @@ import {
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardShell } from '../components/dashboard/DashboardShell'
-import { capitalizePlan, formatDate, formatStatusLabel } from '../services/dashboardTypes'
-import type { DashboardData } from '../services/dashboardTypes'
-import { setPageMetadata } from '../services/metadata'
-import { smeApi } from '../services/tslApi'
+import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { capitalizePlan, formatDate, formatStatusLabel } from '../../services/dashboardTypes'
+import type { DashboardData } from '../../services/dashboardTypes'
+import { setPageMetadata } from '../../services/metadata'
+import { smeApi } from '../../services/tslApi'
 import './Dashboard.css'
 
 const quickStartCards = [

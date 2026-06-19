@@ -15,8 +15,8 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DashboardShell } from '../components/dashboard/DashboardShell'
-import { setPageMetadata } from '../services/metadata'
+import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardWizards.css'
 

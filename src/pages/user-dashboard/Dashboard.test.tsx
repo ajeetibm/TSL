@@ -2,16 +2,16 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
-import type { DashboardData } from '../services/dashboardTypes'
+import type { DashboardData } from '../../services/dashboardTypes'
 
 // Mock dependencies
-vi.mock('../components/dashboard/DashboardShell', () => ({
+vi.mock('../../components/dashboard/DashboardShell', () => ({
   DashboardShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dashboard-shell">{children}</div>
   ),
 }))
 
-vi.mock('../services/metadata', () => ({
+vi.mock('../../services/metadata', () => ({
   setPageMetadata: vi.fn(),
 }))
 
@@ -54,7 +54,7 @@ const mockDashboardData: DashboardData = {
   ],
 }
 
-vi.mock('../services/tslApi', () => ({
+vi.mock('../../services/tslApi', () => ({
   smeApi: {
     dashboard: vi.fn(() =>
       Promise.resolve({
@@ -217,7 +217,7 @@ describe('Dashboard Page', () => {
   })
 
   it('displays message when no workflows exist', async () => {
-    const { smeApi } = await import('../services/tslApi')
+    const { smeApi } = await import('../../services/tslApi')
     vi.mocked(smeApi.dashboard).mockResolvedValueOnce({
       success: true,
       data: {
@@ -235,7 +235,7 @@ describe('Dashboard Page', () => {
   })
 
   it('displays error message when API fails', async () => {
-    const { smeApi } = await import('../services/tslApi')
+    const { smeApi } = await import('../../services/tslApi')
     vi.mocked(smeApi.dashboard).mockResolvedValueOnce({
       success: false,
       message: 'Failed to load dashboard data.',

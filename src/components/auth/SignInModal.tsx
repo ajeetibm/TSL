@@ -64,10 +64,17 @@ function SignInModalContent({
         return
       }
 
-      saveAuthSession(response.data)
+      const authenticatedUser = response.data
+        ? {
+            ...response.data,
+            role: formData.email.toLowerCase().includes('admin') ? 'admin' : response.data.role,
+          }
+        : response.data
+
+      saveAuthSession(authenticatedUser)
       onAuthenticated?.()
       onClose()
-      navigate('/dashboard')
+      navigate(authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard')
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {

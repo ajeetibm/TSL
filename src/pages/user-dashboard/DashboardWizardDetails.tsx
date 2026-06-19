@@ -20,8 +20,8 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { DashboardShell } from '../components/dashboard/DashboardShell'
-import { setPageMetadata } from '../services/metadata'
+import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardWizardDetails.css'
 

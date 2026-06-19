@@ -1,7 +1,7 @@
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, MessageSquare, Scale, Send, Upload } from 'lucide-react'
 import { useState } from 'react'
-import { DashboardShell } from '../components/dashboard/DashboardShell'
-import { setPageMetadata } from '../services/metadata'
+import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardCounsel.css'
 

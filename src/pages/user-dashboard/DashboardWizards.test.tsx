@@ -4,13 +4,13 @@ import { BrowserRouter } from 'react-router-dom'
 import DashboardWizards from './DashboardWizards'
 
 // Mock DashboardShell
-vi.mock('../components/dashboard/DashboardShell', () => ({
+vi.mock('../../components/dashboard/DashboardShell', () => ({
   DashboardShell: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dashboard-shell">{children}</div>
   ),
 }))
 
-vi.mock('../services/metadata', () => ({
+vi.mock('../../services/metadata', () => ({
   setPageMetadata: vi.fn(),
 }))
 

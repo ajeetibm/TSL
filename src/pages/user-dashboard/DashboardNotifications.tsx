@@ -9,8 +9,8 @@ import {
   UserRound,
   WandSparkles,
 } from 'lucide-react'
-import { DashboardShell } from '../components/dashboard/DashboardShell'
-import { setPageMetadata } from '../services/metadata'
+import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardNotifications.css'
 
