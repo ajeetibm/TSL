@@ -15,6 +15,7 @@ import {
   Sparkles,
   UsersRound,
   WandSparkles,
+  X,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -68,6 +69,52 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
 }
 
 const planFeatures = ['Unlimited runs', 'Priority processing', 'Advanced customisation', 'Bulk operations']
+
+const pricingComparisonPlans = [
+  {
+    title: 'Launchpad',
+    price: 'R499',
+    icon: FileText,
+    highlighted: true,
+    features: [
+      { label: '5 essential wizards', included: true },
+      { label: '3 runs per wizard/month', included: true },
+      { label: 'Basic email support', included: true },
+      { label: '6 months storage', included: true },
+      { label: 'No API access', included: false },
+      { label: 'No white-label', included: false },
+    ],
+  },
+  {
+    title: 'Operator',
+    price: 'R999',
+    icon: ShoppingCart,
+    popular: true,
+    features: [
+      { label: 'All 12 legal wizards', included: true },
+      { label: 'Unlimited runs', included: true },
+      { label: 'Priority support (24-48hr)', included: true },
+      { label: 'Unlimited storage', included: true },
+      { label: 'API access', included: true },
+      { label: 'No white-label', included: false },
+    ],
+  },
+  {
+    title: 'Boardroom',
+    price: 'R2,499',
+    icon: ShoppingCart,
+    features: [
+      { label: 'All 30 legal wizards', included: true },
+      { label: 'Unlimited runs', included: true },
+      { label: 'Dedicated support (SLA)', included: true },
+      { label: 'Unlimited storage', included: true },
+      { label: 'API access', included: true },
+      { label: 'White-label options', included: true },
+      { label: 'Custom workflows', included: true },
+      { label: 'Custom wizard development', included: true },
+    ],
+  },
+]
 
 const operatorIncludes = [
   'All 30 legal wizards',
@@ -135,6 +182,7 @@ export default function DashboardWizardDetails() {
   const navigate = useNavigate()
   const location = useLocation()
   const [isPaymentView, setIsPaymentView] = useState(false)
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
     const selectedFromState = locationState?.selectedWizards
@@ -369,10 +417,10 @@ export default function DashboardWizardDetails() {
 
               <div className="dashboard-wizard-details__pricing-footer">
                 <p>Want to see all features and pricing tiers?</p>
-                <a href="/pricing">
+                <button type="button" onClick={() => setIsPricingModalOpen(true)}>
                   View complete pricing comparison
                   <ChevronRight size={14} />
-                </a>
+                </button>
               </div>
             </div>
           </section>
@@ -435,6 +483,87 @@ export default function DashboardWizardDetails() {
             </div>
           </section>
         </div>
+
+        {isPricingModalOpen && (
+          <div
+            className="dashboard-wizard-details__modal-backdrop"
+            role="presentation"
+            onClick={() => setIsPricingModalOpen(false)}
+          >
+            <section
+              className="dashboard-wizard-details__pricing-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="pricing-comparison-title"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="dashboard-wizard-details__modal-close"
+                aria-label="Close pricing comparison"
+                onClick={() => setIsPricingModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+
+              <header className="dashboard-wizard-details__modal-header">
+                <h2 id="pricing-comparison-title">Pricing Comparison</h2>
+                <p>Compare the features and pricing of our different tiers to find the best fit for your needs.</p>
+              </header>
+
+              <div className="dashboard-wizard-details__comparison-grid">
+                {pricingComparisonPlans.map(({ title, price, icon: Icon, highlighted, popular, features }) => (
+                  <article
+                    className={
+                      highlighted
+                        ? 'dashboard-wizard-details__comparison-card dashboard-wizard-details__comparison-card--highlighted'
+                        : 'dashboard-wizard-details__comparison-card'
+                    }
+                    key={title}
+                  >
+                    {popular && (
+                      <span className="dashboard-wizard-details__popular-badge">
+                        <Sparkles size={14} />
+                        Popular
+                      </span>
+                    )}
+                    <h3>
+                      <Icon size={20} />
+                      {title}
+                    </h3>
+                    <div className="dashboard-wizard-details__comparison-price">
+                      <strong>{price}</strong>
+                      <span>/month</span>
+                    </div>
+                    <ul>
+                      {features.map((feature) => (
+                        <li
+                          className={
+                            feature.included
+                              ? 'dashboard-wizard-details__comparison-feature'
+                              : 'dashboard-wizard-details__comparison-feature dashboard-wizard-details__comparison-feature--muted'
+                          }
+                          key={feature.label}
+                        >
+                          {feature.included ? <CheckCircle2 size={16} /> : <X size={16} />}
+                          {feature.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="dashboard-wizard-details__modal-action"
+                onClick={() => setIsPricingModalOpen(false)}
+              >
+                Close
+              </button>
+            </section>
+          </div>
+        )}
       </main>
     </DashboardShell>
   )
