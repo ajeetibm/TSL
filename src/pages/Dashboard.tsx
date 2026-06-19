@@ -12,9 +12,13 @@ import {
   Shield,
   Zap,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../components/dashboard/DashboardShell'
+import { capitalizePlan, formatDate, formatStatusLabel } from '../services/dashboardTypes'
+import type { DashboardData } from '../services/dashboardTypes'
 import { setPageMetadata } from '../services/metadata'
+import { smeApi } from '../services/tslApi'
 import './Dashboard.css'
 
 const quickStartCards = [
@@ -38,39 +42,6 @@ const quickStartCards = [
   },
 ]
 
-const selectedWizards = [
-  {
-    title: 'Non-Disclosure Agreement (NDA)',
-    note: 'Need NDAs for investor meetings and contractor agreements',
-    type: 'Wizards',
-    quantity: '2 Items',
-  },
-  {
-    title: 'Employment Offer letter',
-    note: 'Hiring our first developer next month',
-    type: 'Wizards',
-    quantity: '1 Items',
-  },
-  {
-    title: 'Privacy Policy',
-    note: 'Required for our web app launch',
-    type: 'Runs',
-    quantity: '1 Items',
-  },
-  {
-    title: 'Founder Agreement',
-    note: 'Setting up co-founder equity split',
-    type: 'Runs Used',
-    quantity: '1 Items',
-  },
-  {
-    title: 'Service Agreement',
-    note: 'Multiple client contracts needed',
-    type: 'Runs Used',
-    quantity: '3 Items',
-  },
-]
-
 const planBenefits = [
   '12 wizard runs per month',
   'Access to all legal wizards',
@@ -86,15 +57,47 @@ const notices = [
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   setPageMetadata(
     'Dashboard',
     'TSL user dashboard for reviewing pre-selected legal wizards, plan usage, quick actions, and legal notices.',
   )
 
+  useEffect(() => {
+    let cancelled = false
+
+    smeApi.dashboard().then((response) => {
+      if (cancelled) return
+      if (!response.success) {
+        setError(response.message ?? 'Failed to load dashboard data.')
+        setLoading(false)
+        return
+      }
+      if (response.data) {
+        setDashboardData(response.data)
+      }
+      setLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const browseWizards = () => {
     navigate('/dashboard/wizards')
   }
+
+  const user = dashboardData?.user
+  const planLabel = capitalizePlan(user?.plan)
+  const runsRemaining = user?.runsRemaining ?? 0
+  const runsTotal = user?.runsTotal ?? 0
+  const inProgress = dashboardData?.inProgress ?? []
+  const completed = dashboardData?.completed ?? []
+  const workflowCount = inProgress.length + completed.length
 
   return (
     <DashboardShell activeSection="Dashboard">
@@ -102,7 +105,7 @@ export default function Dashboard() {
           <div>
             <h2>Welcome to The Startup Legal!</h2>
             <p>
-              You're all set up with your <strong>Operator Plan</strong>. Let's get your first legal
+              You're all set up with your <strong>{planLabel} Plan</strong>. Let's get your first legal
               document created.
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
@@ -113,7 +116,7 @@ export default function Dashboard() {
 
           <div className="user-dashboard__plan-card">
             <h3>
-              Your <span>Operator Plan</span> Includes:
+              Your <span>{planLabel} Plan</span> Includes:
             </h3>
             <ul>
               {planBenefits.map((benefit) => (
@@ -127,6 +130,9 @@ export default function Dashboard() {
         </header>
 
         <div className="user-dashboard__content">
+          {loading && <p>Loading dashboard data...</p>}
+          {error && <p role="alert">{error}</p>}
+
           <section className="user-dashboard__quick-start" aria-label="Quick start">
             {quickStartCards.map(({ title, description, action, icon: Icon }) => (
               <article className="user-dashboard__start-card" key={title}>
@@ -156,28 +162,32 @@ export default function Dashboard() {
                   <Zap size={26} />
                 </span>
                 <div>
-                  <h3>5 Wizards Available (8 Items)</h3>
+                  <h3>
+                    {workflowCount} Workflow{workflowCount === 1 ? '' : 's'} ({runsRemaining} runs left)
+                  </h3>
                   <p>
-                    You have 5 wizard runs remaining this month. <strong>One Wizard per start</strong>
+                    You have {runsRemaining} wizard runs remaining of {runsTotal} this month.{' '}
+                    <strong>One Wizard per start</strong>
                   </p>
                 </div>
               </div>
 
               <div className="user-dashboard__wizard-list">
-                {selectedWizards.map((wizard) => (
-                  <article className="user-dashboard__wizard-row" key={wizard.title}>
+                {inProgress.map((workflow) => (
+                  <article className="user-dashboard__wizard-row" key={workflow.workflowId}>
                     <div className="user-dashboard__wizard-copy">
                       <h3>
                         <span aria-hidden="true">i</span>
-                        {wizard.title}
+                        {workflow.wizardName}
                       </h3>
                       <p>
-                        <strong>Note:</strong> {wizard.note}
+                        <strong>Status:</strong> {formatStatusLabel(workflow.status)}
+                        {workflow.lastUpdated && ` • Updated ${formatDate(workflow.lastUpdated)}`}
                       </p>
                     </div>
                     <div className="user-dashboard__wizard-meta">
-                      <span>{wizard.type}</span>
-                      <strong>{wizard.quantity}</strong>
+                      <span>In Progress</span>
+                      <strong>{workflow.progress ?? 0}%</strong>
                     </div>
                     <button type="button" onClick={browseWizards}>
                       <Play size={18} />
@@ -185,6 +195,32 @@ export default function Dashboard() {
                     </button>
                   </article>
                 ))}
+
+                {completed.map((workflow) => (
+                  <article className="user-dashboard__wizard-row" key={workflow.workflowId}>
+                    <div className="user-dashboard__wizard-copy">
+                      <h3>
+                        <span aria-hidden="true">i</span>
+                        {workflow.wizardName}
+                      </h3>
+                      <p>
+                        <strong>Completed:</strong> {formatDate(workflow.completedAt)}
+                      </p>
+                    </div>
+                    <div className="user-dashboard__wizard-meta">
+                      <span>Completed</span>
+                      <strong>{workflow.downloads?.length ?? 0} files</strong>
+                    </div>
+                    <button type="button" onClick={browseWizards}>
+                      <Play size={18} />
+                      View
+                    </button>
+                  </article>
+                ))}
+
+                {!loading && workflowCount === 0 && (
+                  <p>No workflows yet. Browse wizards to get started.</p>
+                )}
               </div>
             </section>
           </div>
@@ -201,11 +237,11 @@ export default function Dashboard() {
                 <Box size={18} />
                 Browse All Wizards
               </button>
-              <button type="button" className="user-dashboard__action">
+              <button type="button" className="user-dashboard__action" onClick={() => navigate('/dashboard/counsel')}>
                 <Scale size={18} />
                 Book Legal Counsel
               </button>
-              <button type="button" className="user-dashboard__action">
+              <button type="button" className="user-dashboard__action" onClick={() => navigate('/dashboard/playbooks')}>
                 <BookOpen size={18} />
                 View Playbooks
               </button>

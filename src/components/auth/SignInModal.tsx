@@ -2,6 +2,7 @@ import { Eye, EyeOff, Mail, X } from 'lucide-react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { authApi, saveAuthSession } from '../../services/tslApi'
 import './SignInModal.css'
 
 interface SignInModalProps {
@@ -29,6 +30,8 @@ function SignInModalContent({
   const [mode, setMode] = useState<'signin' | 'signup'>(initialMode)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formError, setFormError] = useState('')
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -36,17 +39,66 @@ function SignInModalContent({
     confirmPassword: '',
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    onAuthenticated?.()
-    onClose()
-    navigate('/dashboard')
+    setFormError('')
+    setIsSubmitting(true)
+
+    try {
+      const response = mode === 'signin'
+        ? await authApi.login({
+            email: formData.email,
+            password: formData.password,
+            portal: 'sme',
+          })
+        : await authApi.register({
+            fullName: formData.fullName,
+            email: formData.email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+            acceptedTerms: true,
+          })
+
+      if (!response.success) {
+        setFormError(response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.')
+        return
+      }
+
+      saveAuthSession(response.data)
+      onAuthenticated?.()
+      onClose()
+      navigate('/dashboard')
+    } catch {
+      setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleGoogleSignIn = () => {
-    // Handle Google sign in
-    console.log('Google sign in clicked')
+  const handleGoogleSignIn = async () => {
+    setFormError('')
+    setIsSubmitting(true)
+
+    try {
+      const response = await authApi.google({
+        idToken: 'google_id_token_here',
+        portal: 'sme',
+      })
+
+      if (!response.success) {
+        setFormError(response.message ?? 'Unable to continue with Google.')
+        return
+      }
+
+      saveAuthSession(response.data)
+      onAuthenticated?.()
+      onClose()
+      navigate('/dashboard')
+    } catch {
+      setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const toggleMode = () => {
@@ -58,6 +110,7 @@ function SignInModalContent({
       password: '',
       confirmPassword: '',
     })
+    setFormError('')
     setShowPassword(false)
     setShowConfirmPassword(false)
   }
@@ -184,11 +237,18 @@ function SignInModalContent({
               </div>
             )}
 
+            {formError && (
+              <p className="signin-modal__error" role="alert">
+                {formError}
+              </p>
+            )}
+
             <button
               type="submit"
               className="signin-modal__primary"
+              disabled={isSubmitting}
             >
-              {mode === 'signin' ? 'Sign In' : 'Create Account'}
+              {isSubmitting ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
 
             <div className="signin-modal__divider">
@@ -202,6 +262,7 @@ function SignInModalContent({
               type="button"
               onClick={handleGoogleSignIn}
               className="signin-modal__google"
+              disabled={isSubmitting}
             >
               <svg className="signin-modal__google-icon" viewBox="0 0 24 24">
                 <path

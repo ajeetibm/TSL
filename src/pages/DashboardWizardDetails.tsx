@@ -2,7 +2,7 @@ import {
   ArrowLeft,
   Check,
   CheckCircle2,
-  Clock3,
+  ChevronRight,
   FileCheck2,
   FileText,
   HandCoins,
@@ -11,6 +11,7 @@ import {
   Scale,
   Shield,
   ShieldCheck,
+  ShoppingCart,
   Sparkles,
   UsersRound,
   WandSparkles,
@@ -33,6 +34,7 @@ type WizardLocationState = {
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
+const paymentMethodsImage = 'http://localhost:3845/assets/761051ddf5ffbe7a40fc2116dcc418a7ea581dfd.png'
 
 const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   'Loan Agreement': {
@@ -95,7 +97,7 @@ const wizardSteps = [
   {
     title: 'Input Your Details',
     time: '3-4 min',
-    description: 'Answer guided questions about parties, confidential information, and term preferences.',
+    description: 'Answer guided questions about parties, confidential information, and terms',
   },
   {
     title: 'AI Legal Review',
@@ -105,17 +107,17 @@ const wizardSteps = [
   {
     title: 'Plain-Language Preview',
     time: '1-2 min',
-    description: 'Review your NDA in clear language before finalising the legal draft.',
+    description: 'Review your NDA in clear language before finalizing legal text',
   },
   {
     title: 'Legal Drafting',
     time: '30 sec',
-    description: 'System generates an SA-compliant legal document with the right clauses.',
+    description: 'System generates SA-compliant legal document with your inputs',
   },
   {
     title: 'Quality Check',
     time: '15 sec',
-    description: 'Automated verification ensures all clauses are properly completed.',
+    description: 'Automated verification ensures all clauses are properly formatted',
   },
   {
     title: 'E-Signature Setup',
@@ -132,6 +134,7 @@ const wizardSteps = [
 export default function DashboardWizardDetails() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [isPaymentView, setIsPaymentView] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
     const selectedFromState = locationState?.selectedWizards
@@ -185,18 +188,72 @@ export default function DashboardWizardDetails() {
 
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
+  const OverviewIcon = selectedWizards[0]?.icon ?? Shield
+
+  if (isPaymentView) {
+    return (
+      <DashboardShell activeSection="Wizards">
+        <main className="dashboard-wizard-details dashboard-wizard-details--payment">
+          <button
+            type="button"
+            className="dashboard-wizard-details__back"
+            onClick={() => setIsPaymentView(false)}
+          >
+            <ArrowLeft size={18} />
+            Back to Wizard Overview
+          </button>
+
+          <section className="dashboard-wizard-details__payment-screen">
+            <div className="dashboard-wizard-details__payment-copy">
+              <h1>Payment</h1>
+              <p>Placeholder</p>
+            </div>
+            <div className="dashboard-wizard-details__payment-art" aria-label="Payment method placeholder">
+              <img src={paymentMethodsImage} alt="Top payment methods in South Africa" />
+            </div>
+          </section>
+        </main>
+      </DashboardShell>
+    )
+  }
 
   return (
     <DashboardShell activeSection="Wizards">
       <main className="dashboard-wizard-details">
-        <button
-          type="button"
-          className="dashboard-wizard-details__back"
-          onClick={() => navigate('/dashboard/wizards')}
-        >
-          <ArrowLeft size={18} />
-          Back to Wizards
-        </button>
+        <section className="dashboard-wizard-details__page-head">
+          <h1>Browse All Wizards</h1>
+          <p>Select a legal wizard to generate your document</p>
+        </section>
+
+        <div className="dashboard-wizard-details__backbar">
+          <button
+            type="button"
+            className="dashboard-wizard-details__back"
+            onClick={() => navigate('/dashboard/wizards')}
+          >
+            <ArrowLeft size={18} />
+            Back to Wizards
+          </button>
+        </div>
+
+        <section className="dashboard-wizard-details__overview">
+          <span className="dashboard-wizard-details__overview-icon">
+            <OverviewIcon size={34} />
+          </span>
+          <div>
+            <h1>Wizard Details &amp; Overview</h1>
+            <p>Everything you need to know before starting this legal workflow</p>
+          </div>
+          <button
+            type="button"
+            className="dashboard-wizard-details__payment-button"
+            disabled={selectedWizards.length === 0}
+            onClick={() => setIsPaymentView(true)}
+          >
+            Proceed to Payment
+            <ChevronRight size={16} />
+          </button>
+        </section>
 
         <div className="dashboard-wizard-details__stack">
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__selected">
@@ -209,7 +266,8 @@ export default function DashboardWizardDetails() {
                 <h1>Selected Wizards</h1>
               </div>
               <span className="dashboard-wizard-details__count">
-                {totalWizards} {wizardLabel}
+                <ShoppingCart size={16} />
+                {totalWizards}{wizardLabel}
               </span>
             </div>
 
@@ -255,22 +313,24 @@ export default function DashboardWizardDetails() {
           </section>
 
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__pricing">
-            <div className="dashboard-wizard-details__section-heading">
+            <div className="dashboard-wizard-details__section-heading dashboard-wizard-details__pricing-heading">
               <div>
-                <span className="dashboard-wizard-details__eyebrow">
-                  <Sparkles size={16} />
-                  Plan
-                </span>
                 <h2>Pricing for This Wizard</h2>
               </div>
-            </div>
-
-            <div className="dashboard-wizard-details__tabs" aria-label="Pricing plans">
-              <button type="button">Launchpad</button>
-              <button type="button">Operator</button>
-              <button type="button" className="dashboard-wizard-details__tab-active">
-                Boardroom
-              </button>
+              <div className="dashboard-wizard-details__tabs" aria-label="Pricing plans">
+                <button type="button">
+                  <Sparkles size={13} />
+                  Launchpad
+                </button>
+                <button type="button">
+                  <ShieldCheck size={13} />
+                  Operator
+                </button>
+                <button type="button" className="dashboard-wizard-details__tab-active">
+                  <Scale size={13} />
+                  Boardroom
+                </button>
+              </div>
             </div>
 
             <div className="dashboard-wizard-details__plan-card">
@@ -309,7 +369,10 @@ export default function DashboardWizardDetails() {
 
               <div className="dashboard-wizard-details__pricing-footer">
                 <p>Want to see all features and pricing tiers?</p>
-                <button type="button">View complete pricing comparison</button>
+                <a href="/pricing">
+                  View complete pricing comparison
+                  <ChevronRight size={14} />
+                </a>
               </div>
             </div>
           </section>
@@ -317,10 +380,6 @@ export default function DashboardWizardDetails() {
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__included">
             <div className="dashboard-wizard-details__section-heading">
               <div>
-                <span className="dashboard-wizard-details__eyebrow">
-                  <FileCheck2 size={16} />
-                  Output
-                </span>
                 <h2>What's Included</h2>
               </div>
             </div>
@@ -338,10 +397,6 @@ export default function DashboardWizardDetails() {
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__requirements">
             <div className="dashboard-wizard-details__section-heading">
               <div>
-                <span className="dashboard-wizard-details__eyebrow">
-                  <FileText size={16} />
-                  Preparation
-                </span>
                 <h2>What You'll Need to Start</h2>
                 <p>Have these details ready to complete the wizard quickly.</p>
               </div>
@@ -360,10 +415,6 @@ export default function DashboardWizardDetails() {
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__workflow">
             <div className="dashboard-wizard-details__section-heading">
               <div>
-                <span className="dashboard-wizard-details__eyebrow">
-                  <Clock3 size={16} />
-                  Workflow
-                </span>
                 <h2>How the Wizard Works</h2>
               </div>
             </div>

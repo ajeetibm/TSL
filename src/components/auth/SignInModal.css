@@ -173,6 +173,25 @@
   transform: translateY(-2px);
 }
 
+.signin-modal__primary:disabled,
+.signin-modal__google:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+  transform: none;
+}
+
+.signin-modal__error {
+  margin: -0.75rem 0 1rem;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  border-radius: 16px;
+  background: rgba(254, 226, 226, 0.7);
+  padding: 0.75rem 1rem;
+  color: #991b1b;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .signin-modal__divider {
   position: relative;
   height: 1.25rem;

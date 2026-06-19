@@ -111,7 +111,7 @@ export default function DashboardProfile() {
                   <h2>FibreGents (Pty) Ltd</h2>
                   <p>Member since December 2025</p>
                   <div>
-                    <span>Operator Plan</span>
+                    <span>Operator Plan1</span>
                     <span>Account Active</span>
                   </div>
                 </div>
@@ -288,11 +288,43 @@ export default function DashboardProfile() {
           )}
 
           {activeTab === 'preferences' && (
-            <div className="dashboard-profile__card">
-              <h2>Preferences</h2>
-              <p className="dashboard-profile__section-description">
-                Customize your notification settings, language, and other preferences.
-              </p>
+            <div className="dashboard-profile__preferences">
+              <section className="dashboard-profile__card">
+                <h2 className="dashboard-profile__preferences-title">Email Preferences</h2>
+                
+                <div className="dashboard-profile__preference-item">
+                  <div className="dashboard-profile__preference-content">
+                    <h3>Workflow Updates</h3>
+                    <p>Notifications about wizard progress and completions</p>
+                  </div>
+                  <label className="dashboard-profile__toggle">
+                    <input type="checkbox" defaultChecked />
+                    <span className="dashboard-profile__toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="dashboard-profile__preference-item">
+                  <div className="dashboard-profile__preference-content">
+                    <h3>Weekly Summary</h3>
+                    <p>Receive a weekly digest of your activity</p>
+                  </div>
+                  <label className="dashboard-profile__toggle">
+                    <input type="checkbox" defaultChecked />
+                    <span className="dashboard-profile__toggle-slider"></span>
+                  </label>
+                </div>
+
+                <div className="dashboard-profile__preference-item">
+                  <div className="dashboard-profile__preference-content">
+                    <h3>Product Updates</h3>
+                    <p>News about new features and improvements</p>
+                  </div>
+                  <label className="dashboard-profile__toggle">
+                    <input type="checkbox" defaultChecked />
+                    <span className="dashboard-profile__toggle-slider"></span>
+                  </label>
+                </div>
+              </section>
             </div>
           )}
         </section>

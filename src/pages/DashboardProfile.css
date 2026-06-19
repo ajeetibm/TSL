@@ -429,8 +429,8 @@
 .dashboard-profile__toggle {
   position: relative;
   display: inline-block;
-  width: 51px;
-  height: 31px;
+  width: 48px;
+  height: 26px;
   flex: 0 0 auto;
 }
 
@@ -447,33 +447,34 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #d7d7d7;
+  background-color: #e5e7eb;
   border-radius: 9999px;
-  transition: background-color 0.3s ease;
+  transition: background-color 160ms ease;
 }
 
 .dashboard-profile__toggle-slider:before {
   position: absolute;
   content: "";
-  height: 24px;
-  width: 24px;
+  height: 22px;
+  width: 22px;
   aspect-ratio: 1/1;
-  left: 4px;
+  left: 3px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #ffffff;
+  background-color: #c79a3b;
   border-radius: 9999px;
-  transition: transform 0.3s ease, background-color 0.3s ease, left 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  transition: transform 160ms ease, background-color 160ms ease;
+  box-shadow: 0 2px 5px rgba(7, 25, 43, 0.18);
 }
 
 .dashboard-profile__toggle input:checked + .dashboard-profile__toggle-slider {
-  background-color: #d7d7d7;
+  border-radius: 9999px;
+  background-color: #c79a3b;
 }
 
 .dashboard-profile__toggle input:checked + .dashboard-profile__toggle-slider:before {
-  left: calc(100% - 28px);
-  background-color: #C79A3B;
+  transform: translate(20px, -50%);
+  background-color: #e5e7eb;
 }
 
 @media (max-width: 720px) {
@@ -502,4 +503,56 @@
   .dashboard-profile__update-button {
     width: 100%;
   }
+}
+
+
+/* Preferences Tab */
+.dashboard-profile__preferences {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.dashboard-profile__preferences-title {
+  margin: 0 0 24px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0b1c2f;
+}
+
+.dashboard-profile__preference-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 0;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.dashboard-profile__preference-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-profile__preference-content {
+  flex: 1;
+}
+
+.dashboard-profile__preference-content h3 {
+  margin: 0 0 4px;
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #0b1c2f;
+}
+
+.dashboard-profile__preference-content p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #6d6d6d;
 }
