@@ -1,10 +1,28 @@
 import {
+  Activity,
   AlertTriangle,
+  ArrowLeft,
+  ArrowRight,
+  Award,
   BriefcaseBusiness,
+  Check,
+  CircleX,
+  Clock,
+  Download,
   DollarSign,
+  FileText,
   LayoutDashboard,
+  Lock,
   LogOut,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  Save,
+  Search,
   Settings,
+  Shield,
+  X,
   UserPlus,
   UsersRound,
 } from 'lucide-react'
@@ -44,19 +62,291 @@ type AdminDashboardData = {
   }
 }
 
+type AdminCounselRequest = NonNullable<AdminDashboardData['recentCounselRequests']>[number]
+
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard, active: true },
-  { label: 'Users & Activity', icon: UsersRound },
-  { label: 'Counsel', icon: BriefcaseBusiness },
-  { label: 'Issues', icon: AlertTriangle, badge: 23 },
-  { label: 'Settings', icon: Settings },
-]
+  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { key: 'users', label: 'Users & Activity', icon: UsersRound },
+  { key: 'counsel', label: 'Counsel', icon: BriefcaseBusiness },
+  { key: 'issues', label: 'Issues', icon: AlertTriangle, badge: 23 },
+  { key: 'settings', label: 'Settings', icon: Settings },
+] as const
 
 const quickActions = [
   { label: 'Invite Sub Admin', icon: UserPlus },
   { label: 'Create Counsel', icon: UsersRound },
   { label: 'Billing & Invoices', icon: DollarSign },
 ]
+
+const counselIconAssets = {
+  scale: 'http://localhost:3845/assets/d8431c19281ee249950d588f7e06b5a2596055c7.svg',
+  clock: 'http://localhost:3845/assets/2c59fa8f41eb4b11d72af7dbb2fad5262b68b76e.svg',
+  completed: 'http://localhost:3845/assets/b78d8a9c3fdf67664434591876ab04caeb1258f8.svg',
+  trend: 'http://localhost:3845/assets/51c9a700e9c33e09894dbacd7c24943eec4e6024.svg',
+  monthCheck: 'http://localhost:3845/assets/58bc07ec7cffebb234a208ca8614cf0d674151c1.svg',
+  dropdown: 'http://localhost:3845/assets/8e02c2a9e2a915b2810831f4c9899ba7dced19b8.svg',
+}
+
+const issueIconAssets = {
+  critical: 'http://localhost:3845/assets/d26d5f52a141d2317231ed88b446d21a9d5fd208.svg',
+  warning: 'http://localhost:3845/assets/95dcb18830d7957985c977807d98e4131ce308de.svg',
+  resolved: 'http://localhost:3845/assets/ebe1d0e3f9cf07a396bebc62759d384a611db59d.svg',
+  highIssue: 'http://localhost:3845/assets/0894cf29ae6b660105d8c19e93cd41cef36448dd.svg',
+  criticalIssue: 'http://localhost:3845/assets/0766f40758b347cebb90c9f19c6d7db47fe2a71d.svg',
+}
+
+const counselMembers = [
+  {
+    name: 'Sarah Mitchell',
+    expertise: 'SaaS & Technology Contracts',
+    experience: '12 years exp',
+    availability: 'Available',
+    email: 'sarah.mitchell@legaltech.com',
+  },
+  {
+    name: 'David Thompson',
+    expertise: 'Intellectual Property & IP Law',
+    experience: '15 years exp',
+    availability: 'Available',
+    email: 'david.thompson@legaltech.com',
+  },
+  {
+    name: 'Emily Chen',
+    expertise: 'Employment Law & HR Compliance',
+    experience: '8 years exp',
+    availability: 'Busy',
+    email: 'emily.chen@legaltech.com',
+  },
+  {
+    name: 'Robert Anderson',
+    expertise: 'Corporate Law & M&A',
+    experience: '18 years exp',
+    availability: 'Available',
+    email: 'robert.anderson@legaltech.com',
+  },
+  {
+    name: 'Jennifer Williams',
+    expertise: 'Commercial Contracts & Compliance',
+    experience: '10 years exp',
+    availability: 'Busy',
+    email: 'jennifer.williams@legaltech.com',
+  },
+  {
+    name: 'Marcus Rodriguez',
+    expertise: 'SaaS & Technology Contracts',
+    experience: '6 years exp',
+    availability: 'Available',
+    email: 'marcus.rodriguez@legaltech.com',
+  },
+  {
+    name: 'Olivia Zhang',
+    expertise: 'Intellectual Property & IP Law',
+    experience: '14 years exp',
+    availability: 'Available',
+    email: 'olivia.zhang@legaltech.com',
+  },
+]
+
+const adminUsers = [
+  { name: 'John Doe', email: 'john@example.com', plan: 'Operator', status: 'Active', joinDate: 'Jan 15, 2025' },
+  { name: 'Sarah Smith', email: 'sarah@example.com', plan: 'Launchpad', status: 'Active', joinDate: 'Feb 20, 2025' },
+  { name: 'Mike Johnson', email: 'mike@example.com', plan: 'Operator', status: 'Active', joinDate: 'Mar 10, 2025' },
+  { name: 'Emily Brown', email: 'emily@example.com', plan: 'Operator', status: 'Active', joinDate: 'Apr 5, 2025' },
+  { name: 'David Wilson', email: 'david@example.com', plan: 'Launchpad', status: 'Inactive', joinDate: 'May 12, 2025' },
+  { name: 'Lisa Anderson', email: 'lisa@example.com', plan: 'Boardroom', status: 'Active', joinDate: 'Jun 8, 2025' },
+]
+
+const adminManagementRows = [
+  {
+    name: 'John Smith',
+    email: 'john.smith@admin.com',
+    status: 'Active',
+    lastActive: '2 hours ago',
+    invitedDate: 'Dec 15, 2024',
+    secondaryAction: 'Revoke',
+  },
+  {
+    name: 'Emily Davis',
+    email: 'emily.davis@admin.com',
+    status: 'Pending',
+    lastActive: 'Not yet active',
+    invitedDate: 'Jan 3, 2025',
+    secondaryAction: 'Cancel',
+  },
+  {
+    name: 'Michael Chen',
+    email: 'michael.chen@admin.com',
+    status: 'Active',
+    lastActive: '5 minutes ago',
+    invitedDate: 'Nov 20, 2024',
+    secondaryAction: 'Revoke',
+  },
+  {
+    name: 'Sarah Johnson',
+    email: 'sarah.j@admin.com',
+    status: 'Pending',
+    lastActive: 'Not yet active',
+    invitedDate: 'Jan 5, 2025',
+    secondaryAction: 'Cancel',
+  },
+]
+
+const adminCounselMembers = [
+  {
+    initials: 'DTM',
+    name: 'Dr. Thabo Mbeki',
+    expertise: 'Corporate Law & M&A',
+    status: 'Available',
+    experience: '15 years experience',
+    location: 'Johannesburg, Gauteng',
+    email: 'thabo.mbeki@counsel.co.za',
+    phone: '+27 11 123 4567',
+    completed: 287,
+  },
+  {
+    initials: 'AZK',
+    name: 'Adv. Zanele Khumalo',
+    expertise: 'Employment & Labour Law',
+    status: 'Available',
+    experience: '12 years experience',
+    location: 'Cape Town, Western Cape',
+    email: 'zanele.khumalo@counsel.co.za',
+    phone: '+27 21 987 6543',
+    completed: 234,
+  },
+  {
+    initials: 'RM',
+    name: 'Robert van der Merwe',
+    expertise: 'Intellectual Property & Technology',
+    status: 'Not Available',
+    experience: '18 years experience',
+    location: 'Pretoria, Gauteng',
+    email: 'robert.vdm@counsel.co.za',
+    phone: '+27 12 345 6789',
+    completed: 342,
+  },
+  {
+    initials: 'JN',
+    name: 'Jennifer Naidoo',
+    expertise: 'Commercial & Contract Law',
+    status: 'Available',
+    experience: '10 years experience',
+    location: 'Durban, KwaZulu-Natal',
+    email: 'jennifer.naidoo@counsel.co.za',
+    phone: '+27 31 234 5678',
+    completed: 198,
+  },
+  {
+    initials: 'MB',
+    name: 'Michael Botha',
+    expertise: 'Regulatory & Compliance',
+    status: 'Available',
+    experience: '14 years experience',
+    location: 'Johannesburg, Gauteng',
+    email: 'michael.botha@counsel.co.za',
+    phone: '+27 11 876 5432',
+    completed: 256,
+  },
+  {
+    initials: 'DLD',
+    name: 'Dr. Lindiwe Dlamini',
+    expertise: 'Company Law & Governance',
+    status: 'Not Available',
+    experience: '16 years experience',
+    location: 'Sandton, Gauteng',
+    email: 'lindiwe.dlamini@counsel.co.za',
+    phone: '+27 11 234 9876',
+    completed: 301,
+  },
+]
+
+const adminIssues = [
+  {
+    title: 'Payment Gateway Timeout Error',
+    id: '#ISS-1089',
+    category: 'Payment',
+    reported: '2024-01-09 08:45',
+    by: 'System',
+    severity: 'High',
+  },
+  {
+    title: 'Document Generation Failure',
+    id: '#ISS-1088',
+    category: 'Wizard',
+    reported: '2024-01-09 07:12',
+    by: 'Michael Chen',
+    severity: 'Critical',
+  },
+  {
+    title: 'User Authentication Loop',
+    id: '#ISS-1087',
+    category: 'Auth',
+    reported: '2024-01-09 06:33',
+    by: 'Sarah Johnson',
+    severity: 'High',
+  },
+  {
+    title: 'Email Notification Delay',
+    id: '#ISS-1086',
+    category: 'Notification',
+    reported: '2024-01-08 22:15',
+    by: 'System',
+    severity: 'Medium',
+  },
+  {
+    title: 'PDF Export Formatting Issue',
+    id: '#ISS-1085',
+    category: 'Export',
+    reported: '2024-01-08 18:42',
+    by: 'David Park',
+    severity: 'Low',
+  },
+  {
+    title: 'Dashboard Widget Loading Error',
+    id: '#ISS-1084',
+    category: 'Dashboard',
+    reported: '2024-01-08 15:27',
+    by: 'Emma Wilson',
+    severity: 'Medium',
+  },
+  {
+    title: 'Database Connection Intermittent',
+    id: '#ISS-1083',
+    category: 'Database',
+    reported: '2024-01-08 14:05',
+    by: 'System',
+    severity: 'Critical',
+  },
+  {
+    title: 'Search Functionality Not Working',
+    id: '#ISS-1082',
+    category: 'Search',
+    reported: '2024-01-08 11:38',
+    by: 'Lisa Anderson',
+    severity: 'High',
+  },
+]
+
+const issueCategories = [
+  { label: 'Payment', count: 5, tone: 'critical' },
+  { label: 'Wizard', count: 8, tone: 'high' },
+  { label: 'Authentication', count: 4, tone: 'medium' },
+  { label: 'Database', count: 3, tone: 'critical' },
+  { label: 'Notification', count: 6, tone: 'neutral' },
+  { label: 'Other', count: 5, tone: 'neutral' },
+]
+
+const adminInvoices = [
+  { invoiceId: 'INV-2025-001', client: 'Acme Corp', plan: 'Operator', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
+  { invoiceId: 'INV-2025-002', client: 'TechStart Ltd', plan: 'Launchpad', issueDate: 'Jan 2, 2026', dueDate: 'Jan 16, 2026' },
+  { invoiceId: 'INV-2025-003', client: 'Digital Co', plan: 'Operator', issueDate: 'Dec 25, 2025', dueDate: 'Jan 8, 2026' },
+  { invoiceId: 'INV-2024-004', client: 'Cloud Systems', plan: 'Boardroom', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
+  { invoiceId: 'INV-2024-005', client: 'Smart Solutions', plan: 'Operator', issueDate: 'Dec 20, 2025', dueDate: 'Jan 3, 2026' },
+]
+
+type AdminNavKey = (typeof navItems)[number]['key']
+type ManagementTab = 'users' | 'admins'
+type SettingsTab = 'billing' | 'general' | 'notifications' | 'security'
 
 const defaultRevenue = [
   { month: 'Jan', actual: 29000, target: 30000 },
@@ -92,6 +382,12 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null)
   const [error, setError] = useState('')
+  const [activeRequest, setActiveRequest] = useState<AdminCounselRequest | null>(null)
+  const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
+  const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
+  const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
+  const [managementTab, setManagementTab] = useState<ManagementTab>('users')
+  const [settingsTab, setSettingsTab] = useState<SettingsTab>('billing')
 
   setPageMetadata('Admin Dashboard', 'TSL admin dashboard for platform KPIs, counsel requests, revenue, and issues.')
 
@@ -152,6 +448,42 @@ export default function AdminDashboard() {
     navigate('/')
   }
 
+  const openPreviewModal = (request: AdminCounselRequest) => {
+    setActiveRequest(request)
+    setAssignmentStep('preview')
+    setSelectedCounsel(counselMembers[0].email)
+  }
+
+  const closeAssignmentModal = () => {
+    setActiveRequest(null)
+    setAssignmentStep('preview')
+  }
+
+  const assignToCounsel = () => {
+    closeAssignmentModal()
+  }
+
+  const headerTitle =
+    activeNav === 'users'
+      ? 'User & Admin Management'
+      : activeNav === 'counsel'
+        ? 'Counsel Management'
+        : activeNav === 'issues'
+          ? 'Issues Management'
+          : activeNav === 'settings'
+            ? 'Settings'
+          : 'Dashboard Overview'
+  const headerDescription =
+    activeNav === 'users'
+      ? 'Manage platform administrators, permissions, and user access'
+      : activeNav === 'counsel'
+        ? 'Manage counsel availability, expertise, and case workload'
+        : activeNav === 'issues'
+          ? 'Monitor, prioritize, and resolve platform issues'
+          : activeNav === 'settings'
+            ? 'Configure billing, notifications, and platform security'
+          : "Welcome back! Here's what's happening with your platform today."
+
   return (
     <div className="admin-dashboard">
       <aside className="admin-dashboard__sidebar">
@@ -161,17 +493,22 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="admin-dashboard__nav" aria-label="Admin navigation">
-          {navItems.map(({ label, icon: Icon, active, badge }) => (
-            <button
-              type="button"
-              className={active ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
-              key={label}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-              {badge && <b>{badge}</b>}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon
+            const badge = 'badge' in item ? item.badge : undefined
+            return (
+              <button
+                type="button"
+                className={activeNav === item.key ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
+                key={item.label}
+                onClick={() => setActiveNav(item.key)}
+              >
+                <Icon size={17} />
+                <span>{item.label}</span>
+                {badge && <b>{badge}</b>}
+              </button>
+            )
+          })}
         </nav>
 
         <div className="admin-dashboard__sidebar-footer">
@@ -188,12 +525,713 @@ export default function AdminDashboard() {
 
       <main className="admin-dashboard__main">
         <header className="admin-dashboard__header">
-          <h1>Dashboard Overview</h1>
-          <p>Welcome back! Here's what's happening with your platform today.</p>
+          <h1>{headerTitle}</h1>
+          <p>{headerDescription}</p>
         </header>
 
         {error && <p className="admin-dashboard__error">{error}</p>}
 
+        {activeNav === 'users' ? (
+          <section className="admin-users">
+            <div className="admin-users__stats" aria-label="User activity summary">
+              <article className="admin-users__stat">
+                <span>
+                  <Activity size={24} />
+                </span>
+                <div>
+                  <strong>2,847</strong>
+                  <h2>Actions Today</h2>
+                  <p>+12% vs yesterday</p>
+                </div>
+              </article>
+              <article className="admin-users__stat">
+                <span>
+                  <UsersRound size={24} />
+                </span>
+                <div>
+                  <strong>234</strong>
+                  <h2>Active Users Now</h2>
+                  <p>8.2% of total</p>
+                </div>
+              </article>
+              <article className="admin-users__stat">
+                <span>
+                  <FileText size={24} />
+                </span>
+                <div>
+                  <strong>87</strong>
+                  <h2>{managementTab === 'admins' ? 'Wizards Started' : 'Workflows Started'}</h2>
+                  <p>today</p>
+                </div>
+              </article>
+            </div>
+
+            <div className="admin-users__tabs" aria-label="Management tabs">
+              <button
+                type="button"
+                className={managementTab === 'users' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
+                onClick={() => setManagementTab('users')}
+              >
+                User Management
+              </button>
+              <button
+                type="button"
+                className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
+                onClick={() => setManagementTab('admins')}
+              >
+                Admin Management
+              </button>
+            </div>
+
+            {managementTab === 'admins' && (
+              <div className="admin-users__admin-stats" aria-label="Admin management summary">
+                <article className="admin-users__admin-stat">
+                  <span>
+                    <Shield size={24} />
+                  </span>
+                  <div>
+                    <strong>2</strong>
+                    <p>Active Admins</p>
+                  </div>
+                </article>
+                <article className="admin-users__admin-stat admin-users__admin-stat--muted">
+                  <span>
+                    <Clock size={24} />
+                  </span>
+                  <div>
+                    <strong>2</strong>
+                    <p>Pending Invites</p>
+                  </div>
+                </article>
+              </div>
+            )}
+
+            <div className="admin-users__table-card">
+              <div className={managementTab === 'admins' ? 'admin-users__filters admin-users__filters--admin' : 'admin-users__filters'}>
+                <label className="admin-users__search">
+                  <Search size={17} />
+                  <input type="search" placeholder="Search users..." />
+                </label>
+                {managementTab === 'users' ? (
+                  <>
+                    <button type="button" className="admin-users__filter-button">
+                      All Roles
+                      <span className="admin-users__select-arrow" aria-hidden="true" />
+                    </button>
+                    <button type="button" className="admin-users__filter-button">
+                      All Plans
+                      <span className="admin-users__select-arrow" aria-hidden="true" />
+                    </button>
+                    <button type="button" className="admin-users__filter-button">
+                      All Status
+                      <span className="admin-users__select-arrow" aria-hidden="true" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" className="admin-users__filter-button">
+                      All Status
+                      <span className="admin-users__select-arrow" aria-hidden="true" />
+                    </button>
+                    <button type="button" className="admin-users__invite">
+                      Invite Sub Admin
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="admin-users__table-wrap">
+                {managementTab === 'users' ? (
+                  <table className="admin-users__table">
+                    <thead>
+                      <tr>
+                        <th aria-label="Select all">
+                          <span className="admin-users__checkbox" />
+                        </th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Plan</th>
+                        <th>Status</th>
+                        <th>Join Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminUsers.map((user) => (
+                        <tr key={user.email}>
+                          <td>
+                            <span className="admin-users__checkbox" />
+                          </td>
+                          <td>
+                            <strong>{user.name}</strong>
+                          </td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className="admin-users__pill admin-users__pill--plan">{user.plan}</span>
+                          </td>
+                          <td>
+                            <span
+                              className={
+                                user.status === 'Active'
+                                  ? 'admin-users__pill admin-users__pill--active'
+                                  : 'admin-users__pill admin-users__pill--inactive'
+                              }
+                            >
+                              {user.status}
+                            </span>
+                          </td>
+                          <td>{user.joinDate}</td>
+                          <td>
+                            <button type="button" className="admin-users__view">
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="admin-users__table admin-users__table--admins">
+                    <thead>
+                      <tr>
+                        <th aria-label="Select all">
+                          <span className="admin-users__checkbox" />
+                        </th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Last Active</th>
+                        <th>Invited Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {adminManagementRows.map((admin) => (
+                        <tr key={admin.email}>
+                          <td>
+                            <span className="admin-users__checkbox" />
+                          </td>
+                          <td>
+                            <strong>{admin.name}</strong>
+                          </td>
+                          <td>{admin.email}</td>
+                          <td>
+                            <span
+                              className={
+                                admin.status === 'Active'
+                                  ? 'admin-users__pill admin-users__pill--active'
+                                  : 'admin-users__pill admin-users__pill--pending'
+                              }
+                            >
+                              {admin.status}
+                            </span>
+                          </td>
+                          <td className={admin.status === 'Pending' ? 'admin-users__last-active--pending' : undefined}>
+                            {admin.lastActive}
+                          </td>
+                          <td>{admin.invitedDate}</td>
+                          <td>
+                            <span className="admin-users__action-group">
+                              <button type="button" className="admin-users__edit">
+                                Edit
+                              </button>
+                              <span className="admin-users__divider" aria-hidden="true" />
+                              <button
+                                type="button"
+                                className={
+                                  admin.secondaryAction === 'Revoke'
+                                    ? 'admin-users__danger'
+                                    : 'admin-users__muted-action'
+                                }
+                              >
+                                {admin.secondaryAction}
+                              </button>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </section>
+        ) : activeNav === 'settings' ? (
+          <section className="admin-settings">
+            <div className="admin-settings__tabs" aria-label="Settings tabs">
+              <button
+                type="button"
+                className={settingsTab === 'billing' ? 'admin-settings__tab admin-settings__tab--active' : 'admin-settings__tab'}
+                onClick={() => setSettingsTab('billing')}
+              >
+                Billing &amp; Invoices
+              </button>
+              <button
+                type="button"
+                className={settingsTab === 'general' ? 'admin-settings__tab admin-settings__tab--active' : 'admin-settings__tab'}
+                onClick={() => setSettingsTab('general')}
+              >
+                General Settings
+              </button>
+              <button
+                type="button"
+                className={settingsTab === 'notifications' ? 'admin-settings__tab admin-settings__tab--active' : 'admin-settings__tab'}
+                onClick={() => setSettingsTab('notifications')}
+              >
+                Notifications
+              </button>
+              <button
+                type="button"
+                className={settingsTab === 'security' ? 'admin-settings__tab admin-settings__tab--active' : 'admin-settings__tab'}
+                onClick={() => setSettingsTab('security')}
+              >
+                Security
+              </button>
+            </div>
+
+            {settingsTab === 'billing' ? (
+              <div className="admin-settings__billing">
+                <section className="admin-settings__billing-alert">
+                  <span>
+                    <AlertTriangle size={22} />
+                  </span>
+                  <div>
+                    <h2>Payment Reconciliation Required</h2>
+                    <p>3 payments have failed in the last 7 days. Review and retry failed transactions to maintain cash flow.</p>
+                    <button type="button">Review Failed Payments</button>
+                  </div>
+                </section>
+
+                <div className="admin-settings__billing-stats" aria-label="Billing summary">
+                  <article className="admin-settings__billing-stat">
+                    <span>
+                      <DollarSign size={24} />
+                    </span>
+                    <div>
+                      <strong>R485,740</strong>
+                      <p>Total Revenue</p>
+                      <small>This month</small>
+                    </div>
+                  </article>
+                  <article className="admin-settings__billing-stat">
+                    <span>
+                      <Clock size={24} />
+                    </span>
+                    <div>
+                      <strong>R23,450</strong>
+                      <p>Outstanding Invoices</p>
+                      <small>12 pending</small>
+                    </div>
+                  </article>
+                  <article className="admin-settings__billing-stat admin-settings__billing-stat--failed">
+                    <span>
+                      <CircleX size={23} />
+                    </span>
+                    <div>
+                      <strong>R8,920</strong>
+                      <p>Failed Payments</p>
+                      <small>5 failed</small>
+                    </div>
+                  </article>
+                </div>
+
+                <section className="admin-settings__invoice-card">
+                  <header className="admin-settings__invoice-header">
+                    <h2>Recent Invoices</h2>
+                    <button type="button">
+                      <Download size={17} />
+                      Download Invoices
+                    </button>
+                  </header>
+
+                  <div className="admin-settings__invoice-filters">
+                    <label className="admin-settings__invoice-search">
+                      <Search size={18} />
+                      <input type="search" placeholder="Search users..." aria-label="Search invoices" />
+                    </label>
+                    {['All Clients', 'All Plans', 'All Months'].map((filter) => (
+                      <button key={filter} type="button" className="admin-settings__invoice-filter">
+                        {filter}
+                        <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="admin-settings__invoice-table-wrap">
+                    <table className="admin-settings__invoice-table">
+                      <thead>
+                        <tr>
+                          <th>Invoice ID</th>
+                          <th>Client</th>
+                          <th>Plans</th>
+                          <th>Issue Date</th>
+                          <th>Due Date</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {adminInvoices.map((invoice) => (
+                          <tr key={invoice.invoiceId}>
+                            <td>{invoice.invoiceId}</td>
+                            <td>{invoice.client}</td>
+                            <td>
+                              <span className="admin-settings__plan-pill">{invoice.plan}</span>
+                            </td>
+                            <td>{invoice.issueDate}</td>
+                            <td>{invoice.dueDate}</td>
+                            <td>
+                              <span className="admin-settings__invoice-actions">
+                                <button type="button">View</button>
+                                <i aria-hidden="true" />
+                                <button type="button">Download</button>
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            ) : settingsTab === 'security' ? (
+              <div className="admin-settings__card">
+                <header className="admin-settings__heading">
+                  <span>
+                    <Lock size={24} />
+                  </span>
+                  <div>
+                    <h2>Security Settings</h2>
+                    <p>Manage authentication and access control</p>
+                  </div>
+                </header>
+
+                <div className="admin-settings__rows">
+                  <article className="admin-settings__row">
+                    <span className="admin-settings__row-icon">
+                      <Shield size={22} />
+                    </span>
+                    <div>
+                      <h3>Two-Factor Authentication</h3>
+                      <p>Add an extra layer of security to your account</p>
+                    </div>
+                    <button type="button" className="admin-settings__toggle" aria-label="Toggle two-factor authentication">
+                      <span />
+                    </button>
+                  </article>
+
+                  <article className="admin-settings__row">
+                    <span className="admin-settings__row-icon">
+                      <Clock size={22} />
+                    </span>
+                    <div>
+                      <h3>Session Timeout</h3>
+                      <p>Auto-logout after inactivity</p>
+                    </div>
+                    <button type="button" className="admin-settings__select">
+                      English
+                      <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                    </button>
+                  </article>
+
+                  <article className="admin-settings__row">
+                    <span className="admin-settings__row-icon">
+                      <Shield size={22} />
+                    </span>
+                    <div>
+                      <h3>Login Notifications</h3>
+                      <p>Get notified of new login attempts</p>
+                    </div>
+                    <button type="button" className="admin-settings__toggle" aria-label="Toggle login notifications">
+                      <span />
+                    </button>
+                  </article>
+
+                  <article className="admin-settings__row admin-settings__row--last">
+                    <span className="admin-settings__row-icon">
+                      <Lock size={22} />
+                    </span>
+                    <div>
+                      <h3>Password Policy</h3>
+                      <p>Set minimum password requirements</p>
+                    </div>
+                    <button type="button" className="admin-settings__link">
+                      Configure
+                    </button>
+                  </article>
+                </div>
+
+                <section className="admin-settings__recommendations">
+                  <Shield size={22} />
+                  <div>
+                    <h3>Security Recommendations</h3>
+                    <p>• Enable two-factor authentication for enhanced security</p>
+                    <p>• Review and update your password regularly</p>
+                    <p>• Monitor login activity and active sessions</p>
+                  </div>
+                </section>
+
+                <footer className="admin-settings__footer">
+                  <button type="button">
+                    <Save size={18} />
+                    Save Security Settings
+                  </button>
+                </footer>
+              </div>
+            ) : (
+              <div className="admin-settings__card admin-settings__card--empty">
+                <header className="admin-settings__heading">
+                  <span>{settingsTab === 'general' ? <Settings size={24} /> : <Mail size={24} />}</span>
+                  <div>
+                    <h2>{settingsTab === 'general' ? 'General Settings' : 'Notification Preferences'}</h2>
+                    <p>
+                      {settingsTab === 'general'
+                        ? 'Platform-wide configuration and preferences'
+                        : 'Configure how and when you receive notifications'}
+                    </p>
+                  </div>
+                </header>
+              </div>
+            )}
+          </section>
+        ) : activeNav === 'issues' ? (
+          <section className="admin-issues">
+            <div className="admin-issues__stats" aria-label="Issues summary">
+              <article className="admin-issues__stat">
+                <span>
+                  <img src={issueIconAssets.critical} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>3</strong>
+                  <p>Critical</p>
+                  <small className="admin-issues__copy--critical">Immediate attention required</small>
+                </div>
+              </article>
+              <article className="admin-issues__stat">
+                <span>
+                  <img src={issueIconAssets.warning} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>12</strong>
+                  <p>High Priority</p>
+                  <small className="admin-issues__copy--high">Requires attention</small>
+                </div>
+              </article>
+              <article className="admin-issues__stat admin-issues__stat--warning">
+                <span>
+                  <img src={issueIconAssets.warning} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>11</strong>
+                  <p>Medium Priority</p>
+                  <small className="admin-issues__copy--medium">Monitor closely</small>
+                </div>
+              </article>
+              <article className="admin-issues__stat admin-issues__stat--warning">
+                <span>
+                  <img src={issueIconAssets.resolved} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>8</strong>
+                  <p>Resolved Today</p>
+                  <small className="admin-issues__copy--success">Successfully resolved</small>
+                </div>
+              </article>
+            </div>
+
+            <div className="admin-issues__layout">
+              <section className="admin-issues__list-panel">
+                <div className="admin-issues__filters">
+                  <label className="admin-issues__search">
+                    <Search size={16} />
+                    <input type="search" placeholder="Search issues..." />
+                  </label>
+                  <button type="button" className="admin-issues__filter-button">
+                    All Severity
+                    <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                  </button>
+                </div>
+
+                <div className="admin-issues__list">
+                  {adminIssues.map((issue) => {
+                    const critical = issue.severity === 'Critical'
+                    const medium = issue.severity === 'Medium'
+                    const low = issue.severity === 'Low'
+                    return (
+                      <article className="admin-issues__item" key={issue.id}>
+                        <span className="admin-issues__item-icon">
+                          <img
+                            src={critical || low ? issueIconAssets.criticalIssue : issueIconAssets.highIssue}
+                            alt=""
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <div className="admin-issues__item-content">
+                          <div className="admin-issues__item-heading">
+                            <div>
+                              <h2>{issue.title}</h2>
+                              <p>
+                                {issue.id} • {issue.category}
+                              </p>
+                            </div>
+                            <b
+                              className={
+                                critical
+                                  ? 'admin-issues__severity admin-issues__severity--critical'
+                                  : medium
+                                    ? 'admin-issues__severity admin-issues__severity--medium'
+                                    : low
+                                      ? 'admin-issues__severity admin-issues__severity--low'
+                                      : 'admin-issues__severity admin-issues__severity--high'
+                              }
+                            >
+                              {issue.severity}
+                            </b>
+                          </div>
+                          <p className="admin-issues__meta">
+                            Reported: {issue.reported}
+                            <span>•</span>
+                            By: {issue.by}
+                          </p>
+                          <button type="button">View Details</button>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              </section>
+
+              <aside className="admin-issues__categories">
+                <h2>Issue Categories</h2>
+                <div>
+                  {issueCategories.map((category) => (
+                    <article className="admin-issues__category" key={category.label}>
+                      <strong>{category.label}</strong>
+                      <span className={`admin-issues__category-count admin-issues__category-count--${category.tone}`}>
+                        {category.count}
+                      </span>
+                    </article>
+                  ))}
+                </div>
+              </aside>
+            </div>
+          </section>
+        ) : activeNav === 'counsel' ? (
+          <section className="admin-counsel">
+            <div className="admin-counsel__stats" aria-label="Counsel summary">
+              <article className="admin-counsel__stat">
+                <span>
+                  <img src={counselIconAssets.scale} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>6</strong>
+                  <p>Total Counsel</p>
+                  <small>
+                    <b>4 Available</b>
+                    <i>·</i>
+                    <em>2 Not Available</em>
+                  </small>
+                </div>
+              </article>
+              <article className="admin-counsel__stat">
+                <span>
+                  <img src={counselIconAssets.clock} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>61</strong>
+                  <p>Active Cases</p>
+                  <small>
+                    <img src={counselIconAssets.trend} alt="" aria-hidden="true" />
+                    <b>18% increase</b>
+                  </small>
+                </div>
+              </article>
+              <article className="admin-counsel__stat">
+                <span>
+                  <img src={counselIconAssets.completed} alt="" aria-hidden="true" />
+                </span>
+                <div>
+                  <strong>1,618</strong>
+                  <p>Completed Cases</p>
+                  <small>
+                    <img src={counselIconAssets.monthCheck} alt="" aria-hidden="true" />
+                    <b>This month: 68</b>
+                  </small>
+                </div>
+              </article>
+            </div>
+
+            <div className="admin-counsel__filters">
+              <label className="admin-counsel__search">
+                <Search size={16} />
+                <input type="search" placeholder="Search counsel..." />
+              </label>
+              <button type="button" className="admin-counsel__filter-button">
+                All Expertise
+                <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+              </button>
+              <button type="button" className="admin-counsel__filter-button">
+                All Status
+                <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+              </button>
+              <button type="button" className="admin-counsel__add">
+                <Plus size={20} />
+                Add Counsel
+              </button>
+            </div>
+
+            <div className="admin-counsel__grid">
+              {adminCounselMembers.map((member) => (
+                <article className="admin-counsel__card" key={member.email}>
+                  <div className="admin-counsel__card-header">
+                    <div className="admin-counsel__card-top">
+                      <span>{member.initials}</span>
+                      <b
+                        className={
+                          member.status === 'Available'
+                            ? 'admin-counsel__status admin-counsel__status--available'
+                            : 'admin-counsel__status admin-counsel__status--unavailable'
+                        }
+                      >
+                        {member.status}
+                      </b>
+                    </div>
+                    <h2>{member.name}</h2>
+                    <p>{member.expertise}</p>
+                  </div>
+
+                  <div className="admin-counsel__card-body">
+                    <ul>
+                      <li>
+                        <Award size={16} />
+                        {member.experience}
+                      </li>
+                      <li>
+                        <MapPin size={16} />
+                        {member.location}
+                      </li>
+                      <li>
+                        <Mail size={16} />
+                        {member.email}
+                      </li>
+                      <li>
+                        <Phone size={16} />
+                        {member.phone}
+                      </li>
+                    </ul>
+
+                    <div className="admin-counsel__completed">
+                      <strong>{member.completed}</strong>
+                      <span>Completed</span>
+                    </div>
+
+                    <button type="button">View Profile</button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <>
         <section className="admin-dashboard__kpis" aria-label="Admin KPI summary">
           <article className="admin-dashboard__kpi">
             <span>
@@ -246,7 +1284,9 @@ export default function AdminDashboard() {
                   <p>
                     From: <strong>{request.fromUser || 'Michael Chen'}</strong>
                   </p>
-                  <button type="button">Preview &amp; Assign to Counsel</button>
+                  <button type="button" onClick={() => openPreviewModal(request)}>
+                    Preview &amp; Assign to Counsel
+                  </button>
                 </article>
               ))}
             </div>
@@ -331,7 +1371,178 @@ export default function AdminDashboard() {
             </div>
           </section>
         </div>
+          </>
+        )}
       </main>
+
+      {activeRequest && (
+        <div className="admin-assignment" role="dialog" aria-modal="true" aria-labelledby="admin-assignment-title">
+          <div
+            className={
+              assignmentStep === 'assign'
+                ? 'admin-assignment__modal admin-assignment__modal--assign'
+                : 'admin-assignment__modal'
+            }
+          >
+            <header className="admin-assignment__header">
+              <div>
+                <h2 id="admin-assignment-title">
+                  {assignmentStep === 'assign' ? 'Assign to Counsel' : 'Preview Request'}
+                </h2>
+                <p>
+                  {assignmentStep === 'assign'
+                    ? 'Select a counsel member based on their expertise'
+                    : 'Review the request before assigning to counsel'}
+                </p>
+              </div>
+              <button type="button" className="admin-assignment__close" onClick={closeAssignmentModal} aria-label="Close modal">
+                <X size={22} />
+              </button>
+            </header>
+
+            {assignmentStep === 'preview' ? (
+              <>
+                <section className="admin-assignment__body">
+                  <h3>Request Details</h3>
+
+                  <div className="admin-assignment__detail">
+                    <span>From:</span>
+                    <strong>{activeRequest.fromUser || 'Michael Chen'}</strong>
+                  </div>
+
+                  <div className="admin-assignment__detail">
+                    <span>Subject:</span>
+                    <strong>{activeRequest.subject || 'Contract Review for SaaS Agreement'}</strong>
+                  </div>
+
+                  <div className="admin-assignment__detail admin-assignment__detail--paragraph">
+                    <span>Description:</span>
+                    <p>
+                      I need a comprehensive review of our new SaaS agreement template. The contract includes
+                      subscription terms, data privacy clauses, and service level agreements. Please ensure compliance
+                      with current regulations and industry best practices.
+                    </p>
+                  </div>
+
+                  <div className="admin-assignment__detail">
+                    <span>Attachment:</span>
+                    <div className="admin-assignment__attachment">
+                      <i>
+                        <FileText size={21} />
+                      </i>
+                      <div>
+                        <strong>SaaS_Agreement_Draft_v2.pdf</strong>
+                        <small>2.4 MB • PDF Document</small>
+                      </div>
+                      <button type="button" aria-label="Download attachment">
+                        <Download size={17} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="admin-assignment__detail">
+                    <span>Related Wizard:</span>
+                    <strong>SaaS Contract Generator</strong>
+                  </div>
+                </section>
+
+                <footer className="admin-assignment__footer">
+                  <button type="button" className="admin-assignment__secondary" onClick={closeAssignmentModal}>
+                    Cancel
+                  </button>
+                  <button type="button" className="admin-assignment__primary" onClick={() => setAssignmentStep('assign')}>
+                    Proceed <ArrowRight size={17} />
+                  </button>
+                </footer>
+              </>
+            ) : (
+              <>
+                <section className="admin-assignment__assign-body">
+                  <div className="admin-assignment__assign-top">
+                    <h3>Select Counsel Member</h3>
+                    <span>7 of 7 available</span>
+                  </div>
+
+                  <label className="admin-assignment__search">
+                    <Search size={17} />
+                    <input type="search" placeholder="Search by name, expertise, or email..." />
+                  </label>
+
+                  <div className="admin-assignment__filters" aria-label="Counsel filters">
+                    <select defaultValue="All Expertise">
+                      <option>All Expertise</option>
+                      <option>SaaS</option>
+                      <option>Intellectual Property</option>
+                      <option>Employment Law</option>
+                    </select>
+                    <select defaultValue="All Experience">
+                      <option>All Experience</option>
+                      <option>10+ Years</option>
+                      <option>5-10 Years</option>
+                      <option>1-5 Years</option>
+                    </select>
+                    <select defaultValue="All Availability">
+                      <option>All Availability</option>
+                      <option>Available</option>
+                      <option>Busy</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-assignment__counsel-list">
+                    {counselMembers.map((member) => {
+                      const selected = selectedCounsel === member.email
+                      const busy = member.availability === 'Busy'
+                      return (
+                        <button
+                          type="button"
+                          className={
+                            selected
+                              ? 'admin-assignment__counsel-card admin-assignment__counsel-card--selected'
+                              : 'admin-assignment__counsel-card'
+                          }
+                          key={member.email}
+                          onClick={() => setSelectedCounsel(member.email)}
+                        >
+                          <div>
+                            <h4>{member.name}</h4>
+                            <p>{member.expertise}</p>
+                            <span>
+                              <small>{member.experience}</small>
+                              <small className={busy ? 'admin-assignment__busy' : 'admin-assignment__available'}>
+                                {member.availability}
+                              </small>
+                            </span>
+                          </div>
+                          {selected && (
+                            <b>
+                              <Check size={16} />
+                            </b>
+                          )}
+                          <em>{member.email}</em>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <label className="admin-assignment__notes">
+                    <span>Additional Notes (Optional)</span>
+                    <textarea placeholder="Add any additional context or instructions for the counsel member..." />
+                  </label>
+                </section>
+
+                <footer className="admin-assignment__footer">
+                  <button type="button" className="admin-assignment__secondary admin-assignment__secondary--outlined" onClick={() => setAssignmentStep('preview')}>
+                    <ArrowLeft size={17} /> Previous
+                  </button>
+                  <button type="button" className="admin-assignment__primary" onClick={assignToCounsel}>
+                    Assign to Counsel
+                  </button>
+                </footer>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
