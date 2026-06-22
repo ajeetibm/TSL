@@ -1,8 +1,10 @@
 import {
   ArrowLeft,
+  Building2,
   Check,
   CheckCircle2,
   ChevronRight,
+  CreditCard,
   FileCheck2,
   FileText,
   HandCoins,
@@ -14,6 +16,7 @@ import {
   ShoppingCart,
   Sparkles,
   UsersRound,
+  WalletCards,
   WandSparkles,
   X,
 } from 'lucide-react'
@@ -35,7 +38,14 @@ type WizardLocationState = {
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
-const paymentMethodsImage = 'http://localhost:3845/assets/761051ddf5ffbe7a40fc2116dcc418a7ea581dfd.png'
+
+const paymentMethods = [
+  { title: 'Bank Transfers', icon: Building2, className: 'dashboard-wizard-details__payment-method-icon--bank' },
+  { title: 'Credit/Debit Cards', icon: CreditCard, className: 'dashboard-wizard-details__payment-method-icon--card' },
+  { title: 'E-wallets', icon: WalletCards, className: 'dashboard-wizard-details__payment-method-icon--wallet' },
+  { title: 'PayPal', icon: null, className: 'dashboard-wizard-details__payment-method-icon--paypal' },
+  { title: 'MasterPass', icon: null, className: 'dashboard-wizard-details__payment-method-icon--masterpass' },
+]
 
 const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   'Loan Agreement': {
@@ -252,12 +262,30 @@ export default function DashboardWizardDetails() {
           </button>
 
           <section className="dashboard-wizard-details__payment-screen">
-            <div className="dashboard-wizard-details__payment-copy">
-              <h1>Payment</h1>
-              <p>Placeholder</p>
+            <div className="dashboard-wizard-details__payment-dots" aria-hidden="true" />
+            <div className="dashboard-wizard-details__payment-methods">
+              <h1>Top 5 Payment Methods in South Africa</h1>
+              <div className="dashboard-wizard-details__payment-method-grid">
+                {paymentMethods.map(({ title, icon: Icon, className }) => (
+                  <article className="dashboard-wizard-details__payment-method" key={title}>
+                    <span className={`dashboard-wizard-details__payment-method-icon ${className}`}>
+                      {Icon ? <Icon size={54} strokeWidth={2.8} /> : null}
+                      {title === 'PayPal' && <b>PP</b>}
+                      {title === 'MasterPass' && (
+                        <i>
+                          <span />
+                          <span />
+                        </i>
+                      )}
+                    </span>
+                    <h2>{title}</h2>
+                  </article>
+                ))}
+              </div>
             </div>
-            <div className="dashboard-wizard-details__payment-art" aria-label="Payment method placeholder">
-              <img src={paymentMethodsImage} alt="Top payment methods in South Africa" />
+            <div className="dashboard-wizard-details__payment-copy" aria-hidden="true">
+              <h2>Payment</h2>
+              <p>Placeholder</p>
             </div>
           </section>
         </main>

@@ -572,32 +572,142 @@
 
 .dashboard-wizard-details__payment-screen {
   position: relative;
-  min-height: calc(100vh - 130px);
+  min-height: min(900px, calc(100vh - 130px));
   overflow: hidden;
   border-radius: 24px;
-  background: linear-gradient(90deg, #ffffff 0 72%, #eaffff 72% 100%);
-  padding: 56px 64px;
+  background: linear-gradient(90deg, #ffffff 0 50%, #eaffff 50% 100%);
+  padding: clamp(72px, 5.4vw, 98px) clamp(56px, 5.3vw, 76px) 76px;
   box-shadow: 0 1px 4px rgba(7, 25, 43, 0.08);
+}
+
+.dashboard-wizard-details__payment-methods {
+  position: relative;
+  z-index: 2;
+  width: min(900px, 62%);
+}
+
+.dashboard-wizard-details__payment-methods h1 {
+  margin: 0 0 72px;
+  color: #000000;
+  font-family: Poppins, var(--font-display);
+  font-size: clamp(30px, 2.4vw, 40px);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.dashboard-wizard-details__payment-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 359px);
+  gap: 40px;
+}
+
+.dashboard-wizard-details__payment-method {
+  min-height: 203px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid #cfcfcf;
+  border-radius: 4px;
+  padding: 28px;
+  background: #ffffff;
+}
+
+.dashboard-wizard-details__payment-method:nth-child(5) {
+  grid-column: 1;
+}
+
+.dashboard-wizard-details__payment-method h2 {
+  margin: 24px 0 0;
+  color: #000000;
+  font-family: Poppins, var(--font-display);
+  font-size: clamp(22px, 2vw, 30px);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.dashboard-wizard-details__payment-method-icon {
+  width: 64px;
+  height: 64px;
+  display: inline-grid;
+  place-items: center;
+}
+
+.dashboard-wizard-details__payment-method-icon--bank {
+  color: #ff8a33;
+}
+
+.dashboard-wizard-details__payment-method-icon--card {
+  color: #1b9ee8;
+}
+
+.dashboard-wizard-details__payment-method-icon--wallet {
+  color: #16a8f4;
+}
+
+.dashboard-wizard-details__payment-method-icon--paypal b {
+  color: #003087;
+  font-family: Poppins, var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -5px;
+}
+
+.dashboard-wizard-details__payment-method-icon--paypal b::first-letter {
+  color: #003087;
+}
+
+.dashboard-wizard-details__payment-method-icon--masterpass {
+  justify-content: flex-start;
+}
+
+.dashboard-wizard-details__payment-method-icon--masterpass i {
+  position: relative;
+  width: 62px;
+  height: 40px;
+  display: block;
+}
+
+.dashboard-wizard-details__payment-method-icon--masterpass span {
+  position: absolute;
+  top: 2px;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+}
+
+.dashboard-wizard-details__payment-method-icon--masterpass span:first-child {
+  left: 0;
+  background: #eb001b;
+}
+
+.dashboard-wizard-details__payment-method-icon--masterpass span:last-child {
+  right: 0;
+  background: #f79e1b;
+  mix-blend-mode: multiply;
 }
 
 .dashboard-wizard-details__payment-copy {
   position: absolute;
-  right: -32px;
-  bottom: 48px;
+  right: clamp(28px, 5vw, 76px);
+  bottom: 68px;
   z-index: 1;
   pointer-events: none;
 }
 
-.dashboard-wizard-details__payment-copy h1,
+.dashboard-wizard-details__payment-copy h2,
 .dashboard-wizard-details__payment-copy p {
   margin: 0;
   font-family: Poppins, var(--font-display);
-  font-size: clamp(60px, 7vw, 100px);
+  font-size: clamp(64px, 6.8vw, 100px);
   line-height: 1;
+  letter-spacing: -0.53px;
   white-space: nowrap;
 }
 
-.dashboard-wizard-details__payment-copy h1 {
+.dashboard-wizard-details__payment-copy h2 {
   color: #101d29;
   font-weight: 700;
 }
@@ -608,18 +718,15 @@
   font-weight: 400;
 }
 
-.dashboard-wizard-details__payment-art {
-  position: relative;
-  z-index: 2;
-  width: min(760px, 72%);
-  overflow: hidden;
-  border-radius: 12px;
-}
-
-.dashboard-wizard-details__payment-art img {
-  display: block;
-  width: 100%;
-  height: auto;
+.dashboard-wizard-details__payment-dots {
+  position: absolute;
+  left: -30px;
+  bottom: 76px;
+  width: 154px;
+  height: 132px;
+  opacity: 0.9;
+  background-image: radial-gradient(circle, #00b8c9 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
 }
 
 .dashboard-wizard-details__checks {
@@ -970,11 +1077,21 @@
 
   .dashboard-wizard-details__payment-screen {
     min-height: auto;
-    padding: 36px 28px 220px;
+    background: linear-gradient(180deg, #ffffff 0 58%, #eaffff 58% 100%);
+    padding: 44px 28px 260px;
   }
 
-  .dashboard-wizard-details__payment-art {
+  .dashboard-wizard-details__payment-methods {
     width: 100%;
+  }
+
+  .dashboard-wizard-details__payment-methods h1 {
+    margin-bottom: 36px;
+  }
+
+  .dashboard-wizard-details__payment-method-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
   }
 
   .dashboard-wizard-details__overview {
@@ -1027,6 +1144,24 @@
   .dashboard-wizard-details__payment-copy {
     right: -16px;
     bottom: 28px;
+  }
+
+  .dashboard-wizard-details__payment-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-wizard-details__payment-method {
+    min-height: 150px;
+  }
+
+  .dashboard-wizard-details__payment-copy h2,
+  .dashboard-wizard-details__payment-copy p {
+    font-size: clamp(46px, 15vw, 72px);
+  }
+
+  .dashboard-wizard-details__payment-dots {
+    left: -44px;
+    bottom: 180px;
   }
 
   .dashboard-wizard-details__pricing-footer .dashboard-wizard-details__payment-button {

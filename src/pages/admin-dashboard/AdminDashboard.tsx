@@ -6,6 +6,9 @@ import {
   Award,
   BriefcaseBusiness,
   Check,
+  ChevronDown,
+  CircleAlert,
+  CircleCheckBig,
   Clock,
   Download,
   DollarSign,
@@ -16,6 +19,7 @@ import {
   MapPin,
   Phone,
   Plus,
+  Scale,
   Search,
   Settings,
   Shield,
@@ -75,23 +79,6 @@ const quickActions = [
   { label: 'Create Counsel', icon: UsersRound },
   { label: 'Billing & Invoices', icon: DollarSign },
 ]
-
-const counselIconAssets = {
-  scale: 'http://localhost:3845/assets/d8431c19281ee249950d588f7e06b5a2596055c7.svg',
-  clock: 'http://localhost:3845/assets/2c59fa8f41eb4b11d72af7dbb2fad5262b68b76e.svg',
-  completed: 'http://localhost:3845/assets/b78d8a9c3fdf67664434591876ab04caeb1258f8.svg',
-  trend: 'http://localhost:3845/assets/51c9a700e9c33e09894dbacd7c24943eec4e6024.svg',
-  monthCheck: 'http://localhost:3845/assets/58bc07ec7cffebb234a208ca8614cf0d674151c1.svg',
-  dropdown: 'http://localhost:3845/assets/8e02c2a9e2a915b2810831f4c9899ba7dced19b8.svg',
-}
-
-const issueIconAssets = {
-  critical: 'http://localhost:3845/assets/d26d5f52a141d2317231ed88b446d21a9d5fd208.svg',
-  warning: 'http://localhost:3845/assets/95dcb18830d7957985c977807d98e4131ce308de.svg',
-  resolved: 'http://localhost:3845/assets/ebe1d0e3f9cf07a396bebc62759d384a611db59d.svg',
-  highIssue: 'http://localhost:3845/assets/0894cf29ae6b660105d8c19e93cd41cef36448dd.svg',
-  criticalIssue: 'http://localhost:3845/assets/0766f40758b347cebb90c9f19c6d7db47fe2a71d.svg',
-}
 
 const counselMembers = [
   {
@@ -490,7 +477,13 @@ export default function AdminDashboard() {
             return (
               <button
                 type="button"
-                className={activeNav === item.key ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
+                className={[
+                  'admin-dashboard__nav-item',
+                  item.key === 'issues' ? 'admin-dashboard__nav-item--issues' : '',
+                  activeNav === item.key ? 'admin-dashboard__nav-item--active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
                 key={item.label}
                 onClick={() => setActiveNav(item.key)}
               >
@@ -795,7 +788,7 @@ export default function AdminDashboard() {
             <div className="admin-issues__stats" aria-label="Issues summary">
               <article className="admin-issues__stat">
                 <span>
-                  <img src={issueIconAssets.critical} alt="" aria-hidden="true" />
+                  <CircleAlert size={28} />
                 </span>
                 <div>
                   <strong>3</strong>
@@ -805,7 +798,7 @@ export default function AdminDashboard() {
               </article>
               <article className="admin-issues__stat">
                 <span>
-                  <img src={issueIconAssets.warning} alt="" aria-hidden="true" />
+                  <AlertTriangle size={28} />
                 </span>
                 <div>
                   <strong>12</strong>
@@ -815,7 +808,7 @@ export default function AdminDashboard() {
               </article>
               <article className="admin-issues__stat admin-issues__stat--warning">
                 <span>
-                  <img src={issueIconAssets.warning} alt="" aria-hidden="true" />
+                  <AlertTriangle size={28} />
                 </span>
                 <div>
                   <strong>11</strong>
@@ -825,7 +818,7 @@ export default function AdminDashboard() {
               </article>
               <article className="admin-issues__stat admin-issues__stat--warning">
                 <span>
-                  <img src={issueIconAssets.resolved} alt="" aria-hidden="true" />
+                  <CircleCheckBig size={28} />
                 </span>
                 <div>
                   <strong>8</strong>
@@ -844,7 +837,7 @@ export default function AdminDashboard() {
                   </label>
                   <button type="button" className="admin-issues__filter-button">
                     All Severity
-                    <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                    <ChevronDown size={16} />
                   </button>
                 </div>
 
@@ -856,11 +849,7 @@ export default function AdminDashboard() {
                     return (
                       <article className="admin-issues__item" key={issue.id}>
                         <span className="admin-issues__item-icon">
-                          <img
-                            src={critical || low ? issueIconAssets.criticalIssue : issueIconAssets.highIssue}
-                            alt=""
-                            aria-hidden="true"
-                          />
+                          {critical || low ? <CircleAlert size={24} /> : <AlertTriangle size={24} />}
                         </span>
                         <div className="admin-issues__item-content">
                           <div className="admin-issues__item-heading">
@@ -917,7 +906,7 @@ export default function AdminDashboard() {
             <div className="admin-counsel__stats" aria-label="Counsel summary">
               <article className="admin-counsel__stat">
                 <span>
-                  <img src={counselIconAssets.scale} alt="" aria-hidden="true" />
+                  <Scale size={28} />
                 </span>
                 <div>
                   <strong>6</strong>
@@ -931,26 +920,26 @@ export default function AdminDashboard() {
               </article>
               <article className="admin-counsel__stat">
                 <span>
-                  <img src={counselIconAssets.clock} alt="" aria-hidden="true" />
+                  <Clock size={28} />
                 </span>
                 <div>
                   <strong>61</strong>
                   <p>Active Cases</p>
                   <small>
-                    <img src={counselIconAssets.trend} alt="" aria-hidden="true" />
+                    <Activity size={16} />
                     <b>18% increase</b>
                   </small>
                 </div>
               </article>
               <article className="admin-counsel__stat">
                 <span>
-                  <img src={counselIconAssets.completed} alt="" aria-hidden="true" />
+                  <CircleCheckBig size={28} />
                 </span>
                 <div>
                   <strong>1,618</strong>
                   <p>Completed Cases</p>
                   <small>
-                    <img src={counselIconAssets.monthCheck} alt="" aria-hidden="true" />
+                    <CircleCheckBig size={16} />
                     <b>This month: 68</b>
                   </small>
                 </div>
@@ -964,11 +953,11 @@ export default function AdminDashboard() {
               </label>
               <button type="button" className="admin-counsel__filter-button">
                 All Expertise
-                <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                <ChevronDown size={16} />
               </button>
               <button type="button" className="admin-counsel__filter-button">
                 All Status
-                <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+                <ChevronDown size={16} />
               </button>
               <button type="button" className="admin-counsel__add">
                 <Plus size={20} />
