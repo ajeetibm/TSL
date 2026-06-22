@@ -6,19 +6,16 @@ import {
   Award,
   BriefcaseBusiness,
   Check,
-  CircleX,
   Clock,
   Download,
   DollarSign,
   FileText,
   LayoutDashboard,
-  Lock,
   LogOut,
   Mail,
   MapPin,
   Phone,
   Plus,
-  Save,
   Search,
   Settings,
   Shield,
@@ -30,6 +27,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
+import { BillingInvoices, GeneralSettings, Notifications, Security } from './components'
 import './AdminDashboard.css'
 
 type AdminDashboardData = {
@@ -336,13 +334,6 @@ const issueCategories = [
   { label: 'Other', count: 5, tone: 'neutral' },
 ]
 
-const adminInvoices = [
-  { invoiceId: 'INV-2025-001', client: 'Acme Corp', plan: 'Operator', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
-  { invoiceId: 'INV-2025-002', client: 'TechStart Ltd', plan: 'Launchpad', issueDate: 'Jan 2, 2026', dueDate: 'Jan 16, 2026' },
-  { invoiceId: 'INV-2025-003', client: 'Digital Co', plan: 'Operator', issueDate: 'Dec 25, 2025', dueDate: 'Jan 8, 2026' },
-  { invoiceId: 'INV-2024-004', client: 'Cloud Systems', plan: 'Boardroom', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
-  { invoiceId: 'INV-2024-005', client: 'Smart Solutions', plan: 'Operator', issueDate: 'Dec 20, 2025', dueDate: 'Jan 3, 2026' },
-]
 
 type AdminNavKey = (typeof navItems)[number]['key']
 type ManagementTab = 'users' | 'admins'
@@ -790,207 +781,13 @@ export default function AdminDashboard() {
             </div>
 
             {settingsTab === 'billing' ? (
-              <div className="admin-settings__billing">
-                <section className="admin-settings__billing-alert">
-                  <span>
-                    <AlertTriangle size={22} />
-                  </span>
-                  <div>
-                    <h2>Payment Reconciliation Required</h2>
-                    <p>3 payments have failed in the last 7 days. Review and retry failed transactions to maintain cash flow.</p>
-                    <button type="button">Review Failed Payments</button>
-                  </div>
-                </section>
-
-                <div className="admin-settings__billing-stats" aria-label="Billing summary">
-                  <article className="admin-settings__billing-stat">
-                    <span>
-                      <DollarSign size={24} />
-                    </span>
-                    <div>
-                      <strong>R485,740</strong>
-                      <p>Total Revenue</p>
-                      <small>This month</small>
-                    </div>
-                  </article>
-                  <article className="admin-settings__billing-stat">
-                    <span>
-                      <Clock size={24} />
-                    </span>
-                    <div>
-                      <strong>R23,450</strong>
-                      <p>Outstanding Invoices</p>
-                      <small>12 pending</small>
-                    </div>
-                  </article>
-                  <article className="admin-settings__billing-stat admin-settings__billing-stat--failed">
-                    <span>
-                      <CircleX size={23} />
-                    </span>
-                    <div>
-                      <strong>R8,920</strong>
-                      <p>Failed Payments</p>
-                      <small>5 failed</small>
-                    </div>
-                  </article>
-                </div>
-
-                <section className="admin-settings__invoice-card">
-                  <header className="admin-settings__invoice-header">
-                    <h2>Recent Invoices</h2>
-                    <button type="button">
-                      <Download size={17} />
-                      Download Invoices
-                    </button>
-                  </header>
-
-                  <div className="admin-settings__invoice-filters">
-                    <label className="admin-settings__invoice-search">
-                      <Search size={18} />
-                      <input type="search" placeholder="Search users..." aria-label="Search invoices" />
-                    </label>
-                    {['All Clients', 'All Plans', 'All Months'].map((filter) => (
-                      <button key={filter} type="button" className="admin-settings__invoice-filter">
-                        {filter}
-                        <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="admin-settings__invoice-table-wrap">
-                    <table className="admin-settings__invoice-table">
-                      <thead>
-                        <tr>
-                          <th>Invoice ID</th>
-                          <th>Client</th>
-                          <th>Plans</th>
-                          <th>Issue Date</th>
-                          <th>Due Date</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {adminInvoices.map((invoice) => (
-                          <tr key={invoice.invoiceId}>
-                            <td>{invoice.invoiceId}</td>
-                            <td>{invoice.client}</td>
-                            <td>
-                              <span className="admin-settings__plan-pill">{invoice.plan}</span>
-                            </td>
-                            <td>{invoice.issueDate}</td>
-                            <td>{invoice.dueDate}</td>
-                            <td>
-                              <span className="admin-settings__invoice-actions">
-                                <button type="button">View</button>
-                                <i aria-hidden="true" />
-                                <button type="button">Download</button>
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </section>
-              </div>
+              <BillingInvoices />
             ) : settingsTab === 'security' ? (
-              <div className="admin-settings__card">
-                <header className="admin-settings__heading">
-                  <span>
-                    <Lock size={24} />
-                  </span>
-                  <div>
-                    <h2>Security Settings</h2>
-                    <p>Manage authentication and access control</p>
-                  </div>
-                </header>
-
-                <div className="admin-settings__rows">
-                  <article className="admin-settings__row">
-                    <span className="admin-settings__row-icon">
-                      <Shield size={22} />
-                    </span>
-                    <div>
-                      <h3>Two-Factor Authentication</h3>
-                      <p>Add an extra layer of security to your account</p>
-                    </div>
-                    <button type="button" className="admin-settings__toggle" aria-label="Toggle two-factor authentication">
-                      <span />
-                    </button>
-                  </article>
-
-                  <article className="admin-settings__row">
-                    <span className="admin-settings__row-icon">
-                      <Clock size={22} />
-                    </span>
-                    <div>
-                      <h3>Session Timeout</h3>
-                      <p>Auto-logout after inactivity</p>
-                    </div>
-                    <button type="button" className="admin-settings__select">
-                      English
-                      <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
-                    </button>
-                  </article>
-
-                  <article className="admin-settings__row">
-                    <span className="admin-settings__row-icon">
-                      <Shield size={22} />
-                    </span>
-                    <div>
-                      <h3>Login Notifications</h3>
-                      <p>Get notified of new login attempts</p>
-                    </div>
-                    <button type="button" className="admin-settings__toggle" aria-label="Toggle login notifications">
-                      <span />
-                    </button>
-                  </article>
-
-                  <article className="admin-settings__row admin-settings__row--last">
-                    <span className="admin-settings__row-icon">
-                      <Lock size={22} />
-                    </span>
-                    <div>
-                      <h3>Password Policy</h3>
-                      <p>Set minimum password requirements</p>
-                    </div>
-                    <button type="button" className="admin-settings__link">
-                      Configure
-                    </button>
-                  </article>
-                </div>
-
-                <section className="admin-settings__recommendations">
-                  <Shield size={22} />
-                  <div>
-                    <h3>Security Recommendations</h3>
-                    <p>• Enable two-factor authentication for enhanced security</p>
-                    <p>• Review and update your password regularly</p>
-                    <p>• Monitor login activity and active sessions</p>
-                  </div>
-                </section>
-
-                <footer className="admin-settings__footer">
-                  <button type="button">
-                    <Save size={18} />
-                    Save Security Settings
-                  </button>
-                </footer>
-              </div>
+              <Security />
+            ) : settingsTab === 'general' ? (
+              <GeneralSettings />
             ) : (
-              <div className="admin-settings__card admin-settings__card--empty">
-                <header className="admin-settings__heading">
-                  <span>{settingsTab === 'general' ? <Settings size={24} /> : <Mail size={24} />}</span>
-                  <div>
-                    <h2>{settingsTab === 'general' ? 'General Settings' : 'Notification Preferences'}</h2>
-                    <p>
-                      {settingsTab === 'general'
-                        ? 'Platform-wide configuration and preferences'
-                        : 'Configure how and when you receive notifications'}
-                    </p>
-                  </div>
-                </header>
-              </div>
+              <Notifications />
             )}
           </section>
         ) : activeNav === 'issues' ? (
