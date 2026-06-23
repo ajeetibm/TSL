@@ -9,20 +9,27 @@ interface SignInModalProps {
   isOpen: boolean
   onClose: () => void
   initialMode?: 'signin' | 'signup'
+  redirectTo?: string
   onAuthenticated?: () => void
 }
 
-export function SignInModal({ isOpen, onClose, initialMode = 'signup', onAuthenticated }: SignInModalProps) {
+export function SignInModal({ isOpen, onClose, initialMode = 'signup', redirectTo, onAuthenticated }: SignInModalProps) {
   if (!isOpen) return null
 
   return createPortal(
-    <SignInModalContent initialMode={initialMode} onClose={onClose} onAuthenticated={onAuthenticated} />,
+    <SignInModalContent
+      initialMode={initialMode}
+      redirectTo={redirectTo}
+      onClose={onClose}
+      onAuthenticated={onAuthenticated}
+    />,
     document.body,
   )
 }
 
 function SignInModalContent({
   initialMode = 'signup',
+  redirectTo,
   onClose,
   onAuthenticated,
 }: Omit<SignInModalProps, 'isOpen'>) {
@@ -39,23 +46,66 @@ function SignInModalContent({
     confirmPassword: '',
   })
 
+  const validateForm = () => {
+    const email = formData.email.trim()
+    const password = formData.password.trim()
+
+    if (mode === 'signup' && !formData.fullName.trim()) {
+      return 'Please enter your full name.'
+    }
+
+    if (!email) {
+      return 'Please enter your email address.'
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return 'Please enter a valid email address.'
+    }
+
+    if (!password) {
+      return 'Please enter your password.'
+    }
+
+    if (mode === 'signup' && password.length < 6) {
+      return 'Password must be at least 6 characters.'
+    }
+
+    if (mode === 'signup' && !formData.confirmPassword.trim()) {
+      return 'Please confirm your password.'
+    }
+
+    if (mode === 'signup' && password !== formData.confirmPassword.trim()) {
+      return 'Passwords do not match.'
+    }
+
+    return ''
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setFormError('')
+
+    const validationError = validateForm()
+
+    if (validationError) {
+      setFormError(validationError)
+      return
+    }
+
     setIsSubmitting(true)
 
     try {
       const response = mode === 'signin'
         ? await authApi.login({
-            email: formData.email,
-            password: formData.password,
+            email: formData.email.trim(),
+            password: formData.password.trim(),
             portal: 'sme',
           })
         : await authApi.register({
-            fullName: formData.fullName,
-            email: formData.email,
-            password: formData.password,
-            confirmPassword: formData.confirmPassword,
+            fullName: formData.fullName.trim(),
+            email: formData.email.trim(),
+            password: formData.password.trim(),
+            confirmPassword: formData.confirmPassword.trim(),
             acceptedTerms: true,
           })
 
@@ -67,14 +117,17 @@ function SignInModalContent({
       const authenticatedUser = response.data
         ? {
             ...response.data,
-            role: formData.email.toLowerCase().includes('admin') ? 'admin' : response.data.role,
+            role: formData.email.trim().toLowerCase().includes('admin') ? 'admin' : response.data.role,
           }
         : response.data
 
       saveAuthSession(authenticatedUser)
       onAuthenticated?.()
       onClose()
-      navigate(authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard')
+      navigate(
+        redirectTo ??
+          (authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'),
+      )
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {
@@ -100,7 +153,7 @@ function SignInModalContent({
       saveAuthSession(response.data)
       onAuthenticated?.()
       onClose()
-      navigate('/dashboard')
+      navigate(redirectTo ?? '/dashboard')
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {

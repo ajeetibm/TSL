@@ -7,6 +7,7 @@ import {
   Plus,
   Star,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { wizards } from '../../data/wizards'
 import { loadWizardQuantities, saveWizardQuantities } from '../../utils/wizardCart'
 import './WizardDetailOverview.css'
@@ -51,6 +52,7 @@ const testimonials = [
 ]
 
 export function WizardDetailOverview() {
+  const navigate = useNavigate()
   const [quantities, setQuantities] = useState(() => loadWizardQuantities())
 
   const selectedWizards = useMemo(
@@ -89,6 +91,15 @@ export function WizardDetailOverview() {
     })
   }
 
+  const proceedToPayment = () => {
+    navigate('/dashboard/wizard-details', {
+      state: {
+        showPayment: true,
+        selectedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })),
+      },
+    })
+  }
+
   return (
     <div className="wizard-detail">
       <div className="wizard-detail__topbar">
@@ -103,7 +114,7 @@ export function WizardDetailOverview() {
           <h1>Wizard Details & Overview</h1>
           <p>Everything you need to know before starting this legal workflow</p>
         </div>
-        <button className="wizard-detail__payment">
+        <button className="wizard-detail__payment" onClick={proceedToPayment}>
           Proceed To Payment
           <ChevronRight size={16} />
         </button>

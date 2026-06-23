@@ -24,7 +24,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
       return
     }
 
-    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup' } }))
+    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/wizard-details' } }))
   }
 
   return (

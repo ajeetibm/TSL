@@ -115,7 +115,7 @@ describe('WizardCartBar', () => {
 
       expect(openAuthModal).toHaveBeenCalledTimes(1)
       expect(openAuthModal.mock.calls[0][0]).toMatchObject({
-        detail: { mode: 'signup' },
+        detail: { mode: 'signup', redirectTo: '/wizard-details' },
       })
       expect(mockNavigate).not.toHaveBeenCalled()
 

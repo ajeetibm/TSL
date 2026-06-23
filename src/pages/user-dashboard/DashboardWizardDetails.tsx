@@ -1,6 +1,8 @@
 import {
   ArrowLeft,
+  ArrowRight,
   Building2,
+  Calendar,
   Check,
   CheckCircle2,
   ChevronRight,
@@ -9,6 +11,7 @@ import {
   FileText,
   HandCoins,
   Minus,
+  Play,
   Plus,
   Scale,
   Shield,
@@ -19,6 +22,7 @@ import {
   WalletCards,
   WandSparkles,
   X,
+  Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
@@ -35,6 +39,7 @@ type SelectedWizard = {
 
 type WizardLocationState = {
   selectedWizards?: SelectedWizard[]
+  showPayment?: boolean
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
@@ -191,7 +196,8 @@ const wizardSteps = [
 export default function DashboardWizardDetails() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [isPaymentView, setIsPaymentView] = useState(false)
+  const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
+  const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
@@ -248,6 +254,187 @@ export default function DashboardWizardDetails() {
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
+  const handlePaymentMethodSelect = () => {
+    setShowDashboardView(true)
+  }
+
+  if (showDashboardView) {
+    return (
+      <DashboardShell activeSection="Wizards">
+        <main className="dashboard-wizard-details dashboard-wizard-details--success">
+          <header className="user-dashboard__hero">
+            <div>
+              <h2>Dashboard</h2>
+              <p>
+                Track your legal workflows and completed documents across all your business operations.
+              </p>
+              <button type="button" className="user-dashboard__gold-button" onClick={() => navigate('/dashboard/wizards')}>
+                Browse Wizards
+                <ArrowRight size={18} />
+              </button>
+            </div>
+
+            <div className="user-dashboard__plan-card">
+              <h3>
+                Your <span>Boardroom Plan</span> Includes:
+              </h3>
+              <ul>
+                <li>
+                  <CheckCircle2 size={18} />
+                  30 wizard runs per month
+                </li>
+                <li>
+                  <CheckCircle2 size={18} />
+                  Access to all legal wizards
+                </li>
+                <li>
+                  <CheckCircle2 size={18} />
+                  Priority support
+                </li>
+                <li>
+                  <CheckCircle2 size={18} />
+                  Legal counsel credits
+                </li>
+              </ul>
+            </div>
+          </header>
+
+          <div className="dashboard-wizard-details__stats-grid">
+            <article className="dashboard-wizard-details__stat-card">
+              <span className="dashboard-wizard-details__stat-icon dashboard-wizard-details__stat-icon--gold">
+                <Zap size={24} />
+              </span>
+              <div>
+                <strong>9 <span>of 30</span></strong>
+                <h3>Wizards Remaining</h3>
+                <p>This billing period</p>
+              </div>
+            </article>
+
+            <article className="dashboard-wizard-details__stat-card">
+              <span className="dashboard-wizard-details__stat-icon dashboard-wizard-details__stat-icon--dark">
+                <CheckCircle2 size={24} />
+              </span>
+              <div>
+                <strong>3</strong>
+                <h3>Wizards Used</h3>
+                <p>Since Dec 1, 2025</p>
+              </div>
+            </article>
+
+            <article className="dashboard-wizard-details__stat-card dashboard-wizard-details__stat-card--billing">
+              <span className="dashboard-wizard-details__stat-icon dashboard-wizard-details__stat-icon--calendar">
+                <Calendar size={24} />
+              </span>
+              <div>
+                <strong>Jan 1</strong>
+                <p className="dashboard-wizard-details__stat-year">2026</p>
+                <h3>Next Billing</h3>
+                <p className="dashboard-wizard-details__stat-price">Boardroom Plan - R2,499</p>
+              </div>
+            </article>
+          </div>
+
+          <section className="dashboard-wizard-details__workflows">
+            <div className="dashboard-wizard-details__workflow-tabs">
+              <button type="button" className="dashboard-wizard-details__workflow-tab dashboard-wizard-details__workflow-tab--active">
+                New
+              </button>
+              <button type="button" className="dashboard-wizard-details__workflow-tab">
+                In Progress
+              </button>
+              <button type="button" className="dashboard-wizard-details__workflow-tab">
+                Completed
+              </button>
+            </div>
+
+            <div className="dashboard-wizard-details__workflow-list">
+              <article className="dashboard-wizard-details__workflow-item">
+                <span className="dashboard-wizard-details__workflow-icon">i</span>
+                <div className="dashboard-wizard-details__workflow-content">
+                  <h3>Non-Disclosure Agreement (NDA)</h3>
+                  <p><strong>Note:</strong> Need NDAs for investor meetings and contractor agreements</p>
+                </div>
+                <div className="dashboard-wizard-details__workflow-meta">
+                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
+                  <strong>3 Items</strong>
+                </div>
+                <button type="button" className="dashboard-wizard-details__workflow-start">
+                  <Play size={18} />
+                  Start
+                </button>
+              </article>
+
+              <article className="dashboard-wizard-details__workflow-item">
+                <span className="dashboard-wizard-details__workflow-icon">i</span>
+                <div className="dashboard-wizard-details__workflow-content">
+                  <h3>Employment Offer letter</h3>
+                  <p><strong>Note:</strong> Hiring our first developer next month</p>
+                </div>
+                <div className="dashboard-wizard-details__workflow-meta">
+                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
+                  <strong>3 Item</strong>
+                </div>
+                <button type="button" className="dashboard-wizard-details__workflow-start">
+                  <Play size={18} />
+                  Start
+                </button>
+              </article>
+
+              <article className="dashboard-wizard-details__workflow-item">
+                <span className="dashboard-wizard-details__workflow-icon">i</span>
+                <div className="dashboard-wizard-details__workflow-content">
+                  <h3>Privacy Policy</h3>
+                  <p><strong>Note:</strong> Required for our web app launch</p>
+                </div>
+                <div className="dashboard-wizard-details__workflow-meta">
+                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
+                  <strong>2 Item</strong>
+                </div>
+                <button type="button" className="dashboard-wizard-details__workflow-start">
+                  <Play size={18} />
+                  Start
+                </button>
+              </article>
+
+              <article className="dashboard-wizard-details__workflow-item">
+                <span className="dashboard-wizard-details__workflow-icon">i</span>
+                <div className="dashboard-wizard-details__workflow-content">
+                  <h3>Founder Agreement</h3>
+                  <p><strong>Note:</strong> Setting up co-founder equity split</p>
+                </div>
+                <div className="dashboard-wizard-details__workflow-meta">
+                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
+                  <strong>2 Item</strong>
+                </div>
+                <button type="button" className="dashboard-wizard-details__workflow-start">
+                  <Play size={18} />
+                  Start
+                </button>
+              </article>
+
+              <article className="dashboard-wizard-details__workflow-item">
+                <span className="dashboard-wizard-details__workflow-icon">i</span>
+                <div className="dashboard-wizard-details__workflow-content">
+                  <h3>Service Agreement</h3>
+                  <p><strong>Note:</strong> Multiple client contracts needed</p>
+                </div>
+                <div className="dashboard-wizard-details__workflow-meta">
+                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
+                  <strong>3 Item</strong>
+                </div>
+                <button type="button" className="dashboard-wizard-details__workflow-start">
+                  <Play size={18} />
+                  Start
+                </button>
+              </article>
+            </div>
+          </section>
+        </main>
+      </DashboardShell>
+    )
+  }
+
   if (isPaymentView) {
     return (
       <DashboardShell activeSection="Wizards">
@@ -267,7 +454,19 @@ export default function DashboardWizardDetails() {
               <h1>Top 5 Payment Methods in South Africa</h1>
               <div className="dashboard-wizard-details__payment-method-grid">
                 {paymentMethods.map(({ title, icon: Icon, className }) => (
-                  <article className="dashboard-wizard-details__payment-method" key={title}>
+                  <article
+                    className="dashboard-wizard-details__payment-method"
+                    key={title}
+                    role="button"
+                    tabIndex={0}
+                    onClick={handlePaymentMethodSelect}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        handlePaymentMethodSelect()
+                      }
+                    }}
+                  >
                     <span className={`dashboard-wizard-details__payment-method-icon ${className}`}>
                       {Icon ? <Icon size={54} strokeWidth={2.8} /> : null}
                       {title === 'PayPal' && <b>PP</b>}

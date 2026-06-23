@@ -2,11 +2,19 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 100;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(30, 41, 59, 0.95);
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(24px);
+  transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
+}
+
+.navbar--light {
   border-bottom: 1px solid rgba(226, 232, 240, 0.8);
   background: rgba(255, 255, 255, 0.95);
-  color: #07192b;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
-  backdrop-filter: blur(24px);
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .navbar__inner {
@@ -24,17 +32,27 @@
 }
 
 .navbar__brand-mark {
-  color: #07192b;
+  color: #d4a437;
   font-size: 1.5rem;
   font-weight: 900;
   letter-spacing: 0.025em;
+  transition: color 300ms ease;
+}
+
+.navbar--light .navbar__brand-mark {
+  color: #0f172a;
 }
 
 .navbar__brand-name {
   display: none;
-  color: #07192b;
+  color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
+  transition: color 300ms ease;
+}
+
+.navbar--light .navbar__brand-name {
+  color: #0f172a;
 }
 
 .navbar__links,
@@ -45,14 +63,30 @@
 .navbar__link {
   position: relative;
   padding-block: 1.75rem;
-  color: #475569;
+  color: #94a3b8;
   font-size: 0.875rem;
   font-weight: 500;
   transition: color 160ms ease;
 }
 
-.navbar__link:hover,
+.navbar__link:hover {
+  color: #cbd5e1;
+}
+
+.navbar--light .navbar__link {
+  color: #64748b;
+}
+
+.navbar--light .navbar__link:hover {
+  color: #334155;
+}
+
 .navbar__link--active {
+  color: #d4a437;
+  font-weight: 600;
+}
+
+.navbar--light .navbar__link--active {
   color: #d4a437;
 }
 
@@ -68,13 +102,21 @@
 }
 
 .navbar__signin {
-  color: #07192b;
+  color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
   transition: color 160ms ease;
 }
 
 .navbar__signin:hover {
+  color: #d4a437;
+}
+
+.navbar--light .navbar__signin {
+  color: #0f172a;
+}
+
+.navbar--light .navbar__signin:hover {
   color: #d4a437;
 }
 
@@ -106,6 +148,12 @@
   transition: background-color 160ms ease;
 }
 
+.navbar__account-wrap {
+  position: relative;
+  display: none;
+  align-self: stretch;
+}
+
 .navbar__account:hover {
   background: #eceeed;
 }
@@ -127,15 +175,74 @@
   line-height: 1.25rem;
 }
 
+.navbar__account-chevron {
+  transition: transform 180ms ease;
+}
+
+.navbar__account-chevron--open {
+  transform: rotate(180deg);
+}
+
+.navbar__account-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 13rem;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 0 0 1rem 1rem;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-0.75rem) scaleY(0.94);
+  transform-origin: top;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.navbar__account-menu--open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scaleY(1);
+}
+
+.navbar__account-menu button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  color: #102030;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: left;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.navbar__account-menu button:hover {
+  background: rgba(212, 164, 55, 0.12);
+  color: #c79a3b;
+}
+
+.navbar__account-menu svg {
+  color: #c79a3b;
+}
+
 .navbar__toggle {
   display: inline-flex;
   width: 2.75rem;
   height: 2.75rem;
   align-items: center;
   justify-content: center;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 9999px;
-  color: #07192b;
+  color: #ffffff;
+  transition: border-color 300ms ease, color 300ms ease;
+}
+
+.navbar--light .navbar__toggle {
+  border: 1px solid rgba(15, 23, 42, 0.2);
+  color: #0f172a;
 }
 
 .navbar__mobile {
@@ -176,11 +283,31 @@
   text-align: left;
 }
 
+.navbar__mobile-account-panel {
+  display: grid;
+  gap: 0.5rem;
+}
+
 .navbar__mobile-account-name {
   flex: 1;
   color: #0d1b2a;
   font-size: 0.875rem;
   font-weight: 700;
+}
+
+.navbar__mobile-account-action {
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem 0.75rem 4.25rem;
+  color: #334155;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.navbar__mobile-account-action:hover {
+  background: rgba(212, 164, 55, 0.12);
+  color: #c79a3b;
 }
 
 .navbar__mobile-cta {
@@ -220,6 +347,10 @@
     display: flex;
     align-items: center;
     gap: 1.5rem;
+  }
+
+  .navbar__account-wrap {
+    display: flex;
   }
 
   .navbar__account {
