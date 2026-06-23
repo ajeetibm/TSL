@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { beforeEach, describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
@@ -35,6 +35,11 @@ const renderCartBar = (props = {}) => {
 }
 
 describe('WizardCartBar', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    mockNavigate.mockClear()
+  })
+
   describe('Rendering', () => {
     it('should render when totalItems > 0', () => {
       const { container } = renderCartBar()
@@ -98,8 +103,29 @@ describe('WizardCartBar', () => {
       expect(onClear).toHaveBeenCalledTimes(1)
     })
 
-    it('should navigate to wizard-details when View Details is clicked', async () => {
+    it('should open sign up modal when guest clicks View Details', async () => {
       const user = userEvent.setup()
+      const openAuthModal = vi.fn()
+      window.addEventListener('tsl-open-auth-modal', openAuthModal)
+
+      renderCartBar()
+
+      const viewDetailsButton = screen.getByRole('button', { name: /View Details/i })
+      await user.click(viewDetailsButton)
+
+      expect(openAuthModal).toHaveBeenCalledTimes(1)
+      expect(openAuthModal.mock.calls[0][0]).toMatchObject({
+        detail: { mode: 'signup' },
+      })
+      expect(mockNavigate).not.toHaveBeenCalled()
+
+      window.removeEventListener('tsl-open-auth-modal', openAuthModal)
+    })
+
+    it('should navigate to wizard-details when authenticated user clicks View Details', async () => {
+      const user = userEvent.setup()
+      localStorage.setItem('tsl-authenticated', 'true')
+
       renderCartBar()
 
       const viewDetailsButton = screen.getByRole('button', { name: /View Details/i })
@@ -111,7 +137,7 @@ describe('WizardCartBar', () => {
 
   describe('Icons', () => {
     it('should render ShoppingCart icon in View Details button', () => {
-      const { container } = renderCartBar()
+      renderCartBar()
 
       const viewDetailsButton = screen.getByRole('button', { name: /View Details/i })
       const svg = viewDetailsButton.querySelector('svg.lucide-shopping-cart')
@@ -119,7 +145,7 @@ describe('WizardCartBar', () => {
     })
 
     it('should render ChevronRight icon in View Details button', () => {
-      const { container } = renderCartBar()
+      renderCartBar()
 
       const viewDetailsButton = screen.getByRole('button', { name: /View Details/i })
       const svg = viewDetailsButton.querySelector('svg.lucide-chevron-right')

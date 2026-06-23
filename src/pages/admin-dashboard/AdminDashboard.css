@@ -2507,3 +2507,336 @@
     flex-direction: column;
   }
 }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 608px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 32px 24px;
+  background: #1a2332;
+  color: #ffffff;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 32px;
+}
+
+.modal-header p {
+  margin: 8px 0 0;
+  color: #d4a84f;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.modal-close {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 32px;
+  overflow-y: auto;
+}
+
+.modal-form__group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-form__group--full {
+  grid-column: 1 / -1;
+}
+
+.modal-form__row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.modal-form label {
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+  min-height: 48px;
+  padding: 12px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 24px;
+  transition: border-color 0.2s;
+}
+
+.modal-form input:focus,
+.modal-form select:focus,
+.modal-form textarea:focus {
+  outline: none;
+  border-color: #d4a84f;
+}
+
+.modal-form input::placeholder,
+.modal-form textarea::placeholder {
+  color: #9ca3af;
+}
+
+.modal-form textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.modal-form select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%230d1b2a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+  cursor: pointer;
+}
+
+.modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.modal-btn {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 24px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn--secondary {
+  background: #f3f4f6;
+  color: #0d1b2a;
+}
+
+.modal-btn--secondary:hover {
+  background: #e5e7eb;
+}
+
+.modal-btn--primary {
+  background: linear-gradient(135deg, #d3a038, #e0b64f);
+  color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-btn--primary:hover {
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .modal-form__row {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Modal disabled/readonly input styles */
+.modal-form input:disabled,
+.modal-form select:disabled,
+.modal-form textarea:disabled {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.modal-actions--single {
+  grid-template-columns: 1fr;
+}
+
+.modal-btn--full {
+  width: 100%;
+}
+
+/* Issue Details Modal Styles */
+.issue-details {
+  padding: 32px;
+}
+
+.issue-details h3 {
+  margin: 0 0 12px 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  color: #0d1b2a;
+}
+
+.issue-details__badge {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 20px;
+  margin-bottom: 24px;
+}
+
+.issue-severity-critical {
+  background: #ffe2e2;
+  color: #dc2626;
+}
+
+.issue-severity-high {
+  background: #ffedd4;
+  color: #ea580c;
+}
+
+.issue-severity-medium {
+  background: #fef9c2;
+  color: #ca8a04;
+}
+
+.issue-severity-low {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.issue-details__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.issue-details__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+}
+
+.issue-details__item svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #d4a84f;
+}
+
+.issue-details__item > div {
+  min-width: 0;
+}
+
+.issue-details__label {
+  display: block;
+  margin-bottom: 4px;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 16px;
+}
+
+.issue-details__item p {
+  margin: 0;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.issue-details__description {
+  margin-bottom: 24px;
+}
+
+.issue-details__description h4 {
+  margin: 0 0 12px;
+  color: #0d1b2a;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 20px;
+}
+
+.issue-details__description p {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+@media (max-width: 640px) {
+  .issue-details__grid {
+    grid-template-columns: 1fr;
+  }
+}

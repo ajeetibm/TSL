@@ -18,6 +18,15 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
 
   if (totalItems === 0) return null
 
+  const handleViewDetails = () => {
+    if (localStorage.getItem('tsl-authenticated') === 'true') {
+      navigate('/wizard-details')
+      return
+    }
+
+    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup' } }))
+  }
+
   return (
     <div className="wizard-cart-bar">
       <div className="wizard-cart-bar__content">
@@ -37,7 +46,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
           <button className="wizard-cart-bar__clear" onClick={onClear}>
             Clear Cart
           </button>
-          <button className="wizard-cart-bar__details" onClick={() => navigate('/wizard-details')}>
+          <button className="wizard-cart-bar__details" onClick={handleViewDetails}>
             <ShoppingCart size={16} />
             View Details
             <ChevronRight size={16} />

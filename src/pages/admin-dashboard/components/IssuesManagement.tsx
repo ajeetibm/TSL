@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Search, AlertCircle, AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react'
+import IssueDetailsModal from './IssueDetailsModal'
 
 const adminIssues = [
   {
@@ -77,8 +79,23 @@ const issueCategories = [
 ]
 
 export default function IssuesManagement() {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedIssue, setSelectedIssue] = useState<typeof adminIssues[0] | null>(null)
+
+  const handleViewDetails = (issue: typeof adminIssues[0]) => {
+    console.log('Opening modal for issue:', issue)
+    setSelectedIssue(issue)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedIssue(null)
+  }
+
   return (
-    <section className="admin-issues">
+    <>
+      <section className="admin-issues">
       <div className="admin-issues__stats" aria-label="Issues summary">
         <article className="admin-issues__stat">
           <span>
@@ -172,7 +189,9 @@ export default function IssuesManagement() {
                       <span>•</span>
                       By: {issue.by}
                     </p>
-                    <button type="button">View Details</button>
+                    <button type="button" onClick={() => handleViewDetails(issue)}>
+                      View Details
+                    </button>
                   </div>
                 </article>
               )
@@ -194,7 +213,10 @@ export default function IssuesManagement() {
           </div>
         </aside>
       </div>
-    </section>
+      </section>
+
+      <IssueDetailsModal isOpen={isModalOpen} issue={selectedIssue} onClose={handleCloseModal} />
+    </>
   )
 }
 

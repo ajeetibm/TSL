@@ -3,7 +3,6 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowRight,
-  Award,
   BriefcaseBusiness,
   Check,
   ChevronDown,
@@ -15,11 +14,6 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
-  Mail,
-  MapPin,
-  Phone,
-  Plus,
-  Scale,
   Search,
   Settings,
   Shield,
@@ -31,7 +25,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
-import { BillingInvoices, GeneralSettings, Notifications, Security } from './components'
+import {
+  BillingInvoices,
+  CounselManagement,
+  GeneralSettings,
+  IssuesManagement,
+  Notifications,
+  Security,
+} from './components'
 import './AdminDashboard.css'
 
 type AdminDashboardData = {
@@ -173,75 +174,6 @@ const adminManagementRows = [
     lastActive: 'Not yet active',
     invitedDate: 'Jan 5, 2025',
     secondaryAction: 'Cancel',
-  },
-]
-
-const adminCounselMembers = [
-  {
-    initials: 'DTM',
-    name: 'Dr. Thabo Mbeki',
-    expertise: 'Corporate Law & M&A',
-    status: 'Available',
-    experience: '15 years experience',
-    location: 'Johannesburg, Gauteng',
-    email: 'thabo.mbeki@counsel.co.za',
-    phone: '+27 11 123 4567',
-    completed: 287,
-  },
-  {
-    initials: 'AZK',
-    name: 'Adv. Zanele Khumalo',
-    expertise: 'Employment & Labour Law',
-    status: 'Available',
-    experience: '12 years experience',
-    location: 'Cape Town, Western Cape',
-    email: 'zanele.khumalo@counsel.co.za',
-    phone: '+27 21 987 6543',
-    completed: 234,
-  },
-  {
-    initials: 'RM',
-    name: 'Robert van der Merwe',
-    expertise: 'Intellectual Property & Technology',
-    status: 'Not Available',
-    experience: '18 years experience',
-    location: 'Pretoria, Gauteng',
-    email: 'robert.vdm@counsel.co.za',
-    phone: '+27 12 345 6789',
-    completed: 342,
-  },
-  {
-    initials: 'JN',
-    name: 'Jennifer Naidoo',
-    expertise: 'Commercial & Contract Law',
-    status: 'Available',
-    experience: '10 years experience',
-    location: 'Durban, KwaZulu-Natal',
-    email: 'jennifer.naidoo@counsel.co.za',
-    phone: '+27 31 234 5678',
-    completed: 198,
-  },
-  {
-    initials: 'MB',
-    name: 'Michael Botha',
-    expertise: 'Regulatory & Compliance',
-    status: 'Available',
-    experience: '14 years experience',
-    location: 'Johannesburg, Gauteng',
-    email: 'michael.botha@counsel.co.za',
-    phone: '+27 11 876 5432',
-    completed: 256,
-  },
-  {
-    initials: 'DLD',
-    name: 'Dr. Lindiwe Dlamini',
-    expertise: 'Company Law & Governance',
-    status: 'Not Available',
-    experience: '16 years experience',
-    location: 'Sandton, Gauteng',
-    email: 'lindiwe.dlamini@counsel.co.za',
-    phone: '+27 11 234 9876',
-    completed: 301,
   },
 ]
 
@@ -784,238 +716,9 @@ export default function AdminDashboard() {
             )}
           </section>
         ) : activeNav === 'issues' ? (
-          <section className="admin-issues">
-            <div className="admin-issues__stats" aria-label="Issues summary">
-              <article className="admin-issues__stat">
-                <span>
-                  <CircleAlert size={28} />
-                </span>
-                <div>
-                  <strong>3</strong>
-                  <p>Critical</p>
-                  <small className="admin-issues__copy--critical">Immediate attention required</small>
-                </div>
-              </article>
-              <article className="admin-issues__stat">
-                <span>
-                  <AlertTriangle size={28} />
-                </span>
-                <div>
-                  <strong>12</strong>
-                  <p>High Priority</p>
-                  <small className="admin-issues__copy--high">Requires attention</small>
-                </div>
-              </article>
-              <article className="admin-issues__stat admin-issues__stat--warning">
-                <span>
-                  <AlertTriangle size={28} />
-                </span>
-                <div>
-                  <strong>11</strong>
-                  <p>Medium Priority</p>
-                  <small className="admin-issues__copy--medium">Monitor closely</small>
-                </div>
-              </article>
-              <article className="admin-issues__stat admin-issues__stat--warning">
-                <span>
-                  <CircleCheckBig size={28} />
-                </span>
-                <div>
-                  <strong>8</strong>
-                  <p>Resolved Today</p>
-                  <small className="admin-issues__copy--success">Successfully resolved</small>
-                </div>
-              </article>
-            </div>
-
-            <div className="admin-issues__layout">
-              <section className="admin-issues__list-panel">
-                <div className="admin-issues__filters">
-                  <label className="admin-issues__search">
-                    <Search size={16} />
-                    <input type="search" placeholder="Search issues..." />
-                  </label>
-                  <button type="button" className="admin-issues__filter-button">
-                    All Severity
-                    <ChevronDown size={16} />
-                  </button>
-                </div>
-
-                <div className="admin-issues__list">
-                  {adminIssues.map((issue) => {
-                    const critical = issue.severity === 'Critical'
-                    const medium = issue.severity === 'Medium'
-                    const low = issue.severity === 'Low'
-                    return (
-                      <article className="admin-issues__item" key={issue.id}>
-                        <span className="admin-issues__item-icon">
-                          {critical || low ? <CircleAlert size={24} /> : <AlertTriangle size={24} />}
-                        </span>
-                        <div className="admin-issues__item-content">
-                          <div className="admin-issues__item-heading">
-                            <div>
-                              <h2>{issue.title}</h2>
-                              <p>
-                                {issue.id} • {issue.category}
-                              </p>
-                            </div>
-                            <b
-                              className={
-                                critical
-                                  ? 'admin-issues__severity admin-issues__severity--critical'
-                                  : medium
-                                    ? 'admin-issues__severity admin-issues__severity--medium'
-                                    : low
-                                      ? 'admin-issues__severity admin-issues__severity--low'
-                                      : 'admin-issues__severity admin-issues__severity--high'
-                              }
-                            >
-                              {issue.severity}
-                            </b>
-                          </div>
-                          <p className="admin-issues__meta">
-                            Reported: {issue.reported}
-                            <span>•</span>
-                            By: {issue.by}
-                          </p>
-                          <button type="button">View Details</button>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-
-              <aside className="admin-issues__categories">
-                <h2>Issue Categories</h2>
-                <div>
-                  {issueCategories.map((category) => (
-                    <article className="admin-issues__category" key={category.label}>
-                      <strong>{category.label}</strong>
-                      <span className={`admin-issues__category-count admin-issues__category-count--${category.tone}`}>
-                        {category.count}
-                      </span>
-                    </article>
-                  ))}
-                </div>
-              </aside>
-            </div>
-          </section>
+          <IssuesManagement />
         ) : activeNav === 'counsel' ? (
-          <section className="admin-counsel">
-            <div className="admin-counsel__stats" aria-label="Counsel summary">
-              <article className="admin-counsel__stat">
-                <span>
-                  <Scale size={28} />
-                </span>
-                <div>
-                  <strong>6</strong>
-                  <p>Total Counsel</p>
-                  <small>
-                    <b>4 Available</b>
-                    <i>·</i>
-                    <em>2 Not Available</em>
-                  </small>
-                </div>
-              </article>
-              <article className="admin-counsel__stat">
-                <span>
-                  <Clock size={28} />
-                </span>
-                <div>
-                  <strong>61</strong>
-                  <p>Active Cases</p>
-                  <small>
-                    <Activity size={16} />
-                    <b>18% increase</b>
-                  </small>
-                </div>
-              </article>
-              <article className="admin-counsel__stat">
-                <span>
-                  <CircleCheckBig size={28} />
-                </span>
-                <div>
-                  <strong>1,618</strong>
-                  <p>Completed Cases</p>
-                  <small>
-                    <CircleCheckBig size={16} />
-                    <b>This month: 68</b>
-                  </small>
-                </div>
-              </article>
-            </div>
-
-            <div className="admin-counsel__filters">
-              <label className="admin-counsel__search">
-                <Search size={16} />
-                <input type="search" placeholder="Search counsel..." />
-              </label>
-              <button type="button" className="admin-counsel__filter-button">
-                All Expertise
-                <ChevronDown size={16} />
-              </button>
-              <button type="button" className="admin-counsel__filter-button">
-                All Status
-                <ChevronDown size={16} />
-              </button>
-              <button type="button" className="admin-counsel__add">
-                <Plus size={20} />
-                Add Counsel
-              </button>
-            </div>
-
-            <div className="admin-counsel__grid">
-              {adminCounselMembers.map((member) => (
-                <article className="admin-counsel__card" key={member.email}>
-                  <div className="admin-counsel__card-header">
-                    <div className="admin-counsel__card-top">
-                      <span>{member.initials}</span>
-                      <b
-                        className={
-                          member.status === 'Available'
-                            ? 'admin-counsel__status admin-counsel__status--available'
-                            : 'admin-counsel__status admin-counsel__status--unavailable'
-                        }
-                      >
-                        {member.status}
-                      </b>
-                    </div>
-                    <h2>{member.name}</h2>
-                    <p>{member.expertise}</p>
-                  </div>
-
-                  <div className="admin-counsel__card-body">
-                    <ul>
-                      <li>
-                        <Award size={16} />
-                        {member.experience}
-                      </li>
-                      <li>
-                        <MapPin size={16} />
-                        {member.location}
-                      </li>
-                      <li>
-                        <Mail size={16} />
-                        {member.email}
-                      </li>
-                      <li>
-                        <Phone size={16} />
-                        {member.phone}
-                      </li>
-                    </ul>
-
-                    <div className="admin-counsel__completed">
-                      <strong>{member.completed}</strong>
-                      <span>Completed</span>
-                    </div>
-
-                    <button type="button">View Profile</button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
+          <CounselManagement />
         ) : (
           <>
         <section className="admin-dashboard__kpis" aria-label="Admin KPI summary">

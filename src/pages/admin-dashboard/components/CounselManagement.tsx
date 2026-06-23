@@ -1,13 +1,19 @@
-import { Mail, MapPin, Phone, Plus, Search } from 'lucide-react'
-
-const counselIconAssets = {
-  scale: 'http://localhost:3845/assets/d8431c19281ee249950d588f7e06b5a2596055c7.svg',
-  clock: 'http://localhost:3845/assets/2c59fa8f41eb4b11d72af7dbb2fad5262b68b76e.svg',
-  completed: 'http://localhost:3845/assets/b78d8a9c3fdf67664434591876ab04caeb1258f8.svg',
-  trend: 'http://localhost:3845/assets/51c9a700e9c33e09894dbacd7c24943eec4e6024.svg',
-  monthCheck: 'http://localhost:3845/assets/58bc07ec7cffebb234a208ca8614cf0d674151c1.svg',
-  dropdown: 'http://localhost:3845/assets/8e02c2a9e2a915b2810831f4c9899ba7dced19b8.svg',
-}
+import { useState } from 'react'
+import {
+  Activity,
+  Check,
+  CheckCircle,
+  ChevronDown,
+  Clock,
+  Mail,
+  MapPin,
+  Phone,
+  Plus,
+  Scale,
+  Search,
+} from 'lucide-react'
+import AddCounselModal from './AddCounselModal'
+import CounselProfileModal from './CounselProfileModal'
 
 const adminCounselMembers = [
   {
@@ -79,12 +85,31 @@ const adminCounselMembers = [
 ]
 
 export default function CounselManagement() {
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [selectedCounsel, setSelectedCounsel] = useState<typeof adminCounselMembers[0] | null>(null)
+
+  const handleViewProfile = (member: typeof adminCounselMembers[0]) => {
+    setSelectedCounsel(member)
+    setIsProfileModalOpen(true)
+  }
+
   return (
+    <>
+      <AddCounselModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <CounselProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => {
+          setIsProfileModalOpen(false)
+          setSelectedCounsel(null)
+        }}
+        counsel={selectedCounsel}
+      />
     <section className="admin-counsel">
       <div className="admin-counsel__stats" aria-label="Counsel summary">
         <article className="admin-counsel__stat">
           <span>
-            <img src={counselIconAssets.scale} alt="" aria-hidden="true" />
+            <Scale size={28} />
           </span>
           <div>
             <strong>6</strong>
@@ -98,26 +123,26 @@ export default function CounselManagement() {
         </article>
         <article className="admin-counsel__stat">
           <span>
-            <img src={counselIconAssets.clock} alt="" aria-hidden="true" />
+            <Clock size={28} />
           </span>
           <div>
             <strong>61</strong>
             <p>Active Cases</p>
             <small>
-              <img src={counselIconAssets.trend} alt="" aria-hidden="true" />
+              <Activity size={16} />
               <b>18% increase</b>
             </small>
           </div>
         </article>
         <article className="admin-counsel__stat">
           <span>
-            <img src={counselIconAssets.completed} alt="" aria-hidden="true" />
+            <CheckCircle size={28} />
           </span>
           <div>
             <strong>1,618</strong>
             <p>Completed Cases</p>
             <small>
-              <img src={counselIconAssets.monthCheck} alt="" aria-hidden="true" />
+              <Check size={16} />
               <b>This month: 68</b>
             </small>
           </div>
@@ -131,13 +156,13 @@ export default function CounselManagement() {
         </label>
         <button type="button" className="admin-counsel__filter-button">
           All Expertise
-          <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+          <ChevronDown size={16} />
         </button>
         <button type="button" className="admin-counsel__filter-button">
           All Status
-          <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+          <ChevronDown size={16} />
         </button>
-        <button type="button" className="admin-counsel__add">
+        <button type="button" className="admin-counsel__add" onClick={() => setIsAddModalOpen(true)}>
           <Plus size={20} />
           Add Counsel
         </button>
@@ -188,12 +213,15 @@ export default function CounselManagement() {
                 <span>Completed</span>
               </div>
 
-              <button type="button">View Profile</button>
+              <button type="button" onClick={() => handleViewProfile(member)}>
+                View Profile
+              </button>
             </div>
           </article>
         ))}
       </div>
     </section>
+    </>
   )
 }
 
