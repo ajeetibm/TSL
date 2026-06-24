@@ -1,13 +1,17 @@
 import {
   Activity,
   AlertTriangle,
+  Briefcase,
+  CalendarDays,
+  Camera,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Phone,
   ArrowLeft,
   ArrowRight,
   BriefcaseBusiness,
   Check,
-  ChevronDown,
-  CircleAlert,
-  CircleCheckBig,
   Clock,
   Download,
   DollarSign,
@@ -19,6 +23,7 @@ import {
   Shield,
   X,
   UserPlus,
+  UserRound,
   UsersRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -177,86 +182,29 @@ const adminManagementRows = [
   },
 ]
 
-const adminIssues = [
-  {
-    title: 'Payment Gateway Timeout Error',
-    id: '#ISS-1089',
-    category: 'Payment',
-    reported: '2024-01-09 08:45',
-    by: 'System',
-    severity: 'High',
-  },
-  {
-    title: 'Document Generation Failure',
-    id: '#ISS-1088',
-    category: 'Wizard',
-    reported: '2024-01-09 07:12',
-    by: 'Michael Chen',
-    severity: 'Critical',
-  },
-  {
-    title: 'User Authentication Loop',
-    id: '#ISS-1087',
-    category: 'Auth',
-    reported: '2024-01-09 06:33',
-    by: 'Sarah Johnson',
-    severity: 'High',
-  },
-  {
-    title: 'Email Notification Delay',
-    id: '#ISS-1086',
-    category: 'Notification',
-    reported: '2024-01-08 22:15',
-    by: 'System',
-    severity: 'Medium',
-  },
-  {
-    title: 'PDF Export Formatting Issue',
-    id: '#ISS-1085',
-    category: 'Export',
-    reported: '2024-01-08 18:42',
-    by: 'David Park',
-    severity: 'Low',
-  },
-  {
-    title: 'Dashboard Widget Loading Error',
-    id: '#ISS-1084',
-    category: 'Dashboard',
-    reported: '2024-01-08 15:27',
-    by: 'Emma Wilson',
-    severity: 'Medium',
-  },
-  {
-    title: 'Database Connection Intermittent',
-    id: '#ISS-1083',
-    category: 'Database',
-    reported: '2024-01-08 14:05',
-    by: 'System',
-    severity: 'Critical',
-  },
-  {
-    title: 'Search Functionality Not Working',
-    id: '#ISS-1082',
-    category: 'Search',
-    reported: '2024-01-08 11:38',
-    by: 'Lisa Anderson',
-    severity: 'High',
-  },
-]
 
-const issueCategories = [
-  { label: 'Payment', count: 5, tone: 'critical' },
-  { label: 'Wizard', count: 8, tone: 'high' },
-  { label: 'Authentication', count: 4, tone: 'medium' },
-  { label: 'Database', count: 3, tone: 'critical' },
-  { label: 'Notification', count: 6, tone: 'neutral' },
-  { label: 'Other', count: 5, tone: 'neutral' },
-]
-
-
-type AdminNavKey = (typeof navItems)[number]['key']
+type AdminNavKey = (typeof navItems)[number]['key'] | 'profile'
 type ManagementTab = 'users' | 'admins'
 type SettingsTab = 'billing' | 'general' | 'notifications' | 'security'
+type AdminProfileTab = 'information' | 'security' | 'preferences'
+
+type AdminProfileForm = {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  location: string
+  jobTitle: string
+}
+
+const defaultAdminProfile: AdminProfileForm = {
+  firstName: 'Given',
+  lastName: 'Kibanza',
+  email: 'given@thestartuplegal.co.za',
+  phone: '+27 11 234 5678',
+  location: '123 Main Street, Sandton, Johannesburg, 2196',
+  jobTitle: 'Platform Administrator',
+}
 
 const defaultRevenue = [
   { month: 'Jan', actual: 29000, target: 30000 },
@@ -298,6 +246,8 @@ export default function AdminDashboard() {
   const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
   const [managementTab, setManagementTab] = useState<ManagementTab>('users')
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('billing')
+  const [profileTab, setProfileTab] = useState<AdminProfileTab>('information')
+  const [adminProfile, setAdminProfile] = useState<AdminProfileForm>(defaultAdminProfile)
 
   setPageMetadata('Admin Dashboard', 'TSL admin dashboard for platform KPIs, counsel requests, revenue, and issues.')
 
@@ -373,6 +323,18 @@ export default function AdminDashboard() {
     closeAssignmentModal()
   }
 
+  const updateAdminProfile = (field: keyof AdminProfileForm, value: string) => {
+    setAdminProfile((current) => ({ ...current, [field]: value }))
+  }
+
+  const resetAdminProfile = () => {
+    setAdminProfile(defaultAdminProfile)
+  }
+
+  const saveAdminProfile = () => {
+    console.log('Saving admin profile:', adminProfile)
+  }
+
   const headerTitle =
     activeNav === 'users'
       ? 'User & Admin Management'
@@ -382,7 +344,9 @@ export default function AdminDashboard() {
           ? 'Issues Management'
           : activeNav === 'settings'
             ? 'Settings'
-          : 'Dashboard Overview'
+            : activeNav === 'profile'
+              ? 'Profile'
+              : 'Dashboard Overview'
   const headerDescription =
     activeNav === 'users'
       ? 'Manage platform administrators, permissions, and user access'
@@ -392,7 +356,9 @@ export default function AdminDashboard() {
           ? 'Monitor, prioritize, and resolve platform issues'
           : activeNav === 'settings'
             ? 'Configure billing, notifications, and platform security'
-          : "Welcome back! Here's what's happening with your platform today."
+            : activeNav === 'profile'
+              ? 'Manage your account settings and preferences'
+              : "Welcome back! Here's what's happening with your platform today."
 
   return (
     <div className="admin-dashboard">
@@ -428,8 +394,12 @@ export default function AdminDashboard() {
         </nav>
 
         <div className="admin-dashboard__sidebar-footer">
-          <button type="button" className="admin-dashboard__nav-item">
-            <UsersRound size={17} />
+          <button
+            type="button"
+            className={activeNav === 'profile' ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
+            onClick={() => setActiveNav('profile')}
+          >
+            <UserRound size={17} />
             <span>Profile</span>
           </button>
           <button type="button" className="admin-dashboard__nav-item" onClick={signOut}>
@@ -447,7 +417,220 @@ export default function AdminDashboard() {
 
         {error && <p className="admin-dashboard__error">{error}</p>}
 
-        {activeNav === 'users' ? (
+        {activeNav === 'profile' ? (
+          <section className="admin-profile">
+            <div className="admin-profile__tabs" aria-label="Profile tabs">
+              <button
+                type="button"
+                className={profileTab === 'information' ? 'admin-profile__tab admin-profile__tab--active' : 'admin-profile__tab'}
+                onClick={() => setProfileTab('information')}
+              >
+                Profile Information
+              </button>
+              <button
+                type="button"
+                className={profileTab === 'security' ? 'admin-profile__tab admin-profile__tab--active' : 'admin-profile__tab'}
+                onClick={() => setProfileTab('security')}
+              >
+                Security
+              </button>
+              <button
+                type="button"
+                className={profileTab === 'preferences' ? 'admin-profile__tab admin-profile__tab--active' : 'admin-profile__tab'}
+                onClick={() => setProfileTab('preferences')}
+              >
+                Preferences
+              </button>
+            </div>
+
+            <div className="admin-profile__content">
+              {profileTab === 'information' && (
+                <form className="admin-profile__card">
+                  <div className="admin-profile__summary">
+                    <div className="admin-profile__avatar">
+                      <span>FG</span>
+                      <button type="button" aria-label="Change profile photo">
+                        <Camera size={17} />
+                      </button>
+                    </div>
+                    <div className="admin-profile__identity">
+                      <h2>Given</h2>
+                      <p>Super Admin - Member since December 2025</p>
+                      <em>Last Login: January 9, 2026 - 14:23</em>
+                    </div>
+                  </div>
+
+                  <div className="admin-profile__fields">
+                    <label className="admin-profile__field">
+                      <span>First Name</span>
+                      <div className="admin-profile__input-wrap">
+                        <UserRound size={17} />
+                        <input
+                          type="text"
+                          value={adminProfile.firstName}
+                          onChange={(event) => updateAdminProfile('firstName', event.target.value)}
+                        />
+                      </div>
+                    </label>
+
+                    <label className="admin-profile__field">
+                      <span>Last Name</span>
+                      <div className="admin-profile__input-wrap">
+                        <UserRound size={17} />
+                        <input
+                          type="text"
+                          value={adminProfile.lastName}
+                          onChange={(event) => updateAdminProfile('lastName', event.target.value)}
+                        />
+                      </div>
+                    </label>
+
+                    <label className="admin-profile__field">
+                      <span>Email Address</span>
+                      <div className="admin-profile__input-wrap">
+                        <Mail size={17} />
+                        <input
+                          type="email"
+                          value={adminProfile.email}
+                          onChange={(event) => updateAdminProfile('email', event.target.value)}
+                        />
+                      </div>
+                    </label>
+
+                    <label className="admin-profile__field">
+                      <span>Phone Number</span>
+                      <div className="admin-profile__input-wrap">
+                        <Phone size={17} />
+                        <input
+                          type="tel"
+                          value={adminProfile.phone}
+                          onChange={(event) => updateAdminProfile('phone', event.target.value)}
+                        />
+                      </div>
+                    </label>
+
+                    <label className="admin-profile__field admin-profile__field--wide">
+                      <span>Location</span>
+                      <div className="admin-profile__input-wrap">
+                        <MapPin size={17} />
+                        <input
+                          type="text"
+                          value={adminProfile.location}
+                          onChange={(event) => updateAdminProfile('location', event.target.value)}
+                        />
+                      </div>
+                    </label>
+
+                    <label className="admin-profile__field admin-profile__field--wide">
+                      <span>Job Title</span>
+                      <div className="admin-profile__input-wrap">
+                        <Briefcase size={17} />
+                        <input
+                          type="text"
+                          value={adminProfile.jobTitle}
+                          onChange={(event) => updateAdminProfile('jobTitle', event.target.value)}
+                        />
+                      </div>
+                    </label>
+                  </div>
+
+                  <div className="admin-profile__actions">
+                    <button type="button" onClick={resetAdminProfile}>
+                      Cancel
+                    </button>
+                    <button type="button" onClick={saveAdminProfile}>
+                      Save Changes
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {profileTab === 'security' && (
+                <div className="admin-profile__stack">
+                  <section className="admin-profile__card">
+                    <div className="admin-profile__card-title">
+                      <span className="admin-profile__icon admin-profile__icon--gold">
+                        <LockKeyhole size={20} />
+                      </span>
+                      <h2>Change Password</h2>
+                    </div>
+                    <form className="admin-profile__password-form">
+                      <label className="admin-profile__field">
+                        <span>Current Password</span>
+                        <input type="password" placeholder="Enter current password" />
+                      </label>
+                      <label className="admin-profile__field">
+                        <span>New Password</span>
+                        <input type="password" placeholder="Enter new password" />
+                      </label>
+                      <label className="admin-profile__field">
+                        <span>Confirm New Password</span>
+                        <input type="password" placeholder="Confirm new password" />
+                      </label>
+                      <button type="submit" className="admin-profile__primary-button">
+                        Update Password
+                      </button>
+                    </form>
+                  </section>
+
+                  <section className="admin-profile__card admin-profile__row-card">
+                    <div className="admin-profile__row-copy">
+                      <span className="admin-profile__icon admin-profile__icon--dark">
+                        <Shield size={20} />
+                      </span>
+                      <div>
+                        <h2>Two-Factor Authentication</h2>
+                        <p>Add an extra layer of security to your account</p>
+                      </div>
+                    </div>
+                    <label className="admin-profile__toggle">
+                      <input type="checkbox" defaultChecked />
+                      <span />
+                    </label>
+                  </section>
+
+                  <section className="admin-profile__card">
+                    <div className="admin-profile__card-title">
+                      <span className="admin-profile__icon admin-profile__icon--dark">
+                        <CalendarDays size={20} />
+                      </span>
+                      <h2>Active Sessions</h2>
+                    </div>
+                    <div className="admin-profile__session">
+                      <div>
+                        <strong>Current Session</strong>
+                        <p>Chrome on Windows - Johannesburg, South Africa</p>
+                      </div>
+                      <span>Active</span>
+                    </div>
+                  </section>
+                </div>
+              )}
+
+              {profileTab === 'preferences' && (
+                <section className="admin-profile__card admin-profile__preferences">
+                  <h2>Email Preferences</h2>
+                  {[
+                    ['Workflow Updates', 'Notifications about wizard progress and completions'],
+                    ['Weekly Summary', 'Receive a weekly digest of your activity'],
+                    ['Product Updates', 'News about new features and improvements'],
+                  ].map(([title, description]) => (
+                    <div className="admin-profile__preference" key={title}>
+                      <div>
+                        <h3>{title}</h3>
+                        <p>{description}</p>
+                      </div>
+                      <label className="admin-profile__toggle">
+                        <input type="checkbox" defaultChecked />
+                        <span />
+                      </label>
+                    </div>
+                  ))}
+                </section>
+              )}
+            </div>
+          </section>
+        ) : activeNav === 'users' ? (
           <section className="admin-users">
             <div className="admin-users__stats" aria-label="User activity summary">
               <article className="admin-users__stat">

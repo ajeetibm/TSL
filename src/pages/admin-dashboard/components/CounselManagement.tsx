@@ -15,7 +15,19 @@ import {
 import AddCounselModal from './AddCounselModal'
 import CounselProfileModal from './CounselProfileModal'
 
-const adminCounselMembers = [
+type CounselMember = {
+  initials: string
+  name: string
+  expertise: string
+  status: string
+  experience: string
+  location: string
+  email: string
+  phone: string
+  completed: number
+}
+
+const initialCounselMembers: CounselMember[] = [
   {
     initials: 'DTM',
     name: 'Dr. Thabo Mbeki',
@@ -85,18 +97,32 @@ const adminCounselMembers = [
 ]
 
 export default function CounselManagement() {
+  const [counselMembers, setCounselMembers] = useState<CounselMember[]>(initialCounselMembers)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const [selectedCounsel, setSelectedCounsel] = useState<typeof adminCounselMembers[0] | null>(null)
+  const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
 
-  const handleViewProfile = (member: typeof adminCounselMembers[0]) => {
+  const handleViewProfile = (member: CounselMember) => {
     setSelectedCounsel(member)
     setIsProfileModalOpen(true)
   }
 
+  const handleAddCounsel = (newCounsel: CounselMember) => {
+    setCounselMembers((prev) => [...prev, newCounsel])
+    setIsAddModalOpen(false)
+  }
+
+  const availableCount = counselMembers.filter((m) => m.status === 'Available').length
+  const notAvailableCount = counselMembers.filter((m) => m.status === 'Not Available').length
+  const totalCompleted = counselMembers.reduce((sum, m) => sum + m.completed, 0)
+
   return (
     <>
-      <AddCounselModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <AddCounselModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddCounsel}
+      />
       <CounselProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => {
@@ -112,12 +138,12 @@ export default function CounselManagement() {
             <Scale size={28} />
           </span>
           <div>
-            <strong>6</strong>
+            <strong>{counselMembers.length}</strong>
             <p>Total Counsel</p>
             <small>
-              <b>4 Available</b>
+              <b>{availableCount} Available</b>
               <i>·</i>
-              <em>2 Not Available</em>
+              <em>{notAvailableCount} Not Available</em>
             </small>
           </div>
         </article>
@@ -169,7 +195,7 @@ export default function CounselManagement() {
       </div>
 
       <div className="admin-counsel__grid">
-        {adminCounselMembers.map((member) => (
+        {counselMembers.map((member) => (
           <article className="admin-counsel__card" key={member.email}>
             <div className="admin-counsel__card-header">
               <div className="admin-counsel__card-top">
