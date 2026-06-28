@@ -10,6 +10,8 @@ const Contact = lazy(() => import('../pages/Contact'))
 const AdminDashboard = lazy(() => import('../pages/admin-dashboard/AdminDashboard'))
 const CounselLogin = lazy(() => import('../pages/counsel-portal/CounselLogin'))
 const CounselPortal = lazy(() => import('../pages/counsel-portal/CounselPortal'))
+const CounselProfile = lazy(() => import('../pages/counsel-portal/CounselProfile'))
+const CounselResetPassword = lazy(() => import('../pages/counsel-portal/CounselResetPassword'))
 const Dashboard = lazy(() => import('../pages/user-dashboard/Dashboard'))
 const DashboardCounsel = lazy(() => import('../pages/user-dashboard/DashboardCounsel'))
 const DashboardNotifications = lazy(() => import('../pages/user-dashboard/DashboardNotifications'))
@@ -40,7 +42,9 @@ export function AppRoutes() {
           <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="counsel/login" element={<CounselLogin />} />
           <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
+          <Route path="counsel/reset-password" element={<CounselResetPassword />} />
           <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
+          <Route path="counsel/profile" element={<CounselProfile />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/counsel" element={<DashboardCounsel />} />
           <Route path="dashboard/notifications" element={<DashboardNotifications />} />

@@ -118,6 +118,12 @@
   font-weight: 700;
 }
 
+.counsel-login__success {
+  margin: 0;
+  color: #00a83e !important;
+  font-weight: 700;
+}
+
 .counsel-login__card > button {
   min-height: 52px;
   border: 0;

@@ -1,0 +1,635 @@
+/* Counsel Profile Styles */
+
+.counsel-profile__header {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 40px 24px;
+  background: #ffffff;
+}
+
+.counsel-profile__header h1 {
+  margin: 0;
+  color: #0d1b2a;
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.counsel-profile__header p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.counsel-profile__status {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 0 20px;
+  background: #f5f5f5;
+  color: #666666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.counsel-profile__status:hover {
+  border-color: #c79a3b;
+  background: #fffbf5;
+}
+
+.counsel-profile__status span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.counsel-profile__status small {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.counsel-profile__status strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0d1b2a;
+}
+
+.counsel-profile__status i {
+  width: 48px;
+  height: 28px;
+  position: relative;
+  border-radius: 999px;
+  background: #cfd6df;
+  transition: background 0.2s ease;
+}
+
+.counsel-profile__status i::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.counsel-profile__status--available i {
+  background: #00a83e;
+}
+
+.counsel-profile__status--available i::after {
+  transform: translateX(20px);
+}
+
+.counsel-profile__notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 40px;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 6px;
+  background: #fff3f3;
+  border: 1px solid #ffc9c9;
+  color: #c10007;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.counsel-profile__notice button {
+  margin-left: auto;
+  min-height: 20px;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  color: #c10007;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.counsel-profile__notice button:hover {
+  background: transparent;
+  color: #a50006;
+}
+
+.counsel-profile__tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 40px;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.counsel-profile__tab {
+  min-height: 48px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0 0;
+  margin-right: 32px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.counsel-profile__tab:hover {
+  color: #0d1b2a;
+}
+
+.counsel-profile__tab--active {
+  border-bottom-color: #c79a3b;
+  color: #0d1b2a;
+  font-weight: 700;
+}
+
+.counsel-profile__content {
+  padding: 32px 40px 64px;
+  background: #f3f4f6;
+  min-height: calc(100vh - 300px);
+}
+
+.counsel-profile__card {
+  width: 766px;
+  max-width: 100%;
+  margin: 0 0 24px;
+  border: 2px solid #e5e5e5;
+  border-radius: 24px;
+  padding: 32px;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.counsel-profile__avatar-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.counsel-profile__avatar {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1e293b;
+  color: #ffffff;
+  font-size: 40px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.counsel-profile__avatar-upload {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #ffffff;
+  box-shadow: 0 10px 7.5px rgba(0, 0, 0, 0.1), 0 4px 3px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.counsel-profile__avatar-upload:hover {
+  background: #b88a35;
+}
+
+.counsel-profile__avatar-upload svg {
+  width: 18px;
+  height: 18px;
+}
+
+.counsel-profile__user-info {
+  padding-top: 8px;
+}
+
+.counsel-profile__user-info h2 {
+  margin: 0 0 8px;
+  color: #0d1b2a;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.counsel-profile__user-info p {
+  margin: 0 0 4px;
+  color: #6b7280;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.counsel-profile__last-login {
+  margin-top: 2px !important;
+  color: #666666 !important;
+  font-family: "Merriweather", Georgia, serif;
+  font-size: 16px !important;
+  font-style: italic;
+  line-height: 28px !important;
+  white-space: nowrap;
+}
+
+.counsel-profile__last-login strong {
+  font-weight: 700;
+  font-style: italic;
+}
+
+.counsel-profile__last-login span {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.counsel-profile__form {
+  display: grid;
+  gap: 24px;
+}
+
+.counsel-profile__form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.counsel-profile__form-group {
+  display: grid;
+  gap: 10px;
+}
+
+.counsel-profile__form-group--full {
+  grid-column: 1 / -1;
+}
+
+.counsel-profile__form-group label {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.counsel-profile__form-group label span {
+  color: #9ca3af;
+  font-weight: 400;
+  font-size: 13px;
+}
+
+.counsel-profile__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.counsel-profile__input-wrapper svg {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: #666666;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.counsel-profile__input-wrapper input,
+.counsel-profile__input-wrapper select {
+  width: 100%;
+}
+
+.counsel-profile__form-group input,
+.counsel-profile__form-group select,
+.counsel-profile__form-group textarea {
+  min-height: 52px;
+  width: 100%;
+  border: 2px solid #e5e5e5;
+  border-radius: 24px;
+  padding: 0 24px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font-size: 16px;
+  line-height: 24px;
+  transition: all 0.2s ease;
+}
+
+.counsel-profile__input-wrapper input,
+.counsel-profile__input-wrapper select {
+  padding-left: 48px;
+}
+
+.counsel-profile__form-group textarea {
+  min-height: 52px;
+  padding: 12px 24px;
+  resize: none;
+}
+
+.counsel-profile__meeting-input {
+  color: #1d49b8 !important;
+}
+
+.counsel-profile__form-group select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='14' height='8' viewBox='0 0 14 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L7 7L13 1' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  padding-right: 45px;
+  cursor: pointer;
+}
+
+.counsel-profile__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  padding-top: 16px;
+  margin-top: 8px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.counsel-profile__btn {
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.counsel-profile__btn--secondary {
+  min-width: 103px;
+  background: #ffffff;
+  color: #0d1b2a;
+  border: 2px solid #e5e5e5;
+}
+
+.counsel-profile__btn--secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.counsel-profile__btn--primary {
+  min-width: 154px;
+  background: #c79a3b;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.counsel-profile__btn--primary:hover {
+  background: #b8892f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.counsel-profile__btn--standalone {
+  width: fit-content;
+  margin-top: 8px;
+}
+
+.counsel-profile__section-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-bottom: 0;
+  border-bottom: 0;
+  margin-bottom: 28px;
+}
+
+.counsel-profile__section-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0d1b2a;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.counsel-profile__section-icon--gold {
+  background: #c79a3b;
+  color: #ffffff;
+}
+
+.counsel-profile__section-icon--navy {
+  background: #0d1b2a;
+  color: #ffffff;
+}
+
+.counsel-profile__section-header h2 {
+  margin: 0;
+  color: #0d1b2a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+  letter-spacing: 0;
+}
+
+.counsel-profile__toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.counsel-profile__toggle-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0d1b2a;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.counsel-profile__toggle-content {
+  flex: 1;
+}
+
+.counsel-profile__toggle-content h3 {
+  margin: 0 0 6px;
+  color: #0d1b2a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 28px;
+}
+
+.counsel-profile__toggle-content p {
+  margin: 0;
+  color: #666666;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.counsel-profile__toggle {
+  width: 46px;
+  height: 24px;
+  position: relative;
+  border: 0;
+  border-radius: 999px;
+  background: #e6e8ec;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.counsel-profile__toggle span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #c79a3b;
+  transition: transform 0.2s ease;
+}
+
+.counsel-profile__toggle--active {
+  background: #c79a3b;
+}
+
+.counsel-profile__toggle--active span {
+  transform: translateX(22px);
+}
+
+.counsel-profile__session {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-radius: 24px;
+  background: #f4f4f4;
+}
+
+.counsel-profile__session h4 {
+  margin: 0 0 6px;
+  color: #0d1b2a;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 24px;
+}
+
+.counsel-profile__session p {
+  margin: 0;
+  color: #666666;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.counsel-profile__session-badge {
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #dcffe8;
+  color: #00a83e;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.counsel-profile__preferences-title {
+  margin: 0 0 24px;
+  color: #0d1b2a;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.counsel-profile__preference-list {
+  display: grid;
+  gap: 0;
+}
+
+.counsel-profile__preference-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.counsel-profile__preference-item:last-child {
+  border-bottom: 0;
+}
+
+.counsel-profile__preference-item h3 {
+  margin: 0 0 4px;
+  color: #0d1b2a;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.counsel-profile__preference-item p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .counsel-profile__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 24px;
+  }
+
+  .counsel-profile__tabs {
+    padding: 0 24px;
+    overflow-x: auto;
+  }
+
+  .counsel-profile__content {
+    padding: 24px;
+  }
+
+  .counsel-profile__card {
+    width: 100%;
+    padding: 24px;
+  }
+
+  .counsel-profile__avatar-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .counsel-profile__form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .counsel-profile__form-actions {
+    flex-direction: column;
+  }
+
+  .counsel-profile__btn {
+    width: 100%;
+  }
+}
+
+/* Made with Bob */

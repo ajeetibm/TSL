@@ -205,6 +205,7 @@ export const counselPortalApi = {
     request(`/api/v1/counsel/requests/${requestId}/reject`, 'POST', { reason }),
   requests: () => request('/api/v1/counsel/requests'),
   updateProfile: (payload: JsonRecord) => request('/api/v1/counsel/profile', 'PUT', payload),
+  resetPassword: (payload: JsonRecord) => request<AuthUser>('/api/v1/counsel/reset-password', 'POST', payload, false),
 }
 
 export const playbookApi = {

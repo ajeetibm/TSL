@@ -37,6 +37,17 @@ export default function CounselLogin() {
       }
 
       saveAuthSession(response.data)
+
+      if (response.data.mustResetPassword) {
+        navigate('/counsel/reset-password', {
+          state: {
+            email: response.data.email,
+            token: response.data.token,
+          },
+        })
+        return
+      }
+
       navigate('/counsel/dashboard')
     } catch {
       setError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')

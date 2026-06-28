@@ -293,10 +293,10 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
         </nav>
 
         <div className="counsel-portal__sidebar-footer">
-          <button type="button" className="counsel-portal__nav-item" onClick={() => navigate('/counsel/dashboard')}>
+          <Link to="/counsel/profile" className="counsel-portal__nav-item">
             <UsersRound size={16} />
             <span>Profile</span>
-          </button>
+          </Link>
           <button type="button" className="counsel-portal__nav-item" onClick={signOut}>
             <LogOut size={16} />
             <span>Sign Out</span>
