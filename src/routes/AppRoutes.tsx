@@ -8,6 +8,8 @@ const Features = lazy(() => import('../pages/Features'))
 const Pricing = lazy(() => import('../pages/Pricing'))
 const Contact = lazy(() => import('../pages/Contact'))
 const AdminDashboard = lazy(() => import('../pages/admin-dashboard/AdminDashboard'))
+const CounselLogin = lazy(() => import('../pages/counsel-portal/CounselLogin'))
+const CounselPortal = lazy(() => import('../pages/counsel-portal/CounselPortal'))
 const Dashboard = lazy(() => import('../pages/user-dashboard/Dashboard'))
 const DashboardCounsel = lazy(() => import('../pages/user-dashboard/DashboardCounsel'))
 const DashboardNotifications = lazy(() => import('../pages/user-dashboard/DashboardNotifications'))
@@ -36,6 +38,9 @@ export function AppRoutes() {
           <Route path="pricing" element={<Pricing />} />
           <Route path="contact" element={<Contact />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
+          <Route path="counsel/login" element={<CounselLogin />} />
+          <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
+          <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="dashboard/counsel" element={<DashboardCounsel />} />
           <Route path="dashboard/notifications" element={<DashboardNotifications />} />

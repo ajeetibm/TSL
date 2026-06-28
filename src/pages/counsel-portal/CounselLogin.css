@@ -1,0 +1,129 @@
+.counsel-login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: #f4f4f4;
+  color: #0d1b2a;
+}
+
+.counsel-login button,
+.counsel-login input {
+  font: inherit;
+}
+
+.counsel-login__panel {
+  width: min(100%, 460px);
+}
+
+.counsel-login__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.counsel-login__brand > span {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0d1b2a;
+  color: #ffffff;
+}
+
+.counsel-login__brand svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.counsel-login__brand h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 30px;
+}
+
+.counsel-login__brand p {
+  margin: 3px 0 0;
+  color: #666666;
+}
+
+.counsel-login__card {
+  display: grid;
+  gap: 22px;
+  border: 1px solid #e5e5e5;
+  border-radius: 28px;
+  padding: 34px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(13, 27, 42, 0.1);
+}
+
+.counsel-login__card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 36px;
+}
+
+.counsel-login__card p {
+  margin: 8px 0 0;
+  color: #666666;
+  line-height: 24px;
+}
+
+.counsel-login__card label {
+  display: grid;
+  gap: 10px;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.counsel-login__card label > div {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d7d7d7;
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #7a7a7a;
+}
+
+.counsel-login__card input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #0d1b2a;
+}
+
+.counsel-login__card label button {
+  border: 0;
+  background: transparent;
+  color: #6d6d6d;
+  cursor: pointer;
+}
+
+.counsel-login__card [role="alert"] {
+  margin: 0;
+  color: #c10007;
+  font-weight: 700;
+}
+
+.counsel-login__card > button {
+  min-height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+}

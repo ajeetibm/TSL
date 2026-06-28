@@ -28,6 +28,8 @@ export interface AuthUser {
   token: string
   tokenExpiry?: string
   createdAt?: string
+  portal?: 'sme' | 'admin' | 'counsel'
+  mustResetPassword?: boolean
 }
 
 export interface RegisterPayload {

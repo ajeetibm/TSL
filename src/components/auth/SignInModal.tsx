@@ -5,6 +5,28 @@ import { useNavigate } from 'react-router-dom'
 import { authApi, saveAuthSession } from '../../services/tslApi'
 import './SignInModal.css'
 
+type AuthenticatedRouteUser = {
+  role?: string | null
+  portal?: string | null
+}
+
+function getAuthenticatedRoute(user?: AuthenticatedRouteUser, redirectTo?: string) {
+  if (redirectTo) return redirectTo
+
+  const role = user?.role?.toLowerCase()
+  const portal = user?.portal?.toLowerCase()
+
+  if (role === 'counsel' || portal === 'counsel') {
+    return '/counsel/dashboard'
+  }
+
+  if (role === 'admin' || role === 'super_admin' || portal === 'admin') {
+    return '/admin/dashboard'
+  }
+
+  return '/dashboard'
+}
+
 interface SignInModalProps {
   isOpen: boolean
   onClose: () => void
@@ -124,10 +146,7 @@ function SignInModalContent({
       saveAuthSession(authenticatedUser)
       onAuthenticated?.()
       onClose()
-      navigate(
-        redirectTo ??
-          (authenticatedUser?.role === 'admin' || authenticatedUser?.role === 'super_admin' ? '/admin/dashboard' : '/dashboard'),
-      )
+      navigate(getAuthenticatedRoute(authenticatedUser, redirectTo))
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {
@@ -153,7 +172,7 @@ function SignInModalContent({
       saveAuthSession(response.data)
       onAuthenticated?.()
       onClose()
-      navigate(redirectTo ?? '/dashboard')
+      navigate(getAuthenticatedRoute(response.data, redirectTo))
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {

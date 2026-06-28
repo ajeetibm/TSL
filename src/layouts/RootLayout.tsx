@@ -7,7 +7,11 @@ import { Navbar } from '../components/layout/Navbar'
 export function RootLayout() {
   const { pathname } = useLocation()
   const [isAnimating, setIsAnimating] = useState(false)
-  const isFocusedAppFlow = pathname.startsWith('/dashboard') || pathname.startsWith('/admin') || pathname === '/wizard-details'
+  const isFocusedAppFlow =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/admin') ||
+    pathname.startsWith('/counsel') ||
+    pathname === '/wizard-details'
 
   useEffect(() => {
     // Trigger animation on route change
