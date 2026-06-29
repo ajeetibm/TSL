@@ -319,7 +319,25 @@ export default function AdminDashboard() {
     setAssignmentStep('preview')
   }
 
-  const assignToCounsel = () => {
+  const assignToCounsel = async () => {
+    if (!activeRequest) return
+
+    const response = await adminApi.assignCounselRequest(activeRequest.requestId, {
+      counselEmail: selectedCounsel,
+    })
+
+    if (!response.success) {
+      setError(response.message ?? 'Unable to assign counsel.')
+      return
+    }
+
+    setDashboardData((current) => {
+      if (!current?.recentCounselRequests) return current
+      return {
+        ...current,
+        recentCounselRequests: current.recentCounselRequests.filter((request) => request.requestId !== activeRequest.requestId),
+      }
+    })
     closeAssignmentModal()
   }
 
@@ -950,7 +968,7 @@ export default function AdminDashboard() {
               {counselRequests.map((request) => (
                 <article className="admin-dashboard__request-card" key={request.requestId}>
                   <div>
-                    <h3>Contract Review for SaaS Agreement</h3>
+                    <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
                     <time>{formatTimeAgo(request.receivedAt)}</time>
                   </div>
                   <p>

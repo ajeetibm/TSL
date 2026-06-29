@@ -10,13 +10,18 @@ type AuthenticatedRouteUser = {
   portal?: string | null
 }
 
-function getAuthenticatedRoute(user?: AuthenticatedRouteUser, redirectTo?: string) {
-  if (redirectTo) return redirectTo
-
+function getAuthenticatedRoute(user?: AuthenticatedRouteUser & { mustResetPassword?: boolean }, redirectTo?: string) {
   const role = user?.role?.toLowerCase()
   const portal = user?.portal?.toLowerCase()
+  const isCounsel = role === 'counsel' || portal === 'counsel'
 
-  if (role === 'counsel' || portal === 'counsel') {
+  if (isCounsel && user?.mustResetPassword) {
+    return '/counsel/reset-password'
+  }
+
+  if (redirectTo) return redirectTo
+
+  if (isCounsel) {
     return '/counsel/dashboard'
   }
 
@@ -146,7 +151,14 @@ function SignInModalContent({
       saveAuthSession(authenticatedUser)
       onAuthenticated?.()
       onClose()
-      navigate(getAuthenticatedRoute(authenticatedUser, redirectTo))
+      navigate(getAuthenticatedRoute(authenticatedUser, redirectTo), {
+        state: authenticatedUser?.mustResetPassword
+          ? {
+              email: authenticatedUser.email,
+              token: authenticatedUser.token,
+            }
+          : undefined,
+      })
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {
@@ -172,7 +184,14 @@ function SignInModalContent({
       saveAuthSession(response.data)
       onAuthenticated?.()
       onClose()
-      navigate(getAuthenticatedRoute(response.data, redirectTo))
+      navigate(getAuthenticatedRoute(response.data, redirectTo), {
+        state: response.data?.mustResetPassword
+          ? {
+              email: response.data.email,
+              token: response.data.token,
+            }
+          : undefined,
+      })
     } catch {
       setFormError('Mock API is not reachable. Please confirm the mock server is running on port 8080.')
     } finally {

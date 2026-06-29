@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import AddCounselModal from './AddCounselModal'
 import CounselProfileModal from './CounselProfileModal'
+import { adminApi } from '../../../services/tslApi'
 
 type CounselMember = {
   initials: string
@@ -107,7 +108,16 @@ export default function CounselManagement() {
     setIsProfileModalOpen(true)
   }
 
-  const handleAddCounsel = (newCounsel: CounselMember) => {
+  const handleAddCounsel = async (newCounsel: CounselMember) => {
+    await adminApi.addCounsel({
+      fullName: newCounsel.name,
+      email: newCounsel.email,
+      phone: newCounsel.phone,
+      expertise: newCounsel.expertise,
+      location: newCounsel.location,
+      experience: newCounsel.experience,
+    })
+
     setCounselMembers((prev) => [...prev, newCounsel])
     setIsAddModalOpen(false)
   }

@@ -215,6 +215,31 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as {
+        email?: string
+        token?: string
+        role?: string
+        portal?: string
+        mustResetPassword?: boolean
+      }
+      const isCounsel = storedUser.role === 'counsel' || storedUser.portal === 'counsel'
+
+      if (isCounsel && storedUser.mustResetPassword) {
+        navigate('/counsel/reset-password', {
+          replace: true,
+          state: {
+            email: storedUser.email,
+            token: storedUser.token,
+          },
+        })
+      }
+    } catch {
+      // Ignore malformed local mock session data and allow normal loading.
+    }
+  }, [navigate])
+
+  useEffect(() => {
     counselPortalApi.dashboard().then((response) => {
       if (!response.success) return
       const data = (response.data ?? null) as DashboardData | null
