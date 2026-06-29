@@ -304,6 +304,32 @@
   margin-top: 4px;
 }
 
+.dashboard-counsel__submit:disabled,
+.dashboard-counsel__response:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dashboard-counsel__message {
+  margin: 0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dashboard-counsel__message--error {
+  border: 1px solid #ffc9c9;
+  background: #fff3f3;
+  color: #c10007;
+}
+
+.dashboard-counsel__message--success {
+  border: 1px solid #86efac;
+  background: #dcffe8;
+  color: #008a34;
+}
+
 .dashboard-counsel__history {
   display: grid;
   gap: 24px;

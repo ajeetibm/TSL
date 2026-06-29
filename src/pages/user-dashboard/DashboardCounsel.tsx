@@ -1,24 +1,67 @@
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, MessageSquare, Scale, Send, Upload } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { counselApi } from '../../services/tslApi'
+import type { CounselCredits, CounselRequest } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardCounsel.css'
 
-const requestHistory = [
+type CounselFormData = {
+  subject: string
+  description: string
+  relatedWizard: string
+}
+
+type CounselHistoryRequest = {
+  requestId: string
+  title: string
+  date: string
+  reviewer: string
+  status: string
+  responseUrl?: string | null
+}
+
+type CreatedCounselRequest = {
+  requestId?: string
+  subject?: string
+  status?: string
+  assignedCounsel?: string
+  submittedAt?: string
+  creditsRemaining?: number
+  responseUrl?: string | null
+}
+
+type CounselRequestResponse = CounselRequest[] | { requests?: CounselRequest[] }
+
+const fallbackCredits: CounselCredits = {
+  plan: 'Boardroom',
+  creditsTotal: 6,
+  creditsUsed: 1,
+  creditsRemaining: 2,
+  usageThisMonth: 1,
+  topUpRate: 450,
+  currency: 'ZAR',
+  resetDate: '2026-02-01',
+}
+
+const fallbackHistory: CounselHistoryRequest[] = [
   {
+    requestId: 'fallback-1',
     title: 'NDA Review - Tech Partnership',
     date: 'Dec 15, 2025',
     reviewer: 'Reviewed by Sarah Naidoo',
     status: 'In Progress',
   },
   {
+    requestId: 'fallback-2',
     title: 'NDA Review - Tech Partnership',
     date: 'Dec 15, 2025',
     reviewer: 'Reviewed by Sarah Naidoo',
     status: 'Completed',
   },
   {
+    requestId: 'fallback-3',
     title: 'NDA Review - Tech Partnership',
     date: 'Dec 15, 2025',
     reviewer: 'Reviewed by Sarah Naidoo',
@@ -26,10 +69,179 @@ const requestHistory = [
   },
 ]
 
+function formatRequestDate(value?: string) {
+  if (!value) return 'Today'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+
+  return date.toLocaleDateString('en-ZA', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+function formatStatus(status?: string) {
+  if (!status) return 'Pending'
+
+  return status
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
+function toHistoryRequest(request: CounselRequest | CreatedCounselRequest): CounselHistoryRequest {
+  const status = formatStatus(request.status)
+  const isPending = status.toLowerCase() === 'pending'
+  const isAssigned = status.toLowerCase() === 'assigned'
+  const reviewer = request.assignedCounsel
+    ? `Reviewed by ${request.assignedCounsel}`
+    : isPending
+      ? 'Awaiting admin assignment'
+      : isAssigned
+        ? 'Assigned to counsel'
+        : 'Submitted'
+
+  return {
+    requestId: request.requestId ?? `local-${Date.now()}`,
+    title: request.subject ?? 'Counsel Request',
+    date: formatRequestDate(request.submittedAt),
+    reviewer,
+    status,
+    responseUrl: request.responseUrl ?? null,
+  }
+}
+
+function normalizeHistory(payload?: CounselRequestResponse): CounselHistoryRequest[] {
+  const requests = Array.isArray(payload) ? payload : payload?.requests ?? []
+
+  return requests.length > 0 ? requests.map(toHistoryRequest) : fallbackHistory
+}
+
 export default function DashboardCounsel() {
   const [activeTab, setActiveTab] = useState<'book' | 'history'>('book')
+  const [credits, setCredits] = useState<CounselCredits>(fallbackCredits)
+  const [history, setHistory] = useState<CounselHistoryRequest[]>(fallbackHistory)
+  const [formData, setFormData] = useState<CounselFormData>({
+    subject: '',
+    description: '',
+    relatedWizard: '',
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [errorMessage, setErrorMessage] = useState('')
+  const submitInFlightRef = useRef(false)
 
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadCounselData() {
+      const [creditsResponse, requestsResponse] = await Promise.all([counselApi.credits(), counselApi.requests()])
+
+      if (!isMounted) return
+
+      if (creditsResponse.success && creditsResponse.data) {
+        setCredits(creditsResponse.data)
+      }
+
+      if (requestsResponse.success) {
+        setHistory(normalizeHistory(requestsResponse.data as CounselRequestResponse | undefined))
+      }
+    }
+
+    loadCounselData()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const handleFieldChange = (field: keyof CounselFormData, value: string) => {
+    setFormData((current) => ({
+      ...current,
+      [field]: value,
+    }))
+  }
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (submitInFlightRef.current) return
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    const subject = formData.subject.trim()
+    const description = formData.description.trim()
+
+    if (!subject || !description) {
+      setErrorMessage('Please add a subject and description before submitting.')
+      return
+    }
+
+    if (credits.creditsRemaining <= 0) {
+      setErrorMessage('You do not have any counsel credits remaining. Please top up before submitting.')
+      return
+    }
+
+    submitInFlightRef.current = true
+    setIsSubmitting(true)
+
+    try {
+      const response = await counselApi.createRequest({
+        subject,
+        description,
+        relatedWizard: formData.relatedWizard || undefined,
+        fromUser: 'Thabo Molefe',
+        userEmail: 'thabo@company.co.za',
+        company: 'FibreGents (Pty) Ltd',
+      })
+
+      if (!response.success) {
+        setErrorMessage(response.message ?? 'Unable to submit counsel request.')
+        return
+      }
+
+      const created = response.data as CreatedCounselRequest | undefined
+      const createdRequest = toHistoryRequest({
+        requestId: created?.requestId,
+        subject: created?.subject ?? subject,
+        status: created?.status ?? 'pending',
+        submittedAt: created?.submittedAt ?? new Date().toISOString(),
+        responseUrl: created?.responseUrl ?? null,
+      })
+
+      setHistory((current) => [createdRequest, ...current])
+      setCredits((current) => ({
+        ...current,
+        creditsRemaining:
+          typeof created?.creditsRemaining === 'number'
+            ? created.creditsRemaining
+            : Math.max(current.creditsRemaining - 1, 0),
+        creditsUsed: current.creditsUsed + 1,
+        usageThisMonth: current.usageThisMonth + 1,
+      }))
+
+      const refreshedCredits = await counselApi.credits()
+      if (refreshedCredits.success && refreshedCredits.data) {
+        setCredits(refreshedCredits.data)
+      }
+
+      setFormData({
+        subject: '',
+        description: '',
+        relatedWizard: '',
+      })
+      setSuccessMessage('Counsel request submitted. Admin can now review and assign it.')
+      setActiveTab('history')
+    } finally {
+      submitInFlightRef.current = false
+      setIsSubmitting(false)
+    }
+  }
+
+  const topUpRate = `${credits.currency === 'ZAR' ? 'R' : `${credits.currency} `}${credits.topUpRate.toLocaleString('en-ZA')}`
 
   return (
     <DashboardShell activeSection="Counsel">
@@ -52,12 +264,12 @@ export default function DashboardCounsel() {
                   <DollarSign size={24} />
                 </span>
                 <div className="dashboard-counsel__stat-value">
-                  <strong>2</strong>
+                  <strong>{credits.creditsRemaining}</strong>
                   <span>credits remaining</span>
                 </div>
               </div>
               <h2>Counsel Credits</h2>
-              <p>Included with your Boardroom plan</p>
+              <p>Included with your {credits.plan} plan</p>
             </article>
 
             <article className="dashboard-counsel__stat">
@@ -66,12 +278,14 @@ export default function DashboardCounsel() {
                   <MessageSquare size={24} />
                 </span>
                 <div className="dashboard-counsel__stat-value">
-                  <strong>1</strong>
+                  <strong>{credits.creditsUsed}</strong>
                   <span>credits used</span>
                 </div>
               </div>
               <h2>Usage This Month</h2>
-              <p>1 of 6 included credits</p>
+              <p>
+                {credits.usageThisMonth} of {credits.creditsTotal} included credits
+              </p>
             </article>
           </section>
 
@@ -82,8 +296,8 @@ export default function DashboardCounsel() {
             <div>
               <h2>Credit Usage &amp; Top-Ups</h2>
               <p>
-                Your plan includes 6 counsel credits per month for basic reviews. If scope exceeds basic credit
-                allocation, top-up pricing applies at R450 per additional credit hour.
+                Your plan includes {credits.creditsTotal} counsel credits per month for basic reviews. If scope exceeds
+                basic credit allocation, top-up pricing applies at {topUpRate} per additional credit hour.
               </p>
             </div>
             <button type="button">
@@ -119,20 +333,38 @@ export default function DashboardCounsel() {
             </div>
 
             {activeTab === 'book' ? (
-              <form className="dashboard-counsel__form">
+              <form className="dashboard-counsel__form" onSubmit={handleSubmit}>
                 <div className="dashboard-counsel__form-heading">
                   <h2>Request Expert Review</h2>
                   <p>Submit a request for legal review or escalation. Our attorneys will respond within 24 hours.</p>
                 </div>
 
+                {errorMessage ? (
+                  <p className="dashboard-counsel__message dashboard-counsel__message--error" role="alert">
+                    {errorMessage}
+                  </p>
+                ) : null}
+                {successMessage ? (
+                  <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
+                ) : null}
+
                 <label className="dashboard-counsel__field">
                   <span>Subject</span>
-                  <input type="text" aria-label="Subject" />
+                  <input
+                    type="text"
+                    aria-label="Subject"
+                    value={formData.subject}
+                    onChange={(event) => handleFieldChange('subject', event.target.value)}
+                  />
                 </label>
 
                 <label className="dashboard-counsel__field">
                   <span>Description</span>
-                  <textarea aria-label="Description" />
+                  <textarea
+                    aria-label="Description"
+                    value={formData.description}
+                    onChange={(event) => handleFieldChange('description', event.target.value)}
+                  />
                 </label>
 
                 <label className="dashboard-counsel__field">
@@ -151,7 +383,11 @@ export default function DashboardCounsel() {
 
                 <label className="dashboard-counsel__field">
                   <span>Related Wizard (Optional)</span>
-                  <select aria-label="Related Wizard" defaultValue="">
+                  <select
+                    aria-label="Related Wizard"
+                    value={formData.relatedWizard}
+                    onChange={(event) => handleFieldChange('relatedWizard', event.target.value)}
+                  >
                     <option value="" disabled />
                     <option>Non-Disclosure Agreement (NDA)</option>
                     <option>Employment Offer Letter</option>
@@ -161,19 +397,23 @@ export default function DashboardCounsel() {
                   </select>
                 </label>
 
-                <button type="submit" className="dashboard-counsel__submit">
+                <button type="submit" className="dashboard-counsel__submit" disabled={isSubmitting || credits.creditsRemaining <= 0}>
                   <Send size={18} />
-                  Submit Request
+                  {isSubmitting ? 'Submitting...' : 'Submit Request'}
                 </button>
               </form>
             ) : (
               <div className="dashboard-counsel__history" aria-label="Counsel request history">
-                {requestHistory.map((request, index) => {
-                  const isCompleted = request.status === 'Completed'
+                {successMessage ? (
+                  <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
+                ) : null}
+                {history.map((request) => {
+                  const statusKey = request.status.toLowerCase()
+                  const isCompleted = statusKey === 'completed' || statusKey === 'accepted'
                   const StatusIcon = isCompleted ? CheckCircle2 : CircleDot
 
                   return (
-                    <article className="dashboard-counsel__history-card" key={`${request.title}-${index}`}>
+                    <article className="dashboard-counsel__history-card" key={request.requestId}>
                       <div className="dashboard-counsel__history-copy">
                         <h2>{request.title}</h2>
                         <p>
@@ -194,7 +434,7 @@ export default function DashboardCounsel() {
                         {request.status}
                       </span>
 
-                      <button type="button" className="dashboard-counsel__response">
+                      <button type="button" className="dashboard-counsel__response" disabled={!request.responseUrl}>
                         View Response
                       </button>
                     </article>

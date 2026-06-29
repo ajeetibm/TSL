@@ -230,10 +230,23 @@ function formatCompactCurrency(value = 0) {
 }
 
 function formatTimeAgo(value?: string) {
-  if (!value) return '12 min ago'
+  if (!value) return 'just now'
+
   const submitted = new Date(value)
-  if (Number.isNaN(submitted.getTime())) return '12 min ago'
-  return '12 min ago'
+  if (Number.isNaN(submitted.getTime())) return 'just now'
+
+  const elapsedMs = Date.now() - submitted.getTime()
+  if (elapsedMs < 0) return 'just now'
+
+  const elapsedMinutes = Math.floor(elapsedMs / 60000)
+  if (elapsedMinutes < 1) return 'just now'
+  if (elapsedMinutes < 60) return `${elapsedMinutes} min ago`
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60)
+  if (elapsedHours < 24) return `${elapsedHours}h ago`
+
+  const elapsedDays = Math.floor(elapsedHours / 24)
+  return `${elapsedDays}d ago`
 }
 
 export default function AdminDashboard() {
@@ -278,16 +291,26 @@ export default function AdminDashboard() {
   }, [dashboardData])
 
   const counselRequests = useMemo(() => {
-    const requests = dashboardData?.recentCounselRequests ?? []
-    const fallback = requests[0] ?? {
-      requestId: 'req_demo',
-      subject: 'Contract Review for SaaS Agreement',
-      fromUser: 'Michael Chen',
-      receivedAt: '2026-06-19T09:00:00Z',
-      status: 'pending',
+    const requests = dashboardData?.recentCounselRequests
+
+    if (!requests) {
+      return [
+        {
+          requestId: 'req_demo',
+          subject: 'Contract Review for SaaS Agreement',
+          fromUser: 'Michael Chen',
+          receivedAt: '2026-06-19T09:00:00Z',
+          status: 'pending',
+        },
+      ]
     }
 
-    return Array.from({ length: 4 }, (_, index) => requests[index] ?? { ...fallback, requestId: `${fallback.requestId}-${index}` })
+    const seenRequestIds = new Set<string>()
+    return requests.filter((request) => {
+      if (seenRequestIds.has(request.requestId)) return false
+      seenRequestIds.add(request.requestId)
+      return true
+    })
   }, [dashboardData])
 
   const topWizards = (dashboardData?.topWizards ?? []).map((wizard, index) => ({
