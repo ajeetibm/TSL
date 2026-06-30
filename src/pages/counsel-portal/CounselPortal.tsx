@@ -24,6 +24,19 @@ type CounselMode = 'dashboard' | 'requests'
 type Availability = 'available' | 'unavailable'
 type RequestStatus = 'pending' | 'accepted' | 'rejected'
 
+type CounselAcceptEmail = {
+  to?: string
+  cc?: string
+  from?: string
+  subject?: string
+  calendlyLink?: string
+  availabilityWindow?: string
+}
+
+type CounselAcceptResponse = {
+  email?: CounselAcceptEmail
+}
+
 type DashboardRequest = {
   requestId: string
   subject: string
@@ -283,9 +296,28 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   }
 
   const setRequestStatus = async (requestId: string, status: RequestStatus) => {
-    setRequests((current) => current.map((request) => (request.requestId === requestId ? { ...request, status } : request)))
+    const request = requests.find((item) => item.requestId === requestId)
+    setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status } : item)))
+
     if (status === 'accepted') {
-      await counselPortalApi.acceptRequest(requestId)
+      const response = await counselPortalApi.acceptRequest(requestId)
+      if (response.success) {
+        const data = (response.data ?? {}) as CounselAcceptResponse
+        const email = data.email ?? {}
+        const emailState = {
+          requestId,
+          subject: request?.subject ?? email.subject,
+          to: email.to,
+          cc: email.cc,
+          from: email.from,
+          emailSubject: email.subject,
+          calendlyLink: email.calendlyLink,
+          availabilityWindow: email.availabilityWindow,
+        }
+
+        sessionStorage.setItem('tsl-counsel-email-preview', JSON.stringify(emailState))
+        navigate('/counsel/email-sent', { state: emailState })
+      }
     } else if (status === 'rejected') {
       await counselPortalApi.rejectRequest(requestId, 'Unavailable')
     }

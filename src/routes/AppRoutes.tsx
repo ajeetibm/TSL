@@ -9,6 +9,7 @@ const Pricing = lazy(() => import('../pages/Pricing'))
 const Contact = lazy(() => import('../pages/Contact'))
 const AdminDashboard = lazy(() => import('../pages/admin-dashboard/AdminDashboard'))
 const CounselLogin = lazy(() => import('../pages/counsel-portal/CounselLogin'))
+const CounselEmailSent = lazy(() => import('../pages/counsel-portal/CounselEmailSent'))
 const CounselPortal = lazy(() => import('../pages/counsel-portal/CounselPortal'))
 const CounselProfile = lazy(() => import('../pages/counsel-portal/CounselProfile'))
 const CounselResetPassword = lazy(() => import('../pages/counsel-portal/CounselResetPassword'))
@@ -42,6 +43,7 @@ export function AppRoutes() {
           <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="counsel/login" element={<CounselLogin />} />
           <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
+          <Route path="counsel/email-sent" element={<CounselEmailSent />} />
           <Route path="counsel/reset-password" element={<CounselResetPassword />} />
           <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
           <Route path="counsel/profile" element={<CounselProfile />} />

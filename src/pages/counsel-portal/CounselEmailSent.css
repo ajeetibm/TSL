@@ -1,0 +1,80 @@
+.counsel-email-sent {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #f7f7f7;
+  color: #0b1c2f;
+}
+
+.counsel-email-sent__content {
+  width: min(100%, 980px);
+  min-height: 640px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  padding: 72px 24px 78px;
+  text-align: center;
+}
+
+.counsel-email-sent__copy {
+  align-self: center;
+  display: grid;
+  justify-items: center;
+}
+
+.counsel-email-sent h1 {
+  margin: 0 0 22px;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 82px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.counsel-email-sent p {
+  max-width: 900px;
+  margin: 0;
+  color: #666666;
+  font-size: 32px;
+  line-height: 1.28;
+}
+
+.counsel-email-sent a {
+  color: #0074ff;
+}
+
+.counsel-email-sent__copy a {
+  margin-top: 8px;
+  font-size: 32px;
+  line-height: 1.25;
+  text-decoration: underline;
+  word-break: break-word;
+}
+
+.counsel-email-sent__back {
+  color: #000000;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+@media (max-width: 720px) {
+  .counsel-email-sent__content {
+    min-height: 560px;
+    padding: 48px 20px;
+  }
+
+  .counsel-email-sent h1 {
+    font-size: 58px;
+  }
+
+  .counsel-email-sent p,
+  .counsel-email-sent__copy a {
+    font-size: 22px;
+  }
+
+  .counsel-email-sent__back {
+    font-size: 22px;
+  }
+}
