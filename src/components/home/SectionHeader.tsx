@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
-import { revealUp } from '../../hooks/useScrollReveal'
+import { revealUp, defaultViewport } from '../../hooks/useScrollReveal'
 import { cn } from '../../utils/cn'
 
 interface SectionHeaderProps {
@@ -16,7 +16,7 @@ export function SectionHeader({ eyebrow, title, description, inverse }: SectionH
       className="mx-auto max-w-[1312px] text-center"
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, margin: '-80px' }}
+      viewport={defaultViewport}
       variants={revealUp}
     >
       <span

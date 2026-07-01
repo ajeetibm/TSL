@@ -1,6 +1,6 @@
 import { CheckCircle2, Database, FileCheck2, QrCode, Scale, ShieldCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 
 const proofCards = [
@@ -39,7 +39,7 @@ export function ServicesSection() {
           className="text-center"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={revealUp}
         >
           <span className="inline-flex min-h-[40px] items-center gap-[14px] rounded-full border border-[#DADDE1] bg-[#F4F5F6] px-[34px] text-[16px] font-bold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -56,7 +56,7 @@ export function ServicesSection() {
           className="mx-auto mt-[112px] grid max-w-[1130px] grid-cols-5 gap-[28px]"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={staggerContainer}
         >
           {proofCards.map(({ title, description, icon: Icon }) => (

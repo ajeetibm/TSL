@@ -11,4 +11,18 @@ export interface PricingPlan {
   description: string
   highlight?: boolean
   features: string[]
+  tagline?: string
+}
+
+export interface PricingFeature {
+  name: string
+  launchpad: boolean | string
+  operator: boolean | string
+  boardroom: boolean | string
+  exclusive?: boolean
+}
+
+export interface PricingCategory {
+  title: string
+  features: PricingFeature[]
 }

@@ -6,7 +6,7 @@ export default {
     extend: {
       colors: {
         navy: {
-          primary: '#07192B',
+          primary: '#0D1B2A',
           secondary: '#2A3A4E',
         },
         gold: {

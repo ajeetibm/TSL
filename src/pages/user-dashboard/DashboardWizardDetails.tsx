@@ -255,7 +255,9 @@ export default function DashboardWizardDetails() {
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
   const handlePaymentMethodSelect = () => {
+    localStorage.setItem('tsl-dashboard-payment-complete', 'true')
     setShowDashboardView(true)
+    navigate('/dashboard')
   }
 
   if (showDashboardView) {
