@@ -9,12 +9,21 @@ import {
   UserRound,
   WandSparkles,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useNotificationCount } from '../../context/NotificationContext'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardNotifications.css'
 
-const unreadNotifications = [
+type Notification = {
+  title: string
+  message: string
+  time: string
+  icon: React.ElementType
+}
+
+const initialUnread: Notification[] = [
   {
     title: 'Document completed',
     message: 'Your Privacy Policy (POPIA Compliant) has been completed and is ready to download.',
@@ -47,7 +56,7 @@ const unreadNotifications = [
   },
 ]
 
-const earlierNotifications = [
+const initialEarlier: Notification[] = [
   {
     title: 'New team member added',
     message: 'Sarah Johnson has been added to your workspace with Editor permissions.',
@@ -79,6 +88,27 @@ const settingsOptions = [
 export default function DashboardNotifications() {
   setPageMetadata('Notifications', 'Stay updated with your legal workflow activities.')
 
+  const [unread, setUnread] = useState<Notification[]>(initialUnread)
+  const [earlier, setEarlier] = useState<Notification[]>(initialEarlier)
+  const { setUnreadCount } = useNotificationCount()
+
+  // Keep the sidebar badge in sync whenever the unread list changes
+  useEffect(() => {
+    setUnreadCount(unread.length)
+  }, [unread.length])
+
+  function markAsRead(title: string) {
+    const item = unread.find((n) => n.title === title)
+    if (!item) return
+    setUnread((prev) => prev.filter((n) => n.title !== title))
+    setEarlier((prev) => [item, ...prev])
+  }
+
+  function markAllAsRead() {
+    setEarlier((prev) => [...unread, ...prev])
+    setUnread([])
+  }
+
   return (
     <DashboardShell activeSection="Notifications">
       <main className="dashboard-notifications">
@@ -87,18 +117,18 @@ export default function DashboardNotifications() {
             <h1>Notifications</h1>
             <p>Stay updated with your legal workflow activities</p>
           </div>
-          <button type="button">Mark all as read</button>
+          <button type="button" onClick={markAllAsRead}>Mark all as read</button>
         </header>
 
         <div className="dashboard-notifications__content">
           <section className="dashboard-notifications__feed" aria-label="Notification feed">
             <div className="dashboard-notifications__section-title">
               <h2>Unread</h2>
-              <span>{unreadNotifications.length}</span>
+              <span>{unread.length}</span>
             </div>
 
             <div className="dashboard-notifications__list">
-              {unreadNotifications.map(({ title, message, time, icon: Icon }) => (
+              {unread.map(({ title, message, time, icon: Icon }) => (
                 <article className="dashboard-notifications__card dashboard-notifications__card--unread" key={title}>
                   <span className="dashboard-notifications__item-icon dashboard-notifications__item-icon--gold">
                     <Icon size={24} />
@@ -113,7 +143,7 @@ export default function DashboardNotifications() {
                     <p>{message}</p>
                     <div className="dashboard-notifications__meta">
                       <span>{time}</span>
-                      <button type="button">Mark as read</button>
+                      <button type="button" onClick={() => markAsRead(title)}>Mark as read</button>
                     </div>
                   </div>
                 </article>
@@ -122,7 +152,7 @@ export default function DashboardNotifications() {
 
             <h2 className="dashboard-notifications__earlier-title">Earlier</h2>
             <div className="dashboard-notifications__list">
-              {earlierNotifications.map(({ title, message, time, icon: Icon }) => (
+              {earlier.map(({ title, message, time, icon: Icon }) => (
                 <article className="dashboard-notifications__card" key={title}>
                   <span className="dashboard-notifications__item-icon">
                     <Icon size={24} />
@@ -183,11 +213,11 @@ export default function DashboardNotifications() {
               <dl>
                 <div>
                   <dt>Total notifications</dt>
-                  <dd>8</dd>
+                  <dd>{unread.length + earlier.length}</dd>
                 </div>
                 <div>
                   <dt>Unread</dt>
-                  <dd>5</dd>
+                  <dd>{unread.length}</dd>
                 </div>
               </dl>
             </section>

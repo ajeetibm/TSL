@@ -9,8 +9,9 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useNotificationCount } from '../../context/NotificationContext'
 import { clearAuthSession, notificationApi } from '../../services/tslApi'
 
 type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
@@ -35,15 +36,16 @@ const sidebarItems = [
 
 export function DashboardShell({ activeSection, children }: DashboardShellProps) {
   const navigate = useNavigate()
-  const [notificationBadge, setNotificationBadge] = useState<number | null>(null)
+  const { unreadCount, seedUnreadCount } = useNotificationCount()
 
+  // Seed the badge from the API on first mount. seedUnreadCount is a no-op if
+  // the Notifications page has already written a live value into context.
   useEffect(() => {
     let cancelled = false
 
     notificationApi.list().then((response) => {
       if (cancelled || !response.success) return
-      const count = response.data?.unreadCount ?? 0
-      setNotificationBadge(count > 0 ? count : null)
+      seedUnreadCount(response.data?.unreadCount ?? 0)
     })
 
     return () => {
@@ -78,7 +80,7 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
             >
               <Icon size={18} />
               <span>{label}</span>
-              {label === 'Notifications' && notificationBadge !== null && <b>{notificationBadge}</b>}
+              {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
             </button>
           ))}
         </nav>

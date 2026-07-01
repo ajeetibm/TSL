@@ -158,9 +158,12 @@ function PlaybookPDFModal({ playbook, onClose }: PlaybookPDFModalProps) {
   const { title, description, pdfUrl } = playbook
   const [numPages, setNumPages] = useState<number | null>(null)
 
-  // `renderScale` is what react-pdf uses — only updated after the gesture settles
-  // to avoid flickering canvas teardown on every tick.
+  // `renderScale` multiplies the base page width (derived from the body container).
+  // Only updated after a zoom gesture settles to avoid flickering canvas teardown.
   const [renderScale, setRenderScale] = useState(1.0)
+
+  // `bodyWidth` is measured from the scrollable container so pages fill the available area.
+  const [bodyWidth, setBodyWidth] = useState<number | undefined>(undefined)
 
   // `visualScale` follows every wheel tick and is applied via CSS transform
   // so the user sees instant, smooth feedback while gesturing.
@@ -171,6 +174,20 @@ function PlaybookPDFModal({ playbook, onClose }: PlaybookPDFModalProps) {
   const pagesWrapRef = useRef<HTMLDivElement>(null)
 
   const clampScale = (s: number) => Math.min(Math.max(s, 0.4), 3.0)
+
+  // Measure the body container width so pages fill it; update on resize.
+  useEffect(() => {
+    const el = bodyRef.current
+    if (!el) return
+    const measure = () => {
+      // Subtract horizontal padding (32px each side = 96px total)
+      setBodyWidth(el.clientWidth - 96)
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   // Trap focus / close on Escape
   useEffect(() => {
@@ -273,7 +290,7 @@ function PlaybookPDFModal({ playbook, onClose }: PlaybookPDFModalProps) {
                   <Page
                     key={`page_${i + 1}`}
                     pageNumber={i + 1}
-                    scale={renderScale}
+                    width={bodyWidth ? bodyWidth * renderScale : undefined}
                     className="pdf-modal__page"
                     renderTextLayer
                     renderAnnotationLayer

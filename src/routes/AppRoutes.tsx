@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { NotificationProvider } from '../context/NotificationContext'
 import { RootLayout } from '../layouts/RootLayout'
 
 const Home = lazy(() => import('../pages/Home'))
@@ -26,6 +27,7 @@ const WizardDetails = lazy(() => import('../pages/WizardDetails'))
 
 export function AppRoutes() {
   return (
+    <NotificationProvider>
     <Suspense
       fallback={
         <div className="grid min-h-screen place-items-center bg-navy-primary text-white">
@@ -60,5 +62,6 @@ export function AppRoutes() {
         </Route>
       </Routes>
     </Suspense>
+    </NotificationProvider>
   )
 }

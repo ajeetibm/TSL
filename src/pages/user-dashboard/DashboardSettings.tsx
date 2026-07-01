@@ -2,13 +2,18 @@ import {
   BadgeCheck,
   Building2,
   CalendarDays,
+  CheckCircle2,
   CreditCard,
   Download,
+  FileText,
   Landmark,
   Plus,
   Settings,
+  ShoppingCart,
   Smartphone,
+  Sparkles,
   WalletCards,
+  X,
   Zap,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -16,6 +21,52 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardSettings.css'
+
+const pricingComparisonPlans = [
+  {
+    title: 'Launchpad',
+    price: 'R499',
+    icon: FileText,
+    highlighted: true,
+    features: [
+      { label: '5 essential wizards', included: true },
+      { label: '3 runs per wizard/month', included: true },
+      { label: 'Basic email support', included: true },
+      { label: '6 months storage', included: true },
+      { label: 'No API access', included: false },
+      { label: 'No white-label', included: false },
+    ],
+  },
+  {
+    title: 'Operator',
+    price: 'R999',
+    icon: ShoppingCart,
+    popular: true,
+    features: [
+      { label: 'All 12 legal wizards', included: true },
+      { label: 'Unlimited runs', included: true },
+      { label: 'Priority support (24-48hr)', included: true },
+      { label: 'Unlimited storage', included: true },
+      { label: 'API access', included: true },
+      { label: 'No white-label', included: false },
+    ],
+  },
+  {
+    title: 'Boardroom',
+    price: 'R2,499',
+    icon: ShoppingCart,
+    features: [
+      { label: 'All 30 legal wizards', included: true },
+      { label: 'Unlimited runs', included: true },
+      { label: 'Dedicated support (SLA)', included: true },
+      { label: 'Unlimited storage', included: true },
+      { label: 'API access', included: true },
+      { label: 'White-label options', included: true },
+      { label: 'Custom workflows', included: true },
+      { label: 'Custom wizard development', included: true },
+    ],
+  },
+]
 
 const planStats = [
   { label: 'Wizard Runs', value: '12/month' },
@@ -62,6 +113,7 @@ const invoices = [
 
 export default function DashboardSettings() {
   const [activeTab, setActiveTab] = useState<'billing' | 'history'>('billing')
+  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
 
   setPageMetadata('Settings', 'Manage your account, billing, and notification preferences.')
 
@@ -135,7 +187,7 @@ export default function DashboardSettings() {
 
                     <div className="dashboard-settings__plan-actions">
                       <button type="button">Upgrade Plan</button>
-                      <button type="button">Compare Plans</button>
+                      <button type="button" onClick={() => setIsPricingModalOpen(true)}>Compare Plans</button>
                     </div>
                   </article>
                 </section>
@@ -264,6 +316,86 @@ export default function DashboardSettings() {
           </aside>
         </div>
       </main>
+        {isPricingModalOpen && (
+          <div
+            className="dashboard-settings__modal-backdrop"
+            role="presentation"
+            onClick={() => setIsPricingModalOpen(false)}
+          >
+            <section
+              className="dashboard-settings__pricing-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="settings-pricing-title"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                className="dashboard-settings__modal-close"
+                aria-label="Close pricing comparison"
+                onClick={() => setIsPricingModalOpen(false)}
+              >
+                <X size={20} />
+              </button>
+
+              <header className="dashboard-settings__modal-header">
+                <h2 id="settings-pricing-title">Pricing Comparison</h2>
+                <p>Compare the features and pricing of our different tiers to find the best fit for your needs.</p>
+              </header>
+
+              <div className="dashboard-settings__comparison-grid">
+                {pricingComparisonPlans.map(({ title, price, icon: Icon, highlighted, popular, features }) => (
+                  <article
+                    className={
+                      highlighted
+                        ? 'dashboard-settings__comparison-card dashboard-settings__comparison-card--highlighted'
+                        : 'dashboard-settings__comparison-card'
+                    }
+                    key={title}
+                  >
+                    {popular && (
+                      <span className="dashboard-settings__popular-badge">
+                        <Sparkles size={14} />
+                        Popular
+                      </span>
+                    )}
+                    <h3>
+                      <Icon size={20} />
+                      {title}
+                    </h3>
+                    <div className="dashboard-settings__comparison-price">
+                      <strong>{price}</strong>
+                      <span>/month</span>
+                    </div>
+                    <ul>
+                      {features.map((feature) => (
+                        <li
+                          className={
+                            feature.included
+                              ? 'dashboard-settings__comparison-feature'
+                              : 'dashboard-settings__comparison-feature dashboard-settings__comparison-feature--muted'
+                          }
+                          key={feature.label}
+                        >
+                          {feature.included ? <CheckCircle2 size={16} /> : <X size={16} />}
+                          {feature.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </article>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="dashboard-settings__modal-action"
+                onClick={() => setIsPricingModalOpen(false)}
+              >
+                Close
+              </button>
+            </section>
+          </div>
+        )}
     </DashboardShell>
   )
 }
