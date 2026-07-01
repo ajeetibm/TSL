@@ -1,15 +1,12 @@
 import {
   AlertTriangle,
+  ChevronDown,
   CircleX,
   Clock,
   DollarSign,
   Download,
   Search,
 } from 'lucide-react'
-
-const counselIconAssets = {
-  dropdown: 'http://localhost:3845/assets/8e02c2a9e2a915b2810831f4c9899ba7dced19b8.svg',
-}
 
 const adminInvoices = [
   { invoiceId: 'INV-2025-001', client: 'Acme Corp', plan: 'Operator', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
@@ -83,7 +80,7 @@ export default function BillingInvoices() {
           {['All Clients', 'All Plans', 'All Months'].map((filter) => (
             <button key={filter} type="button" className="admin-settings__invoice-filter">
               {filter}
-              <img src={counselIconAssets.dropdown} alt="" aria-hidden="true" />
+              <ChevronDown size={16} />
             </button>
           ))}
         </div>
