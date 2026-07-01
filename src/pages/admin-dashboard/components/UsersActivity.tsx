@@ -1,7 +1,22 @@
 import { Activity, Clock, FileText, Search, Shield, UsersRound } from 'lucide-react'
 import { useState } from 'react'
+import InviteSubAdminModal from './InviteSubAdminModal'
+import UserDetailsModal from './UserDetailsModal'
+import './UserDetailsModal.css'
 
-const adminUsers = [
+interface User {
+  name: string
+  email: string
+  plan: string
+  status: string
+  joinDate: string
+  company?: string
+  phone?: string
+  registrationNumber?: string
+  address?: string
+}
+
+const adminUsers: User[] = [
   { name: 'John Doe', email: 'john@example.com', plan: 'Operator', status: 'Active', joinDate: 'Jan 15, 2025' },
   { name: 'Sarah Smith', email: 'sarah@example.com', plan: 'Launchpad', status: 'Active', joinDate: 'Feb 20, 2025' },
   { name: 'Mike Johnson', email: 'mike@example.com', plan: 'Operator', status: 'Active', joinDate: 'Mar 10, 2025' },
@@ -49,6 +64,33 @@ type ManagementTab = 'users' | 'admins'
 
 export default function UsersActivity() {
   const [managementTab, setManagementTab] = useState<ManagementTab>('users')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+
+  const handleViewUser = (user: User) => {
+    setSelectedUser(user)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedUser(null)
+  }
+
+  const handleOpenInviteModal = () => {
+    setIsInviteModalOpen(true)
+  }
+
+  const handleCloseInviteModal = () => {
+    setIsInviteModalOpen(false)
+  }
+
+  const handleSendInvitation = (data: { fullName: string; email: string; message: string }) => {
+    console.log('Sending invitation:', data)
+    // TODO: Implement API call to send invitation
+    // For now, just log the data
+  }
 
   return (
     <section className="admin-users">
@@ -152,7 +194,7 @@ export default function UsersActivity() {
                 All Status
                 <span className="admin-users__select-arrow" aria-hidden="true" />
               </button>
-              <button type="button" className="admin-users__invite">
+              <button type="button" className="admin-users__invite" onClick={handleOpenInviteModal}>
                 Invite Sub Admin
               </button>
             </>
@@ -201,7 +243,7 @@ export default function UsersActivity() {
                     </td>
                     <td>{user.joinDate}</td>
                     <td>
-                      <button type="button" className="admin-users__view">
+                      <button type="button" className="admin-users__view" onClick={() => handleViewUser(user)}>
                         View
                       </button>
                     </td>
@@ -272,6 +314,20 @@ export default function UsersActivity() {
           )}
         </div>
       </div>
+
+      {selectedUser && (
+        <UserDetailsModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          user={selectedUser}
+        />
+      )}
+
+      <InviteSubAdminModal
+        isOpen={isInviteModalOpen}
+        onClose={handleCloseInviteModal}
+        onSendInvitation={handleSendInvitation}
+      />
     </section>
   )
 }

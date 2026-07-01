@@ -423,6 +423,28 @@
   background: #b8bdc2;
 }
 
+.admin-dashboard__chart-wrap {
+  position: relative;
+  margin: 28px 16px 0 0;
+  padding-left: 46px;
+}
+
+.admin-dashboard__chart-axis {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40px;
+  height: 286px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #6d6d6d;
+  font-size: 11px;
+  font-weight: 400;
+  text-align: right;
+  pointer-events: none;
+}
+
 .admin-dashboard__chart {
   position: relative;
   height: 286px;
@@ -432,7 +454,7 @@
   gap: 10px;
   border-bottom: 2px solid #bfc4c9;
   border-left: 2px solid #bfc4c9;
-  margin: 28px 16px 0 46px;
+  margin: 0;
   padding: 0 10px;
   background-image:
     linear-gradient(to top, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
@@ -793,6 +815,21 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
+}
+
+.admin-users__view:hover {
+  background: rgba(199, 154, 59, 0.1);
+  color: #a67f2f;
+}
+
+.admin-users__view:active {
+  transform: scale(0.98);
 }
 
 .admin-users__admin-stats {

@@ -37,7 +37,15 @@ import {
   IssuesManagement,
   Notifications,
   Security,
+  UsersActivity,
 } from './components'
+import {
+  getRevenueAxisTicks,
+  buildRevenueLinePoints,
+  formatRevenueAxisLabel,
+  getRevenuePlotHeight,
+} from './revenueChartUtils'
+import type { RevenueAxisConfig } from './revenueChartUtils'
 import './AdminDashboard.css'
 
 type AdminDashboardData = {
@@ -67,6 +75,7 @@ type AdminDashboardData = {
       bestMonth?: number
       growthRate?: string
     }
+    axis?: RevenueAxisConfig
   }
 }
 
@@ -206,21 +215,6 @@ const defaultAdminProfile: AdminProfileForm = {
   jobTitle: 'Platform Administrator',
 }
 
-const defaultRevenue = [
-  { month: 'Jan', actual: 29000, target: 30000 },
-  { month: 'Feb', actual: 32000, target: 30000 },
-  { month: 'Mar', actual: 30000, target: 31000 },
-  { month: 'Apr', actual: 35500, target: 32000 },
-  { month: 'May', actual: 39000, target: 35000 },
-  { month: 'Jun', actual: 42000, target: 38000 },
-  { month: 'Jul', actual: 40500, target: 39000 },
-  { month: 'Aug', actual: 44500, target: 42000 },
-  { month: 'Sep', actual: 47000, target: 45000 },
-  { month: 'Oct', actual: 45000, target: 46000 },
-  { month: 'Nov', actual: 50500, target: 48000 },
-  { month: 'Dec', actual: 52400, target: 50000 },
-]
-
 function formatCurrency(value = 0) {
   return `R${Math.round(value).toLocaleString('en-ZA')}`
 }
@@ -281,14 +275,11 @@ export default function AdminDashboard() {
     }
   }, [])
 
-  const revenueMonths = useMemo(() => {
-    const apiMonths = dashboardData?.revenueChart?.months ?? []
-    const merged = defaultRevenue.map((fallback) => {
-      const apiValue = apiMonths.find((item) => item.month.toLowerCase() === fallback.month.toLowerCase())
-      return apiValue ?? fallback
-    })
-    return merged
-  }, [dashboardData])
+  const revenueMonths = useMemo(
+    () => dashboardData?.revenueChart?.months ?? [],
+    [dashboardData],
+  )
+  const revenueAxis = dashboardData?.revenueChart?.axis
 
   const counselRequests = useMemo(() => {
     const requests = dashboardData?.recentCounselRequests
@@ -317,14 +308,7 @@ export default function AdminDashboard() {
     ...wizard,
     percent: [92, 85, 88, 79, 91][index] ?? 82,
   }))
-  const revenueLinePoints = revenueMonths
-    .map((item, index) => {
-      const x = revenueMonths.length <= 1 ? 0 : (index / (revenueMonths.length - 1)) * 100
-      const plottedHeight = Math.max(26, item.actual / 220)
-      const y = 100 - (Math.min(plottedHeight, 250) / 286) * 100
-      return `${x},${y}`
-    })
-    .join(' ')
+  const revenueLinePoints = buildRevenueLinePoints(revenueMonths, revenueAxis)
 
   const signOut = () => {
     clearAuthSession()
@@ -672,230 +656,7 @@ export default function AdminDashboard() {
             </div>
           </section>
         ) : activeNav === 'users' ? (
-          <section className="admin-users">
-            <div className="admin-users__stats" aria-label="User activity summary">
-              <article className="admin-users__stat">
-                <span>
-                  <Activity size={24} />
-                </span>
-                <div>
-                  <strong>2,847</strong>
-                  <h2>Actions Today</h2>
-                  <p>+12% vs yesterday</p>
-                </div>
-              </article>
-              <article className="admin-users__stat">
-                <span>
-                  <UsersRound size={24} />
-                </span>
-                <div>
-                  <strong>234</strong>
-                  <h2>Active Users Now</h2>
-                  <p>8.2% of total</p>
-                </div>
-              </article>
-              <article className="admin-users__stat">
-                <span>
-                  <FileText size={24} />
-                </span>
-                <div>
-                  <strong>87</strong>
-                  <h2>{managementTab === 'admins' ? 'Wizards Started' : 'Workflows Started'}</h2>
-                  <p>today</p>
-                </div>
-              </article>
-            </div>
-
-            <div className="admin-users__tabs" aria-label="Management tabs">
-              <button
-                type="button"
-                className={managementTab === 'users' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
-                onClick={() => setManagementTab('users')}
-              >
-                User Management
-              </button>
-              <button
-                type="button"
-                className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
-                onClick={() => setManagementTab('admins')}
-              >
-                Admin Management
-              </button>
-            </div>
-
-            {managementTab === 'admins' && (
-              <div className="admin-users__admin-stats" aria-label="Admin management summary">
-                <article className="admin-users__admin-stat">
-                  <span>
-                    <Shield size={24} />
-                  </span>
-                  <div>
-                    <strong>2</strong>
-                    <p>Active Admins</p>
-                  </div>
-                </article>
-                <article className="admin-users__admin-stat admin-users__admin-stat--muted">
-                  <span>
-                    <Clock size={24} />
-                  </span>
-                  <div>
-                    <strong>2</strong>
-                    <p>Pending Invites</p>
-                  </div>
-                </article>
-              </div>
-            )}
-
-            <div className="admin-users__table-card">
-              <div className={managementTab === 'admins' ? 'admin-users__filters admin-users__filters--admin' : 'admin-users__filters'}>
-                <label className="admin-users__search">
-                  <Search size={17} />
-                  <input type="search" placeholder="Search users..." />
-                </label>
-                {managementTab === 'users' ? (
-                  <>
-                    <button type="button" className="admin-users__filter-button">
-                      All Roles
-                      <span className="admin-users__select-arrow" aria-hidden="true" />
-                    </button>
-                    <button type="button" className="admin-users__filter-button">
-                      All Plans
-                      <span className="admin-users__select-arrow" aria-hidden="true" />
-                    </button>
-                    <button type="button" className="admin-users__filter-button">
-                      All Status
-                      <span className="admin-users__select-arrow" aria-hidden="true" />
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button type="button" className="admin-users__filter-button">
-                      All Status
-                      <span className="admin-users__select-arrow" aria-hidden="true" />
-                    </button>
-                    <button type="button" className="admin-users__invite">
-                      Invite Sub Admin
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <div className="admin-users__table-wrap">
-                {managementTab === 'users' ? (
-                  <table className="admin-users__table">
-                    <thead>
-                      <tr>
-                        <th aria-label="Select all">
-                          <span className="admin-users__checkbox" />
-                        </th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Plan</th>
-                        <th>Status</th>
-                        <th>Join Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {adminUsers.map((user) => (
-                        <tr key={user.email}>
-                          <td>
-                            <span className="admin-users__checkbox" />
-                          </td>
-                          <td>
-                            <strong>{user.name}</strong>
-                          </td>
-                          <td>{user.email}</td>
-                          <td>
-                            <span className="admin-users__pill admin-users__pill--plan">{user.plan}</span>
-                          </td>
-                          <td>
-                            <span
-                              className={
-                                user.status === 'Active'
-                                  ? 'admin-users__pill admin-users__pill--active'
-                                  : 'admin-users__pill admin-users__pill--inactive'
-                              }
-                            >
-                              {user.status}
-                            </span>
-                          </td>
-                          <td>{user.joinDate}</td>
-                          <td>
-                            <button type="button" className="admin-users__view">
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <table className="admin-users__table admin-users__table--admins">
-                    <thead>
-                      <tr>
-                        <th aria-label="Select all">
-                          <span className="admin-users__checkbox" />
-                        </th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Status</th>
-                        <th>Last Active</th>
-                        <th>Invited Date</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {adminManagementRows.map((admin) => (
-                        <tr key={admin.email}>
-                          <td>
-                            <span className="admin-users__checkbox" />
-                          </td>
-                          <td>
-                            <strong>{admin.name}</strong>
-                          </td>
-                          <td>{admin.email}</td>
-                          <td>
-                            <span
-                              className={
-                                admin.status === 'Active'
-                                  ? 'admin-users__pill admin-users__pill--active'
-                                  : 'admin-users__pill admin-users__pill--pending'
-                              }
-                            >
-                              {admin.status}
-                            </span>
-                          </td>
-                          <td className={admin.status === 'Pending' ? 'admin-users__last-active--pending' : undefined}>
-                            {admin.lastActive}
-                          </td>
-                          <td>{admin.invitedDate}</td>
-                          <td>
-                            <span className="admin-users__action-group">
-                              <button type="button" className="admin-users__edit">
-                                Edit
-                              </button>
-                              <span className="admin-users__divider" aria-hidden="true" />
-                              <button
-                                type="button"
-                                className={
-                                  admin.secondaryAction === 'Revoke'
-                                    ? 'admin-users__danger'
-                                    : 'admin-users__muted-action'
-                                }
-                              >
-                                {admin.secondaryAction}
-                              </button>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </section>
+          <UsersActivity />
         ) : activeNav === 'settings' ? (
           <section className="admin-settings">
             <div className="admin-settings__tabs" aria-label="Settings tabs">
@@ -1043,7 +804,7 @@ export default function AdminDashboard() {
             <div className="admin-dashboard__section-heading">
               <div>
                 <h2>Monthly Revenue Trend</h2>
-                <p>Year 2025 Performance vs Target</p>
+                <p>Year {dashboardData?.revenueChart?.year ?? new Date().getFullYear()} Performance vs Target</p>
               </div>
               <div className="admin-dashboard__legend">
                 <span><i /> Actual Revenue</span>
@@ -1051,35 +812,43 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
-              <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                <polyline points={revenueLinePoints} />
-              </svg>
-              {revenueMonths.map((item) => (
-                <div className="admin-dashboard__bar-group" key={item.month}>
-                  <span style={{ height: `${Math.max(26, item.target / 220)}px` }} />
-                  <i style={{ bottom: `${Math.max(26, item.actual / 220)}px` }} />
-                  <b>{item.month}</b>
-                </div>
-              ))}
+            <div className="admin-dashboard__chart-wrap">
+              <div className="admin-dashboard__chart-axis" aria-hidden="true">
+                {getRevenueAxisTicks(revenueAxis).map((value) => (
+                  <span key={value}>{formatRevenueAxisLabel(value, revenueAxis)}</span>
+                ))}
+              </div>
+
+              <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
+                <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  <polyline points={revenueLinePoints} />
+                </svg>
+                {revenueMonths.map((item) => (
+                  <div className="admin-dashboard__bar-group" key={item.month}>
+                    <span style={{ height: `${getRevenuePlotHeight(item.target, revenueAxis)}px` }} />
+                    <i style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }} />
+                    <b>{item.month}</b>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="admin-dashboard__revenue-summary">
               <div>
                 <span>Total Revenue</span>
-                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.totalRevenue ?? 504100)}</strong>
+                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.totalRevenue ?? 0)}</strong>
               </div>
               <div>
                 <span>Avg Monthly</span>
-                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.avgMonthly ?? 42008)}</strong>
+                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.avgMonthly ?? 0)}</strong>
               </div>
               <div>
                 <span>Best Month</span>
-                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.bestMonth ?? 52400)}</strong>
+                <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.bestMonth ?? 0)}</strong>
               </div>
               <div>
                 <span>Growth Rate</span>
-                <strong className="admin-dashboard__growth">+{dashboardData?.revenueChart?.summary?.growthRate ?? '48.7%'}</strong>
+                <strong className="admin-dashboard__growth">+{dashboardData?.revenueChart?.summary?.growthRate ?? '0%'}</strong>
               </div>
             </div>
           </section>
