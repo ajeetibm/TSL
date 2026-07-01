@@ -7,16 +7,42 @@ import {
   Download,
   Search,
 } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 const adminInvoices = [
-  { invoiceId: 'INV-2025-001', client: 'Acme Corp', plan: 'Operator', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
-  { invoiceId: 'INV-2025-002', client: 'TechStart Ltd', plan: 'Launchpad', issueDate: 'Jan 2, 2026', dueDate: 'Jan 16, 2026' },
-  { invoiceId: 'INV-2025-003', client: 'Digital Co', plan: 'Operator', issueDate: 'Dec 25, 2025', dueDate: 'Jan 8, 2026' },
-  { invoiceId: 'INV-2024-004', client: 'Cloud Systems', plan: 'Boardroom', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026' },
-  { invoiceId: 'INV-2024-005', client: 'Smart Solutions', plan: 'Operator', issueDate: 'Dec 20, 2025', dueDate: 'Jan 3, 2026' },
+  { invoiceId: 'INV-2025-001', client: 'Acme Corp', plan: 'Operator', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026', month: 'Jan' },
+  { invoiceId: 'INV-2025-002', client: 'TechStart Ltd', plan: 'Launchpad', issueDate: 'Jan 2, 2026', dueDate: 'Jan 16, 2026', month: 'Jan' },
+  { invoiceId: 'INV-2025-003', client: 'Digital Co', plan: 'Operator', issueDate: 'Dec 25, 2025', dueDate: 'Jan 8, 2026', month: 'Dec' },
+  { invoiceId: 'INV-2024-004', client: 'Cloud Systems', plan: 'Boardroom', issueDate: 'Jan 3, 2026', dueDate: 'Jan 17, 2026', month: 'Jan' },
+  { invoiceId: 'INV-2024-005', client: 'Smart Solutions', plan: 'Operator', issueDate: 'Dec 20, 2025', dueDate: 'Jan 3, 2026', month: 'Dec' },
 ]
 
 export default function BillingInvoices() {
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedClient, setSelectedClient] = useState('All Clients')
+  const [selectedPlan, setSelectedPlan] = useState('All Plans')
+  const [selectedMonth, setSelectedMonth] = useState('All Months')
+
+  // Get unique values for filters
+  const clients = useMemo(() => ['All Clients', ...Array.from(new Set(adminInvoices.map(inv => inv.client)))], [])
+  const plans = useMemo(() => ['All Plans', ...Array.from(new Set(adminInvoices.map(inv => inv.plan)))], [])
+  const months = useMemo(() => ['All Months', ...Array.from(new Set(adminInvoices.map(inv => inv.month)))], [])
+
+  // Filter invoices based on search and filters
+  const filteredInvoices = useMemo(() => {
+    return adminInvoices.filter(invoice => {
+      const matchesSearch = searchQuery === '' ||
+        invoice.invoiceId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        invoice.plan.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesClient = selectedClient === 'All Clients' || invoice.client === selectedClient
+      const matchesPlan = selectedPlan === 'All Plans' || invoice.plan === selectedPlan
+      const matchesMonth = selectedMonth === 'All Months' || invoice.month === selectedMonth
+
+      return matchesSearch && matchesClient && matchesPlan && matchesMonth
+    })
+  }, [searchQuery, selectedClient, selectedPlan, selectedMonth])
   return (
     <div className="admin-settings__billing">
       <section className="admin-settings__billing-alert">
@@ -75,14 +101,41 @@ export default function BillingInvoices() {
         <div className="admin-settings__invoice-filters">
           <label className="admin-settings__invoice-search">
             <Search size={18} />
-            <input type="search" placeholder="Search users..." aria-label="Search invoices" />
+            <input
+              type="search"
+              placeholder="Search users..."
+              aria-label="Search invoices"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </label>
-          {['All Clients', 'All Plans', 'All Months'].map((filter) => (
-            <button key={filter} type="button" className="admin-settings__invoice-filter">
-              {filter}
-              <ChevronDown size={16} />
-            </button>
-          ))}
+          <select
+            className="admin-settings__invoice-filter"
+            value={selectedClient}
+            onChange={(e) => setSelectedClient(e.target.value)}
+          >
+            {clients.map((client) => (
+              <option key={client} value={client}>{client}</option>
+            ))}
+          </select>
+          <select
+            className="admin-settings__invoice-filter"
+            value={selectedPlan}
+            onChange={(e) => setSelectedPlan(e.target.value)}
+          >
+            {plans.map((plan) => (
+              <option key={plan} value={plan}>{plan}</option>
+            ))}
+          </select>
+          <select
+            className="admin-settings__invoice-filter"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+          >
+            {months.map((month) => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
         </div>
 
         <div className="admin-settings__invoice-table-wrap">
@@ -98,7 +151,7 @@ export default function BillingInvoices() {
               </tr>
             </thead>
             <tbody>
-              {adminInvoices.map((invoice) => (
+              {filteredInvoices.length > 0 ? filteredInvoices.map((invoice) => (
                 <tr key={invoice.invoiceId}>
                   <td>{invoice.invoiceId}</td>
                   <td>{invoice.client}</td>
@@ -115,7 +168,13 @@ export default function BillingInvoices() {
                     </span>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                    No invoices found matching your filters
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
