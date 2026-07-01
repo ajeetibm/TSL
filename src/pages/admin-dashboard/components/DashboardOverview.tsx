@@ -1,4 +1,10 @@
 import { BriefcaseBusiness, DollarSign, UsersRound } from 'lucide-react'
+import {
+  getRevenueAxisTicks,
+  formatRevenueAxisLabel,
+  getRevenuePlotHeight,
+} from '../revenueChartUtils'
+import type { RevenueAxisConfig } from '../revenueChartUtils'
 
 type DashboardData = {
   kpis?: {
@@ -23,6 +29,7 @@ type DashboardData = {
       bestMonth?: number
       growthRate?: string
     }
+    axis?: RevenueAxisConfig
   }
 }
 
@@ -38,6 +45,7 @@ type DashboardOverviewProps = {
   topWizards: Array<{ name: string; completions: number; percent: number }>
   revenueMonths: Array<{ month: string; actual: number; target: number }>
   revenueLinePoints: string
+  revenueAxis?: RevenueAxisConfig | null
   quickActions: Array<{ label: string; icon: any }>
   onOpenPreviewModal: (request: any) => void
   formatCurrency: (value?: number) => string
@@ -51,6 +59,7 @@ export default function DashboardOverview({
   topWizards,
   revenueMonths,
   revenueLinePoints,
+  revenueAxis,
   quickActions,
   onOpenPreviewModal,
   formatCurrency,
@@ -160,7 +169,7 @@ export default function DashboardOverview({
           <div className="admin-dashboard__section-heading">
             <div>
               <h2>Monthly Revenue Trend</h2>
-              <p>Year 2025 Performance vs Target</p>
+              <p>Year {dashboardData?.revenueChart?.year ?? new Date().getFullYear()} Performance vs Target</p>
             </div>
             <div className="admin-dashboard__legend">
               <span>
@@ -172,36 +181,44 @@ export default function DashboardOverview({
             </div>
           </div>
 
-          <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
-            <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              <polyline points={revenueLinePoints} />
-            </svg>
-            {revenueMonths.map((item) => (
-              <div className="admin-dashboard__bar-group" key={item.month}>
-                <span style={{ height: `${Math.max(26, item.target / 220)}px` }} />
-                <i style={{ bottom: `${Math.max(26, item.actual / 220)}px` }} />
-                <b>{item.month}</b>
-              </div>
-            ))}
+          <div className="admin-dashboard__chart-wrap">
+            <div className="admin-dashboard__chart-axis" aria-hidden="true">
+              {getRevenueAxisTicks(revenueAxis).map((value) => (
+                <span key={value}>{formatRevenueAxisLabel(value, revenueAxis)}</span>
+              ))}
+            </div>
+
+            <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
+              <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                <polyline points={revenueLinePoints} />
+              </svg>
+              {revenueMonths.map((item) => (
+                <div className="admin-dashboard__bar-group" key={item.month}>
+                  <span style={{ height: `${getRevenuePlotHeight(item.target, revenueAxis)}px` }} />
+                  <i style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }} />
+                  <b>{item.month}</b>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="admin-dashboard__revenue-summary">
             <div>
               <span>Total Revenue</span>
-              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.totalRevenue ?? 504100)}</strong>
+              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.totalRevenue ?? 0)}</strong>
             </div>
             <div>
               <span>Avg Monthly</span>
-              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.avgMonthly ?? 42008)}</strong>
+              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.avgMonthly ?? 0)}</strong>
             </div>
             <div>
               <span>Best Month</span>
-              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.bestMonth ?? 52400)}</strong>
+              <strong>{formatCompactCurrency(dashboardData?.revenueChart?.summary?.bestMonth ?? 0)}</strong>
             </div>
             <div>
               <span>Growth Rate</span>
               <strong className="admin-dashboard__growth">
-                +{dashboardData?.revenueChart?.summary?.growthRate ?? '48.7%'}
+                +{dashboardData?.revenueChart?.summary?.growthRate ?? '0%'}
               </strong>
             </div>
           </div>

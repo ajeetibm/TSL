@@ -3,6 +3,7 @@ import { ApproachSection } from '../components/home/ApproachSection'
 import { ContactSection } from '../components/home/ContactSection'
 import { FeaturesSection } from '../components/home/FeaturesSection'
 import { HeroSection } from '../components/home/HeroSection'
+import { MetricsSection } from '../components/home/MetricsSection'
 import { PricingSection } from '../components/home/PricingSection'
 import { ServicesSection } from '../components/home/ServicesSection'
 import { StatisticsSection } from '../components/home/StatisticsSection'
@@ -19,6 +20,7 @@ export default function Home() {
     <>
       <HeroSection />
       <AboutSection />
+      <MetricsSection />
       <ApproachSection />
       <FeaturesSection />
       <ServicesSection />

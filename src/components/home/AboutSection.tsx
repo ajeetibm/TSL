@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Award, CircleDot, Shield, Target } from 'lucide-react'
-import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 
 const cards = [
@@ -32,7 +32,7 @@ export function AboutSection() {
           className="text-center"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={revealUp}
         >
           <span className="inline-flex min-h-[38px] items-center gap-[12px] rounded-full border border-[rgba(13,27,42,0.1)] bg-[rgba(13,27,42,0.05)] px-[16px] text-[14px] font-semibold leading-5 text-[#333] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -62,7 +62,7 @@ export function AboutSection() {
           className="mx-auto mt-[96px] grid max-w-[1120px] gap-[76px] md:grid-cols-3"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={staggerContainer}
         >
           {cards.map(({ title, description, icon: Icon }) => (

@@ -2,11 +2,10 @@
   position: fixed;
   inset: 0 0 auto;
   z-index: 100;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(30, 41, 59, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  background: #25323F;
   color: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(24px);
   transition: background-color 300ms ease, border-color 300ms ease, color 300ms ease;
 }
 
@@ -23,6 +22,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding-inline: 1rem;
 }
 
 .navbar__brand {
@@ -32,15 +32,15 @@
 }
 
 .navbar__brand-mark {
-  color: #d4a437;
+  color: #C79A3B;
   font-size: 1.5rem;
-  font-weight: 900;
-  letter-spacing: 0.025em;
+  font-weight: 800;
+  letter-spacing: 0.05em;
   transition: color 300ms ease;
 }
 
 .navbar--light .navbar__brand-mark {
-  color: #0f172a;
+  color: #C79A3B;
 }
 
 .navbar__brand-name {
@@ -63,14 +63,14 @@
 .navbar__link {
   position: relative;
   padding-block: 1.75rem;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 400;
   transition: color 160ms ease;
 }
 
 .navbar__link:hover {
-  color: #cbd5e1;
+  color: #ffffff;
 }
 
 .navbar--light .navbar__link {
@@ -82,12 +82,12 @@
 }
 
 .navbar__link--active {
-  color: #d4a437;
-  font-weight: 600;
+  color: #C79A3B;
+  font-weight: 700;
 }
 
 .navbar--light .navbar__link--active {
-  color: #d4a437;
+  color: #C79A3B;
 }
 
 .navbar__link--active::after {
@@ -96,20 +96,20 @@
   bottom: 1.25rem;
   left: 0;
   height: 2px;
-  border-radius: 9999px;
-  background: #d4a437;
+  border-radius: 0;
+  background: #C79A3B;
   content: "";
 }
 
 .navbar__signin {
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 0.875rem;
   font-weight: 700;
   transition: color 160ms ease;
 }
 
 .navbar__signin:hover {
-  color: #d4a437;
+  color: #ffffff;
 }
 
 .navbar--light .navbar__signin {
@@ -121,19 +121,19 @@
 }
 
 .navbar__cta {
-  border-radius: 9999px;
-  background: #d4a437;
-  padding: 0.75rem 2rem;
+  border-radius: 24px;
+  background: #C79A3B;
+  padding: 1rem 3rem;
   color: #ffffff;
   font-size: 0.875rem;
   font-weight: 700;
-  box-shadow: 0 10px 15px rgba(212, 164, 55, 0.2);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
   transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
 }
 
 .navbar__cta:hover {
-  background: #e3c36f;
-  color: #07192b;
+  background: #E3C36F;
+  color: #0D1B2A;
   transform: translateY(-2px);
 }
 
@@ -334,7 +334,8 @@
 
 @media (min-width: 1024px) {
   .navbar__inner {
-    min-height: 5rem;
+    min-height: 4.0625rem;
+    padding-inline: 4rem;
   }
 
   .navbar__links {

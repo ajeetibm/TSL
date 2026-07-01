@@ -1,6 +1,6 @@
 import { BookOpen, Users, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 
 const approachColumns = [
@@ -38,7 +38,7 @@ export function ApproachSection() {
           className="text-center"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={revealUp}
         >
           <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-[#E6D9BD] bg-white px-[38px] text-[16px] font-bold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -53,7 +53,7 @@ export function ApproachSection() {
           className="mx-auto mt-[86px] grid max-w-[1180px] gap-[82px] md:grid-cols-3"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={staggerContainer}
         >
           {approachColumns.map(({ title, subtitle, paragraph, bullets, icon: Icon }) => (

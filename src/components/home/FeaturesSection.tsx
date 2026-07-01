@@ -1,6 +1,6 @@
 import { FileText, Users, BookOpen, Check, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 import { SectionHeader } from './SectionHeader'
 
@@ -80,62 +80,57 @@ export function FeaturesSection() {
           className="mt-14 grid gap-8 lg:grid-cols-3"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={staggerContainer}
         >
           {features.map((feature, index) => {
             const Icon = feature.icon
-            const railClass =
+            const borderColor =
               index === 1
-                ? 'bg-gold shadow-[10px_0_18px_rgba(212,168,71,0.25)]'
+                ? 'border-gold'
                 : index === 2
-                  ? 'bg-[#303030] shadow-[10px_0_18px_rgba(48,48,48,0.18)]'
-                  : 'bg-navy-primary shadow-[10px_0_18px_rgba(10,25,48,0.18)]'
+                  ? 'border-[#303030]'
+                  : 'border-navy-primary'
 
             return (
               <motion.article
                 key={feature.title}
                 variants={revealUp}
                 whileHover={{ y: -8 }}
-                className="relative flex min-h-[520px] flex-col overflow-hidden rounded-[2rem] bg-white p-7 pl-10 shadow-[0_24px_50px_rgba(10,25,48,0.14)] transition md:p-9 md:pl-12"
+                className={`relative flex min-h-[540px] flex-col overflow-visible rounded-[32px] border-l-[10px] ${borderColor} bg-white p-8 shadow-[0_20px_40px_rgba(10,25,48,0.12)] transition md:p-10`}
               >
-                <span
-                  className={`absolute bottom-4 left-0 top-4 w-3 rounded-l-[2rem] ${railClass}`}
-                  aria-hidden="true"
-                />
-
-                <div className="flex items-start gap-6">
+                <div className="flex items-start gap-5">
                   <span
-                    className={`grid h-16 w-16 flex-shrink-0 place-items-center rounded-full ${feature.iconBg} text-white shadow-xl`}
+                    className={`grid h-14 w-14 flex-shrink-0 place-items-center rounded-full ${feature.iconBg} text-white shadow-lg`}
                   >
-                    <Icon size={30} strokeWidth={2.2} />
+                    <Icon size={26} strokeWidth={2.2} />
                   </span>
                   <div>
-                    <h3 className="text-2xl font-black uppercase leading-tight tracking-tight text-navy-primary">
+                    <h3 className="text-xl font-black uppercase leading-tight tracking-tight text-[#0D1B2A]">
                       {feature.title}
                     </h3>
-                    <p className="mt-2 text-base font-bold text-slate-600">{feature.subtitle}</p>
+                    <p className="mt-1 text-sm font-semibold text-[#5F6368]">{feature.subtitle}</p>
                   </div>
                 </div>
 
-                <p className="mt-8 text-lg leading-8 text-slate-600">{feature.description}</p>
+                <p className="mt-6 text-[15px] leading-[1.6] text-[#4F4F4F]">{feature.description}</p>
 
-                <ul className="mt-7 grid gap-4">
+                <ul className="mt-6 grid gap-3">
                   {feature.items.map((item) => (
-                    <li key={item} className="flex items-center gap-5">
+                    <li key={item} className="flex items-center gap-4">
                       <span
-                        className={`grid h-9 w-9 flex-shrink-0 place-items-center rounded-full ${feature.checkBg} text-white shadow-sm`}
+                        className={`grid h-8 w-8 flex-shrink-0 place-items-center rounded-full ${feature.checkBg} text-white`}
                       >
-                        <Check size={17} strokeWidth={3} />
+                        <Check size={16} strokeWidth={2.5} />
                       </span>
-                      <span className="text-base leading-6 text-slate-600">{item}</span>
+                      <span className="text-[14px] leading-[1.4] text-[#4F4F4F]">{item}</span>
                     </li>
                   ))}
                 </ul>
 
                 <a
                   href={feature.buttonHref}
-                  className={`mt-auto inline-flex min-h-14 w-full items-center justify-center gap-3 rounded-full px-6 text-lg font-black transition-all ${feature.buttonStyle} shadow-xl hover:scale-[1.02]`}
+                  className={`mt-auto inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-bold transition-all ${feature.buttonStyle} shadow-lg hover:scale-[1.02]`}
                 >
                   {feature.buttonText}
                   <span aria-hidden="true">→</span>

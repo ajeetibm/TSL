@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, AlertCircle, AlertTriangle, CheckCircle2, ChevronDown } from 'lucide-react'
+import { Search, AlertCircle, AlertTriangle, CheckCircle, ChevronDown } from 'lucide-react'
 import IssueDetailsModal from './IssueDetailsModal'
 
 const adminIssues = [
@@ -129,7 +129,7 @@ export default function IssuesManagement() {
         </article>
         <article className="admin-issues__stat admin-issues__stat--warning">
           <span>
-            <CheckCircle2 size={28} />
+            <CheckCircle size={28} />
           </span>
           <div>
             <strong>8</strong>

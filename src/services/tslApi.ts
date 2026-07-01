@@ -120,6 +120,7 @@ export function clearAuthSession() {
   localStorage.removeItem('tsl-authenticated')
   localStorage.removeItem('tsl-auth-token')
   localStorage.removeItem('tsl-auth-user')
+  localStorage.removeItem('tsl-dashboard-payment-complete')
 }
 
 export const authApi = {

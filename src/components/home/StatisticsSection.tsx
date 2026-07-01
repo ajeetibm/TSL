@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock, Target, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 
 const metrics = [
@@ -38,7 +38,7 @@ export function StatisticsSection() {
           className="text-center"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={revealUp}
         >
           <h2 className="text-[34px] font-bold leading-[1.14] tracking-[0] text-white md:text-[42px]">
@@ -53,7 +53,7 @@ export function StatisticsSection() {
           className="mt-[52px] grid gap-7 md:grid-cols-2 xl:grid-cols-4"
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
+          viewport={defaultViewport}
           variants={staggerContainer}
         >
           {metrics.map(({ icon: Icon, value, label, tag }) => (

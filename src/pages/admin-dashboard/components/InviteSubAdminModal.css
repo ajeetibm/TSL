@@ -1,0 +1,221 @@
+.invite-admin-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.invite-admin-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  max-width: 488px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.invite-admin-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 32px 24px;
+  background: linear-gradient(135deg, #0d1f33 0%, #16334f 100%);
+  color: #ffffff;
+  border-radius: 16px 16px 0 0;
+}
+
+.invite-admin-modal__header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.invite-admin-modal__header p {
+  margin: 6px 0 0;
+  color: #d4a948;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.invite-admin-modal__close {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.invite-admin-modal__close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.invite-admin-modal__content {
+  padding: 32px;
+  display: grid;
+  gap: 24px;
+}
+
+.invite-admin-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invite-admin-modal__field label {
+  color: #0b1c2f;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.invite-admin-modal__input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.invite-admin-modal__input-wrapper svg {
+  position: absolute;
+  left: 16px;
+  color: #999999;
+  pointer-events: none;
+}
+
+.invite-admin-modal__field input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0 16px 0 48px;
+  background: #ffffff;
+  color: #0b1c2f;
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.invite-admin-modal__field input:focus {
+  outline: none;
+  border-color: #d4a948;
+  background: #ffffff;
+}
+
+.invite-admin-modal__field input::placeholder {
+  color: #999999;
+}
+
+.invite-admin-modal__field textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: #ffffff;
+  color: #0b1c2f;
+  font-size: 15px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.invite-admin-modal__field textarea:focus {
+  outline: none;
+  border-color: #d4a948;
+  background: #ffffff;
+}
+
+.invite-admin-modal__field textarea::placeholder {
+  color: #999999;
+}
+
+.invite-admin-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.invite-admin-modal__button {
+  min-height: 48px;
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.invite-admin-modal__button--secondary {
+  background: #ffffff;
+  color: #5a5a5a;
+  border: 1px solid #e0e0e0;
+}
+
+.invite-admin-modal__button--secondary:hover {
+  background: #f8f8f8;
+  border-color: #d0d0d0;
+}
+
+.invite-admin-modal__button--primary {
+  background: linear-gradient(135deg, #d4a948 0%, #e0b64f 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(212, 169, 72, 0.3);
+}
+
+.invite-admin-modal__button--primary:hover {
+  box-shadow: 0 6px 16px rgba(212, 169, 72, 0.4);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .invite-admin-modal {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .invite-admin-modal__header {
+    border-radius: 0;
+    padding: 24px 20px 20px;
+  }
+
+  .invite-admin-modal__header h2 {
+    font-size: 20px;
+  }
+
+  .invite-admin-modal__content {
+    padding: 24px 20px;
+  }
+
+  .invite-admin-modal__footer {
+    flex-direction: column-reverse;
+  }
+
+  .invite-admin-modal__button {
+    width: 100%;
+  }
+}
+
+/* Made with Bob */
