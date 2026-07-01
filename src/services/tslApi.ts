@@ -209,5 +209,5 @@ export const counselPortalApi = {
 }
 
 export const playbookApi = {
-  list: () => request<PlaybooksData>('/api/v1/playbooks', 'GET', undefined, false),
+  playBookList: () => request<PlaybooksData>('/api/v1/playbooks', 'GET', undefined, false),
 }

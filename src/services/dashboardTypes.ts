@@ -112,31 +112,22 @@ export interface PaymentMethod {
 }
 
 export interface PlaybookItem {
-  playbookId: string
   title: string
-  steps: number
-  estimatedTime: number
+  steps: string
+  time: string
   description: string
-  relatedWizards?: string[]
-  accessTier?: string
-  consumesRuns?: boolean
+  wizards?: string[]
+  pdfUrl?: string
 }
 
-export interface PlaybookCategory {
-  category: string
-  playbooks: PlaybookItem[]
-}
-
-export interface PlaybookSample {
+export interface PlaybookSection {
   title: string
-  fileSize: string
-  pages: number
-  downloadUrl: string
+  icon: string
+  cards: PlaybookItem[]
 }
 
 export interface PlaybooksData {
-  categories: PlaybookCategory[]
-  samples: PlaybookSample[]
+  playbookSections: PlaybookSection[]
 }
 
 export function capitalizePlan(plan?: string): string {
