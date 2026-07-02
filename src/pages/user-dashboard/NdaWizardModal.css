@@ -34,7 +34,7 @@
   color: #ffffff;
   font-family: Montserrat, 'Open Sans', sans-serif;
   font-size: 26px;
-  font-weight: 800;
+  font-weight: 700;
   margin-bottom: 24px;
 }
 
@@ -102,8 +102,8 @@
 }
 
 .nda-modal__step-dot--done {
-  background: #22c55e;
-  color: #ffffff;
+  background: #dcfce7;
+  color: #16a34a;
 }
 
 .nda-modal__step-label {
