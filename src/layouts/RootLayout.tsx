@@ -10,7 +10,7 @@ export function RootLayout() {
   const isFocusedAppFlow =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/counsel') ||
+    pathname.startsWith('/counsel/') ||
     pathname === '/wizard-details'
 
   useEffect(() => {

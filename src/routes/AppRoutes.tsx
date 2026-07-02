@@ -8,6 +8,8 @@ const About = lazy(() => import('../pages/About'))
 const Features = lazy(() => import('../pages/Features'))
 const Pricing = lazy(() => import('../pages/Pricing'))
 const Contact = lazy(() => import('../pages/Contact'))
+const Counsel = lazy(() => import('../pages/Counsel'))
+const PlaybooksInsights = lazy(() => import('../pages/PlaybooksInsights'))
 const AdminDashboard = lazy(() => import('../pages/admin-dashboard/AdminDashboard'))
 const CounselLogin = lazy(() => import('../pages/counsel-portal/CounselLogin'))
 const CounselEmailSent = lazy(() => import('../pages/counsel-portal/CounselEmailSent'))
@@ -42,6 +44,8 @@ export function AppRoutes() {
           <Route path="features" element={<Features />} />
           <Route path="pricing" element={<Pricing />} />
           <Route path="contact" element={<Contact />} />
+          <Route path="counsel" element={<Counsel />} />
+          <Route path="playbooks-insights" element={<PlaybooksInsights />} />
           <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="counsel/login" element={<CounselLogin />} />
           <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />

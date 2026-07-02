@@ -4,6 +4,7 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { counselApi } from '../../services/tslApi'
 import type { CounselCredits, CounselRequest } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
+import CounselCreditsModal from './CounselCreditsModal'
 import './Dashboard.css'
 import './DashboardCounsel.css'
 
@@ -130,6 +131,7 @@ export default function DashboardCounsel() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false)
   const submitInFlightRef = useRef(false)
 
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
@@ -300,7 +302,7 @@ export default function DashboardCounsel() {
                 basic credit allocation, top-up pricing applies at {topUpRate} per additional credit hour.
               </p>
             </div>
-            <button type="button">
+            <button type="button" onClick={() => setIsCreditsModalOpen(true)}>
               Top Up Credits
               <ChevronRight size={16} />
             </button>
@@ -444,6 +446,12 @@ export default function DashboardCounsel() {
             )}
           </section>
         </div>
+
+        <CounselCreditsModal
+          isOpen={isCreditsModalOpen}
+          onClose={() => setIsCreditsModalOpen(false)}
+          currentPlan={credits.plan}
+        />
       </main>
     </DashboardShell>
   )
