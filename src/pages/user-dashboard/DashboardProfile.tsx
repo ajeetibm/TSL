@@ -1,6 +1,8 @@
 import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import type { AuthUser } from '../../services/tslApi'
+import { profileApi } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardProfile.css'
@@ -16,16 +18,35 @@ interface CompanyFormData {
   contactPerson: string
 }
 
+const PROFILE_STORAGE_KEY = 'tsl-profile-data'
+
+function loadSavedProfile(): CompanyFormData {
+  const saved = localStorage.getItem(PROFILE_STORAGE_KEY)
+  if (saved) {
+    try {
+      return JSON.parse(saved) as CompanyFormData
+    } catch {
+      // fall through to defaults below
+    }
+  }
+  const authRaw = localStorage.getItem('tsl-auth-user')
+  const auth: AuthUser | null = authRaw ? (JSON.parse(authRaw) as AuthUser) : null
+  return {
+    companyName: auth?.fullName ?? '',
+    registrationNumber: '',
+    email: auth?.email ?? '',
+    phone: '',
+    physicalAddress: '',
+    contactPerson: '',
+  }
+}
+
 export default function DashboardProfile() {
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
-  const [formData, setFormData] = useState<CompanyFormData>({
-    companyName: 'FibreGents (Pty) Ltd',
-    registrationNumber: '2025/123456/07',
-    email: 'info@fibregents.co.za',
-    phone: '+27 11 234 5678',
-    physicalAddress: '123 Main Street, Sandton, Johannesburg, 2196',
-    contactPerson: 'Thabo Molefe',
-  })
+  const [savedData, setSavedData] = useState<CompanyFormData>(loadSavedProfile)
+  const [formData, setFormData] = useState<CompanyFormData>(loadSavedProfile)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   setPageMetadata('Profile', 'Manage your account settings and preferences.')
 
@@ -33,19 +54,22 @@ export default function DashboardProfile() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSave = () => {
-    console.log('Saving profile data:', formData)
+  const handleSave = async () => {
+    setIsSaving(true)
+    setSaveError(null)
+    const result = await profileApi.update({ ...formData })
+    setIsSaving(false)
+    if (!result.success) {
+      setSaveError(result.message ?? 'Failed to save profile.')
+      return
+    }
+    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(formData))
+    setSavedData(formData)
   }
 
   const handleCancel = () => {
-    setFormData({
-      companyName: 'FibreGents (Pty) Ltd',
-      registrationNumber: '2025/123456/07',
-      email: 'info@fibregents.co.za',
-      phone: '+27 11 234 5678',
-      physicalAddress: '123 Main Street, Sandton, Johannesburg, 2196',
-      contactPerson: 'Thabo Molefe',
-    })
+    setFormData(savedData)
+    setSaveError(null)
   }
 
   return (
@@ -102,13 +126,20 @@ export default function DashboardProfile() {
             <form className="dashboard-profile__card">
               <div className="dashboard-profile__summary">
                 <div className="dashboard-profile__avatar">
-                  <span>FG</span>
+                  <span>
+                    {formData.companyName
+                      .split(' ')
+                      .slice(0, 2)
+                      .map((w) => w[0])
+                      .join('')
+                      .toUpperCase() || '??'}
+                  </span>
                   <button type="button" aria-label="Change profile photo">
                     <Camera size={18} />
                   </button>
                 </div>
                 <div className="dashboard-profile__identity">
-                  <h2>FibreGents (Pty) Ltd</h2>
+                  <h2>{formData.companyName || 'Your Company'}</h2>
                   <p>Member since December 2025</p>
                   <div>
                     <span>Operator Plan1</span>
@@ -190,12 +221,17 @@ export default function DashboardProfile() {
                 </label>
               </div>
 
+              {saveError && (
+                <p className="dashboard-profile__save-error" role="alert">
+                  {saveError}
+                </p>
+              )}
               <div className="dashboard-profile__actions">
-                <button type="button" onClick={handleCancel}>
+                <button type="button" onClick={handleCancel} disabled={isSaving}>
                   Cancel
                 </button>
-                <button type="submit" onClick={handleSave}>
-                  Save Changes
+                <button type="submit" onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
             </form>

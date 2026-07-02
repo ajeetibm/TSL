@@ -42,9 +42,9 @@ function FeatureValue({ value, exclusive }: { value: boolean | string; exclusive
 
 export function PricingSection() {
   return (
-    <section className="bg-white pb-20 pt-14 lg:pb-28 lg:pt-16" id="pricing">
+    <section className="bg-white pt-14 lg:pt-16 pb-20 lg:pb-28" id="pricing">
+      {/* Section header — scrolls normally off screen */}
       <Container>
-        {/* Header */}
         <div className="flex flex-col items-center gap-16 mb-14">
           <div className="flex flex-col items-center gap-8">
             <div className="inline-flex items-center gap-4 px-7 py-2.5 bg-[rgba(13,27,42,0.05)] border-2 border-[rgba(13,27,42,0.1)] rounded-full shadow-sm">
@@ -63,25 +63,33 @@ export function PricingSection() {
             </p>
           </div>
         </div>
+      </Container>
 
-        {/* Pricing Table Container */}
-        <motion.div
-          className="overflow-hidden rounded-3xl border-2 border-[#E5E7EB] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
-          initial="hidden"
-          whileInView="visible"
-          viewport={defaultViewport}
-          variants={staggerContainer}
-        >
-          {/* Sticky Pricing Cards Header */}
-          <div className="relative z-10 bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)]">
-            <div className="grid grid-cols-1 md:grid-cols-3">
-              {/* Pricing Cards */}
+      {/* 
+        Drawer layout:
+        - Sticky cards row pins to top of viewport (below navbar)
+        - Comparison table is in normal flow directly after, so it scrolls UP
+          and disappears underneath the sticky cards — like a drawer closing
+        - The outer wrapper uses overflow-hidden to clip the table as it slides under
+      */}
+      <Container>
+        <div className="relative">
+
+          {/* ── Non-sticky top strip: tagline bar + icon — scrolls away normally ── */}
+          <div className="rounded-t-3xl overflow-hidden border-2 border-b-0 border-[#E5E7EB] bg-white">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3"
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              variants={staggerContainer}
+            >
               {pricingPlans.map((plan, index) => (
                 <motion.div
                   key={plan.name}
                   variants={revealUp}
                   className={cn(
-                    'relative flex flex-col items-center gap-5 px-8 pt-0 pb-10 border-b md:border-b-0',
+                    'relative flex flex-col items-center gap-4 px-8 pt-0 pb-6',
                     index < 2 && 'md:border-r border-[#E5E7EB]',
                     plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
                   )}
@@ -110,7 +118,30 @@ export function PricingSection() {
                   )}>
                     <Info size={20} className={plan.highlight ? 'text-white' : 'text-[#4A5565]'} />
                   </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
 
+          {/* ── Sticky lid: from plan names downward — pins when plan names reach top ── */}
+          <div className="sticky top-16 lg:top-20 z-20 overflow-hidden border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15),0_2px_4px_-2px_rgba(0,0,0,0.1)]">
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-3"
+              initial="hidden"
+              whileInView="visible"
+              viewport={defaultViewport}
+              variants={staggerContainer}
+            >
+              {pricingPlans.map((plan, index) => (
+                <motion.div
+                  key={plan.name}
+                  variants={revealUp}
+                  className={cn(
+                    'relative flex flex-col items-center gap-5 px-8 pt-6 pb-10 border-b md:border-b-0',
+                    index < 2 && 'md:border-r border-[#E5E7EB]',
+                    plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
+                  )}
+                >
                   {/* Plan Name & Runs */}
                   <div className="flex flex-col items-center gap-1">
                     <h3 className="text-lg font-bold text-[#0D1B2A] font-display">{plan.name}</h3>
@@ -142,8 +173,8 @@ export function PricingSection() {
                   {/* Playbooks Badge */}
                   <div className={cn(
                     "flex flex-col items-center gap-2 w-full max-w-[240px] px-3 py-3 rounded-2xl border-2",
-                    plan.highlight 
-                      ? "bg-[rgba(199,154,59,0.1)] border-gold" 
+                    plan.highlight
+                      ? "bg-[rgba(199,154,59,0.1)] border-gold"
                       : "bg-[#F9FAFB] border-[#E5E7EB]"
                   )}>
                     <span className="text-xs font-bold text-[#333333]">{plan.features[1]}</span>
@@ -153,11 +184,12 @@ export function PricingSection() {
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
 
-          {/* Scrollable Feature Comparison Sections */}
-          <div className="bg-white">
+          {/* ── Comparison table — scrolls up and disappears under the sticky lid ── */}
+          <div className="rounded-b-3xl border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden">
+
             {/* Company Registration */}
             <div className="border-t-2 border-[#E5E7EB]">
               <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
@@ -331,8 +363,9 @@ export function PricingSection() {
                 </button>
               </div>
             </div>
+
           </div>
-        </motion.div>
+        </div>
       </Container>
     </section>
   )
