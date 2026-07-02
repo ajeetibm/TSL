@@ -7,12 +7,14 @@ import {
   CheckCircle2,
   ChevronRight,
   CreditCard,
+  Crown,
   FileCheck2,
   FileText,
   HandCoins,
   Minus,
   Play,
   Plus,
+  Rocket,
   Scale,
   Shield,
   ShieldCheck,
@@ -25,7 +27,7 @@ import {
   Zap,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
@@ -83,6 +85,66 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   },
 }
 
+type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
+
+const plans: Record<PlanKey, {
+  title: string
+  price: string
+  description: string
+  icon: LucideIcon
+  includes: string[]
+  includesLabel: string
+}> = {
+  Launchpad: {
+    title: 'Launchpad Plan',
+    price: 'R299',
+    description: 'Perfect for startups and individuals with essential legal needs',
+    icon: Rocket,
+    includesLabel: "What's Included in Launchpad:",
+    includes: [
+      'Access to 4 legal wizards',
+      '5 wizard runs per month',
+      'Standard support (48-72h response)',
+      '1GB document storage',
+      'PDF export',
+    ],
+  },
+  Operator: {
+    title: 'Operator Plan',
+    price: 'R999',
+    description: 'For growing businesses with ongoing legal needs',
+    icon: Building2,
+    includesLabel: "What's Included in Operator:",
+    includes: [
+      'Access to all 12 legal wizards',
+      'Unlimited wizard runs',
+      'Priority support (24-48h response)',
+      'Unlimited document storage',
+      'API access for integrations',
+    ],
+  },
+  Boardroom: {
+    title: 'Boardroom Plan',
+    price: 'R2,499',
+    description: 'Enterprise-grade legal coverage for large organisations',
+    icon: Crown,
+    includesLabel: "What's Included in Boardroom:",
+    includes: [
+      'All 30 legal wizards',
+      'Unlimited wizard runs',
+      'Dedicated support (SLA)',
+      'Unlimited document storage',
+      'API access + white-label options',
+    ],
+  },
+}
+
+function getPlanFromCount(count: number): PlanKey {
+  if (count >= 1 && count <= 4) return 'Launchpad'
+  if (count >= 5 && count <= 30) return 'Operator'
+  return 'Boardroom'
+}
+
 const planFeatures = ['Unlimited runs', 'Priority processing', 'Advanced customisation', 'Bulk operations']
 
 const pricingComparisonPlans = [
@@ -129,14 +191,6 @@ const pricingComparisonPlans = [
       { label: 'Custom wizard development', included: true },
     ],
   },
-]
-
-const operatorIncludes = [
-  'All 30 legal wizards',
-  'Unlimited wizard runs',
-  'Priority support (24-48hr response)',
-  'Unlimited document storage',
-  'API access for integrations',
 ]
 
 const includedItems = [
@@ -199,6 +253,7 @@ export default function DashboardWizardDetails() {
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+  const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
     const selectedFromState = locationState?.selectedWizards
@@ -252,6 +307,12 @@ export default function DashboardWizardDetails() {
 
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
+
+  useEffect(() => {
+    if (totalWizards > 0) {
+      setActivePlan(getPlanFromCount(totalWizards))
+    }
+  }, [totalWizards])
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
   const handlePaymentMethodSelect = () => {
@@ -595,63 +656,74 @@ export default function DashboardWizardDetails() {
                 <h2>Pricing for This Wizard</h2>
               </div>
               <div className="dashboard-wizard-details__tabs" aria-label="Pricing plans">
-                <button type="button">
-                  <Sparkles size={13} />
-                  Launchpad
-                </button>
-                <button type="button">
-                  <ShieldCheck size={13} />
-                  Operator
-                </button>
-                <button type="button" className="dashboard-wizard-details__tab-active">
-                  <Scale size={13} />
-                  Boardroom
-                </button>
+                {(['Launchpad', 'Operator', 'Boardroom'] as PlanKey[]).map((plan) => {
+                  const PlanIcon = plans[plan].icon
+                  return (
+                    <button
+                      key={plan}
+                      type="button"
+                      className={activePlan === plan ? 'dashboard-wizard-details__tab-active' : undefined}
+                      onClick={() => setActivePlan(plan)}
+                    >
+                      <PlanIcon size={13} />
+                      {plan}
+                    </button>
+                  )
+                })}
               </div>
             </div>
 
-            <div className="dashboard-wizard-details__plan-card">
-              <div className="dashboard-wizard-details__plan-summary">
-                <div>
-                  <h3>Boardroom Plan</h3>
-                  <p>For growing businesses with ongoing legal needs</p>
+            {(() => {
+              const plan = plans[activePlan]
+              const PlanIcon = plan.icon
+              return (
+                <div className="dashboard-wizard-details__plan-card">
+                  <div className="dashboard-wizard-details__plan-summary">
+                    <div>
+                      <h3>
+                        <PlanIcon size={16} />
+                        {plan.title}
+                      </h3>
+                      <p>{plan.description}</p>
+                    </div>
+                    <div className="dashboard-wizard-details__price">
+                      <strong>{plan.price}</strong>
+                      <span>/month</span>
+                    </div>
+                  </div>
+
+                  <h4>Sample text for now</h4>
+                  <div className="dashboard-wizard-details__feature-grid">
+                    {planFeatures.map((feature) => (
+                      <span key={feature}>
+                        <CheckCircle2 size={18} />
+                        {feature}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="dashboard-wizard-details__operator">
+                    <h5>{plan.includesLabel}</h5>
+                    <ul>
+                      {plan.includes.map((item) => (
+                        <li key={item}>
+                          <Check size={17} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="dashboard-wizard-details__pricing-footer">
+                    <p>Want to see all features and pricing tiers?</p>
+                    <button type="button" onClick={() => setIsPricingModalOpen(true)}>
+                      View complete pricing comparison
+                      <ChevronRight size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="dashboard-wizard-details__price">
-                  <strong>R2,499</strong>
-                  <span>/month</span>
-                </div>
-              </div>
-
-              <h4>Sample text for now</h4>
-              <div className="dashboard-wizard-details__feature-grid">
-                {planFeatures.map((feature) => (
-                  <span key={feature}>
-                    <CheckCircle2 size={18} />
-                    {feature}
-                  </span>
-                ))}
-              </div>
-
-              <div className="dashboard-wizard-details__operator">
-                <h5>What's Included in Operator:</h5>
-                <ul>
-                  {operatorIncludes.map((item) => (
-                    <li key={item}>
-                      <Check size={17} />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="dashboard-wizard-details__pricing-footer">
-                <p>Want to see all features and pricing tiers?</p>
-                <button type="button" onClick={() => setIsPricingModalOpen(true)}>
-                  View complete pricing comparison
-                  <ChevronRight size={14} />
-                </button>
-              </div>
-            </div>
+              )
+            })()}
           </section>
 
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__included">
