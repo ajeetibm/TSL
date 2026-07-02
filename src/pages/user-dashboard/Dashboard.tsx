@@ -5,6 +5,7 @@ import {
   Calendar,
   CheckCircle2,
   ChevronRight,
+  CircleCheckBig,
   Download,
   FileText,
   Folder,
@@ -38,7 +39,7 @@ const landingPlanBenefits = [
 ]
 
 const paidPlanBenefits = [
-  '30 wizard runs per month',
+  '12 wizard runs per month',
   'Access to all legal wizards',
   'Priority support',
   'Legal counsel credits',
@@ -187,8 +188,8 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<DashboardTab>('new')
   const [isPaidDashboard, setIsPaidDashboard] = useState(hasPaymentCompleted)
+  const [activeTab, setActiveTab] = useState<DashboardTab>(hasPaymentCompleted ? 'inProgress' : 'new')
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
 
   setPageMetadata(
@@ -224,7 +225,7 @@ export default function Dashboard() {
   const user = dashboardData?.user
   const landingRunsRemaining = user?.runsRemaining ?? 5
   const paidRunsRemaining = user?.runsRemaining ?? 9
-  const paidRunsTotal = user?.runsTotal && user.runsTotal > 12 ? user.runsTotal : 30
+  const paidRunsTotal = user?.runsTotal ?? 12
   const paidRunsUsed = user?.runsUsed ?? 3
   const inProgressItems = dashboardData?.inProgress?.length ? dashboardData.inProgress : fallbackInProgress
   const completedItems = dashboardData?.completed?.length ? dashboardData.completed : fallbackCompleted
@@ -407,7 +408,7 @@ export default function Dashboard() {
 
         <div className="user-dashboard__plan-card user-dashboard__plan-card--paid">
           <h3>
-            Your <span>Boardroom Plan</span> Includes:
+            Your <span>Operator Plan</span> Includes:
           </h3>
           <ul>
             {paidPlanBenefits.map((benefit) => (
@@ -461,22 +462,13 @@ export default function Dashboard() {
               <div className="user-dashboard__stat-date">Jan 1</div>
               <div className="user-dashboard__stat-year">2026</div>
               <div className="user-dashboard__stat-billing">Next Billing</div>
-              <div className="user-dashboard__stat-plan">Boardroom Plan - R2,499</div>
+              <div className="user-dashboard__stat-plan">Operator Plan - R999</div>
             </div>
           </article>
         </section>
 
         <section className="user-dashboard__workflow-panel">
           <div className="user-dashboard__tabs" role="tablist" aria-label="Dashboard workflow status">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeTab === 'new'}
-              className={activeTab === 'new' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'}
-              onClick={() => setActiveTab('new')}
-            >
-              New
-            </button>
             <button
               type="button"
               role="tab"
@@ -500,38 +492,6 @@ export default function Dashboard() {
               Completed
             </button>
           </div>
-
-          {activeTab === 'new' && (
-            <div className="user-dashboard__wizard-list" role="tabpanel">
-              {newWizards.map((wizard) => (
-                <article className="user-dashboard__new-wizard-card" key={wizard.id}>
-                  <div className="user-dashboard__new-wizard-copy">
-                    <h3>
-                      <Info size={16} />
-                      {wizard.title}
-                    </h3>
-                    <p>
-                      <strong>Note:</strong> {wizard.note}
-                    </p>
-                  </div>
-                  <div className="user-dashboard__new-wizard-meta">
-                    <span>Wizards</span>
-                    <strong>
-                      {wizard.wizards} {wizard.paidItems}
-                    </strong>
-                  </div>
-                  <button
-                    type="button"
-                    className="user-dashboard__new-wizard-button"
-                    onClick={() => setIsNdaModalOpen(true)}
-                  >
-                    <Play size={16} />
-                    Start
-                  </button>
-                </article>
-              ))}
-            </div>
-          )}
 
           {activeTab === 'inProgress' && (
             <div className="user-dashboard__progress-grid" role="tabpanel">
@@ -571,7 +531,7 @@ export default function Dashboard() {
               {completedItems.map((workflow) => (
                 <article className="user-dashboard__completed-card" key={workflow.workflowId}>
                   <span className="user-dashboard__completed-icon">
-                    <CheckCircle2 size={24} />
+                    <CircleCheckBig size={28} />
                   </span>
                   <div className="user-dashboard__completed-copy">
                     <h3>{workflow.wizardName}</h3>

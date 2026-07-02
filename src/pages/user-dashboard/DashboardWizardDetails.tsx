@@ -141,7 +141,7 @@ const plans: Record<PlanKey, {
 
 function getPlanFromCount(count: number): PlanKey {
   if (count >= 1 && count <= 4) return 'Launchpad'
-  if (count >= 5 && count <= 30) return 'Operator'
+  if (count >= 5 && count <= 13) return 'Operator'
   return 'Boardroom'
 }
 
