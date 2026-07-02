@@ -218,7 +218,7 @@ function PreviewParty({ title, name, reg, address }: { title: string; name: stri
 }
 
 /* ─── Main Modal ─────────────────────────────────────────── */
-export default function NdaWizardModal({ onClose }: { onClose: () => void }) {
+export default function NdaWizardModal({ onClose, onComplete }: { onClose: () => void; onComplete?: () => void }) {
   const [step, setStep] = useState<Step>(1)
   const [isPreview, setIsPreview] = useState(false)
   const [data, setData] = useState<NdaData>(empty)
@@ -459,7 +459,7 @@ export default function NdaWizardModal({ onClose }: { onClose: () => void }) {
           </span>
 
           {isPreview ? (
-            <button type="button" className="nda-modal__btn nda-modal__btn--generate" onClick={onClose}>
+            <button type="button" className="nda-modal__btn nda-modal__btn--generate" onClick={() => { onComplete?.(); onClose() }}>
               <Check size={15} />
               Generate NDA
             </button>

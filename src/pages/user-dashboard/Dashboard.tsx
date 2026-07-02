@@ -188,7 +188,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<DashboardTab>('new')
-  const [isPaidDashboard] = useState(hasPaymentCompleted)
+  const [isPaidDashboard, setIsPaidDashboard] = useState(hasPaymentCompleted)
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
 
   setPageMetadata(
@@ -380,7 +380,14 @@ export default function Dashboard() {
         </main>
 
         {isNdaModalOpen && (
-          <NdaWizardModal onClose={() => setIsNdaModalOpen(false)} />
+          <NdaWizardModal
+            onClose={() => setIsNdaModalOpen(false)}
+            onComplete={() => {
+              localStorage.setItem(DASHBOARD_PAYMENT_COMPLETE_KEY, 'true')
+              setIsPaidDashboard(true)
+              setIsNdaModalOpen(false)
+            }}
+          />
         )}
       </DashboardShell>
     )
@@ -592,7 +599,14 @@ export default function Dashboard() {
       </main>
 
       {isNdaModalOpen && (
-        <NdaWizardModal onClose={() => setIsNdaModalOpen(false)} />
+        <NdaWizardModal
+          onClose={() => setIsNdaModalOpen(false)}
+          onComplete={() => {
+            localStorage.setItem(DASHBOARD_PAYMENT_COMPLETE_KEY, 'true')
+            setIsPaidDashboard(true)
+            setIsNdaModalOpen(false)
+          }}
+        />
       )}
     </DashboardShell>
   )
