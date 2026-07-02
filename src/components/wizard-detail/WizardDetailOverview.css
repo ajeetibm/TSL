@@ -68,7 +68,7 @@
 .wizard-detail__panel-heading h2 {
   color: #0d1b2a;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 32px;
 }
 
@@ -132,7 +132,7 @@
 .wizard-detail__selected-card h3 {
   color: #0d1b2a;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 32px;
 }
 
@@ -220,28 +220,37 @@
   font-weight: 800;
 }
 
-.wizard-detail__pricing-tags {
+.wizard-detail__plan-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.wizard-detail__pricing-tags span,
-.wizard-detail__pricing-tags strong {
+.wizard-detail__plan-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border-radius: 9999px;
-  padding: 8px 12px;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.wizard-detail__pricing-tags span {
+  border: 2px solid #e5e5e5;
   background: #f4f4f4;
+  padding: 6px 14px;
   color: #666666;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.wizard-detail__pricing-tags strong {
+.wizard-detail__plan-tab--active {
+  border-color: #c79a3b;
   background: #c79a3b;
   color: #ffffff;
+}
+
+.wizard-detail__price-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .wizard-detail__price-card {
@@ -262,7 +271,7 @@
 .wizard-detail__price-header h3 {
   color: #0d1b2a;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .wizard-detail__price-header p,
@@ -294,7 +303,7 @@
 .wizard-detail__sample h4 {
   color: #0d1b2a;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .wizard-detail__sample-grid,
@@ -392,7 +401,7 @@
 .wizard-detail__step h3 {
   color: #0d1b2a;
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 28px;
 }
 

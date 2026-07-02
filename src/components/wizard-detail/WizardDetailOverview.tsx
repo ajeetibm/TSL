@@ -3,14 +3,77 @@ import {
   ArrowLeft,
   ChevronRight,
   ClipboardCheck,
+  Building2,
+  Crown,
   Minus,
   Plus,
+  Rocket,
   Star,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { wizards } from '../../data/wizards'
 import { loadWizardQuantities, saveWizardQuantities } from '../../utils/wizardCart'
 import './WizardDetailOverview.css'
+
+type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
+
+const plans: Record<PlanKey, {
+  title: string
+  price: string
+  description: string
+  icon: typeof Rocket
+  includes: string[]
+  includesLabel: string
+}> = {
+  Launchpad: {
+    title: 'Launchpad Plan',
+    price: 'R299',
+    description: 'Perfect for startups and individuals with essential legal needs',
+    icon: Rocket,
+    includesLabel: "What's Included in Launchpad:",
+    includes: [
+      'Access to 4 legal wizards',
+      '5 wizard runs per month',
+      'Standard support (48-72h response)',
+      '1GB document storage',
+      'PDF export',
+    ],
+  },
+  Operator: {
+    title: 'Operator Plan',
+    price: 'R999',
+    description: 'For growing businesses with ongoing legal needs',
+    icon: Building2,
+    includesLabel: "What's Included in Operator:",
+    includes: [
+      'Access to all 12 legal wizards',
+      'Unlimited wizard runs',
+      'Priority support (24-48h response)',
+      'Unlimited document storage',
+      'API access for integrations',
+    ],
+  },
+  Boardroom: {
+    title: 'Boardroom Plan',
+    price: 'R2,499',
+    description: 'Enterprise-grade legal coverage for large organisations',
+    icon: Crown,
+    includesLabel: "What's Included in Boardroom:",
+    includes: [
+      'All 30 legal wizards',
+      'Unlimited wizard runs',
+      'Dedicated support (SLA)',
+      'Unlimited document storage',
+      'API access + white-label options',
+    ],
+  },
+}
+
+function getPlanFromCount(totalCount: number): PlanKey {
+  if (totalCount >= 1 && totalCount <= 4) return 'Launchpad'
+  if (totalCount >= 5 && totalCount <= 30) return 'Operator'
+  return 'Boardroom'
+}
 
 const includedItems = [
   'SA-specific mutual or one-way NDA',
@@ -66,7 +129,18 @@ export function WizardDetailOverview() {
     [quantities],
   )
 
-  const selectedWizardLabel = `${selectedWizards.length} wizard${selectedWizards.length === 1 ? '' : 's'}`
+  const totalWizards = selectedWizards.reduce((sum, w) => sum + w.quantity, 0)
+  const autoPlan = totalWizards > 0 ? getPlanFromCount(totalWizards) : 'Operator'
+  const [activePlan, setActivePlan] = useState<PlanKey>(autoPlan)
+
+  // Keep active plan in sync whenever the total count changes
+  useEffect(() => {
+    if (totalWizards > 0) {
+      setActivePlan(getPlanFromCount(totalWizards))
+    }
+  }, [totalWizards])
+
+  const selectedWizardLabel = `${totalWizards} wizard${totalWizards === 1 ? '' : 's'}`
 
   useEffect(() => {
     saveWizardQuantities(quantities)
@@ -173,48 +247,67 @@ export function WizardDetailOverview() {
       <section className="wizard-detail__panel wizard-detail__panel--pricing">
         <div className="wizard-detail__panel-heading">
           <h2>Pricing for This Wizard</h2>
-          <div className="wizard-detail__pricing-tags">
-            <span>Launchpad</span>
-            <strong>Popular</strong>
-            <span>Best fit</span>
+          <div className="wizard-detail__plan-tabs">
+            {(['Launchpad', 'Operator', 'Boardroom'] as PlanKey[]).map((plan) => {
+              const PlanIcon = plans[plan].icon
+              return (
+                <button
+                  key={plan}
+                  type="button"
+                  className={`wizard-detail__plan-tab${activePlan === plan ? ' wizard-detail__plan-tab--active' : ''}`}
+                  onClick={() => setActivePlan(plan)}
+                >
+                  <PlanIcon size={14} />
+                  {plan}
+                </button>
+              )
+            })}
           </div>
         </div>
 
-        <div className="wizard-detail__price-card">
-          <div className="wizard-detail__price-header">
-            <div>
-              <h3>Operator Plan</h3>
-              <p>For growing businesses with ongoing legal needs</p>
-            </div>
-            <strong>
-              R999
-              <small>/month</small>
-            </strong>
-          </div>
+        {(() => {
+          const plan = plans[activePlan]
+          const PlanIcon = plan.icon
+          return (
+            <div className="wizard-detail__price-card">
+              <div className="wizard-detail__price-header">
+                <div>
+                  <h3>
+                    <PlanIcon size={18} />
+                    {plan.title}
+                  </h3>
+                  <p>{plan.description}</p>
+                </div>
+                <strong>
+                  {plan.price}
+                  <small>/month</small>
+                </strong>
+              </div>
 
-          <div className="wizard-detail__sample">
-            <h4>Sample text for now</h4>
-            <div className="wizard-detail__sample-grid">
-              <span>Unlimited runs</span>
-              <span>Priority processing</span>
-              <span>Advanced automation</span>
-              <span>Bulk operations</span>
+              <div className="wizard-detail__sample">
+                <h4>Sample text for now</h4>
+                <div className="wizard-detail__sample-grid">
+                  <span>Unlimited runs</span>
+                  <span>Priority processing</span>
+                  <span>Advanced customisation</span>
+                  <span>Bulk operations</span>
+                </div>
+                <div className="wizard-detail__included-box">
+                  <b>{plan.includesLabel}</b>
+                  <ul>
+                    {plan.includes.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             </div>
-            <div className="wizard-detail__included-box">
-              <b>What's Included in Operator:</b>
-              <ul>
-                <li>Access to all 12 legal wizards</li>
-                <li>Unlimited wizard runs</li>
-                <li>Priority support (24-48h response)</li>
-                <li>Unlimited document storage</li>
-                <li>API access for integrations</li>
-              </ul>
-            </div>
-          </div>
-        </div>
+          )
+        })()}
 
         <p className="wizard-detail__pricing-link">
-          Want to see all features and pricing tiers? <a href="/pricing">View complete pricing comparison</a>
+          Want to see all features and pricing tiers?{' '}
+          <a href="/pricing">View complete pricing comparison →</a>
         </p>
       </section>
 
