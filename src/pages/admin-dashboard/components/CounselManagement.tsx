@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Activity,
   Check,
@@ -102,6 +102,34 @@ export default function CounselManagement() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
+  
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedExpertise, setSelectedExpertise] = useState('All Expertise')
+  const [selectedStatus, setSelectedStatus] = useState('All Status')
+  
+  // Dropdown open states
+  const [isExpertiseDropdownOpen, setIsExpertiseDropdownOpen] = useState(false)
+  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false)
+  
+  // Refs for dropdown click outside detection
+  const expertiseDropdownRef = useRef<HTMLDivElement>(null)
+  const statusDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (expertiseDropdownRef.current && !expertiseDropdownRef.current.contains(event.target as Node)) {
+        setIsExpertiseDropdownOpen(false)
+      }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setIsStatusDropdownOpen(false)
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleViewProfile = (member: CounselMember) => {
     setSelectedCounsel(member)
@@ -121,6 +149,31 @@ export default function CounselManagement() {
     setCounselMembers((prev) => [...prev, newCounsel])
     setIsAddModalOpen(false)
   }
+
+  // Filter counsel members based on search and filters
+  const filteredCounselMembers = useMemo(() => {
+    return counselMembers.filter((member) => {
+      // Search filter
+      const matchesSearch =
+        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        member.expertise.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      // Expertise filter
+      const matchesExpertise = selectedExpertise === 'All Expertise' || member.expertise === selectedExpertise
+      
+      // Status filter
+      const matchesStatus = selectedStatus === 'All Status' || member.status === selectedStatus
+      
+      return matchesSearch && matchesExpertise && matchesStatus
+    })
+  }, [counselMembers, searchQuery, selectedExpertise, selectedStatus])
+
+  // Get unique expertise areas for filter dropdown
+  const uniqueExpertise = Array.from(new Set(counselMembers.map(member => member.expertise)))
+  
+  // Get unique statuses for filter dropdown
+  const uniqueStatuses = Array.from(new Set(counselMembers.map(member => member.status)))
 
   const availableCount = counselMembers.filter((m) => m.status === 'Available').length
   const notAvailableCount = counselMembers.filter((m) => m.status === 'Not Available').length
@@ -188,16 +241,149 @@ export default function CounselManagement() {
       <div className="admin-counsel__filters">
         <label className="admin-counsel__search">
           <Search size={16} />
-          <input type="search" placeholder="Search counsel..." />
+          <input
+            type="search"
+            placeholder="Search counsel..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </label>
-        <button type="button" className="admin-counsel__filter-button">
-          All Expertise
-          <ChevronDown size={16} />
-        </button>
-        <button type="button" className="admin-counsel__filter-button">
-          All Status
-          <ChevronDown size={16} />
-        </button>
+        
+        {/* All Expertise Dropdown */}
+        <div ref={expertiseDropdownRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            className="admin-counsel__filter-button"
+            onClick={() => setIsExpertiseDropdownOpen(!isExpertiseDropdownOpen)}
+          >
+            {selectedExpertise}
+            <ChevronDown size={16} />
+          </button>
+          {isExpertiseDropdownOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '4px',
+              background: '#ffffff',
+              border: '2px solid #e5e5e5',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+              overflow: 'hidden',
+              minWidth: '200px'
+            }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedExpertise('All Expertise')
+                  setIsExpertiseDropdownOpen(false)
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: selectedExpertise === 'All Expertise' ? '#f5f5f5' : 'transparent',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                All Expertise
+              </button>
+              {uniqueExpertise.map(expertise => (
+                <button
+                  key={expertise}
+                  type="button"
+                  onClick={() => {
+                    setSelectedExpertise(expertise)
+                    setIsExpertiseDropdownOpen(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: selectedExpertise === expertise ? '#f5f5f5' : 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {expertise}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* All Status Dropdown */}
+        <div ref={statusDropdownRef} style={{ position: 'relative' }}>
+          <button
+            type="button"
+            className="admin-counsel__filter-button"
+            onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
+          >
+            {selectedStatus}
+            <ChevronDown size={16} />
+          </button>
+          {isStatusDropdownOpen && (
+            <div style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              marginTop: '4px',
+              background: '#ffffff',
+              border: '2px solid #e5e5e5',
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              zIndex: 1000,
+              overflow: 'hidden'
+            }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedStatus('All Status')
+                  setIsStatusDropdownOpen(false)
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  border: 'none',
+                  background: selectedStatus === 'All Status' ? '#f5f5f5' : 'transparent',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  fontSize: '14px'
+                }}
+              >
+                All Status
+              </button>
+              {uniqueStatuses.map(status => (
+                <button
+                  key={status}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStatus(status)
+                    setIsStatusDropdownOpen(false)
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: 'none',
+                    background: selectedStatus === status ? '#f5f5f5' : 'transparent',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    fontSize: '14px'
+                  }}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        
         <button type="button" className="admin-counsel__add" onClick={() => setIsAddModalOpen(true)}>
           <Plus size={20} />
           Add Counsel
@@ -205,8 +391,18 @@ export default function CounselManagement() {
       </div>
 
       <div className="admin-counsel__grid">
-        {counselMembers.map((member) => (
-          <article className="admin-counsel__card" key={member.email}>
+        {filteredCounselMembers.length === 0 ? (
+          <div style={{
+            gridColumn: '1 / -1',
+            textAlign: 'center',
+            padding: '3rem',
+            color: '#666'
+          }}>
+            No counsel members found matching your filters
+          </div>
+        ) : (
+          filteredCounselMembers.map((member) => (
+            <article className="admin-counsel__card" key={member.email}>
             <div className="admin-counsel__card-header">
               <div className="admin-counsel__card-top">
                 <span>{member.initials}</span>
@@ -253,8 +449,9 @@ export default function CounselManagement() {
                 View Profile
               </button>
             </div>
-          </article>
-        ))}
+            </article>
+          ))
+        )}
       </div>
     </section>
     </>
