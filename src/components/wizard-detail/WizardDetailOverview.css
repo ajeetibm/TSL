@@ -329,15 +329,40 @@
   padding: 16px;
 }
 
-.wizard-detail__included-box ul,
+.wizard-detail__included-box ul {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+  padding: 0;
+  list-style: none;
+}
+
 .wizard-detail__panel--start ul {
   margin-top: 10px;
   padding-left: 20px;
 }
 
-.wizard-detail__included-box li,
+.wizard-detail__included-box li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #333333;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.wizard-detail__included-box li svg {
+  flex-shrink: 0;
+  color: #c79a3b;
+}
+
 .wizard-detail__panel--start li {
   list-style: disc;
+}
+
+.wizard-detail__plan-title-icon {
+  color: #c79a3b;
+  margin-bottom: 6px;
 }
 
 .wizard-detail__pricing-link {

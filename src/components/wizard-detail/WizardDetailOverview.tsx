@@ -272,10 +272,8 @@ export function WizardDetailOverview() {
             <div className="wizard-detail__price-card">
               <div className="wizard-detail__price-header">
                 <div>
-                  <h3>
-                    <PlanIcon size={18} />
-                    {plan.title}
-                  </h3>
+                  <PlanIcon size={24} className="wizard-detail__plan-title-icon" />
+                  <h3>{plan.title}</h3>
                   <p>{plan.description}</p>
                 </div>
                 <strong>
@@ -296,7 +294,10 @@ export function WizardDetailOverview() {
                   <b>{plan.includesLabel}</b>
                   <ul>
                     {plan.includes.map((item) => (
-                      <li key={item}>{item}</li>
+                      <li key={item}>
+                        <ChevronRight size={14} />
+                        {item}
+                      </li>
                     ))}
                   </ul>
                 </div>

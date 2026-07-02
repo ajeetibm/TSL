@@ -680,10 +680,8 @@ export default function DashboardWizardDetails() {
                 <div className="dashboard-wizard-details__plan-card">
                   <div className="dashboard-wizard-details__plan-summary">
                     <div>
-                      <h3>
-                        <PlanIcon size={16} />
-                        {plan.title}
-                      </h3>
+                      <PlanIcon size={24} className="dashboard-wizard-details__plan-title-icon" />
+                      <h3>{plan.title}</h3>
                       <p>{plan.description}</p>
                     </div>
                     <div className="dashboard-wizard-details__price">
@@ -707,7 +705,7 @@ export default function DashboardWizardDetails() {
                     <ul>
                       {plan.includes.map((item) => (
                         <li key={item}>
-                          <Check size={17} />
+                          <ChevronRight size={14} />
                           {item}
                         </li>
                       ))}
