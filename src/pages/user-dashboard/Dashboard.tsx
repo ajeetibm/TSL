@@ -23,6 +23,7 @@ import { formatDate, formatStatusLabel } from '../../services/dashboardTypes'
 import type { DashboardData } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { smeApi } from '../../services/tslApi'
+import NdaWizardModal from './NdaWizardModal'
 import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
@@ -188,6 +189,7 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<DashboardTab>('new')
   const [isPaidDashboard] = useState(hasPaymentCompleted)
+  const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
 
   setPageMetadata(
     'Dashboard',
@@ -320,7 +322,11 @@ export default function Dashboard() {
                         {wizard.wizards} {wizard.landingItems}
                       </strong>
                     </div>
-                    <button type="button" className="user-dashboard__new-wizard-button" onClick={browseWizards}>
+                    <button
+                      type="button"
+                      className="user-dashboard__new-wizard-button"
+                      onClick={() => setIsNdaModalOpen(true)}
+                    >
                       <Play size={16} />
                       Start
                     </button>
@@ -372,6 +378,10 @@ export default function Dashboard() {
             </aside>
           </div>
         </main>
+
+        {isNdaModalOpen && (
+          <NdaWizardModal onClose={() => setIsNdaModalOpen(false)} />
+        )}
       </DashboardShell>
     )
   }
@@ -503,7 +513,11 @@ export default function Dashboard() {
                       {wizard.wizards} {wizard.paidItems}
                     </strong>
                   </div>
-                  <button type="button" className="user-dashboard__new-wizard-button" onClick={browseWizards}>
+                  <button
+                    type="button"
+                    className="user-dashboard__new-wizard-button"
+                    onClick={() => setIsNdaModalOpen(true)}
+                  >
                     <Play size={16} />
                     Start
                   </button>
@@ -576,6 +590,10 @@ export default function Dashboard() {
           )}
         </section>
       </main>
+
+      {isNdaModalOpen && (
+        <NdaWizardModal onClose={() => setIsNdaModalOpen(false)} />
+      )}
     </DashboardShell>
   )
 }
