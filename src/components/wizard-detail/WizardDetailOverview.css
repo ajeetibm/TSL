@@ -269,6 +269,9 @@
 }
 
 .wizard-detail__price-header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: #0d1b2a;
   font-size: 20px;
   font-weight: 600;
@@ -362,7 +365,7 @@
 
 .wizard-detail__plan-title-icon {
   color: #c79a3b;
-  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .wizard-detail__pricing-link {

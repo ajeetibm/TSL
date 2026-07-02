@@ -680,8 +680,10 @@ export default function DashboardWizardDetails() {
                 <div className="dashboard-wizard-details__plan-card">
                   <div className="dashboard-wizard-details__plan-summary">
                     <div>
-                      <PlanIcon size={24} className="dashboard-wizard-details__plan-title-icon" />
-                      <h3>{plan.title}</h3>
+                      <h3>
+                        <PlanIcon size={20} className="dashboard-wizard-details__plan-title-icon" />
+                        {plan.title}
+                      </h3>
                       <p>{plan.description}</p>
                     </div>
                     <div className="dashboard-wizard-details__price">

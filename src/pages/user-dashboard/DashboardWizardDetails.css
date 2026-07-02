@@ -368,10 +368,13 @@
 
 .dashboard-wizard-details__plan-title-icon {
   color: #c79a3b;
-  margin-bottom: 6px;
+  flex-shrink: 0;
 }
 
 .dashboard-wizard-details__plan-summary h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
   color: #101828;
   font-family: var(--font-sans);

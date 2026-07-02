@@ -272,8 +272,10 @@ export function WizardDetailOverview() {
             <div className="wizard-detail__price-card">
               <div className="wizard-detail__price-header">
                 <div>
-                  <PlanIcon size={24} className="wizard-detail__plan-title-icon" />
-                  <h3>{plan.title}</h3>
+                  <h3>
+                    <PlanIcon size={20} className="wizard-detail__plan-title-icon" />
+                    {plan.title}
+                  </h3>
                   <p>{plan.description}</p>
                 </div>
                 <strong>
