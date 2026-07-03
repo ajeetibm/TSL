@@ -273,6 +273,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const pendingRequests = dashboardData?.pendingRequests?.length ? dashboardData.pendingRequests : fallbackPending
   const acceptedRequests = dashboardData?.acceptedRequests?.length ? dashboardData.acceptedRequests : fallbackAccepted
   const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
+  const chartYear = dashboardData?.earningsChart?.year ?? 2025
   const summary = dashboardData?.earningsChart?.summary ?? {
     totalEarnings: 32800,
     avgMonthly: 2700,
@@ -398,6 +399,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
           <DashboardView
             acceptedRequests={acceptedRequests}
             kpis={kpis}
+            chartYear={chartYear}
             months={months}
             pendingRequests={pendingRequests}
             setRequestStatus={setRequestStatus}
@@ -422,6 +424,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
 function DashboardView({
   acceptedRequests,
   kpis,
+  chartYear,
   months,
   pendingRequests,
   setRequestStatus,
@@ -429,6 +432,7 @@ function DashboardView({
 }: {
   acceptedRequests: NonNullable<DashboardData['acceptedRequests']>
   kpis: NonNullable<DashboardData['kpis']>
+  chartYear: number
   months: EarningsMonth[]
   pendingRequests: DashboardRequest[]
   setRequestStatus: (requestId: string, status: RequestStatus) => void
@@ -505,7 +509,7 @@ function DashboardView({
           ))}
         </section>
 
-        <EarningsChart months={months} summary={summary} />
+        <EarningsChart chartYear={chartYear} months={months} summary={summary} />
       </div>
     </div>
   )
@@ -527,13 +531,25 @@ function KpiCard({ caption, dark = false, icon, label, value }: { caption: strin
   )
 }
 
-function EarningsChart({ months, summary }: { months: EarningsMonth[]; summary: NonNullable<NonNullable<DashboardData['earningsChart']>['summary']> }) {
-  const maxValue = Math.max(...months.flatMap((item) => [item.earnings, item.target]), 4000)
+function EarningsChart({
+  chartYear,
+  months,
+  summary,
+}: {
+  chartYear: number
+  months: EarningsMonth[]
+  summary: NonNullable<NonNullable<DashboardData['earningsChart']>['summary']>
+}) {
+  const chartMax = 4000
+  const getPoint = (value: number, index: number) => {
+    const x = months.length <= 1 ? 50 : ((index + 0.5) / months.length) * 100
+    const y = 100 - (Math.min(value, chartMax) / chartMax) * 100
+    return { x, y }
+  }
   const linePoints = months
     .map((item, index) => {
-      const x = months.length <= 1 ? 0 : (index / (months.length - 1)) * 100
-      const y = 100 - (item.target / maxValue) * 100
-      return `${x},${y}`
+      const point = getPoint(item.target, index)
+      return `${point.x},${point.y}`
     })
     .join(' ')
 
@@ -541,7 +557,7 @@ function EarningsChart({ months, summary }: { months: EarningsMonth[]; summary: 
     <section className="counsel-dashboard__chart-card">
       <div>
         <h3>Monthly Earnings Trend</h3>
-        <p>Year 2025 - Your earnings performance</p>
+        <p>Year {chartYear} - Your earnings performance</p>
       </div>
 
       <div className="counsel-dashboard__chart">
@@ -554,16 +570,26 @@ function EarningsChart({ months, summary }: { months: EarningsMonth[]; summary: 
         </div>
         <svg className="counsel-dashboard__target-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <polyline points={linePoints} fill="none" stroke="#d19a2f" strokeDasharray="4 4" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
-          {months.map((item, index) => {
-            const x = months.length <= 1 ? 0 : (index / (months.length - 1)) * 100
-            const y = 100 - (item.target / maxValue) * 100
-            return <circle cx={x} cy={y} fill="#d19a2f" key={item.month} r="1.2" vectorEffect="non-scaling-stroke" />
-          })}
         </svg>
+        <div className="counsel-dashboard__target-stars" aria-hidden="true">
+          {months.map((item, index) => {
+            const point = getPoint(item.target, index)
+            return (
+              <svg
+                className="counsel-dashboard__target-star"
+                key={item.month}
+                style={{ left: `${point.x}%`, top: `${point.y}%` }}
+                viewBox="0 0 16 16"
+              >
+                <path d="M8 1.2 9.7 6.3 14.8 8 9.7 9.7 8 14.8 6.3 9.7 1.2 8 6.3 6.3Z" />
+              </svg>
+            )
+          })}
+        </div>
         <div className="counsel-dashboard__bars">
           {months.map((item) => (
             <div className="counsel-dashboard__bar-group" key={item.month}>
-              <span style={{ height: `${Math.max(18, (item.earnings / maxValue) * 100)}%` }} />
+              <span style={{ height: `${Math.min(100, (item.earnings / chartMax) * 100)}%` }} />
               <small>{item.month}</small>
             </div>
           ))}
