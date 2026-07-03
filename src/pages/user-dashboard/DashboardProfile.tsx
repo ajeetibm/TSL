@@ -1,5 +1,5 @@
 import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { profileApi } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
@@ -18,6 +18,33 @@ export default function DashboardProfile() {
   const [saveError, setSaveError] = useState<string | null>(null)
 
   setPageMetadata('Profile', 'Manage your account settings and preferences.')
+
+  useEffect(() => {
+    setFormData(profile)
+  }, [profile])
+
+  useEffect(() => {
+    if (!profile.email) return
+    let isCurrent = true
+
+    profileApi.get(profile.email).then((result) => {
+      if (!isCurrent || !result.success || !result.data) return
+      const data = result.data as Partial<UserProfile>
+      const nextProfile: UserProfile = {
+        companyName: data.companyName ?? '',
+        registrationNumber: data.registrationNumber ?? '',
+        email: data.email ?? profile.email,
+        phone: data.phone ?? '',
+        physicalAddress: data.physicalAddress ?? '',
+        contactPerson: data.contactPerson ?? '',
+      }
+      updateProfile(nextProfile)
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [profile.email, updateProfile])
 
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
