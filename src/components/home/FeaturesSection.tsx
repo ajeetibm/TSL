@@ -142,6 +142,13 @@ export function FeaturesSection() {
 
         <div className="mt-12 text-center">
           <p className="text-xl text-slate-600">Not sure which option is right for you?</p>
+          <a
+            href="/contact"
+            className="mt-6 inline-flex min-h-[60px] items-center gap-3 rounded-full bg-[#C9982A] px-12 text-base font-semibold text-white shadow-md transition-all hover:bg-[#b8881f] hover:scale-[1.02]"
+          >
+            Schedule a Free Consultation
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </Container>
     </section>

@@ -353,20 +353,19 @@
 }
 
 .counsel-dashboard__request-card {
-  height: 213px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  border-radius: 24px;
-  padding: 21px;
+  gap: 10px;
+  border-radius: 16px;
+  padding: 20px;
   background: #f5f5f5;
 }
 
 .counsel-dashboard__request-title {
-  min-height: 40px;
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .counsel-dashboard__request-title h4,
@@ -378,7 +377,8 @@
 }
 
 .counsel-dashboard__request-title h4 {
-  max-width: 190px;
+  max-width: 160px;
+  flex: 1;
 }
 
 .counsel-dashboard__request-title time {
@@ -419,11 +419,11 @@
 
 .counsel-dashboard__request-actions button,
 .counsel-requests__row-actions button {
-  min-height: 40px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   border: 0;
   border-radius: 999px;
   font-size: 14px;

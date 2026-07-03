@@ -1,7 +1,7 @@
 import { Check, Info, Briefcase, FileText, Shield, Users, TrendingUp, Minus } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { pricingPlans, pricingComparison } from '../../data/pricing'
-import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
+import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
 import { cn } from '../../utils/cn'
 import { Container } from '../layout/Container'
 import { SectionHeader } from './SectionHeader'
@@ -75,36 +75,39 @@ export function PricingSection() {
       <Container>
         <div className="relative">
 
-          {/* ── Non-sticky top strip: tagline bar + icon — scrolls away normally ── */}
+          {/* Master 4-col grid: col1=label/empty, cols2-4=plans */}
+
+          {/* ── Non-sticky top strip: tagline bar + icon ── */}
           <div className="rounded-t-3xl overflow-hidden border-2 border-b-0 border-[#E5E7EB] bg-white">
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-3"
-              initial="hidden"
-              whileInView="visible"
-              viewport={defaultViewport}
+              className="hidden md:grid md:grid-cols-4"
+              initial="visible"
+              animate="visible"
               variants={staggerContainer}
             >
+              {/* Empty label column */}
+              <div />
               {pricingPlans.map((plan, index) => (
                 <motion.div
                   key={plan.name}
                   variants={revealUp}
                   className={cn(
-                    'relative flex flex-col items-center gap-4 px-8 pt-0 pb-6',
-                    index < 2 && 'md:border-r border-[#E5E7EB]',
+                    'relative flex flex-col items-center gap-4 px-6 pt-0 pb-6',
+                    index < 2 && 'border-r border-[#E5E7EB]',
                     plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
                   )}
                 >
                   {/* Tagline */}
                   <div
                     className={cn(
-                      'h-8 flex items-center justify-center',
-                      plan.highlight ? 'w-[calc(100%+4rem)] bg-gold' : 'pt-2',
+                      'w-full flex items-center justify-center',
+                      plan.highlight ? 'bg-gold py-2' : 'pt-3 pb-0',
                     )}
                   >
                     <span
                       className={cn(
-                        'text-xs font-bold uppercase text-center',
-                        plan.highlight ? 'text-[#0D1B2A]' : 'text-[rgba(51,51,51,0.8)]',
+                        'text-xs font-bold uppercase tracking-wide text-center',
+                        plan.highlight ? 'text-[#0D1B2A]' : 'text-[rgba(51,51,51,0.7)]',
                       )}
                     >
                       {plan.tagline}
@@ -113,7 +116,7 @@ export function PricingSection() {
 
                   {/* Icon */}
                   <div className={cn(
-                    'flex items-center justify-center w-10 h-10 rounded-full mt-2 shrink-0',
+                    'flex items-center justify-center w-10 h-10 rounded-full mt-1 shrink-0',
                     plan.highlight ? 'bg-gold' : 'bg-[#E5E7EB]'
                   )}>
                     <Info size={20} className={plan.highlight ? 'text-white' : 'text-[#4A5565]'} />
@@ -123,22 +126,23 @@ export function PricingSection() {
             </motion.div>
           </div>
 
-          {/* ── Sticky lid: from plan names downward — pins when plan names reach top ── */}
+          {/* ── Sticky lid: plan names + price + badge ── */}
           <div className="sticky top-16 lg:top-20 z-20 overflow-hidden border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15),0_2px_4px_-2px_rgba(0,0,0,0.1)]">
             <motion.div
-              className="grid grid-cols-1 md:grid-cols-3"
-              initial="hidden"
-              whileInView="visible"
-              viewport={defaultViewport}
+              className="hidden md:grid md:grid-cols-4"
+              initial="visible"
+              animate="visible"
               variants={staggerContainer}
             >
+              {/* Empty label column */}
+              <div />
               {pricingPlans.map((plan, index) => (
                 <motion.div
                   key={plan.name}
                   variants={revealUp}
                   className={cn(
-                    'relative flex flex-col items-center gap-5 px-8 pt-6 pb-10 border-b md:border-b-0',
-                    index < 2 && 'md:border-r border-[#E5E7EB]',
+                    'relative flex flex-col items-center gap-5 px-6 pt-6 pb-10',
+                    index < 2 && 'border-r border-[#E5E7EB]',
                     plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
                   )}
                 >
@@ -150,15 +154,15 @@ export function PricingSection() {
                     </p>
                   </div>
 
-                  {/* Price */}
+                  {/* Price — Operator shows pill above price, others below */}
                   <div className="flex flex-col items-center gap-2">
-                    {index === 1 && (
+                    {plan.highlight && (
                       <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full text-xs font-semibold text-[#333333]">
                         {plan.period}
                       </span>
                     )}
                     <strong className="text-3xl font-bold text-[#0D1B2A]">{plan.price}</strong>
-                    {index !== 1 && (
+                    {!plan.highlight && (
                       <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full text-xs font-semibold text-[#333333]">
                         {plan.period}
                       </span>
@@ -166,13 +170,13 @@ export function PricingSection() {
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs font-normal text-center text-[#333333] px-4">
+                  <p className="text-xs font-normal text-center text-[#333333] px-2">
                     {plan.description}
                   </p>
 
                   {/* Playbooks Badge */}
                   <div className={cn(
-                    "flex flex-col items-center gap-2 w-full max-w-[240px] px-3 py-3 rounded-2xl border-2",
+                    "flex flex-col items-center gap-1 w-full px-3 py-3 rounded-2xl border-2",
                     plan.highlight
                       ? "bg-[rgba(199,154,59,0.1)] border-gold"
                       : "bg-[#F9FAFB] border-[#E5E7EB]"
@@ -187,166 +191,59 @@ export function PricingSection() {
             </motion.div>
           </div>
 
-          {/* ── Comparison table — scrolls up and disappears under the sticky lid ── */}
+          {/* ── Comparison table ── */}
           <div className="rounded-b-3xl border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden">
 
-            {/* Company Registration */}
-            <div className="border-t-2 border-[#E5E7EB]">
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
-                    Company Registration
-                  </h3>
-                  <Info size={14} className="text-gold" />
+            {[
+              { title: 'Company Registration', features: pricingComparison.companyRegistration.features },
+              { title: 'Foundational Documents', features: pricingComparison.foundationalDocuments.features },
+              { title: 'Compliance & Governance', features: pricingComparison.complianceGovernance.features },
+              { title: 'HR & Employment', features: pricingComparison.hrEmployment.features },
+              { title: 'Investor Ready', features: pricingComparison.investorReady.features },
+            ].map((section, si) => (
+              <div key={section.title} className={si === 0 ? 'border-t-2 border-[#E5E7EB]' : ''}>
+                {/* Section header — spans full label col only, value cols stay empty */}
+                <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-b border-[#E5E7EB]">
+                  <div className="px-6 md:px-8 py-5 flex items-center gap-2">
+                    <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
+                      {section.title}
+                    </h3>
+                    <Info size={14} className="text-gold" />
+                  </div>
+                  <div className="hidden md:block border-l border-[#E5E7EB]" />
+                  <div className="hidden md:block border-l border-[#E5E7EB] bg-[rgba(199,154,59,0.05)]" />
+                  <div className="hidden md:block border-l border-[#E5E7EB]" />
+                </div>
+                {/* Feature rows */}
+                <div className="divide-y divide-[#F3F4F6]">
+                  {section.features.map((feature: any) => (
+                    <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
+                      <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
+                        {feature.name}
+                        {feature.exclusive && (
+                          <span className="ml-2 inline-flex items-center px-4 py-0.5 bg-[#DCFCE7] rounded-2xl text-xs font-semibold uppercase text-[#008236]">
+                            Exclusive
+                          </span>
+                        )}
+                      </div>
+                      <div className="md:border-r border-[#F3F4F6]">
+                        <FeatureValue value={feature.launchpad} exclusive={feature.exclusive} />
+                      </div>
+                      <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
+                        <FeatureValue value={feature.operator} exclusive={feature.exclusive} />
+                      </div>
+                      <div>
+                        <FeatureValue value={feature.boardroom} exclusive={feature.exclusive} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="divide-y divide-[#F3F4F6]">
-                {pricingComparison.companyRegistration.features.map((feature) => (
-                  <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
-                    <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
-                      {feature.name}
-                    </div>
-                    <div className="md:border-r border-[#F3F4F6]">
-                      <FeatureValue value={feature.launchpad} />
-                    </div>
-                    <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
-                      <FeatureValue value={feature.operator} />
-                    </div>
-                    <div>
-                      <FeatureValue value={feature.boardroom} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
 
-            {/* Foundational Documents */}
-            <div>
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
-                    Foundational Documents
-                  </h3>
-                  <Info size={14} className="text-gold" />
-                </div>
-              </div>
-              <div className="divide-y divide-[#F3F4F6]">
-                {pricingComparison.foundationalDocuments.features.map((feature) => (
-                  <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
-                    <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
-                      {feature.name}
-                    </div>
-                    <div className="md:border-r border-[#F3F4F6]">
-                      <FeatureValue value={feature.launchpad} />
-                    </div>
-                    <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
-                      <FeatureValue value={feature.operator} />
-                    </div>
-                    <div>
-                      <FeatureValue value={feature.boardroom} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Compliance & Governance */}
-            <div>
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
-                    Compliance & Governance
-                  </h3>
-                  <Info size={14} className="text-gold" />
-                </div>
-              </div>
-              <div className="divide-y divide-[#F3F4F6]">
-                {pricingComparison.complianceGovernance.features.map((feature) => (
-                  <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
-                    <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
-                      {feature.name}
-                      {feature.exclusive && (
-                        <span className="ml-2 inline-flex items-center px-4 py-0.5 bg-[#DCFCE7] rounded-2xl text-xs font-semibold uppercase text-[#008236]">
-                          Exclusive
-                        </span>
-                      )}
-                    </div>
-                    <div className="md:border-r border-[#F3F4F6]">
-                      <FeatureValue value={feature.launchpad} exclusive={feature.exclusive} />
-                    </div>
-                    <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
-                      <FeatureValue value={feature.operator} exclusive={feature.exclusive} />
-                    </div>
-                    <div>
-                      <FeatureValue value={feature.boardroom} exclusive={feature.exclusive} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* HR & Employment */}
-            <div>
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
-                    HR & Employment
-                  </h3>
-                  <Info size={14} className="text-gold" />
-                </div>
-              </div>
-              <div className="divide-y divide-[#F3F4F6]">
-                {pricingComparison.hrEmployment.features.map((feature) => (
-                  <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
-                    <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
-                      {feature.name}
-                    </div>
-                    <div className="md:border-r border-[#F3F4F6]">
-                      <FeatureValue value={feature.launchpad} />
-                    </div>
-                    <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
-                      <FeatureValue value={feature.operator} />
-                    </div>
-                    <div>
-                      <FeatureValue value={feature.boardroom} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Investor Ready */}
-            <div>
-              <div className="bg-[#F9FAFB] border-b border-[#E5E7EB] px-6 md:px-8 py-6 md:py-8">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
-                    Investor Ready
-                  </h3>
-                  <Info size={14} className="text-gold" />
-                </div>
-              </div>
-              <div className="divide-y divide-[#F3F4F6]">
-                {pricingComparison.investorReady.features.map((feature) => (
-                  <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
-                    <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
-                      {feature.name}
-                    </div>
-                    <div className="md:border-r border-[#F3F4F6]">
-                      <FeatureValue value={feature.launchpad} />
-                    </div>
-                    <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
-                      <FeatureValue value={feature.operator} />
-                    </div>
-                    <div>
-                      <FeatureValue value={feature.boardroom} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* CTA Footer */}
-            <div className="grid grid-cols-1 md:grid-cols-3 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+            {/* CTA Footer — also 4-col to match */}
+            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+              <div className="hidden md:block" />
               <div className="flex items-center justify-center py-12 md:border-r border-[#E5E7EB]">
                 <button className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
                   Get Started

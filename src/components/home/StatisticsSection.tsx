@@ -59,22 +59,22 @@ export function StatisticsSection() {
           {metrics.map(({ icon: Icon, value, label, tag }) => (
             <motion.article
               key={label}
-              className="relative h-[205px] rounded-[26px] border border-white/[0.08] bg-[#2A3A4E] p-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]"
+              className="flex min-h-[220px] flex-col rounded-[26px] border border-white/[0.08] bg-[#2A3A4E] p-[24px] shadow-[0_10px_30px_rgba(0,0,0,0.25),inset_0_1px_0_rgba(255,255,255,0.04)]"
               variants={revealUp}
             >
-              <span className="grid h-[38px] w-[38px] place-items-center rounded-full bg-[#D4A63C] text-white shadow-[0_8px_14px_rgba(0,0,0,0.25)]">
-                <Icon size={21} strokeWidth={2.2} />
+              <span className="grid h-[42px] w-[42px] flex-shrink-0 place-items-center rounded-full bg-[#D4A63C] text-white shadow-[0_8px_14px_rgba(0,0,0,0.25)]">
+                <Icon size={22} strokeWidth={2.2} />
               </span>
 
-              <strong className="mt-[38px] block text-[30px] font-bold leading-none text-white md:text-[34px]">
+              <strong className="mt-6 block text-[32px] font-bold leading-none text-white md:text-[36px]">
                 {value}
               </strong>
 
-              <p className="mt-[18px] text-[15px] font-normal leading-tight text-white/85 md:text-[16px]">
+              <p className="mt-3 text-[15px] font-normal leading-snug text-white/85 md:text-[16px]">
                 {label}
               </p>
 
-              <span className="absolute bottom-[20px] left-[20px] inline-flex h-[24px] items-center rounded-full bg-[rgba(212,166,60,0.15)] px-[14px] text-[13px] font-normal leading-none text-white/90">
+              <span className="mt-6 inline-flex w-fit items-center rounded-full bg-[#3A4A5A] px-[14px] py-[7px] text-[13px] font-normal leading-none text-white/80">
                 {tag}
               </span>
             </motion.article>

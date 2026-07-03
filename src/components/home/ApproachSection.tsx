@@ -41,7 +41,7 @@ export function ApproachSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-[#E6D9BD] bg-white px-[38px] text-[16px] font-bold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-[#E6D9BD] bg-gradient-to-b from-[#FEFCF7] to-[#F5EDD8] px-[38px] text-[14px] font-semibold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
             Our Approach
           </span>
           <h2 className="mt-[36px] text-center text-[34px] font-bold leading-[1.18] tracking-[0] text-[#2B2B2B]">
