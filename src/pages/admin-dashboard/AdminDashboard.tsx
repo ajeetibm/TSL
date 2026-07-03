@@ -719,7 +719,7 @@ export default function AdminDashboard() {
           </article>
           <article className="admin-dashboard__kpi">
             <span>
-              <BriefcaseBusiness size={24} />
+              <FileText size={24} />
             </span>
             <div>
               <strong>{(dashboardData?.kpis?.activeWizards ?? 1234).toLocaleString('en-ZA')}</strong>

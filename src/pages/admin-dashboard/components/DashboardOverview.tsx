@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, DollarSign, UsersRound } from 'lucide-react'
+import { FileText, DollarSign, UsersRound } from 'lucide-react'
 import {
   getRevenueAxisTicks,
   formatRevenueAxisLabel,
@@ -81,7 +81,7 @@ export default function DashboardOverview({
         </article>
         <article className="admin-dashboard__kpi">
           <span>
-            <BriefcaseBusiness size={24} />
+            <FileText size={24} />
           </span>
           <div>
             <strong>{(dashboardData?.kpis?.activeWizards ?? 1234).toLocaleString('en-ZA')}</strong>

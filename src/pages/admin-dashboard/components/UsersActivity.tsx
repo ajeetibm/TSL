@@ -1,7 +1,9 @@
-import { Activity, Clock, FileText, Search, Shield, UsersRound, ChevronDown } from 'lucide-react'
+import { Activity, Clock, FileText, Search, Shield, UsersRound } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import InviteSubAdminModal from './InviteSubAdminModal'
 import UserDetailsModal from './UserDetailsModal'
+import { useUserProfile } from '../../../context/UserProfileContext'
+import { adminApi } from '../../../services/tslApi'
 import './UserDetailsModal.css'
 
 interface User {
@@ -14,6 +16,69 @@ interface User {
   phone?: string
   registrationNumber?: string
   address?: string
+}
+
+interface AdminUsersApiUser {
+  userId?: string
+  fullName?: string
+  email?: string
+  companyName?: string
+  contactPerson?: string
+  phone?: string
+  registrationNumber?: string
+  physicalAddress?: string
+  address?: string
+  plan?: string
+  status?: string
+  joinedAt?: string
+}
+
+interface AdminUsersApiData {
+  users?: AdminUsersApiUser[]
+}
+
+function formatPlan(plan?: string) {
+  if (!plan) return 'Operator'
+  const normalized = plan.toLowerCase()
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function formatStatus(status?: string) {
+  if (!status) return 'Active'
+  const normalized = status.toLowerCase()
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1)
+}
+
+function formatJoinDate(joinedAt?: string) {
+  if (!joinedAt) return ''
+  const parsed = new Date(joinedAt)
+  if (Number.isNaN(parsed.getTime())) return joinedAt
+  return parsed.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+function mapApiUser(user: AdminUsersApiUser): User | null {
+  if (!user.email) return null
+
+  return {
+    name: user.contactPerson || user.fullName || user.companyName || 'Unknown',
+    email: user.email,
+    plan: formatPlan(user.plan),
+    status: formatStatus(user.status),
+    joinDate: formatJoinDate(user.joinedAt),
+    company: user.companyName,
+    phone: user.phone,
+    registrationNumber: user.registrationNumber,
+    address: user.physicalAddress || user.address,
+  }
+}
+
+function isAdminLikeEmail(email: string) {
+  const normalized = email.toLowerCase()
+  return normalized.includes('admin') || normalized.includes('thestartuplegal')
 }
 
 const adminUsers: User[] = [
@@ -63,10 +128,12 @@ const adminManagementRows = [
 type ManagementTab = 'users' | 'admins'
 
 export default function UsersActivity() {
+  const { profile } = useUserProfile()
   const [managementTab, setManagementTab] = useState<ManagementTab>('users')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [apiUsers, setApiUsers] = useState<User[] | null>(null)
   
   // Filter states for User Management
   const [searchQuery, setSearchQuery] = useState('')
@@ -90,6 +157,24 @@ export default function UsersActivity() {
   const statusDropdownRef = useRef<HTMLDivElement>(null)
   const adminStatusDropdownRef = useRef<HTMLDivElement>(null)
   
+  useEffect(() => {
+    let isCurrent = true
+
+    adminApi.users().then((result) => {
+      if (!isCurrent || !result.success) return
+      const data = result.data as AdminUsersApiData | undefined
+      const users = data?.users
+        ?.map(mapApiUser)
+        .filter((user): user is User => Boolean(user))
+
+      if (users?.length) setApiUsers(users)
+    })
+
+    return () => {
+      isCurrent = false
+    }
+  }, [])
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,9 +220,36 @@ export default function UsersActivity() {
     // For now, just log the data
   }
 
+  // Merge live profile data for the logged-in user into the API list for same-browser updates.
+  const mergedUsers = useMemo(() => {
+    const sourceUsers = apiUsers?.length ? apiUsers : adminUsers
+    if (!profile.email || isAdminLikeEmail(profile.email)) return sourceUsers
+
+    const existingIndex = sourceUsers.findIndex(
+      (u) => u.email.toLowerCase() === profile.email.toLowerCase(),
+    )
+    const liveRow: User = {
+      name: profile.contactPerson || profile.companyName || sourceUsers[existingIndex]?.name || 'Unknown',
+      email: profile.email,
+      plan: sourceUsers[existingIndex]?.plan ?? 'Operator',
+      status: sourceUsers[existingIndex]?.status ?? 'Active',
+      joinDate: sourceUsers[existingIndex]?.joinDate ?? '',
+      company: profile.companyName,
+      phone: profile.phone,
+      registrationNumber: profile.registrationNumber,
+      address: profile.physicalAddress,
+    }
+    if (existingIndex !== -1) {
+      const updated = [...sourceUsers]
+      updated[existingIndex] = liveRow
+      return updated
+    }
+    return [liveRow, ...sourceUsers]
+  }, [apiUsers, profile])
+
   // Filter users based on search and filters
   const filteredUsers = useMemo(() => {
-    return adminUsers.filter((user) => {
+    return mergedUsers.filter((user) => {
       // Search filter
       const matchesSearch =
         user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -154,7 +266,7 @@ export default function UsersActivity() {
       
       return matchesSearch && matchesRole && matchesPlan && matchesStatus
     })
-  }, [searchQuery, selectedRole, selectedPlan, selectedStatus])
+  }, [mergedUsers, searchQuery, selectedRole, selectedPlan, selectedStatus])
 
   // Filter admins based on search and filters
   const filteredAdmins = useMemo(() => {
@@ -172,10 +284,10 @@ export default function UsersActivity() {
   }, [adminSearchQuery, adminSelectedStatus])
 
   // Get unique plans for filter dropdown
-  const uniquePlans = Array.from(new Set(adminUsers.map(user => user.plan)))
-  
+  const uniquePlans = Array.from(new Set(mergedUsers.map(user => user.plan)))
+
   // Get unique statuses for filter dropdown
-  const uniqueStatuses = Array.from(new Set(adminUsers.map(user => user.status)))
+  const uniqueStatuses = Array.from(new Set(mergedUsers.map(user => user.status)))
   const uniqueAdminStatuses = Array.from(new Set(adminManagementRows.map(admin => admin.status)))
 
   return (

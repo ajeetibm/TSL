@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Activity,
+  Award,
   Check,
   CheckCircle,
   ChevronDown,
@@ -264,7 +265,6 @@ export default function CounselManagement() {
               position: 'absolute',
               top: '100%',
               left: 0,
-              right: 0,
               marginTop: '4px',
               background: '#ffffff',
               border: '2px solid #e5e5e5',
@@ -272,7 +272,8 @@ export default function CounselManagement() {
               boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               zIndex: 1000,
               overflow: 'hidden',
-              minWidth: '200px'
+              width: 'max-content',
+              minWidth: '100%',
             }}>
               <button
                 type="button"
@@ -287,7 +288,8 @@ export default function CounselManagement() {
                   background: selectedExpertise === 'All Expertise' ? '#f5f5f5' : 'transparent',
                   textAlign: 'left',
                   cursor: 'pointer',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 All Expertise
@@ -307,7 +309,8 @@ export default function CounselManagement() {
                     background: selectedExpertise === expertise ? '#f5f5f5' : 'transparent',
                     textAlign: 'left',
                     cursor: 'pointer',
-                    fontSize: '14px'
+                    fontSize: '14px',
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   {expertise}
@@ -422,7 +425,10 @@ export default function CounselManagement() {
 
             <div className="admin-counsel__card-body">
               <ul>
-                <li>{member.experience}</li>
+                <li>
+                  <Award size={14} />
+                  {member.experience}
+                </li>
                 <li>
                   <MapPin size={14} />
                   {member.location}
@@ -440,7 +446,7 @@ export default function CounselManagement() {
                 </div>
               </div>
 
-              <div className="admin-counsel__card-metric">
+              <div className="admin-counsel__completed">
                 <strong>{member.completed}</strong>
                 <span>Completed</span>
               </div>

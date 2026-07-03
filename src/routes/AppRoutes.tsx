@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { NotificationProvider } from '../context/NotificationContext'
+import { UserProfileProvider } from '../context/UserProfileContext'
 import { RootLayout } from '../layouts/RootLayout'
 
 const Home = lazy(() => import('../pages/Home'))
@@ -29,6 +30,7 @@ const WizardDetails = lazy(() => import('../pages/WizardDetails'))
 
 export function AppRoutes() {
   return (
+    <UserProfileProvider>
     <NotificationProvider>
     <Suspense
       fallback={
@@ -67,5 +69,6 @@ export function AppRoutes() {
       </Routes>
     </Suspense>
     </NotificationProvider>
+    </UserProfileProvider>
   )
 }

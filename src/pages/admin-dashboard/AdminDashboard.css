@@ -1010,7 +1010,7 @@
 .admin-counsel__filters {
   min-height: 104px;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) 167px 166px 172px;
+  grid-template-columns: minmax(260px, 1fr) auto auto auto;
   gap: 24px;
   align-items: center;
   border: 2px solid #e5e5e5;
@@ -1194,6 +1194,25 @@
   color: #c79a3b;
 }
 
+.admin-counsel__card-contact {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-counsel__card-contact > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #666666;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.admin-counsel__card-contact > div svg {
+  flex: 0 0 auto;
+  color: #c79a3b;
+}
+
 .admin-counsel__completed {
   min-height: 80px;
   display: grid;
@@ -1338,7 +1357,7 @@
 
 .admin-issues__filters {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) 134px;
+  grid-template-columns: minmax(260px, 1fr) auto;
   gap: 20px;
   margin-bottom: 24px;
 }
@@ -1378,6 +1397,7 @@
   justify-content: space-between;
   gap: 8px;
   padding: 0 20px;
+  white-space: nowrap;
   color: #0d1b2a;
   font-size: 16px;
   font-weight: 700;

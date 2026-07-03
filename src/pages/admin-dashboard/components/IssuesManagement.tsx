@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Search, AlertCircle, AlertTriangle, CheckCircle, ChevronDown } from 'lucide-react'
 import IssueDetailsModal from './IssueDetailsModal'
 
@@ -78,12 +78,47 @@ const issueCategories = [
   { label: 'Other', count: 5, tone: 'neutral' },
 ]
 
+const severityOptions = ['All Severity', 'Critical', 'High', 'Medium', 'Low']
+
 export default function IssuesManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedIssue, setSelectedIssue] = useState<typeof adminIssues[0] | null>(null)
 
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedSeverity, setSelectedSeverity] = useState('All Severity')
+  const [isSeverityDropdownOpen, setIsSeverityDropdownOpen] = useState(false)
+
+  const severityDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (severityDropdownRef.current && !severityDropdownRef.current.contains(event.target as Node)) {
+        setIsSeverityDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filteredIssues = useMemo(() => {
+    return adminIssues.filter((issue) => {
+      const q = searchQuery.toLowerCase()
+      const matchesSearch =
+        issue.title.toLowerCase().includes(q) ||
+        issue.id.toLowerCase().includes(q) ||
+        issue.category.toLowerCase().includes(q) ||
+        issue.by.toLowerCase().includes(q)
+
+      const matchesSeverity =
+        selectedSeverity === 'All Severity' || issue.severity === selectedSeverity
+
+      return matchesSearch && matchesSeverity
+    })
+  }, [searchQuery, selectedSeverity])
+
   const handleViewDetails = (issue: typeof adminIssues[0]) => {
-    console.log('Opening modal for issue:', issue)
     setSelectedIssue(issue)
     setIsModalOpen(true)
   }
@@ -144,58 +179,114 @@ export default function IssuesManagement() {
           <div className="admin-issues__filters">
             <label className="admin-issues__search">
               <Search size={16} />
-              <input type="search" placeholder="Search issues..." />
+              <input
+                type="search"
+                placeholder="Search issues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </label>
-            <button type="button" className="admin-issues__filter-button">
-              All Severity
-              <ChevronDown size={16} />
-            </button>
+
+            <div ref={severityDropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="admin-issues__filter-button"
+                onClick={() => setIsSeverityDropdownOpen((prev) => !prev)}
+              >
+                {selectedSeverity}
+                <ChevronDown size={16} />
+              </button>
+              {isSeverityDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '4px',
+                  background: '#ffffff',
+                  border: '2px solid #e5e5e5',
+                  borderRadius: '12px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                  minWidth: '160px',
+                }}>
+                  {severityOptions.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => {
+                        setSelectedSeverity(option)
+                        setIsSeverityDropdownOpen(false)
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '12px 16px',
+                        border: 'none',
+                        background: selectedSeverity === option ? '#f5f5f5' : 'transparent',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        fontSize: '14px',
+                        fontWeight: selectedSeverity === option ? 700 : 400,
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="admin-issues__list">
-            {adminIssues.map((issue) => {
-              const critical = issue.severity === 'Critical'
-              const medium = issue.severity === 'Medium'
-              const low = issue.severity === 'Low'
-              return (
-                <article className="admin-issues__item" key={issue.id}>
-                  <span className="admin-issues__item-icon">
-                    <AlertTriangle size={24} />
-                  </span>
-                  <div className="admin-issues__item-content">
-                    <div className="admin-issues__item-heading">
-                      <div>
-                        <h2>{issue.title}</h2>
-                        <p>
-                          {issue.id} • {issue.category}
-                        </p>
+            {filteredIssues.length === 0 ? (
+              <p style={{ textAlign: 'center', padding: '2rem', color: '#666' }}>
+                No issues match your filters.
+              </p>
+            ) : (
+              filteredIssues.map((issue) => {
+                const critical = issue.severity === 'Critical'
+                const medium = issue.severity === 'Medium'
+                const low = issue.severity === 'Low'
+                return (
+                  <article className="admin-issues__item" key={issue.id}>
+                    <span className="admin-issues__item-icon">
+                      {critical || low ? <AlertCircle size={24} /> : <AlertTriangle size={24} />}
+                    </span>
+                    <div className="admin-issues__item-content">
+                      <div className="admin-issues__item-heading">
+                        <div>
+                          <h2>{issue.title}</h2>
+                          <p>
+                            {issue.id} • {issue.category}
+                          </p>
+                        </div>
+                        <b
+                          className={
+                            critical
+                              ? 'admin-issues__severity admin-issues__severity--critical'
+                              : medium
+                                ? 'admin-issues__severity admin-issues__severity--medium'
+                                : low
+                                  ? 'admin-issues__severity admin-issues__severity--low'
+                                  : 'admin-issues__severity admin-issues__severity--high'
+                          }
+                        >
+                          {issue.severity}
+                        </b>
                       </div>
-                      <b
-                        className={
-                          critical
-                            ? 'admin-issues__severity admin-issues__severity--critical'
-                            : medium
-                              ? 'admin-issues__severity admin-issues__severity--medium'
-                              : low
-                                ? 'admin-issues__severity admin-issues__severity--low'
-                                : 'admin-issues__severity admin-issues__severity--high'
-                        }
-                      >
-                        {issue.severity}
-                      </b>
+                      <p className="admin-issues__meta">
+                        Reported: {issue.reported}
+                        <span>•</span>
+                        By: {issue.by}
+                      </p>
+                      <button type="button" onClick={() => handleViewDetails(issue)}>
+                        View Details
+                      </button>
                     </div>
-                    <p className="admin-issues__meta">
-                      Reported: {issue.reported}
-                      <span>•</span>
-                      By: {issue.by}
-                    </p>
-                    <button type="button" onClick={() => handleViewDetails(issue)}>
-                      View Details
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
+                  </article>
+                )
+              })
+            )}
           </div>
         </section>
 

@@ -1,56 +1,25 @@
 import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import type { AuthUser } from '../../services/tslApi'
 import { profileApi } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
+import { useUserProfile } from '../../context/UserProfileContext'
+import type { UserProfile } from '../../context/UserProfileContext'
 import './Dashboard.css'
 import './DashboardProfile.css'
 
 type ProfileTab = 'information' | 'security' | 'preferences'
 
-interface CompanyFormData {
-  companyName: string
-  registrationNumber: string
-  email: string
-  phone: string
-  physicalAddress: string
-  contactPerson: string
-}
-
-const PROFILE_STORAGE_KEY = 'tsl-profile-data'
-
-function loadSavedProfile(): CompanyFormData {
-  const saved = localStorage.getItem(PROFILE_STORAGE_KEY)
-  if (saved) {
-    try {
-      return JSON.parse(saved) as CompanyFormData
-    } catch {
-      // fall through to defaults below
-    }
-  }
-  const authRaw = localStorage.getItem('tsl-auth-user')
-  const auth: AuthUser | null = authRaw ? (JSON.parse(authRaw) as AuthUser) : null
-  return {
-    companyName: auth?.fullName ?? '',
-    registrationNumber: '',
-    email: auth?.email ?? '',
-    phone: '',
-    physicalAddress: '',
-    contactPerson: '',
-  }
-}
-
 export default function DashboardProfile() {
+  const { profile, updateProfile } = useUserProfile()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
-  const [savedData, setSavedData] = useState<CompanyFormData>(loadSavedProfile)
-  const [formData, setFormData] = useState<CompanyFormData>(loadSavedProfile)
+  const [formData, setFormData] = useState<UserProfile>(profile)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   setPageMetadata('Profile', 'Manage your account settings and preferences.')
 
-  const handleInputChange = (field: keyof CompanyFormData, value: string) => {
+  const handleInputChange = (field: keyof UserProfile, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
@@ -63,12 +32,11 @@ export default function DashboardProfile() {
       setSaveError(result.message ?? 'Failed to save profile.')
       return
     }
-    localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(formData))
-    setSavedData(formData)
+    updateProfile(formData)
   }
 
   const handleCancel = () => {
-    setFormData(savedData)
+    setFormData(profile)
     setSaveError(null)
   }
 
