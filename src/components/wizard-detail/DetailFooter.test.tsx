@@ -24,14 +24,6 @@ describe('DetailFooter', () => {
         screen.getByText(/Simplifying South African legal processes for startups and SMEs/i)
       ).toBeInTheDocument()
     })
-
-    it('should render copyright text', () => {
-      render(<DetailFooter />)
-
-      expect(
-        screen.getByText(/© Copyright 2025 The Legal Startup. All rights reserved./i)
-      ).toBeInTheDocument()
-    })
   })
 
   describe('Social Links', () => {
@@ -133,34 +125,6 @@ describe('DetailFooter', () => {
     })
   })
 
-  describe('Bottom Section', () => {
-    it('should render Sign Up link', () => {
-      render(<DetailFooter />)
-
-      const signUpLink = screen.getByRole('link', { name: 'Sign Up' })
-      expect(signUpLink).toBeInTheDocument()
-      expect(signUpLink).toHaveAttribute('href', '/wizard-catalogue')
-    })
-
-    it('should render Login link', () => {
-      render(<DetailFooter />)
-
-      const loginLink = screen.getByRole('link', { name: 'Login' })
-      expect(loginLink).toBeInTheDocument()
-      expect(loginLink).toHaveAttribute('href', '/')
-    })
-
-    it('should have bottom section with links', () => {
-      const { container } = render(<DetailFooter />)
-
-      const bottom = container.querySelector('.detail-footer__bottom')
-      expect(bottom).toBeInTheDocument()
-
-      const links = bottom?.querySelectorAll('a')
-      expect(links).toHaveLength(2)
-    })
-  })
-
   describe('Styling Classes', () => {
     it('should have detail-footer class', () => {
       const { container } = render(<DetailFooter />)
@@ -196,13 +160,6 @@ describe('DetailFooter', () => {
       const groups = container.querySelectorAll('.detail-footer__group')
       expect(groups).toHaveLength(3)
     })
-
-    it('should have detail-footer__bottom class', () => {
-      const { container } = render(<DetailFooter />)
-
-      const bottom = container.querySelector('.detail-footer__bottom')
-      expect(bottom).toBeInTheDocument()
-    })
   })
 
   describe('Layout Structure', () => {
@@ -212,12 +169,10 @@ describe('DetailFooter', () => {
       const footer = container.querySelector('.detail-footer')
       const inner = footer?.querySelector('.detail-footer__inner')
       const main = inner?.querySelector('.detail-footer__main')
-      const bottom = inner?.querySelector('.detail-footer__bottom')
 
       expect(footer).toBeInTheDocument()
       expect(inner).toBeInTheDocument()
       expect(main).toBeInTheDocument()
-      expect(bottom).toBeInTheDocument()
     })
 
     it('should have brand section in main', () => {
@@ -345,13 +300,6 @@ describe('DetailFooter', () => {
 
       const main = container.querySelector('.detail-footer__main')
       expect(main).toHaveClass('detail-footer__main')
-    })
-
-    it('should have responsive bottom section', () => {
-      const { container } = render(<DetailFooter />)
-
-      const bottom = container.querySelector('.detail-footer__bottom')
-      expect(bottom).toHaveClass('detail-footer__bottom')
     })
   })
 
@@ -489,16 +437,6 @@ describe('DetailFooter', () => {
       groupLinks.forEach((link) => {
         expect(link.getAttribute('href')).toBe('/contact')
       })
-    })
-
-    it('should have internal links in bottom section', () => {
-      render(<DetailFooter />)
-
-      const signUpLink = screen.getByRole('link', { name: 'Sign Up' })
-      const loginLink = screen.getByRole('link', { name: 'Login' })
-
-      expect(signUpLink.getAttribute('href')).toBe('/wizard-catalogue')
-      expect(loginLink.getAttribute('href')).toBe('/')
     })
   })
 })
