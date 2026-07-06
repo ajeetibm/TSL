@@ -4,6 +4,7 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { counselApi } from '../../services/tslApi'
 import type { CounselCredits, CounselRequest } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
+import { useCounselRequests } from '../../context/CounselRequestContext'
 import CounselCreditsModal from './CounselCreditsModal'
 import './Dashboard.css'
 import './DashboardCounsel.css'
@@ -13,6 +14,10 @@ type CounselFormData = {
   description: string
   relatedWizard: string
 }
+
+const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+const ALLOWED_EXT = ['.pdf', '.docx']
+const MAX_FILE_SIZE = 4 * 1024 * 1024 // 4 MB
 
 type CounselHistoryRequest = {
   requestId: string
@@ -120,6 +125,7 @@ function normalizeHistory(payload?: CounselRequestResponse): CounselHistoryReque
 }
 
 export default function DashboardCounsel() {
+  const { saveAttachments } = useCounselRequests()
   const [activeTab, setActiveTab] = useState<'book' | 'history'>('book')
   const [credits, setCredits] = useState<CounselCredits>(fallbackCredits)
   const [history, setHistory] = useState<CounselHistoryRequest[]>(fallbackHistory)
@@ -128,11 +134,14 @@ export default function DashboardCounsel() {
     description: '',
     relatedWizard: '',
   })
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [attachmentError, setAttachmentError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false)
   const submitInFlightRef = useRef(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
 
@@ -159,6 +168,39 @@ export default function DashboardCounsel() {
       isMounted = false
     }
   }, [])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setAttachmentError('')
+    const incoming = Array.from(e.target.files ?? [])
+    const valid: File[] = []
+    const errors: string[] = []
+
+    for (const file of incoming) {
+      const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
+      if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXT.includes(ext)) {
+        errors.push(`"${file.name}" is not a PDF or DOCX file.`)
+        continue
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        errors.push(`"${file.name}" exceeds the 4 MB limit.`)
+        continue
+      }
+      if (attachments.some((f) => f.name === file.name && f.size === file.size)) {
+        continue // skip duplicate
+      }
+      valid.push(file)
+    }
+
+    if (errors.length) setAttachmentError(errors.join(' '))
+    if (valid.length) setAttachments((prev) => [...prev, ...valid])
+    // reset input so the same file can be re-selected after removal
+    e.target.value = ''
+  }
+
+  const handleRemoveFile = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index))
+    setAttachmentError('')
+  }
 
   const handleFieldChange = (field: keyof CounselFormData, value: string) => {
     setFormData((current) => ({
@@ -214,6 +256,11 @@ export default function DashboardCounsel() {
         responseUrl: created?.responseUrl ?? null,
       })
 
+      // Save attachments so admin Preview modal can access them
+      if (attachments.length > 0) {
+        saveAttachments(createdRequest.requestId, attachments)
+      }
+
       setHistory((current) => [createdRequest, ...current])
       setCredits((current) => ({
         ...current,
@@ -235,6 +282,7 @@ export default function DashboardCounsel() {
         description: '',
         relatedWizard: '',
       })
+      setAttachments([])
       setSuccessMessage('Counsel request submitted. Admin can now review and assign it.')
       setActiveTab('history')
     } finally {
@@ -369,19 +417,61 @@ export default function DashboardCounsel() {
                   />
                 </label>
 
-                <label className="dashboard-counsel__field">
+                <div className="dashboard-counsel__field">
                   <span className="dashboard-counsel__label-row">
                     Attachments (Optional)
                     <small>
                       <Upload size={14} />
-                      PDF, DOCX, • Max 4MB
+                      PDF, DOCX • Max 4MB
                     </small>
                   </span>
-                  <button type="button" className="dashboard-counsel__upload">
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    multiple
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
+
+                  <button
+                    type="button"
+                    className="dashboard-counsel__upload"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Upload size={16} />
                     Upload files
                   </button>
-                </label>
+
+                  {attachmentError && (
+                    <p className="dashboard-counsel__message dashboard-counsel__message--error" style={{ marginTop: 8 }}>
+                      {attachmentError}
+                    </p>
+                  )}
+
+                  {attachments.length > 0 && (
+                    <ul className="dashboard-counsel__file-list">
+                      {attachments.map((file, i) => (
+                        <li key={`${file.name}-${file.size}`} className="dashboard-counsel__file-item">
+                          <span className="dashboard-counsel__file-name">{file.name}</span>
+                          <span className="dashboard-counsel__file-size">
+                            {(file.size / 1024).toFixed(0)} KB
+                          </span>
+                          <button
+                            type="button"
+                            className="dashboard-counsel__file-remove"
+                            aria-label={`Remove ${file.name}`}
+                            onClick={() => handleRemoveFile(i)}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
 
                 <label className="dashboard-counsel__field">
                   <span>Related Wizard (Optional)</span>

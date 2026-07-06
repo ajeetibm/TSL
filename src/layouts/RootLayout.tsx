@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { FloatingAIButton } from '../components/home/FloatingAIButton'
-import { Footer } from '../components/layout/Footer'
+// import { Footer } from '../components/layout/Footer'
 import { Navbar } from '../components/layout/Navbar'
 
 export function RootLayout() {
@@ -39,7 +39,7 @@ export function RootLayout() {
       <main className={isAnimating ? 'page-transition-enter' : ''}>
         <Outlet />
       </main>
-      {!isFocusedAppFlow && <Footer />}
+      {/* {!isFocusedAppFlow && <Footer />} */}
       {!isFocusedAppFlow && <FloatingAIButton />}
     </div>
   )

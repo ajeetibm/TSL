@@ -7,13 +7,13 @@ import { FeaturesSection } from '../components/home/FeaturesSection'
 import { ServicesSection } from '../components/home/ServicesSection'
 import { StatisticsSection } from '../components/home/StatisticsSection'
 import { PricingSection } from '../components/home/PricingSection'
+import { setPageMetadata } from '../services/metadata'
 import { CounselCreditsSection } from '../components/home/CounselCreditsSection'
 import { WhyChooseTSLSection } from '../components/home/WhyChooseTSLSection'
 import { TrustedBySection } from '../components/home/TrustedBySection'
 import { FAQSection } from '../components/home/FAQSection'
 import { ContactSection } from '../components/home/ContactSection'
 import { DetailFooter } from '../components/wizard-detail/DetailFooter'
-import { setPageMetadata } from '../services/metadata'
 
 export default function Pricing() {
   setPageMetadata('Pricing', 'Compare TSL Launchpad, Operator, and Boardroom pricing plans for startup legal workflows.')

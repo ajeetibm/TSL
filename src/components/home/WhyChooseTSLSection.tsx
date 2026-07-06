@@ -1,4 +1,4 @@
-import { Target, ShieldCheck, FileCheck2, TrendingUp, Clock, Zap, ArrowRight } from 'lucide-react'
+import { Target, ShieldCheck, FileCheck2, TrendingUp, Clock, Zap } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -95,26 +95,6 @@ export function WhyChooseTSLSection() {
               </motion.article>
             )
           })}
-        </motion.div>
-
-        <motion.div
-          className="mt-16 flex flex-col items-center gap-6 text-center"
-          initial="hidden"
-          whileInView="visible"
-          viewport={defaultViewport}
-          variants={revealUp}
-        >
-          <p className="max-w-2xl text-[17px] leading-[1.6] text-[#5F6368]">
-            Ready to experience the difference? Start with a single document or commit to your entire legal foundation.
-          </p>
-
-          <a
-            href="#pricing"
-            className="inline-flex items-center gap-3 rounded-full bg-[#C79A3B] px-10 py-4 text-[16px] font-semibold text-white shadow-[0_8px_24px_rgba(199,154,59,0.35)] transition hover:-translate-y-1 hover:bg-[#D4A437]"
-          >
-            View Pricing Options
-            <ArrowRight size={18} />
-          </a>
         </motion.div>
       </Container>
     </section>

@@ -12,8 +12,8 @@ import { WhyChooseTSLSection } from '../components/home/WhyChooseTSLSection'
 import { TrustedBySection } from '../components/home/TrustedBySection'
 import { FAQSection } from '../components/home/FAQSection'
 import { ContactSection } from '../components/home/ContactSection'
-import { DetailFooter } from '../components/wizard-detail/DetailFooter'
 import { setPageMetadata } from '../services/metadata'
+import { DetailFooter } from '../components/wizard-detail/DetailFooter'
 
 export default function Contact() {
   setPageMetadata('Contact', 'Contact TSL - The Startup Legal for startup legal support, counsel, and guided workflows.')

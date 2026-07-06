@@ -28,6 +28,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
+import { useCounselRequests } from '../../context/CounselRequestContext'
 import {
   BillingInvoices,
   CounselManagement,
@@ -242,6 +243,7 @@ function formatTimeAgo(value?: string) {
 }
 
 export default function AdminDashboard() {
+  const { getAttachments } = useCounselRequests()
   const navigate = useNavigate()
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null)
   const [error, setError] = useState('')
@@ -317,6 +319,15 @@ export default function AdminDashboard() {
     setActiveRequest(request)
     setAssignmentStep('preview')
     setSelectedCounsel(counselMembers[0].email)
+  }
+
+  const handleDownloadAttachment = (file: File) => {
+    const url = URL.createObjectURL(file)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = file.name
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   const closeAssignmentModal = () => {
@@ -904,21 +915,38 @@ export default function AdminDashboard() {
                     </p>
                   </div>
 
-                  <div className="admin-assignment__detail">
-                    <span>Attachment:</span>
-                    <div className="admin-assignment__attachment">
-                      <i>
-                        <FileText size={21} />
-                      </i>
-                      <div>
-                        <strong>SaaS_Agreement_Draft_v2.pdf</strong>
-                        <small>2.4 MB • PDF Document</small>
+                  {(() => {
+                    const files = getAttachments(activeRequest.requestId)
+                    if (files.length === 0) return null
+                    return (
+                      <div className="admin-assignment__detail">
+                        <span>Attachment{files.length > 1 ? 's' : ''}:</span>
+                        <div className="admin-assignment__attachments">
+                          {files.map((file) => (
+                            <div className="admin-assignment__attachment" key={`${file.name}-${file.size}`}>
+                              <i>
+                                <FileText size={21} />
+                              </i>
+                              <div>
+                                <strong>{file.name}</strong>
+                                <small>
+                                  {(file.size / (1024 * 1024)).toFixed(1)} MB •{' '}
+                                  {file.type === 'application/pdf' ? 'PDF Document' : 'Word Document'}
+                                </small>
+                              </div>
+                              <button
+                                type="button"
+                                aria-label={`Download ${file.name}`}
+                                onClick={() => handleDownloadAttachment(file)}
+                              >
+                                <Download size={17} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <button type="button" aria-label="Download attachment">
-                        <Download size={17} />
-                      </button>
-                    </div>
-                  </div>
+                    )
+                  })()}
 
                   <div className="admin-assignment__detail">
                     <span>Related Wizard:</span>
