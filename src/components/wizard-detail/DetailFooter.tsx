@@ -38,6 +38,14 @@ export function DetailFooter() {
             </nav>
           ))}
         </div>
+
+        <div className="detail-footer__bottom">
+          <p>© Copyright 2025 The Legal Startup. All rights reserved.</p>
+          <div>
+            <a href="/wizard-catalogue">Sign Up</a>
+            <a href="/">Login</a>
+          </div>
+        </div>
       </div>
     </footer>
   )

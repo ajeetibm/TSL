@@ -11,7 +11,6 @@ import { FAQSection } from '../components/home/FAQSection'
 import { PricingSection } from '../components/home/PricingSection'
 import { ServicesSection } from '../components/home/ServicesSection'
 import { StatisticsSection } from '../components/home/StatisticsSection'
-import { DetailFooter } from '../components/wizard-detail/DetailFooter'
 import { setPageMetadata } from '../services/metadata'
 
 export default function Home() {
@@ -35,7 +34,6 @@ export default function Home() {
       <TrustedBySection />
       <FAQSection />
       <ContactSection />
-      <DetailFooter />
     </>
   )
 }
