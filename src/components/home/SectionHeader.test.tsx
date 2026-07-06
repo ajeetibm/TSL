@@ -49,7 +49,7 @@ describe('SectionHeader', () => {
 
   describe('Styling', () => {
     it('should apply default (non-inverse) styles', () => {
-      const { container } = render(
+      render(
         <SectionHeader
           eyebrow="Test"
           title="Title"

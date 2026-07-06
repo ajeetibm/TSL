@@ -46,7 +46,7 @@ describe('ServicesSection', () => {
     })
 
     it('should render CheckCircle2 icon in eyebrow', () => {
-      const { container } = render(<ServicesSection />)
+      render(<ServicesSection />)
       
       const eyebrow = screen.getByText('What You Actually Get').closest('span')
       expect(eyebrow?.querySelector('svg')).toBeInTheDocument()

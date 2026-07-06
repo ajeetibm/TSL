@@ -1,6 +1,5 @@
 import {
   Bell,
-  ChevronLeft,
   FileText,
   MessageSquare,
   Scale,

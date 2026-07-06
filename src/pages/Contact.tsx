@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { HeroSection } from '../components/home/HeroSection'
 import { AboutSection } from '../components/home/AboutSection'
 import { MetricsSection } from '../components/home/MetricsSection'
@@ -16,6 +17,18 @@ import { setPageMetadata } from '../services/metadata'
 
 export default function Contact() {
   setPageMetadata('Contact', 'Contact TSL - The Startup Legal for startup legal support, counsel, and guided workflows.')
+
+  useEffect(() => {
+    const el = document.getElementById('contact')
+    if (el) {
+      el.scrollIntoView({ behavior: 'instant', block: 'start' })
+    } else {
+      const timer = setTimeout(() => {
+        document.getElementById('contact')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <>

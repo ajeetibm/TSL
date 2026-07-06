@@ -87,7 +87,7 @@ describe('Footer', () => {
     })
 
     it('should render Link2 icon for LinkedIn', () => {
-      const { container } = renderFooter()
+      renderFooter()
 
       const linkedInLink = screen.getByLabelText('LinkedIn')
       const svg = linkedInLink.querySelector('svg')
@@ -96,7 +96,7 @@ describe('Footer', () => {
     })
 
     it('should render CircleUserRound icon for Instagram', () => {
-      const { container } = renderFooter()
+      renderFooter()
 
       const instagramLink = screen.getByLabelText('Instagram')
       const svg = instagramLink.querySelector('svg')
@@ -227,7 +227,7 @@ describe('Footer', () => {
 
   describe('Styling Classes', () => {
     it('should apply footer__brand-title class to brand heading', () => {
-      const { container } = renderFooter()
+      renderFooter()
 
       const brandTitle = screen.getByRole('heading', { name: 'The Startup Legal' })
       expect(brandTitle).toHaveClass('footer__brand-title')

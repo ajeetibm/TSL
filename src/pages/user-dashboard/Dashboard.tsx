@@ -189,7 +189,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isPaidDashboard, setIsPaidDashboard] = useState(hasPaymentCompleted)
-  const [activeTab, setActiveTab] = useState<DashboardTab>(hasPaymentCompleted ? 'inProgress' : 'new')
+  const [activeTab, setActiveTab] = useState<DashboardTab>(hasPaymentCompleted() ? 'inProgress' : 'new')
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
 
   setPageMetadata(

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { SignInModal } from './SignInModal'
@@ -311,7 +311,6 @@ describe('SignInModal', () => {
     })
 
     it('should prevent default form submission', async () => {
-      const user = userEvent.setup()
       renderWithRouter(
         <SignInModal isOpen={true} onClose={mockOnClose} />
       )

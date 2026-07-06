@@ -128,7 +128,6 @@ function PartyBlock({
   addrKey,
   data,
   onChange,
-  namePlaceholder,
   regPlaceholder,
 }: {
   title: string
@@ -236,7 +235,7 @@ export default function NdaWizardModal({ onClose, onComplete }: { onClose: () =>
   }
   const goTo = (s: Step) => { setIsPreview(false); setStep(s) }
 
-  const checkedCount = [data.tradeSecrets, data.permitEmployees, data.returnDestroy].filter(Boolean).length
+  // const checkedCount = [data.tradeSecrets, data.permitEmployees, data.returnDestroy].filter(Boolean).length
 
   return (
     <div className="nda-modal__backdrop" role="presentation" onClick={onClose}>

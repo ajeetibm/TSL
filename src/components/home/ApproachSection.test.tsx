@@ -444,7 +444,7 @@ describe('ApproachSection', () => {
     })
 
     it('should have proper spacing for CTA button', () => {
-      const { container } = render(<ApproachSection />)
+      render(<ApproachSection />)
       
       const buttonContainer = screen.getByRole('link').closest('div')
       expect(buttonContainer).toHaveClass('mt-[100px]')

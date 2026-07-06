@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { HeroSection } from '../components/home/HeroSection'
 import { AboutSection } from '../components/home/AboutSection'
 import { MetricsSection } from '../components/home/MetricsSection'
@@ -16,6 +17,19 @@ import { setPageMetadata } from '../services/metadata'
 
 export default function About() {
   setPageMetadata('About', 'Learn about The Startup Legal mission, trust model, and founder-friendly approach.')
+
+  useEffect(() => {
+    const el = document.getElementById('about')
+    if (el) {
+      el.scrollIntoView({ behavior: 'instant', block: 'start' })
+    } else {
+      // Fallback: section may not be in DOM yet on first paint
+      const timer = setTimeout(() => {
+        document.getElementById('about')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <>

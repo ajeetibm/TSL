@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { HeroSection } from '../components/home/HeroSection'
 import { AboutSection } from '../components/home/AboutSection'
 import { MetricsSection } from '../components/home/MetricsSection'
@@ -16,6 +17,18 @@ import { setPageMetadata } from '../services/metadata'
 
 export default function Features() {
   setPageMetadata('Features', 'Explore TSL legal templates, counsel workflows, playbooks, and LegalTech verification features.')
+
+  useEffect(() => {
+    const el = document.getElementById('features')
+    if (el) {
+      el.scrollIntoView({ behavior: 'instant', block: 'start' })
+    } else {
+      const timer = setTimeout(() => {
+        document.getElementById('features')?.scrollIntoView({ behavior: 'instant', block: 'start' })
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [])
 
   return (
     <>

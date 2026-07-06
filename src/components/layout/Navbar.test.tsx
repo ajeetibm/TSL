@@ -155,7 +155,7 @@ describe('Navbar', () => {
 
     it('should render UserRound icon in account button', () => {
       localStorage.setItem('tsl-authenticated', 'true')
-      const { container } = renderNavbar()
+      renderNavbar()
 
       const accountButton = screen.getByText('Sarfraznawaz.in').closest('button')
       const svg = accountButton?.querySelector('svg')
@@ -165,7 +165,7 @@ describe('Navbar', () => {
 
     it('should render ChevronUp icon in account button', () => {
       localStorage.setItem('tsl-authenticated', 'true')
-      const { container } = renderNavbar()
+      renderNavbar()
 
       const accountButton = screen.getByText('Sarfraznawaz.in').closest('button')
       const svgs = accountButton?.querySelectorAll('svg')
@@ -278,7 +278,7 @@ describe('Navbar', () => {
     })
 
     it('should show Menu icon when closed', () => {
-      const { container } = renderNavbar()
+      renderNavbar()
 
       const toggleButton = screen.getByLabelText('Toggle navigation')
       const svg = toggleButton.querySelector('svg')
@@ -287,7 +287,7 @@ describe('Navbar', () => {
 
     it('should show X icon when open', async () => {
       const user = userEvent.setup()
-      const { container } = renderNavbar()
+      renderNavbar()
 
       const toggleButton = screen.getByLabelText('Toggle navigation')
       await user.click(toggleButton)

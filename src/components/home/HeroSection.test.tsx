@@ -91,7 +91,7 @@ describe('HeroSection', () => {
 
   describe('Icons', () => {
     it('should render Scale icon in stats badge', () => {
-      const { container } = render(<HeroSection />)
+      render(<HeroSection />)
       
       const badge = screen.getByText('300+ SA SMEs Empowered').closest('div')
       const svg = badge?.querySelector('svg')
@@ -208,7 +208,7 @@ describe('HeroSection', () => {
     })
 
     it('should have responsive button layout', () => {
-      const { container } = render(<HeroSection />)
+      render(<HeroSection />)
       
       const buttonContainer = screen.getByRole('button', { name: /Get Started/i }).parentElement
       expect(buttonContainer).toHaveClass('flex-col')
@@ -296,7 +296,7 @@ describe('HeroSection', () => {
     })
 
     it('should have proper spacing between tags', () => {
-      const { container } = render(<HeroSection />)
+      render(<HeroSection />)
       
       const tagsContainer = screen.getByText('Legal Templates').closest('div')
       expect(tagsContainer).toHaveClass('gap-x-9')

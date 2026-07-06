@@ -22,7 +22,7 @@ vi.mock('../components/wizard-catalogue/WizardCard', () => ({
 }))
 
 vi.mock('../components/wizard-catalogue/WizardCartBar', () => ({
-  WizardCartBar: ({ selectedWizards, totalItems }: any) => (
+  WizardCartBar: ({ totalItems }: any) => (
     <div data-testid="wizard-cart-bar">
       Cart: {totalItems} items
     </div>

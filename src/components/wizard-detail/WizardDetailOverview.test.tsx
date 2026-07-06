@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { render, screen } from '@testing-library/react'
 import { WizardDetailOverview } from './WizardDetailOverview'
 
 // Mock wizards data
@@ -280,7 +279,7 @@ describe('WizardDetailOverview', () => {
     })
 
     it('should render ChevronRight icon in payment button', () => {
-      const { container } = render(<WizardDetailOverview />)
+      render(<WizardDetailOverview />)
 
       const paymentButton = screen.getByRole('button', { name: /Proceed To Payment/i })
       const svg = paymentButton.querySelector('svg')

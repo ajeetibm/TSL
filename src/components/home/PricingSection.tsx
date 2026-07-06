@@ -1,10 +1,9 @@
-import { Check, Info, Briefcase, FileText, Shield, Users, TrendingUp, Minus } from 'lucide-react'
+import { Check, Info } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { pricingPlans, pricingComparison } from '../../data/pricing'
 import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
 import { cn } from '../../utils/cn'
 import { Container } from '../layout/Container'
-import { SectionHeader } from './SectionHeader'
 
 function FeatureValue({ value, exclusive }: { value: boolean | string; exclusive?: boolean }) {
   if (value === true) {

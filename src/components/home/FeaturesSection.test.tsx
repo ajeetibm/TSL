@@ -108,7 +108,7 @@ describe('FeaturesSection', () => {
     })
 
     it('should render Zap icon in section header', () => {
-      const { container } = render(<FeaturesSection />)
+      render(<FeaturesSection />)
       
       const header = screen.getByText('How Our Platform Works').closest('span')
       expect(header?.querySelector('svg')).toBeInTheDocument()

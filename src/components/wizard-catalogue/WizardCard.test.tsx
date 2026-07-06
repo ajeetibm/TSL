@@ -240,7 +240,7 @@ describe('WizardCard', () => {
     })
 
     it('should render CheckCircle2 icon in Select button', () => {
-      const { container } = render(<WizardCard {...mockWizardProps} quantity={0} />)
+      render(<WizardCard {...mockWizardProps} quantity={0} />)
 
       const button = screen.getByRole('button', { name: /Select/i })
       const svg = button.querySelector('svg')
@@ -508,7 +508,7 @@ describe('WizardCard', () => {
     })
 
     it('should update quantity display', () => {
-      const { container, rerender } = render(<WizardCard {...mockWizardProps} quantity={1} />)
+      const { rerender } = render(<WizardCard {...mockWizardProps} quantity={1} />)
 
       expect(screen.getByText('1 run')).toBeInTheDocument()
 

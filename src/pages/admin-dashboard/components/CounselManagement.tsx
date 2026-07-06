@@ -178,7 +178,7 @@ export default function CounselManagement() {
 
   const availableCount = counselMembers.filter((m) => m.status === 'Available').length
   const notAvailableCount = counselMembers.filter((m) => m.status === 'Not Available').length
-  const totalCompleted = counselMembers.reduce((sum, m) => sum + m.completed, 0)
+  // const totalCompleted = counselMembers.reduce((sum, m) => sum + m.completed, 0)
 
   return (
     <>

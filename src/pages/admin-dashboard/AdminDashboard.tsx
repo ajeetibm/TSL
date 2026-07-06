@@ -1,5 +1,4 @@
 import {
-  Activity,
   AlertTriangle,
   Briefcase,
   CalendarDays,
@@ -12,7 +11,6 @@ import {
   ArrowRight,
   BriefcaseBusiness,
   Check,
-  Clock,
   Download,
   DollarSign,
   FileText,
@@ -147,53 +145,53 @@ const counselMembers = [
   },
 ]
 
-const adminUsers = [
-  { name: 'John Doe', email: 'john@example.com', plan: 'Operator', status: 'Active', joinDate: 'Jan 15, 2025' },
-  { name: 'Sarah Smith', email: 'sarah@example.com', plan: 'Launchpad', status: 'Active', joinDate: 'Feb 20, 2025' },
-  { name: 'Mike Johnson', email: 'mike@example.com', plan: 'Operator', status: 'Active', joinDate: 'Mar 10, 2025' },
-  { name: 'Emily Brown', email: 'emily@example.com', plan: 'Operator', status: 'Active', joinDate: 'Apr 5, 2025' },
-  { name: 'David Wilson', email: 'david@example.com', plan: 'Launchpad', status: 'Inactive', joinDate: 'May 12, 2025' },
-  { name: 'Lisa Anderson', email: 'lisa@example.com', plan: 'Boardroom', status: 'Active', joinDate: 'Jun 8, 2025' },
-]
+// const adminUsers = [
+//   { name: 'John Doe', email: 'john@example.com', plan: 'Operator', status: 'Active', joinDate: 'Jan 15, 2025' },
+//   { name: 'Sarah Smith', email: 'sarah@example.com', plan: 'Launchpad', status: 'Active', joinDate: 'Feb 20, 2025' },
+//   { name: 'Mike Johnson', email: 'mike@example.com', plan: 'Operator', status: 'Active', joinDate: 'Mar 10, 2025' },
+//   { name: 'Emily Brown', email: 'emily@example.com', plan: 'Operator', status: 'Active', joinDate: 'Apr 5, 2025' },
+//   { name: 'David Wilson', email: 'david@example.com', plan: 'Launchpad', status: 'Inactive', joinDate: 'May 12, 2025' },
+//   { name: 'Lisa Anderson', email: 'lisa@example.com', plan: 'Boardroom', status: 'Active', joinDate: 'Jun 8, 2025' },
+// ]
 
-const adminManagementRows = [
-  {
-    name: 'John Smith',
-    email: 'john.smith@admin.com',
-    status: 'Active',
-    lastActive: '2 hours ago',
-    invitedDate: 'Dec 15, 2024',
-    secondaryAction: 'Revoke',
-  },
-  {
-    name: 'Emily Davis',
-    email: 'emily.davis@admin.com',
-    status: 'Pending',
-    lastActive: 'Not yet active',
-    invitedDate: 'Jan 3, 2025',
-    secondaryAction: 'Cancel',
-  },
-  {
-    name: 'Michael Chen',
-    email: 'michael.chen@admin.com',
-    status: 'Active',
-    lastActive: '5 minutes ago',
-    invitedDate: 'Nov 20, 2024',
-    secondaryAction: 'Revoke',
-  },
-  {
-    name: 'Sarah Johnson',
-    email: 'sarah.j@admin.com',
-    status: 'Pending',
-    lastActive: 'Not yet active',
-    invitedDate: 'Jan 5, 2025',
-    secondaryAction: 'Cancel',
-  },
-]
+// const adminManagementRows = [
+//   {
+//     name: 'John Smith',
+//     email: 'john.smith@admin.com',
+//     status: 'Active',
+//     lastActive: '2 hours ago',
+//     invitedDate: 'Dec 15, 2024',
+//     secondaryAction: 'Revoke',
+//   },
+//   {
+//     name: 'Emily Davis',
+//     email: 'emily.davis@admin.com',
+//     status: 'Pending',
+//     lastActive: 'Not yet active',
+//     invitedDate: 'Jan 3, 2025',
+//     secondaryAction: 'Cancel',
+//   },
+//   {
+//     name: 'Michael Chen',
+//     email: 'michael.chen@admin.com',
+//     status: 'Active',
+//     lastActive: '5 minutes ago',
+//     invitedDate: 'Nov 20, 2024',
+//     secondaryAction: 'Revoke',
+//   },
+//   {
+//     name: 'Sarah Johnson',
+//     email: 'sarah.j@admin.com',
+//     status: 'Pending',
+//     lastActive: 'Not yet active',
+//     invitedDate: 'Jan 5, 2025',
+//     secondaryAction: 'Cancel',
+//   },
+// ]
 
 
 type AdminNavKey = (typeof navItems)[number]['key'] | 'profile'
-type ManagementTab = 'users' | 'admins'
+// type ManagementTab = 'users' | 'admins'
 type SettingsTab = 'billing' | 'general' | 'notifications' | 'security'
 type AdminProfileTab = 'information' | 'security' | 'preferences'
 
@@ -251,7 +249,7 @@ export default function AdminDashboard() {
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
   const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
-  const [managementTab, setManagementTab] = useState<ManagementTab>('users')
+  // const [managementTab, setManagementTab] = useState<ManagementTab>('users')
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('billing')
   const [profileTab, setProfileTab] = useState<AdminProfileTab>('information')
   const [adminProfile, setAdminProfile] = useState<AdminProfileForm>(defaultAdminProfile)
