@@ -364,6 +364,21 @@
   color: rgba(13, 27, 42, 0.3);
 }
 
+.dashboard-profile__security-message {
+  margin: -4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.dashboard-profile__security-message--error {
+  color: #dc2626;
+}
+
+.dashboard-profile__security-message--success {
+  color: #16a34a;
+}
+
 .dashboard-profile__update-button {
   min-height: 52px;
   width: fit-content;
@@ -378,6 +393,11 @@
   line-height: 24px;
   cursor: pointer;
   margin-top: 8px;
+}
+
+.dashboard-profile__update-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 
 .dashboard-profile__2fa {
