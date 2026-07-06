@@ -78,7 +78,7 @@
   display: grid;
   grid-template-columns: minmax(0, 738px) 357px;
   gap: 25px;
-  margin: 0 auto;
+  margin: 0;
   padding: 32px;
 }
 

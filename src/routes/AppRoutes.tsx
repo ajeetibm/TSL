@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import { NotificationProvider } from '../context/NotificationContext'
 import { UserProfileProvider } from '../context/UserProfileContext'
+import { CounselRequestProvider } from '../context/CounselRequestContext'
 import { RootLayout } from '../layouts/RootLayout'
 
 const Home = lazy(() => import('../pages/Home'))
@@ -30,6 +31,7 @@ const WizardDetails = lazy(() => import('../pages/WizardDetails'))
 
 export function AppRoutes() {
   return (
+    <CounselRequestProvider>
     <UserProfileProvider>
     <NotificationProvider>
     <Suspense
@@ -70,5 +72,6 @@ export function AppRoutes() {
     </Suspense>
     </NotificationProvider>
     </UserProfileProvider>
+    </CounselRequestProvider>
   )
 }

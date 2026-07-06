@@ -2210,6 +2210,11 @@
   line-height: 22.75px;
 }
 
+.admin-assignment__attachments {
+  display: grid;
+  gap: 10px;
+}
+
 .admin-assignment__attachment {
   min-height: 68px;
   display: flex;
