@@ -197,6 +197,9 @@ export const profileApi = {
 
 export const adminApi = {
   dashboard: () => request('/api/v1/admin/dashboard'),
+  profile: () => request('/api/v1/admin/profile'),
+  updateProfile: (payload: JsonRecord) => request('/api/v1/admin/profile', 'PUT', payload),
+  changePassword: (payload: JsonRecord) => request('/api/v1/admin/change-password', 'PUT', payload),
   users: () => request('/api/v1/admin/users'),
   updateUser: (userId: string, payload: JsonRecord) => request(`/api/v1/admin/users/${userId}`, 'PUT', payload),
   inviteAdmin: (payload: JsonRecord) => request('/api/v1/admin/admins/invite', 'POST', payload),
@@ -211,12 +214,15 @@ export const adminApi = {
 
 export const counselPortalApi = {
   dashboard: () => request('/api/v1/counsel/dashboard'),
+  profile: (email?: string) =>
+    request(email ? `/api/v1/counsel/profile?email=${encodeURIComponent(email)}` : '/api/v1/counsel/profile'),
   availability: (availability: string) => request('/api/v1/counsel/availability', 'PATCH', { availability }),
   acceptRequest: (requestId: string) => request(`/api/v1/counsel/requests/${requestId}/accept`, 'POST'),
   rejectRequest: (requestId: string, reason: string) =>
     request(`/api/v1/counsel/requests/${requestId}/reject`, 'POST', { reason }),
   requests: () => request('/api/v1/counsel/requests'),
   updateProfile: (payload: JsonRecord) => request('/api/v1/counsel/profile', 'PUT', payload),
+  changePassword: (payload: JsonRecord) => request('/api/v1/counsel/change-password', 'PUT', payload),
   resetPassword: (payload: JsonRecord) => request<AuthUser>('/api/v1/counsel/reset-password', 'POST', payload, false),
 }
 

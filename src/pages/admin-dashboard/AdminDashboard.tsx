@@ -25,6 +25,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
@@ -205,6 +206,12 @@ type AdminProfileForm = {
   jobTitle: string
 }
 
+type PasswordForm = {
+  currentPassword: string
+  newPassword: string
+  confirmPassword: string
+}
+
 const defaultAdminProfile: AdminProfileForm = {
   firstName: 'Given',
   lastName: 'Kibanza',
@@ -251,15 +258,49 @@ export default function AdminDashboard() {
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
   const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
+
+  // Assign modal filters
+  const [counselSearch, setCounselSearch] = useState('')
+  const [filterExpertise, setFilterExpertise] = useState('All Expertise')
+  const [filterExperience, setFilterExperience] = useState('All Experience')
+  const [filterAvailability, setFilterAvailability] = useState('All Availability')
   // const [managementTab, setManagementTab] = useState<ManagementTab>('users')
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('billing')
   const [profileTab, setProfileTab] = useState<AdminProfileTab>('information')
   const [adminProfile, setAdminProfile] = useState<AdminProfileForm>(defaultAdminProfile)
+  const [adminProfileBaseline, setAdminProfileBaseline] = useState<AdminProfileForm>(defaultAdminProfile)
+  const [adminProfileSaving, setAdminProfileSaving] = useState(false)
+  const [adminProfileMessage, setAdminProfileMessage] = useState<string | null>(null)
+  const [adminProfileError, setAdminProfileError] = useState<string | null>(null)
+  const [adminPassword, setAdminPassword] = useState<PasswordForm>({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
+  const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
+  const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
 
   setPageMetadata('Admin Dashboard', 'TSL admin dashboard for platform KPIs, counsel requests, revenue, and issues.')
 
   useEffect(() => {
     let cancelled = false
+
+    adminApi.profile().then((response) => {
+      if (cancelled || !response.success || !response.data) return
+      const data = response.data as Partial<AdminProfileForm>
+      const nextProfile = {
+        ...defaultAdminProfile,
+        firstName: typeof data.firstName === 'string' ? data.firstName : defaultAdminProfile.firstName,
+        lastName: typeof data.lastName === 'string' ? data.lastName : defaultAdminProfile.lastName,
+        email: typeof data.email === 'string' ? data.email : defaultAdminProfile.email,
+        phone: typeof data.phone === 'string' ? data.phone : defaultAdminProfile.phone,
+        location: typeof data.location === 'string' ? data.location : defaultAdminProfile.location,
+        jobTitle: typeof data.jobTitle === 'string' ? data.jobTitle : defaultAdminProfile.jobTitle,
+      }
+      setAdminProfile(nextProfile)
+      setAdminProfileBaseline(nextProfile)
+    })
 
     adminApi.dashboard().then((response) => {
       if (cancelled) return
@@ -330,9 +371,40 @@ export default function AdminDashboard() {
     URL.revokeObjectURL(url)
   }
 
+  const filteredCounselMembers = useMemo(() => {
+    const q = counselSearch.toLowerCase()
+    return counselMembers.filter((m) => {
+      const matchesSearch =
+        !q ||
+        m.name.toLowerCase().includes(q) ||
+        m.expertise.toLowerCase().includes(q) ||
+        m.email.toLowerCase().includes(q)
+
+      const matchesExpertise =
+        filterExpertise === 'All Expertise' || m.expertise.toLowerCase().includes(filterExpertise.toLowerCase())
+
+      const yearsMatch = m.experience.match(/\d+/)
+      const years = yearsMatch ? parseInt(yearsMatch[0]) : 0
+      const matchesExperience =
+        filterExperience === 'All Experience' ||
+        (filterExperience === '10+ Years' && years >= 10) ||
+        (filterExperience === '5-10 Years' && years >= 5 && years < 10) ||
+        (filterExperience === '1-5 Years' && years >= 1 && years < 5)
+
+      const matchesAvailability =
+        filterAvailability === 'All Availability' || m.availability === filterAvailability
+
+      return matchesSearch && matchesExpertise && matchesExperience && matchesAvailability
+    })
+  }, [counselSearch, filterExpertise, filterExperience, filterAvailability])
+
   const closeAssignmentModal = () => {
     setActiveRequest(null)
     setAssignmentStep('preview')
+    setCounselSearch('')
+    setFilterExpertise('All Expertise')
+    setFilterExperience('All Experience')
+    setFilterAvailability('All Availability')
   }
 
   const assignToCounsel = async () => {
@@ -359,14 +431,77 @@ export default function AdminDashboard() {
 
   const updateAdminProfile = (field: keyof AdminProfileForm, value: string) => {
     setAdminProfile((current) => ({ ...current, [field]: value }))
+    setAdminProfileMessage(null)
+    setAdminProfileError(null)
+  }
+
+  const updateAdminPassword = (field: keyof PasswordForm, value: string) => {
+    setAdminPassword((current) => ({ ...current, [field]: value }))
+    setAdminPasswordMessage(null)
+    setAdminPasswordError(null)
   }
 
   const resetAdminProfile = () => {
-    setAdminProfile(defaultAdminProfile)
+    setAdminProfile(adminProfileBaseline)
+    setAdminProfileMessage(null)
+    setAdminProfileError(null)
   }
 
-  const saveAdminProfile = () => {
-    console.log('Saving admin profile:', adminProfile)
+  const saveAdminProfile = async () => {
+    setAdminProfileSaving(true)
+    setAdminProfileMessage(null)
+    setAdminProfileError(null)
+
+    const response = await adminApi.updateProfile(adminProfile)
+    setAdminProfileSaving(false)
+
+    if (!response.success) {
+      setAdminProfileError(response.message ?? 'Unable to save profile.')
+      return
+    }
+
+    const savedProfile = {
+      ...adminProfile,
+      ...((response.data ?? {}) as Partial<AdminProfileForm>),
+    }
+    setAdminProfile(savedProfile)
+    setAdminProfileBaseline(savedProfile)
+    setAdminProfileMessage(response.message ?? 'Profile saved successfully.')
+  }
+
+  const updateAdminProfilePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setAdminPasswordMessage(null)
+    setAdminPasswordError(null)
+
+    if (!adminPassword.currentPassword || !adminPassword.newPassword || !adminPassword.confirmPassword) {
+      setAdminPasswordError('Current password, new password, and confirmation are required.')
+      return
+    }
+
+    if (adminPassword.newPassword !== adminPassword.confirmPassword) {
+      setAdminPasswordError('New password and confirm password must match.')
+      return
+    }
+
+    setAdminPasswordSaving(true)
+    const response = await adminApi.changePassword({
+      email: adminProfile.email,
+      ...adminPassword,
+    })
+    setAdminPasswordSaving(false)
+
+    if (!response.success) {
+      setAdminPasswordError(response.message ?? 'Unable to update password.')
+      return
+    }
+
+    setAdminPassword({
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    })
+    setAdminPasswordMessage(response.message ?? 'Password changed successfully.')
   }
 
   const headerTitle =
@@ -568,12 +703,23 @@ export default function AdminDashboard() {
                     </label>
                   </div>
 
+                  {adminProfileError && (
+                    <p className="admin-profile__message admin-profile__message--error" role="alert">
+                      {adminProfileError}
+                    </p>
+                  )}
+                  {adminProfileMessage && (
+                    <p className="admin-profile__message admin-profile__message--success" role="status">
+                      {adminProfileMessage}
+                    </p>
+                  )}
+
                   <div className="admin-profile__actions">
-                    <button type="button" onClick={resetAdminProfile}>
+                    <button type="button" onClick={resetAdminProfile} disabled={adminProfileSaving}>
                       Cancel
                     </button>
-                    <button type="button" onClick={saveAdminProfile}>
-                      Save Changes
+                    <button type="button" onClick={saveAdminProfile} disabled={adminProfileSaving}>
+                      {adminProfileSaving ? 'Saving...' : 'Save Changes'}
                     </button>
                   </div>
                 </form>
@@ -588,21 +734,46 @@ export default function AdminDashboard() {
                       </span>
                       <h2>Change Password</h2>
                     </div>
-                    <form className="admin-profile__password-form">
+                    <form className="admin-profile__password-form" onSubmit={updateAdminProfilePassword}>
                       <label className="admin-profile__field">
                         <span>Current Password</span>
-                        <input type="password" placeholder="Enter current password" />
+                        <input
+                          type="password"
+                          placeholder="Enter current password"
+                          value={adminPassword.currentPassword}
+                          onChange={(event) => updateAdminPassword('currentPassword', event.target.value)}
+                        />
                       </label>
                       <label className="admin-profile__field">
                         <span>New Password</span>
-                        <input type="password" placeholder="Enter new password" />
+                        <input
+                          type="password"
+                          placeholder="Enter new password"
+                          value={adminPassword.newPassword}
+                          onChange={(event) => updateAdminPassword('newPassword', event.target.value)}
+                        />
                       </label>
                       <label className="admin-profile__field">
                         <span>Confirm New Password</span>
-                        <input type="password" placeholder="Confirm new password" />
+                        <input
+                          type="password"
+                          placeholder="Confirm new password"
+                          value={adminPassword.confirmPassword}
+                          onChange={(event) => updateAdminPassword('confirmPassword', event.target.value)}
+                        />
                       </label>
-                      <button type="submit" className="admin-profile__primary-button">
-                        Update Password
+                      {adminPasswordError && (
+                        <p className="admin-profile__message admin-profile__message--error" role="alert">
+                          {adminPasswordError}
+                        </p>
+                      )}
+                      {adminPasswordMessage && (
+                        <p className="admin-profile__message admin-profile__message--success" role="status">
+                          {adminPasswordMessage}
+                        </p>
+                      )}
+                      <button type="submit" className="admin-profile__primary-button" disabled={adminPasswordSaving}>
+                        {adminPasswordSaving ? 'Updating...' : 'Update Password'}
                       </button>
                     </form>
                   </section>
@@ -968,28 +1139,44 @@ export default function AdminDashboard() {
                 <section className="admin-assignment__assign-body">
                   <div className="admin-assignment__assign-top">
                     <h3>Select Counsel Member</h3>
-                    <span>7 of 7 available</span>
+                    <span>{filteredCounselMembers.length} of {counselMembers.length} available</span>
                   </div>
 
                   <label className="admin-assignment__search">
                     <Search size={17} />
-                    <input type="search" placeholder="Search by name, expertise, or email..." />
+                    <input
+                      type="search"
+                      placeholder="Search by name, expertise, or email..."
+                      value={counselSearch}
+                      onChange={(e) => setCounselSearch(e.target.value)}
+                    />
                   </label>
 
                   <div className="admin-assignment__filters" aria-label="Counsel filters">
-                    <select defaultValue="All Expertise">
+                    <select
+                      value={filterExpertise}
+                      onChange={(e) => setFilterExpertise(e.target.value)}
+                    >
                       <option>All Expertise</option>
                       <option>SaaS</option>
                       <option>Intellectual Property</option>
                       <option>Employment Law</option>
+                      <option>Corporate Law</option>
+                      <option>Commercial Contracts</option>
                     </select>
-                    <select defaultValue="All Experience">
+                    <select
+                      value={filterExperience}
+                      onChange={(e) => setFilterExperience(e.target.value)}
+                    >
                       <option>All Experience</option>
                       <option>10+ Years</option>
                       <option>5-10 Years</option>
                       <option>1-5 Years</option>
                     </select>
-                    <select defaultValue="All Availability">
+                    <select
+                      value={filterAvailability}
+                      onChange={(e) => setFilterAvailability(e.target.value)}
+                    >
                       <option>All Availability</option>
                       <option>Available</option>
                       <option>Busy</option>
@@ -997,7 +1184,12 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="admin-assignment__counsel-list">
-                    {counselMembers.map((member) => {
+                    {filteredCounselMembers.length === 0 ? (
+                      <p style={{ textAlign: 'center', padding: '24px', color: '#666' }}>
+                        No counsel members match your filters.
+                      </p>
+                    ) : null}
+                    {filteredCounselMembers.map((member) => {
                       const selected = selectedCounsel === member.email
                       const busy = member.availability === 'Busy'
                       return (

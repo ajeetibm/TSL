@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import {
   Briefcase,
   Calendar,
@@ -16,7 +17,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
-import { clearAuthSession } from '../../services/tslApi'
+import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 import './CounselProfile.css'
 
@@ -51,25 +52,55 @@ type EmailPreferences = {
   productUpdates: boolean
 }
 
+const defaultProfileData: ProfileData = {
+  firstName: 'Thabo',
+  lastName: 'Thabo',
+  email: 's.nkosi@tsl.co.za',
+  phone: '+27 11 234 5678',
+  specialty: 'Multiple Choice',
+  expertise: 'Multiple Choice',
+  location: 'Johannesburg, Gauteng',
+  experience: '15',
+  education: 'Placeholder',
+  meetingId: 'snawaz@calendly.com',
+  joinedDate: 'December 2025',
+  lastLogin: 'January 9, 2026 - 14:23',
+}
+
+function getStoredCounselUser(): { email?: string; fullName?: string; portal?: string } | null {
+  try {
+    return JSON.parse(localStorage.getItem('tsl-auth-user') || 'null')
+  } catch {
+    return null
+  }
+}
+
+function profileFromSession(fallback: ProfileData): ProfileData {
+  const storedUser = getStoredCounselUser()
+  if (!storedUser || storedUser.portal !== 'counsel') return fallback
+
+  const nameParts = String(storedUser.fullName || '').replace(/^Adv\.\s*/i, '').split(' ').filter(Boolean)
+  return {
+    ...fallback,
+    firstName: nameParts[0] || fallback.firstName,
+    lastName: nameParts.slice(1).join(' ') || fallback.lastName,
+    email: storedUser.email || fallback.email,
+  }
+}
+
 export default function CounselProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
   const [availability, setAvailability] = useState<Availability>('available')
   
-  const [profileData, setProfileData] = useState<ProfileData>({
-    firstName: 'Thabo',
-    lastName: 'Thabo',
-    email: 'thabo.mbeki@counsel.co.za',
-    phone: '+27 11 234 5678',
-    specialty: 'Multiple Choice',
-    expertise: 'Multiple Choice',
-    location: 'Johannesburg, Gauteng',
-    experience: '15',
-    education: 'Placeholder',
-    meetingId: 'snawaz@calendly.com',
-    joinedDate: 'December 2025',
-    lastLogin: 'January 9, 2026 - 14:23',
-  })
+  const [profileData, setProfileData] = useState<ProfileData>(() => profileFromSession(defaultProfileData))
+  const [profileBaseline, setProfileBaseline] = useState<ProfileData>(() => profileFromSession(defaultProfileData))
+  const [profileSaving, setProfileSaving] = useState(false)
+  const [profileMessage, setProfileMessage] = useState<string | null>(null)
+  const [profileError, setProfileError] = useState<string | null>(null)
+  const [passwordSaving, setPasswordSaving] = useState(false)
+  const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     currentPassword: '',
@@ -84,6 +115,27 @@ export default function CounselProfile() {
     productUpdates: false,
   })
 
+  useEffect(() => {
+    let cancelled = false
+    const nextProfile = profileFromSession(defaultProfileData)
+    setProfileData((current) => ({ ...current, ...nextProfile }))
+    setProfileBaseline((current) => ({ ...current, ...nextProfile }))
+
+    counselPortalApi.profile(nextProfile.email).then((response) => {
+      if (cancelled || !response.success || !response.data) return
+      const savedProfile = {
+        ...nextProfile,
+        ...((response.data ?? {}) as Partial<ProfileData>),
+      }
+      setProfileData(savedProfile)
+      setProfileBaseline(savedProfile)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const signOut = () => {
     clearAuthSession()
     navigate('/')
@@ -95,28 +147,87 @@ export default function CounselProfile() {
 
   const handleProfileChange = (field: keyof ProfileData, value: string) => {
     setProfileData((prev) => ({ ...prev, [field]: value }))
+    setProfileMessage(null)
+    setProfileError(null)
   }
 
   const handleSecurityChange = (field: keyof SecuritySettings, value: string | boolean) => {
     setSecuritySettings((prev) => ({ ...prev, [field]: value }))
+    setPasswordMessage(null)
+    setPasswordError(null)
   }
 
   const handlePreferenceToggle = (field: keyof EmailPreferences) => {
     setEmailPreferences((prev) => ({ ...prev, [field]: !prev[field] }))
   }
 
-  const handleSaveProfile = () => {
-    console.log('Profile saved:', profileData)
+  const resetProfileForm = () => {
+    setProfileData(profileBaseline)
+    setProfileMessage(null)
+    setProfileError(null)
   }
 
-  const handleUpdatePassword = () => {
-    console.log('Password updated')
+  const handleSaveProfile = async () => {
+    setProfileSaving(true)
+    setProfileMessage(null)
+    setProfileError(null)
+
+    const response = await counselPortalApi.updateProfile({
+      ...profileData,
+      currentEmail: profileBaseline.email,
+    })
+    setProfileSaving(false)
+
+    if (!response.success) {
+      setProfileError(response.message ?? 'Unable to save profile.')
+      return
+    }
+
+    const savedProfile = {
+      ...profileData,
+      ...((response.data ?? {}) as Partial<ProfileData>),
+    }
+    setProfileData(savedProfile)
+    setProfileBaseline(savedProfile)
+    setProfileMessage(response.message ?? 'Profile saved successfully.')
+  }
+
+  const handleUpdatePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setPasswordMessage(null)
+    setPasswordError(null)
+
+    if (!securitySettings.currentPassword || !securitySettings.newPassword || !securitySettings.confirmPassword) {
+      setPasswordError('Current password, new password, and confirmation are required.')
+      return
+    }
+
+    if (securitySettings.newPassword !== securitySettings.confirmPassword) {
+      setPasswordError('New password and confirm password must match.')
+      return
+    }
+
+    setPasswordSaving(true)
+    const response = await counselPortalApi.changePassword({
+      email: profileData.email,
+      currentPassword: securitySettings.currentPassword,
+      newPassword: securitySettings.newPassword,
+      confirmPassword: securitySettings.confirmPassword,
+    })
+    setPasswordSaving(false)
+
+    if (!response.success) {
+      setPasswordError(response.message ?? 'Unable to update password.')
+      return
+    }
+
     setSecuritySettings({
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
       twoFactorAuth: securitySettings.twoFactorAuth,
     })
+    setPasswordMessage(response.message ?? 'Password changed successfully.')
   }
 
   return (
@@ -374,13 +485,24 @@ export default function CounselProfile() {
                   />
                 </div>
 
+                {profileError && (
+                  <p className="counsel-profile__message counsel-profile__message--error" role="alert">
+                    {profileError}
+                  </p>
+                )}
+                {profileMessage && (
+                  <p className="counsel-profile__message counsel-profile__message--success" role="status">
+                    {profileMessage}
+                  </p>
+                )}
+
                 <div className="counsel-profile__form-actions">
-                  <button type="button" className="counsel-profile__btn counsel-profile__btn--secondary">
+                  <button type="button" className="counsel-profile__btn counsel-profile__btn--secondary" onClick={resetProfileForm} disabled={profileSaving}>
                     Cancel
                   </button>
-                  <button type="button" className="counsel-profile__btn counsel-profile__btn--primary" onClick={handleSaveProfile}>
+                  <button type="button" className="counsel-profile__btn counsel-profile__btn--primary" onClick={handleSaveProfile} disabled={profileSaving}>
                     <Save size={18} />
-                    Save Changes
+                    {profileSaving ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               </form>
@@ -398,7 +520,7 @@ export default function CounselProfile() {
                 <h2>Change Password</h2>
               </div>
 
-              <form className="counsel-profile__form">
+              <form className="counsel-profile__form" onSubmit={handleUpdatePassword}>
                 <div className="counsel-profile__form-group counsel-profile__form-group--full">
                   <label htmlFor="currentPassword">Current Password</label>
                   <input
@@ -432,12 +554,23 @@ export default function CounselProfile() {
                   />
                 </div>
 
+                {passwordError && (
+                  <p className="counsel-profile__message counsel-profile__message--error" role="alert">
+                    {passwordError}
+                  </p>
+                )}
+                {passwordMessage && (
+                  <p className="counsel-profile__message counsel-profile__message--success" role="status">
+                    {passwordMessage}
+                  </p>
+                )}
+
                 <button
-                  type="button"
+                  type="submit"
                   className="counsel-profile__btn counsel-profile__btn--primary counsel-profile__btn--standalone"
-                  onClick={handleUpdatePassword}
+                  disabled={passwordSaving}
                 >
-                  Update Password
+                  {passwordSaving ? 'Updating...' : 'Update Password'}
                 </button>
               </form>
             </div>

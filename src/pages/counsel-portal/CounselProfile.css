@@ -526,6 +526,27 @@
   background: #f4f4f4;
 }
 
+.counsel-profile__message {
+  margin: 6px 0;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.counsel-profile__message--success {
+  color: #16a34a;
+}
+
+.counsel-profile__message--error {
+  color: #dc2626;
+}
+
+.counsel-profile__btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .counsel-profile__session h4 {
   margin: 0 0 6px;
   color: #0d1b2a;

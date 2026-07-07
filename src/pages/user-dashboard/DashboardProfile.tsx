@@ -17,6 +17,7 @@ export default function DashboardProfile() {
   const [formData, setFormData] = useState<UserProfile>(profile)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -57,6 +58,8 @@ export default function DashboardProfile() {
 
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    setSaveError(null)
+    setSaveMessage(null)
   }
 
   const handlePasswordInputChange = (field: keyof typeof passwordData, value: string) => {
@@ -110,6 +113,7 @@ export default function DashboardProfile() {
   const handleSave = async () => {
     setIsSaving(true)
     setSaveError(null)
+    setSaveMessage(null)
     const result = await profileApi.update({ ...formData })
     setIsSaving(false)
     if (!result.success) {
@@ -117,11 +121,13 @@ export default function DashboardProfile() {
       return
     }
     updateProfile(formData)
+    setSaveMessage(result.message ?? 'Profile saved successfully.')
   }
 
   const handleCancel = () => {
     setFormData(profile)
     setSaveError(null)
+    setSaveMessage(null)
   }
 
   return (
@@ -274,8 +280,13 @@ export default function DashboardProfile() {
               </div>
 
               {saveError && (
-                <p className="dashboard-profile__save-error" role="alert">
+                <p className="dashboard-profile__save-message dashboard-profile__save-message--error" role="alert">
                   {saveError}
+                </p>
+              )}
+              {saveMessage && (
+                <p className="dashboard-profile__save-message dashboard-profile__save-message--success" role="status">
+                  {saveMessage}
                 </p>
               )}
               <div className="dashboard-profile__actions">
