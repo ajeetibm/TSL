@@ -47,10 +47,10 @@ a:focus-visible {
 }
 
 /* Page transition animations */
-@keyframes slideUpFadeIn {
+@keyframes pageFadeIn {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -59,5 +59,11 @@ a:focus-visible {
 }
 
 .page-transition-enter {
-  animation: slideUpFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: pageFadeIn 0.22s ease-out forwards;
+}
+
+/* Marketing flow — navbar link transitions */
+.page-transition-marketing {
+  animation: pageFadeIn 0.2s ease-out forwards;
+  will-change: opacity, transform;
 }
