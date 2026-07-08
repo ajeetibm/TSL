@@ -47,7 +47,7 @@ export interface LoginPayload {
 }
 
 export interface GoogleAuthPayload {
-  idToken: string
+  credential: string           // Google ID token from useGoogleLogin / GoogleLogin
   portal?: 'sme' | 'admin' | 'counsel'
 }
 

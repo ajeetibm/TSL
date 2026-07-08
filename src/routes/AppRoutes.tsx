@@ -4,6 +4,7 @@ import { NotificationProvider } from '../context/NotificationContext'
 import { UserProfileProvider } from '../context/UserProfileContext'
 import { CounselRequestProvider } from '../context/CounselRequestContext'
 import { RootLayout } from '../layouts/RootLayout'
+import { ProtectedRoute } from './ProtectedRoute'
 
 const Home = lazy(() => import('../pages/Home'))
 const About = lazy(() => import('../pages/About'))
@@ -43,6 +44,7 @@ export function AppRoutes() {
     >
       <Routes>
         <Route element={<RootLayout />}>
+          {/* Public marketing routes */}
           <Route index element={<Home />} />
           <Route path="about" element={<About />} />
           <Route path="features" element={<Features />} />
@@ -50,23 +52,29 @@ export function AppRoutes() {
           <Route path="contact" element={<Contact />} />
           <Route path="counsel" element={<Counsel />} />
           <Route path="playbooks-insights" element={<PlaybooksInsights />} />
-          <Route path="admin/dashboard" element={<AdminDashboard />} />
-          <Route path="counsel/login" element={<CounselLogin />} />
-          <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
-          <Route path="counsel/email-sent" element={<CounselEmailSent />} />
-          <Route path="counsel/reset-password" element={<CounselResetPassword />} />
-          <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
-          <Route path="counsel/profile" element={<CounselProfile />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="dashboard/counsel" element={<DashboardCounsel />} />
-          <Route path="dashboard/notifications" element={<DashboardNotifications />} />
-          <Route path="dashboard/playbooks" element={<DashboardPlaybooks />} />
-          <Route path="dashboard/profile" element={<DashboardProfile />} />
-          <Route path="dashboard/settings" element={<DashboardSettings />} />
-          <Route path="dashboard/wizards" element={<DashboardWizards />} />
-          <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
           <Route path="wizard-catalogue" element={<WizardCatalogue />} />
           <Route path="wizard-details" element={<WizardDetails />} />
+
+          {/* Counsel login is public */}
+          <Route path="counsel/login" element={<CounselLogin />} />
+          <Route path="counsel/email-sent" element={<CounselEmailSent />} />
+          <Route path="counsel/reset-password" element={<CounselResetPassword />} />
+
+          {/* Protected routes — require authentication */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="dashboard/counsel" element={<DashboardCounsel />} />
+            <Route path="dashboard/notifications" element={<DashboardNotifications />} />
+            <Route path="dashboard/playbooks" element={<DashboardPlaybooks />} />
+            <Route path="dashboard/profile" element={<DashboardProfile />} />
+            <Route path="dashboard/settings" element={<DashboardSettings />} />
+            <Route path="dashboard/wizards" element={<DashboardWizards />} />
+            <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
+            <Route path="admin/dashboard" element={<AdminDashboard />} />
+            <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
+            <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
+            <Route path="counsel/profile" element={<CounselProfile />} />
+          </Route>
         </Route>
       </Routes>
     </Suspense>
