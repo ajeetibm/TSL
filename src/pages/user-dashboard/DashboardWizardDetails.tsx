@@ -31,6 +31,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
+import { openPaystackCheckout } from '../../services/paystackClient'
 import './Dashboard.css'
 import './DashboardWizardDetails.css'
 
@@ -42,6 +43,13 @@ type SelectedWizard = {
 type WizardLocationState = {
   selectedWizards?: SelectedWizard[]
   showPayment?: boolean
+}
+
+type PaymentMessageTone = 'success' | 'error' | 'info'
+
+type PaymentMessage = {
+  tone: PaymentMessageTone
+  text: string
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
@@ -143,6 +151,19 @@ function getPlanFromCount(count: number): PlanKey {
   if (count >= 1 && count <= 4) return 'Launchpad'
   if (count >= 5 && count <= 13) return 'Operator'
   return 'Boardroom'
+}
+
+function getPlanAmount(plan: PlanKey) {
+  return Number(plans[plan].price.replace(/[^0-9.]/g, ''))
+}
+
+function getStoredUserEmail() {
+  try {
+    const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
+    return user.email || 'thabo@company.co.za'
+  } catch {
+    return 'thabo@company.co.za'
+  }
 }
 
 const planFeatures = ['Unlimited runs', 'Priority processing', 'Advanced customisation', 'Bulk operations']
@@ -254,6 +275,9 @@ export default function DashboardWizardDetails() {
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
+  const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
+  const [isInitializingPayment, setIsInitializingPayment] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
     const selectedFromState = locationState?.selectedWizards
@@ -315,10 +339,55 @@ export default function DashboardWizardDetails() {
   }, [totalWizards])
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
-  const handlePaymentMethodSelect = () => {
-    localStorage.setItem('tsl-dashboard-payment-complete', 'true')
-    setShowDashboardView(true)
-    navigate('/dashboard')
+  const handlePaymentMethodSelect = (method: string) => {
+    setSelectedPaymentMethod(method)
+    setPaymentMessage(null)
+  }
+
+  const handlePayNow = async () => {
+    if (!selectedPaymentMethod) {
+      setPaymentMessage({
+        tone: 'info',
+        text: 'Select a payment method before continuing.',
+      })
+      return
+    }
+
+    setPaymentMessage(null)
+    setIsInitializingPayment(true)
+
+    const result = await openPaystackCheckout({
+      amount: getPlanAmount(activePlan),
+      currency: 'ZAR',
+      email: getStoredUserEmail(),
+      paymentMethod: selectedPaymentMethod,
+      plan: activePlan,
+      selectedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })),
+      totalWizards,
+    })
+
+    setIsInitializingPayment(false)
+
+    if (result.status === 'success') {
+      localStorage.setItem('tsl-dashboard-payment-complete', 'true')
+      setPaymentMessage({
+        tone: 'success',
+        text: 'Payment successful. Redirecting to your dashboard...',
+      })
+      window.setTimeout(() => {
+        setShowDashboardView(true)
+        navigate('/dashboard')
+      }, 900)
+      return
+    }
+
+    setPaymentMessage({
+      tone: result.status === 'cancelled' ? 'info' : 'error',
+      text:
+        result.status === 'cancelled'
+          ? 'Payment cancelled. You can stay here and try again when ready.'
+          : result.message || 'Payment failed in Paystack test mode. Please try again.',
+    })
   }
 
   if (showDashboardView) {
@@ -515,18 +584,25 @@ export default function DashboardWizardDetails() {
             <div className="dashboard-wizard-details__payment-dots" aria-hidden="true" />
             <div className="dashboard-wizard-details__payment-methods">
               <h1>Top 5 Payment Methods in South Africa</h1>
+              {paymentMessage ? (
+                <div className={`dashboard-wizard-details__payment-alert dashboard-wizard-details__payment-alert--${paymentMessage.tone}`}>
+                  {paymentMessage.text}
+                </div>
+              ) : null}
+
               <div className="dashboard-wizard-details__payment-method-grid">
                 {paymentMethods.map(({ title, icon: Icon, className }) => (
                   <article
-                    className="dashboard-wizard-details__payment-method"
+                    className={`dashboard-wizard-details__payment-method${selectedPaymentMethod === title ? ' dashboard-wizard-details__payment-method--selected' : ''}`}
                     key={title}
                     role="button"
                     tabIndex={0}
-                    onClick={handlePaymentMethodSelect}
+                    aria-pressed={selectedPaymentMethod === title}
+                    onClick={() => handlePaymentMethodSelect(title)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
-                        handlePaymentMethodSelect()
+                        handlePaymentMethodSelect(title)
                       }
                     }}
                   >
@@ -541,6 +617,23 @@ export default function DashboardWizardDetails() {
                       )}
                     </span>
                     <h2>{title}</h2>
+                    {selectedPaymentMethod === title ? (
+                      <div className="dashboard-wizard-details__card-pay-action">
+                        <span>{plans[activePlan].title} - {plans[activePlan].price}/month</span>
+                        <button
+                          type="button"
+                          className="dashboard-wizard-details__pay-now"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handlePayNow()
+                          }}
+                          disabled={isInitializingPayment || selectedWizards.length === 0}
+                        >
+                          {isInitializingPayment ? 'Preparing...' : 'Pay Now'}
+                          <ArrowRight size={18} />
+                        </button>
+                      </div>
+                    ) : null}
                   </article>
                 ))}
               </div>

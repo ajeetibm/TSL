@@ -189,6 +189,35 @@ export const billingApi = {
   addPaymentMethod: (payload: JsonRecord) => request('/api/v1/sme/billing/payment-methods', 'POST', payload),
 }
 
+export interface PaystackInitialization {
+  provider: 'paystack'
+  mode: 'test'
+  reference: string
+  accessCode: string
+  authorizationUrl: string
+  publicKey: string
+  amount: number
+  amountInKobo: number
+  currency: string
+  email: string
+  plan: string
+}
+
+export interface PaystackVerification {
+  provider: 'paystack'
+  reference: string
+  status: 'success' | 'failed' | 'cancelled'
+  gatewayResponse: string
+  paidAt?: string
+}
+
+export const paymentApi = {
+  initializePaystack: (payload: JsonRecord) =>
+    request<PaystackInitialization>('/api/v1/sme/payments/paystack/initialize', 'POST', payload),
+  verifyPaystack: (payload: JsonRecord) =>
+    request<PaystackVerification>('/api/v1/sme/payments/paystack/verify', 'POST', payload),
+}
+
 export const profileApi = {
   get: (email?: string) =>
     request(email ? `/api/v1/sme/profile?email=${encodeURIComponent(email)}` : '/api/v1/sme/profile'),

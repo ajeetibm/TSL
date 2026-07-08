@@ -27,3 +27,8 @@ dist-ssr
 mcp-config.json
 FIGMA_MCP_SETUP.md
 setup-figma-mcp.sh
+
+# Local environment variables (contains secrets — never commit)
+.env
+.env.local
+.env.*.local
