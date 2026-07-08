@@ -256,6 +256,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('')
   const [activeRequest, setActiveRequest] = useState<AdminCounselRequest | null>(null)
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
+  const [assignableCounselMembers, setAssignableCounselMembers] = useState(counselMembers)
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
   const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
 
@@ -300,6 +301,25 @@ export default function AdminDashboard() {
       }
       setAdminProfile(nextProfile)
       setAdminProfileBaseline(nextProfile)
+    })
+
+    adminApi.counsel().then((response) => {
+      if (cancelled || !response.success || !response.data) return
+      const data = response.data as { counsel?: Array<Record<string, unknown>> }
+      const members = (data.counsel ?? [])
+        .map((member) => ({
+          name: String(member.name || member.fullName || member.email || 'Counsel Member'),
+          expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
+          experience: String(member.experience || '5 years exp'),
+          availability: String(member.availability || member.status || 'Available'),
+          email: String(member.email || '').toLowerCase(),
+        }))
+        .filter((member) => member.email)
+
+      if (members.length > 0) {
+        setAssignableCounselMembers(members)
+        setSelectedCounsel((current) => members.some((member) => member.email === current) ? current : members[0].email)
+      }
     })
 
     adminApi.dashboard().then((response) => {
@@ -359,7 +379,7 @@ export default function AdminDashboard() {
   const openPreviewModal = (request: AdminCounselRequest) => {
     setActiveRequest(request)
     setAssignmentStep('preview')
-    setSelectedCounsel(counselMembers[0].email)
+    setSelectedCounsel(assignableCounselMembers[0]?.email ?? counselMembers[0].email)
   }
 
   const handleDownloadAttachment = (file: File) => {
@@ -373,7 +393,7 @@ export default function AdminDashboard() {
 
   const filteredCounselMembers = useMemo(() => {
     const q = counselSearch.toLowerCase()
-    return counselMembers.filter((m) => {
+    return assignableCounselMembers.filter((m) => {
       const matchesSearch =
         !q ||
         m.name.toLowerCase().includes(q) ||
@@ -396,7 +416,7 @@ export default function AdminDashboard() {
 
       return matchesSearch && matchesExpertise && matchesExperience && matchesAvailability
     })
-  }, [counselSearch, filterExpertise, filterExperience, filterAvailability])
+  }, [assignableCounselMembers, counselSearch, filterExpertise, filterExperience, filterAvailability])
 
   const closeAssignmentModal = () => {
     setActiveRequest(null)
@@ -410,8 +430,11 @@ export default function AdminDashboard() {
   const assignToCounsel = async () => {
     if (!activeRequest) return
 
+    const selectedMember = assignableCounselMembers.find((member) => member.email === selectedCounsel)
     const response = await adminApi.assignCounselRequest(activeRequest.requestId, {
-      counselEmail: selectedCounsel,
+      counselEmail: selectedMember?.email ?? selectedCounsel,
+      counselName: selectedMember?.name,
+      assignedCounselName: selectedMember?.name,
     })
 
     if (!response.success) {
@@ -1139,7 +1162,7 @@ export default function AdminDashboard() {
                 <section className="admin-assignment__assign-body">
                   <div className="admin-assignment__assign-top">
                     <h3>Select Counsel Member</h3>
-                    <span>{filteredCounselMembers.length} of {counselMembers.length} available</span>
+                    <span>{filteredCounselMembers.length} of {assignableCounselMembers.length} available</span>
                   </div>
 
                   <label className="admin-assignment__search">

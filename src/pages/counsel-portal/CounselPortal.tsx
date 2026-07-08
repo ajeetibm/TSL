@@ -253,13 +253,21 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   }, [navigate])
 
   useEffect(() => {
-    counselPortalApi.dashboard().then((response) => {
+    let storedEmail = ''
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
+      storedEmail = storedUser.email ?? ''
+    } catch {
+      storedEmail = ''
+    }
+
+    counselPortalApi.dashboard(storedEmail).then((response) => {
       if (!response.success) return
       const data = (response.data ?? null) as DashboardData | null
       setDashboardData(data)
       setAvailability(data?.availability ?? 'available')
     })
-    counselPortalApi.requests().then((response) => {
+    counselPortalApi.requests(storedEmail).then((response) => {
       if (!response.success) return
       setRequests(normalizeRequests(response.data))
     })
@@ -270,8 +278,8 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   }, [location.pathname])
 
   const kpis = dashboardData?.kpis ?? {}
-  const pendingRequests = dashboardData?.pendingRequests?.length ? dashboardData.pendingRequests : fallbackPending
-  const acceptedRequests = dashboardData?.acceptedRequests?.length ? dashboardData.acceptedRequests : fallbackAccepted
+  const pendingRequests = dashboardData ? (dashboardData.pendingRequests ?? []) : fallbackPending
+  const acceptedRequests = dashboardData ? (dashboardData.acceptedRequests ?? []) : fallbackAccepted
   const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
   const chartYear = dashboardData?.earningsChart?.year ?? 2025
   const summary = dashboardData?.earningsChart?.summary ?? {
@@ -346,7 +354,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
           <Link className={mode === 'requests' ? 'counsel-portal__nav-item counsel-portal__nav-item--active' : 'counsel-portal__nav-item'} to="/counsel/requests">
             <Scale size={17} />
             <span>My Requests</span>
-            <b>{pendingCount || 2}</b>
+            {pendingCount > 0 && <b>{pendingCount}</b>}
           </Link>
         </nav>
 
@@ -452,7 +460,7 @@ function DashboardView({
           <div className="counsel-dashboard__section-heading">
             <div>
               <h3>Requests from Admin</h3>
-              <p>4 requests awaiting your review</p>
+              <p>{pendingRequests.length} request{pendingRequests.length === 1 ? '' : 's'} awaiting your review</p>
             </div>
             <Link to="/counsel/requests">View All</Link>
           </div>
