@@ -17,7 +17,7 @@ import AddCounselModal from './AddCounselModal'
 import CounselProfileModal from './CounselProfileModal'
 import { adminApi } from '../../../services/tslApi'
 
-type CounselMember = {
+export type CounselMember = {
   initials: string
   name: string
   expertise: string
@@ -98,8 +98,14 @@ const initialCounselMembers: CounselMember[] = [
   },
 ]
 
-export default function CounselManagement() {
-  const [counselMembers, setCounselMembers] = useState<CounselMember[]>(initialCounselMembers)
+export { initialCounselMembers }
+
+interface CounselManagementProps {
+  counselMembers: CounselMember[]
+  onCounselAdded: (counsel: CounselMember) => void
+}
+
+export default function CounselManagement({ counselMembers, onCounselAdded }: CounselManagementProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
@@ -147,7 +153,7 @@ export default function CounselManagement() {
       experience: newCounsel.experience,
     })
 
-    setCounselMembers((prev) => [...prev, newCounsel])
+    onCounselAdded(newCounsel)
     setIsAddModalOpen(false)
   }
 

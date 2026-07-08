@@ -19,6 +19,30 @@ function getAccountName() {
   }
 }
 
+function getPortal(): string | undefined {
+  try {
+    const savedUser = localStorage.getItem('tsl-auth-user')
+    const user = savedUser ? JSON.parse(savedUser) as { portal?: string } : null
+    return user?.portal
+  } catch {
+    return undefined
+  }
+}
+
+function getDashboardPath() {
+  const portal = getPortal()
+  if (portal === 'admin') return '/admin/dashboard'
+  if (portal === 'counsel') return '/counsel/dashboard'
+  return '/dashboard'
+}
+
+function getProfilePath() {
+  const portal = getPortal()
+  if (portal === 'admin') return '/admin/dashboard?nav=profile'
+  if (portal === 'counsel') return '/counsel/profile'
+  return '/dashboard/profile'
+}
+
 export function Navbar() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -44,12 +68,12 @@ export function Navbar() {
 
   const goToDashboard = () => {
     setIsAccountMenuOpen(false)
-    navigate('/dashboard')
+    navigate(getDashboardPath())
   }
 
   const goToProfile = () => {
     setIsAccountMenuOpen(false)
-    navigate('/dashboard/profile')
+    navigate(getProfilePath())
   }
 
   const handleSignOut = () => {
@@ -73,7 +97,7 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className={cn('navbar', !isHomePage && 'navbar--light')}>
+    <header className={cn('navbar', (!isHomePage || isAuthenticated) && 'navbar--light')}>
       <Container className="navbar__inner">
         <NavLink to="/" className="navbar__brand" aria-label="TSL home">
           <span className="navbar__brand-mark">TSL</span>

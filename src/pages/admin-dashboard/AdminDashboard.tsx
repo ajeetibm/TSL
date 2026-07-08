@@ -26,7 +26,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
 import { useCounselRequests } from '../../context/CounselRequestContext'
@@ -34,11 +34,15 @@ import {
   BillingInvoices,
   CounselManagement,
   GeneralSettings,
+  InviteSubAdminModal,
   IssuesManagement,
   Notifications,
   Security,
   UsersActivity,
 } from './components'
+import AddCounselModal from './components/AddCounselModal'
+import type { CounselMember } from './components/CounselManagement'
+import { initialCounselMembers } from './components/CounselManagement'
 import {
   getRevenueAxisTicks,
   buildRevenueLinePoints,
@@ -257,7 +261,11 @@ export default function AdminDashboard() {
   const [activeRequest, setActiveRequest] = useState<AdminCounselRequest | null>(null)
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
-  const [activeNav, setActiveNav] = useState<AdminNavKey>('dashboard')
+  const [searchParams] = useSearchParams()
+  const [activeNav, setActiveNav] = useState<AdminNavKey>(() => {
+    const nav = searchParams.get('nav')
+    return (nav === 'profile' ? 'profile' : 'dashboard') as AdminNavKey
+  })
 
   // Assign modal filters
   const [counselSearch, setCounselSearch] = useState('')
@@ -280,6 +288,9 @@ export default function AdminDashboard() {
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
   const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
+  const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
 
   setPageMetadata('Admin Dashboard', 'TSL admin dashboard for platform KPIs, counsel requests, revenue, and issues.')
 
@@ -883,7 +894,10 @@ export default function AdminDashboard() {
         ) : activeNav === 'issues' ? (
           <IssuesManagement />
         ) : activeNav === 'counsel' ? (
-          <CounselManagement />
+          <CounselManagement
+            counselMembers={counselList}
+            onCounselAdded={(c) => setCounselList((prev) => [...prev, c])}
+          />
         ) : (
           <>
         <section className="admin-dashboard__kpis" aria-label="Admin KPI summary">
@@ -950,11 +964,23 @@ export default function AdminDashboard() {
             <section className="admin-dashboard__quick-actions">
               <h2>Quick Actions</h2>
               {quickActions.map(({ label, icon: Icon }) => (
-                <button type="button" key={label}>
-                  <Icon size={19} />
-                  {label}
-                </button>
-              ))}
+                  <button
+                    type="button"
+                    key={label}
+                    onClick={
+                      label === 'Invite Sub Admin'
+                        ? () => setIsInviteModalOpen(true)
+                        : label === 'Create Counsel'
+                          ? () => setIsAddCounselModalOpen(true)
+                          : label === 'Billing & Invoices'
+                            ? () => { setActiveNav('settings'); setSettingsTab('billing') }
+                            : undefined
+                    }
+                  >
+                    <Icon size={19} />
+                    {label}
+                  </button>
+                ))}
             </section>
 
             <section className="admin-dashboard__top-wizards">
@@ -1243,6 +1269,23 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      <InviteSubAdminModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSendInvitation={(data) => {
+          console.log('Sending invitation:', data)
+        }}
+      />
+
+      <AddCounselModal
+        isOpen={isAddCounselModalOpen}
+        onClose={() => setIsAddCounselModalOpen(false)}
+        onAdd={(counsel) => {
+          setCounselList((prev) => [...prev, counsel])
+          setIsAddCounselModalOpen(false)
+        }}
+      />
     </div>
   )
 }

@@ -352,6 +352,10 @@
   color: #cf9b2f;
 }
 
+.modal-content--issue {
+  overflow: auto !important;
+}
+
 .admin-dashboard__wizard-metric {
   margin-top: 19px;
 }
