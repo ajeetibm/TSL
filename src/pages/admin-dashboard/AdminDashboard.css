@@ -2127,9 +2127,11 @@
 
 .admin-assignment__modal--assign {
   width: min(100%, 672px);
+  height: calc(100vh - 40px);
   max-height: calc(100vh - 40px);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .admin-assignment__header {
@@ -2307,12 +2309,11 @@
 }
 
 .admin-assignment__assign-body {
-  min-height: 0;
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: 16px;
-  overflow: auto;
+  overflow-y: auto;
   padding: 24px;
 }
 
@@ -2372,10 +2373,12 @@
 }
 
 .admin-assignment__counsel-list {
-  max-height: 560px;
+  height: 280px;
+  flex-shrink: 0;
   display: grid;
+  align-content: start;
   gap: 12px;
-  overflow: auto;
+  overflow-y: auto;
   padding-right: 8px;
 }
 
