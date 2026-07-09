@@ -47,8 +47,8 @@ export interface LoginPayload {
 }
 
 export interface GoogleAuthPayload {
-  credential: string           // Google ID token from useGoogleLogin / GoogleLogin
-  portal?: 'sme' | 'admin' | 'counsel'
+  // The Google OAuth access token — server calls UserInfo API to resolve email/name/picture
+  access_token: string
 }
 
 export interface ForgotPasswordPayload {

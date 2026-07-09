@@ -168,18 +168,18 @@ function SignInModalContent({
   }
 
   const handleGoogleSignIn = useGoogleLogin({
-    // Called by Google Identity Services with a real access token
+    // Google returns an access_token — pass it straight to our server.
+    // The server calls Google UserInfo internally and maps the email to a role.
     onSuccess: async (tokenResponse) => {
       setFormError('')
       setIsSubmitting(true)
       try {
         const response = await authApi.google({
-          credential: tokenResponse.access_token,
-          portal: 'sme',
+          access_token: tokenResponse.access_token,
         })
 
         if (!response.success) {
-          setFormError(response.message ?? 'Unable to continue with Google.')
+          setFormError(response.message ?? 'Access denied. This Google account is not registered for TSL.')
           return
         }
 
@@ -188,10 +188,7 @@ function SignInModalContent({
         onClose()
         navigate(getAuthenticatedRoute(response.data, redirectTo), {
           state: response.data?.mustResetPassword
-            ? {
-                email: response.data.email,
-                token: response.data.token,
-              }
+            ? { email: response.data.email, token: response.data.token }
             : undefined,
         })
       } catch {
@@ -204,6 +201,7 @@ function SignInModalContent({
       setFormError('Google sign-in failed. Please try again.')
       setIsSubmitting(false)
     },
+    scope: 'openid email profile',
   })
 
   const toggleMode = () => {
