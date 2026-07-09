@@ -101,6 +101,50 @@ export interface BillingData {
   invoices: BillingInvoice[]
 }
 
+// ── Admin Billing & Invoices ───────────────────────────────────────────────
+
+export type AdminInvoiceStatus = 'paid' | 'pending' | 'failed'
+export type AdminInvoicePaymentType = 'subscription' | 'one-time' | 'top-up'
+
+export interface AdminInvoice {
+  invoiceId: string
+  client: string
+  plan: string
+  paymentType: AdminInvoicePaymentType
+  amount: number
+  currency: string
+  status: AdminInvoiceStatus
+  issueDate: string
+  dueDate: string
+  month: string
+  paidAt: string | null
+  reference: string
+  email: string
+}
+
+export interface AdminBillingKpis {
+  totalRevenue: number
+  currency: string
+  period: string
+  outstandingAmount: number
+  outstandingCount: number
+  failedAmount: number
+  failedCount: number
+}
+
+export interface AdminReconciliationAlert {
+  active: boolean
+  message?: string
+  failedCount?: number
+}
+
+export interface AdminBillingData {
+  kpis: AdminBillingKpis
+  reconciliationAlert: AdminReconciliationAlert
+  invoices: AdminInvoice[]
+  total: number
+}
+
 export interface PaymentMethod {
   methodId: string
   type: string

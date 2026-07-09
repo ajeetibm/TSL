@@ -238,7 +238,15 @@ export const adminApi = {
   assignCounselRequest: (requestId: string, payload: JsonRecord) =>
     request(`/api/v1/admin/counsel-requests/${requestId}/assign`, 'POST', payload),
   issues: () => request('/api/v1/admin/issues'),
-  billing: () => request('/api/v1/admin/billing'),
+  billing: (params?: { search?: string; client?: string; plan?: string; month?: string }) => {
+    const qs = new URLSearchParams()
+    if (params?.search) qs.set('search', params.search)
+    if (params?.client) qs.set('client', params.client)
+    if (params?.plan)   qs.set('plan',   params.plan)
+    if (params?.month)  qs.set('month',  params.month)
+    const query = qs.toString()
+    return request(`/api/v1/admin/billing${query ? `?${query}` : ''}`)
+  },
 }
 
 export const counselPortalApi = {
