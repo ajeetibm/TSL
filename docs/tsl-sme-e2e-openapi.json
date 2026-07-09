@@ -1,0 +1,555 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TSL SME User — End-to-End API",
+    "version": "2.0.0",
+    "description": "Complete end-to-end API for the TSL SME user login flow: authentication → dashboard → profile → wizards → payments → counsel → notifications → billing."
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Mock server (local dev)" }
+  ],
+  "tags": [
+    { "name": "1. Auth",          "description": "Login, register, Google OAuth, password management" },
+    { "name": "2. Dashboard",     "description": "SME dashboard overview and workflow status" },
+    { "name": "3. Profile",       "description": "User profile read and update" },
+    { "name": "4. Wizards",       "description": "Browse, start, and manage legal wizards" },
+    { "name": "5. Payments",      "description": "Paystack payment initialize, verify, webhook, history" },
+    { "name": "6. Counsel",       "description": "Counsel credits and request submission" },
+    { "name": "7. Notifications", "description": "Notification list and read management" },
+    { "name": "8. Billing",       "description": "Billing summary, invoices, payment methods" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["1. Auth"], "security": [],
+        "summary": "Step 1a — Email + password login",
+        "description": "Authenticates SME user. Returns signed JWT + AuthUser. Role determines redirect: sme→/dashboard, admin→/admin/dashboard, counsel→/counsel/dashboard.\n\nRate limited: 10 req / 15 min.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/LoginRequest" }, "example": { "email": "thabo@company.co.za", "password": "Test@1234", "portal": "sme" } } }
+        },
+        "responses": {
+          "200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" }, "example": { "success": true, "data": { "userId": "usr_8f3k2m9x", "fullName": "Thabo Molefe", "email": "thabo@company.co.za", "role": "sme", "portal": "sme", "plan": "Operator", "token": "eyJhbGciOiJIUzI1NiJ9...", "tokenExpiry": "2026-07-10T03:28:37.000Z", "mustResetPassword": false } } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/InvalidCredentials" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["1. Auth"], "security": [],
+        "summary": "Step 1b — Register new SME account",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RegisterRequest" }, "example": { "fullName": "Thabo Molefe", "email": "thabo@company.co.za", "password": "Test@1234", "confirmPassword": "Test@1234", "acceptedTerms": true } } }
+        },
+        "responses": {
+          "201": { "description": "Registered successfully", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "409": { "description": "Email already exists", "content": { "application/json": { "example": { "success": false, "message": "An account with this email already exists.", "error": "EMAIL_TAKEN" } } } }
+        }
+      }
+    },
+
+    "/api/v1/auth/google": {
+      "post": {
+        "tags": ["1. Auth"], "security": [],
+        "summary": "Step 1c — Google OAuth login",
+        "description": "Frontend sends Google access_token. Server calls googleapis.com/userinfo, maps email to role, returns JWT.\n\nMock role map:\n- tsl.admin.demo@gmail.com → admin\n- tsl.counsel.demo@gmail.com → counsel\n- tsl.user.demo@gmail.com → user",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/GoogleAuthRequest" }, "example": { "access_token": "ya29.a0AfB_byGHxxxx" } } }
+        },
+        "responses": {
+          "200": { "description": "Google login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "401": { "description": "Token invalid or email not registered", "content": { "application/json": { "example": { "success": false, "message": "This Google account is not registered for TSL access.", "error": "GOOGLE_ACCOUNT_NOT_AUTHORIZED" } } } }
+        }
+      }
+    },
+
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["1. Auth"], "security": [],
+        "summary": "Request password reset email",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } } } } },
+        "responses": { "200": { "description": "Always 200 (prevents email enumeration)", "content": { "application/json": { "example": { "success": true, "message": "If an account exists, a reset link has been sent." } } } } }
+      }
+    },
+
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["1. Auth"], "security": [],
+        "summary": "Reset password via email token",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" } } } },
+        "responses": { "200": { "description": "Password reset", "content": { "application/json": { "example": { "success": true, "message": "Password has been reset successfully." } } } } }
+      }
+    },
+
+    "/api/v1/auth/change-password": {
+      "put": {
+        "tags": ["1. Auth"],
+        "summary": "Change password (authenticated)",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePasswordRequest" } } } },
+        "responses": {
+          "200": { "description": "Password changed", "content": { "application/json": { "example": { "success": true, "message": "Password changed successfully.", "data": { "userId": "usr_8f3k2m9x", "email": "thabo@company.co.za", "passwordUpdatedAt": "2026-07-09T10:30:00.000Z" } } } } },
+          "400": { "description": "Wrong current password or validation error" },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/api/v1/sme/dashboard": {
+      "get": {
+        "tags": ["2. Dashboard"],
+        "summary": "Step 2 — SME dashboard overview",
+        "description": "Returns user plan, wizard run usage, in-progress and completed workflows.",
+        "responses": {
+          "200": {
+            "description": "Dashboard data",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DashboardResponse" }, "example": { "success": true, "data": { "user": { "userId": "usr_8f3k2m9x", "companyName": "FibreGents (Pty) Ltd", "plan": "Operator", "runsUsed": 3, "runsTotal": 15, "runsRemaining": 12, "nextBillingDate": "2026-08-01", "counselCreditsUsed": 1, "counselCreditsTotal": 2 }, "inProgress": [{ "workflowId": "wf_001", "wizardName": "NDA Generator", "status": "in_progress", "progress": 60, "lastUpdated": "2026-07-01T10:00:00Z" }], "completed": [{ "workflowId": "wf_002", "wizardName": "Employment Contract", "status": "completed", "completedAt": "2026-06-20T14:00:00Z", "downloads": ["pdf"] }] } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/api/v1/sme/profile": {
+      "get": {
+        "tags": ["3. Profile"],
+        "summary": "Step 3a — Get SME profile",
+        "parameters": [{ "in": "query", "name": "email", "schema": { "type": "string" }, "description": "Filter by email (optional — uses JWT email by default)" }],
+        "responses": {
+          "200": { "description": "Profile data", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SmeProfileResponse" }, "example": { "success": true, "data": { "userId": "usr_8f3k2m9x", "fullName": "Thabo Molefe", "email": "thabo@company.co.za", "role": "sme", "portal": "sme", "plan": "Operator", "status": "Active", "companyName": "FibreGents (Pty) Ltd", "registrationNumber": "2025/123456/07", "phone": "+27 82 123 4567", "physicalAddress": "123 Main Street, Sandton", "contactPerson": "Thabo Molefe", "joinedAt": "2025-09-15", "updatedAt": "2026-07-01T10:00:00Z" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "put": {
+        "tags": ["3. Profile"],
+        "summary": "Step 3b — Update SME profile",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SmeProfileUpdateRequest" }, "example": { "email": "thabo@company.co.za", "companyName": "FibreGents (Pty) Ltd", "registrationNumber": "2025/123456/07", "phone": "+27 82 123 4567", "physicalAddress": "123 Main Street, Sandton", "contactPerson": "Thabo Molefe" } } } },
+        "responses": {
+          "200": { "description": "Profile updated", "content": { "application/json": { "example": { "success": true, "message": "Profile updated successfully.", "data": { "userId": "usr_8f3k2m9x", "email": "thabo@company.co.za", "companyName": "FibreGents (Pty) Ltd" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/api/v1/wizards": {
+      "get": {
+        "tags": ["4. Wizards"], "security": [],
+        "summary": "Step 4a — List all available wizards",
+        "description": "Public endpoint — no auth required. Returns all legal wizard templates.",
+        "responses": {
+          "200": { "description": "Wizard list", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/WizardListResponse" }, "example": { "success": true, "data": [{ "wizardId": "wiz_nda", "name": "Non-Disclosure Agreement (NDA)", "description": "Protect confidential information", "completionTime": 15, "runsPerWizard": 1, "targetAudience": "All businesses", "isPopular": true, "includedIn": ["Operator", "Boardroom"] }] } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/wizards/{wizardId}/start": {
+      "post": {
+        "tags": ["4. Wizards"],
+        "summary": "Step 4b — Start a wizard",
+        "parameters": [{ "in": "path", "name": "wizardId", "required": true, "schema": { "type": "string" }, "example": "wiz_nda" }],
+        "requestBody": { "content": { "application/json": { "example": { "notes": "Need NDA for investor meeting" } } } },
+        "responses": {
+          "200": { "description": "Wizard started, workflow created", "content": { "application/json": { "example": { "success": true, "data": { "workflowId": "wf_001", "wizardId": "wiz_nda", "status": "started", "currentStep": 1 } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/steps/{stepNumber}": {
+      "put": {
+        "tags": ["4. Wizards"],
+        "summary": "Step 4c — Save a wizard step",
+        "parameters": [
+          { "in": "path", "name": "workflowId", "required": true, "schema": { "type": "string" } },
+          { "in": "path", "name": "stepNumber", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": { "required": true, "content": { "application/json": { "example": { "stepNumber": 1, "data": { "partyA": "FibreGents (Pty) Ltd", "partyB": "TechStart Ltd", "effectiveDate": "2026-07-01" } } } } },
+        "responses": {
+          "200": { "description": "Step saved", "content": { "application/json": { "example": { "success": true, "data": { "workflowId": "wf_001", "stepNumber": 1, "nextStep": 2, "isComplete": false } } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/generate": {
+      "post": {
+        "tags": ["4. Wizards"],
+        "summary": "Step 4d — Generate document from completed workflow",
+        "parameters": [{ "in": "path", "name": "workflowId", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Document generated", "content": { "application/json": { "example": { "success": true, "data": { "workflowId": "wf_001", "status": "generated", "documentUrl": "/api/v1/sme/workflows/wf_001/download?type=pdf" } } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/download": {
+      "get": {
+        "tags": ["4. Wizards"],
+        "summary": "Step 4e — Download generated document",
+        "parameters": [
+          { "in": "path", "name": "workflowId", "required": true, "schema": { "type": "string" } },
+          { "in": "query", "name": "type", "schema": { "type": "string", "enum": ["pdf", "docx"], "default": "pdf" } }
+        ],
+        "responses": {
+          "200": { "description": "Document file or download link" }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/paystack/initialize": {
+      "post": {
+        "tags": ["5. Payments"],
+        "summary": "Step 5a — Initialize Paystack payment",
+        "description": "Creates a payment transaction and returns a Paystack reference. Frontend uses the reference to open the Paystack inline checkout. Rate limited: 5 req / 10 min.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaystackInitRequest" }, "example": { "email": "thabo@company.co.za", "amount": 3999, "currency": "ZAR", "plan": "operator", "paymentMethod": "Credit/Debit Cards", "selectedWizards": [{ "title": "NDA Generator", "quantity": 1 }] } } }
+        },
+        "responses": {
+          "200": { "description": "Payment initialized", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaystackInitResponse" }, "example": { "success": true, "data": { "provider": "paystack", "mode": "sandbox", "reference": "TSL_PAY_1783567945347_0001", "accessCode": "mock_access_code_TSL_PAY_...", "authorizationUrl": "https://checkout.paystack.com/mock_TSL_PAY_...", "publicKey": "pk_test_xxx", "amount": 3999, "amountInKobo": 399900, "currency": "ZAR", "email": "thabo@company.co.za", "plan": "operator" } } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/paystack/verify": {
+      "post": {
+        "tags": ["5. Payments"],
+        "summary": "Step 5b — Verify Paystack payment after checkout",
+        "description": "Called after user completes (or cancels) Paystack checkout. Server calls real Paystack Verify API to confirm payment. Activates subscription on success. Duplicate references are safely rejected.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaystackVerifyRequest" }, "example": { "reference": "TSL_PAY_1783567945347_0001", "outcome": "success" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment verified",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/PaystackVerifyResponse" }, "examples": {
+              "success": { "summary": "Payment successful", "value": { "success": true, "message": "Payment verified and subscription activated.", "data": { "provider": "paystack", "reference": "TSL_PAY_1783567945347_0001", "status": "success", "gatewayResponse": "Approved", "paidAt": "2026-07-09T10:00:00.000Z", "subscription": { "email": "thabo@company.co.za", "plan": "operator", "status": "active", "activatedAt": "2026-07-09T10:00:00.000Z", "expiresAt": "2026-08-08T10:00:00.000Z", "credits": 15 } } } },
+              "failed": { "summary": "Payment failed", "value": { "success": true, "message": "Payment failed.", "data": { "provider": "paystack", "reference": "TSL_PAY_...", "status": "failed", "gatewayResponse": "Declined" } } }
+            } } }
+          },
+          "404": { "description": "Reference not found", "content": { "application/json": { "example": { "success": false, "message": "Payment reference not found.", "error": "PAYMENT_NOT_FOUND" } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/webhook/paystack": {
+      "post": {
+        "tags": ["5. Payments"], "security": [],
+        "summary": "Step 5c — Paystack webhook (charge.success)",
+        "description": "Called directly by Paystack on payment completion. PRODUCTION: verify X-Paystack-Signature header using HMAC-SHA512. Always returns 200 to Paystack.",
+        "requestBody": {
+          "content": { "application/json": { "example": { "event": "charge.success", "data": { "reference": "TSL_PAY_...", "status": "success", "paid_at": "2026-07-09T10:00:00.000Z", "customer": { "email": "thabo@company.co.za" } } } } }
+        },
+        "responses": { "200": { "description": "Acknowledged" } }
+      }
+    },
+
+    "/api/v1/sme/payments/history": {
+      "get": {
+        "tags": ["5. Payments"],
+        "summary": "Get payment history",
+        "parameters": [{ "in": "query", "name": "email", "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Payment history list", "content": { "application/json": { "example": { "success": true, "data": [{ "id": "ph_001", "reference": "TSL_PAY_...", "email": "thabo@company.co.za", "amount": 3999, "currency": "ZAR", "plan": "operator", "status": "success", "paidAt": "2026-07-09T10:00:00.000Z", "gateway": "paystack" }] } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/subscription": {
+      "get": {
+        "tags": ["5. Payments"],
+        "summary": "Get current subscription status",
+        "responses": {
+          "200": { "description": "Subscription data", "content": { "application/json": { "examples": {
+            "active":   { "value": { "success": true, "data": { "email": "thabo@company.co.za", "plan": "operator", "status": "active", "activatedAt": "2026-07-09T10:00:00.000Z", "expiresAt": "2026-08-08T10:00:00.000Z", "credits": 15 } } },
+            "inactive": { "value": { "success": true, "data": { "status": "inactive", "plan": null } } }
+          } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/counsel/credits": {
+      "get": {
+        "tags": ["6. Counsel"],
+        "summary": "Step 6a — Get counsel credit balance",
+        "responses": {
+          "200": { "description": "Counsel credits", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CounselCreditsResponse" }, "example": { "success": true, "data": { "plan": "operator", "creditsTotal": 2, "creditsUsed": 1, "creditsRemaining": 1, "usageThisMonth": 1, "topUpRate": 500, "currency": "ZAR", "resetDate": "2026-08-10" } } } } },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+
+    "/api/v1/sme/counsel/requests": {
+      "get": {
+        "tags": ["6. Counsel"],
+        "summary": "Step 6b — List submitted counsel requests",
+        "responses": {
+          "200": { "description": "Counsel requests list", "content": { "application/json": { "example": { "success": true, "data": [{ "requestId": "req_7800", "subject": "Review of SaaS Service Agreement", "status": "pending", "assignedCounsel": null, "submittedAt": "2026-07-01T09:15:00Z", "responseUrl": null }] } } } }
+        }
+      },
+      "post": {
+        "tags": ["6. Counsel"],
+        "summary": "Step 6c — Submit a new counsel request",
+        "description": "Deducts 1 counsel credit. Duplicate detection: same user + subject within 30 seconds returns the existing request.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/CounselRequestCreate" }, "example": { "subject": "Review of SaaS Service Agreement", "description": "Need a comprehensive review of our SaaS agreement template.", "company": "FibreGents (Pty) Ltd", "fromUser": "Thabo Molefe", "userEmail": "thabo@company.co.za" } } }
+        },
+        "responses": {
+          "201": { "description": "Request created", "content": { "application/json": { "example": { "success": true, "data": { "requestId": "req_7800", "subject": "Review of SaaS Service Agreement", "status": "pending", "creditsRemaining": 0, "submittedAt": "2026-07-09T10:00:00.000Z" } } } } },
+          "200": { "description": "Duplicate detected — existing request returned", "content": { "application/json": { "example": { "success": true, "message": "Duplicate request ignored.", "data": { "requestId": "req_7800", "duplicate": true } } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/notifications": {
+      "get": {
+        "tags": ["7. Notifications"],
+        "summary": "List notifications",
+        "responses": {
+          "200": { "description": "Notifications", "content": { "application/json": { "example": { "success": true, "data": { "unreadCount": 2, "notifications": [{ "notificationId": "notif_001", "type": "document_completed", "title": "NDA Generated", "message": "Your NDA document is ready to download.", "isRead": false, "createdAt": "2026-07-09T10:00:00.000Z" }] } } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/notifications/{notificationId}/read": {
+      "patch": {
+        "tags": ["7. Notifications"],
+        "summary": "Mark notification as read",
+        "parameters": [{ "in": "path", "name": "notificationId", "required": true, "schema": { "type": "string" } }],
+        "requestBody": { "content": { "application/json": { "example": { "isRead": true } } } },
+        "responses": { "200": { "description": "Marked as read" } }
+      }
+    },
+
+    "/api/v1/sme/notifications/read-all": {
+      "post": {
+        "tags": ["7. Notifications"],
+        "summary": "Mark all notifications as read",
+        "responses": { "200": { "description": "All marked as read" } }
+      }
+    },
+
+    "/api/v1/sme/billing": {
+      "get": {
+        "tags": ["8. Billing"],
+        "summary": "Get billing summary",
+        "responses": {
+          "200": { "description": "Billing data", "content": { "application/json": { "example": { "success": true, "data": { "plan": { "name": "Operator", "price": 3999, "currency": "ZAR", "nextBillingDate": "2026-08-01", "runsUsed": 3, "runsTotal": 15, "teamMembers": 1 }, "nextInvoice": { "subscription": 3999, "tax": 599, "total": 4598 }, "invoices": [{ "invoiceId": "INV-2026-001", "date": "2026-07-01", "subscription": 3999, "tax": 599, "total": 4598 }] } } } } }
+        }
+      }
+    },
+
+    "/api/v1/sme/billing/payment-methods": {
+      "get": {
+        "tags": ["8. Billing"],
+        "summary": "List payment methods",
+        "responses": {
+          "200": { "description": "Payment methods", "content": { "application/json": { "example": { "success": true, "data": [{ "methodId": "pm_001", "type": "card", "brand": "Visa", "last4": "4242", "expiry": "12/27", "isDefault": true }] } } } }
+        }
+      },
+      "post": {
+        "tags": ["8. Billing"],
+        "summary": "Add a payment method",
+        "requestBody": { "content": { "application/json": { "example": { "type": "card", "token": "tok_visa_test" } } } },
+        "responses": { "200": { "description": "Payment method added" } }
+      }
+    }
+
+  },
+
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http", "scheme": "bearer", "bearerFormat": "JWT",
+        "description": "JWT issued by /auth/login, /auth/register, or /auth/google. Include as: Authorization: Bearer <token>"
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object", "required": ["email", "password"],
+        "properties": {
+          "email":    { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 },
+          "portal":   { "type": "string", "enum": ["sme", "admin", "counsel"], "default": "sme" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object", "required": ["fullName", "email", "password", "confirmPassword", "acceptedTerms"],
+        "properties": {
+          "fullName": { "type": "string" }, "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 }, "confirmPassword": { "type": "string" },
+          "acceptedTerms": { "type": "boolean" }
+        }
+      },
+      "GoogleAuthRequest": {
+        "type": "object", "required": ["access_token"],
+        "properties": { "access_token": { "type": "string", "description": "OAuth2 access token from @react-oauth/google useGoogleLogin()" } }
+      },
+      "ResetPasswordRequest": {
+        "type": "object", "required": ["token", "newPassword", "confirmPassword"],
+        "properties": { "token": { "type": "string" }, "newPassword": { "type": "string" }, "confirmPassword": { "type": "string" } }
+      },
+      "ChangePasswordRequest": {
+        "type": "object", "required": ["email", "currentPassword", "newPassword", "confirmPassword"],
+        "properties": { "email": { "type": "string" }, "currentPassword": { "type": "string" }, "newPassword": { "type": "string" }, "confirmPassword": { "type": "string" } }
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" }, "fullName": { "type": "string" }, "email": { "type": "string" },
+          "role": { "type": "string", "enum": ["sme", "user", "admin", "counsel"] },
+          "portal": { "type": "string", "enum": ["sme", "admin", "counsel"] },
+          "plan": { "type": "string", "nullable": true },
+          "token": { "type": "string", "description": "Signed JWT — store as tsl-auth-token" },
+          "tokenExpiry": { "type": "string", "format": "date-time" },
+          "mustResetPassword": { "type": "boolean" },
+          "picture": { "type": "string", "description": "Google profile picture (Google login only)" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": { "success": { "type": "boolean" }, "data": { "$ref": "#/components/schemas/AuthUser" }, "isNewUser": { "type": "boolean" } }
+      },
+      "SmeProfileResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "userId": { "type": "string" }, "fullName": { "type": "string" }, "email": { "type": "string" },
+              "role": { "type": "string" }, "portal": { "type": "string" }, "plan": { "type": "string" },
+              "status": { "type": "string" }, "companyName": { "type": "string" },
+              "registrationNumber": { "type": "string" }, "phone": { "type": "string" },
+              "physicalAddress": { "type": "string" }, "contactPerson": { "type": "string" },
+              "joinedAt": { "type": "string" }, "updatedAt": { "type": "string", "format": "date-time" }
+            }
+          }
+        }
+      },
+      "SmeProfileUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" }, "companyName": { "type": "string" },
+          "registrationNumber": { "type": "string" }, "phone": { "type": "string" },
+          "physicalAddress": { "type": "string" }, "contactPerson": { "type": "string" }
+        }
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": {
+            "type": "object",
+            "properties": {
+              "user": { "type": "object", "properties": { "userId": { "type": "string" }, "companyName": { "type": "string" }, "plan": { "type": "string" }, "runsUsed": { "type": "integer" }, "runsTotal": { "type": "integer" }, "runsRemaining": { "type": "integer" }, "nextBillingDate": { "type": "string" }, "counselCreditsUsed": { "type": "integer" }, "counselCreditsTotal": { "type": "integer" } } },
+              "inProgress": { "type": "array", "items": { "$ref": "#/components/schemas/Workflow" } },
+              "completed":  { "type": "array", "items": { "$ref": "#/components/schemas/Workflow" } }
+            }
+          }
+        }
+      },
+      "Workflow": {
+        "type": "object",
+        "properties": {
+          "workflowId": { "type": "string" }, "wizardName": { "type": "string" },
+          "status": { "type": "string", "enum": ["started", "in_progress", "completed", "generated"] },
+          "progress": { "type": "integer", "minimum": 0, "maximum": 100 },
+          "lastUpdated": { "type": "string", "format": "date-time" },
+          "completedAt": { "type": "string", "format": "date-time" },
+          "downloads": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "WizardListResponse": {
+        "type": "object",
+        "properties": { "success": { "type": "boolean" }, "data": { "type": "array", "items": { "$ref": "#/components/schemas/WizardItem" } } }
+      },
+      "WizardItem": {
+        "type": "object",
+        "properties": {
+          "wizardId": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" },
+          "completionTime": { "type": "integer" }, "runsPerWizard": { "type": "integer" },
+          "targetAudience": { "type": "string" }, "isPopular": { "type": "boolean" },
+          "includedIn": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "PaystackInitRequest": {
+        "type": "object", "required": ["email", "amount"],
+        "properties": {
+          "email": { "type": "string", "format": "email" }, "amount": { "type": "number", "description": "Amount in ZAR (not kobo)" },
+          "currency": { "type": "string", "default": "ZAR" }, "plan": { "type": "string", "enum": ["launchpad", "operator", "boardroom"] },
+          "paymentMethod": { "type": "string" }, "selectedWizards": { "type": "array", "items": { "type": "object", "properties": { "title": { "type": "string" }, "quantity": { "type": "integer" } } } }
+        }
+      },
+      "PaystackInitResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "object", "properties": {
+            "provider": { "type": "string" }, "mode": { "type": "string" }, "reference": { "type": "string" },
+            "accessCode": { "type": "string" }, "authorizationUrl": { "type": "string" },
+            "publicKey": { "type": "string" }, "amount": { "type": "number" }, "amountInKobo": { "type": "integer" },
+            "currency": { "type": "string" }, "email": { "type": "string" }, "plan": { "type": "string" }
+          } }
+        }
+      },
+      "PaystackVerifyRequest": {
+        "type": "object", "required": ["reference"],
+        "properties": {
+          "reference": { "type": "string", "description": "The reference returned from /paystack/initialize" },
+          "outcome": { "type": "string", "enum": ["success", "failed", "cancelled"], "description": "MOCK only — simulate Paystack result. Omit in production." }
+        }
+      },
+      "PaystackVerifyResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "data": { "type": "object", "properties": {
+            "provider": { "type": "string" }, "reference": { "type": "string" },
+            "status": { "type": "string", "enum": ["success", "failed", "cancelled"] },
+            "gatewayResponse": { "type": "string" }, "paidAt": { "type": "string", "format": "date-time", "nullable": true },
+            "subscription": { "type": "object", "nullable": true, "properties": {
+              "email": { "type": "string" }, "plan": { "type": "string" }, "status": { "type": "string" },
+              "activatedAt": { "type": "string" }, "expiresAt": { "type": "string" }, "credits": { "type": "integer" }
+            } }
+          } }
+        }
+      },
+      "CounselCreditsResponse": {
+        "type": "object",
+        "properties": { "success": { "type": "boolean" }, "data": { "type": "object", "properties": {
+          "plan": { "type": "string" }, "creditsTotal": { "type": "integer" }, "creditsUsed": { "type": "integer" },
+          "creditsRemaining": { "type": "integer" }, "usageThisMonth": { "type": "integer" },
+          "topUpRate": { "type": "number" }, "currency": { "type": "string" }, "resetDate": { "type": "string" }
+        } } }
+      },
+      "CounselRequestCreate": {
+        "type": "object", "required": ["subject"],
+        "properties": {
+          "subject": { "type": "string" }, "description": { "type": "string" },
+          "company": { "type": "string" }, "fromUser": { "type": "string" }, "userEmail": { "type": "string" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": { "success": { "type": "boolean", "example": false }, "message": { "type": "string" }, "error": { "type": "string" } }
+      }
+    },
+    "responses": {
+      "ValidationError": { "description": "Validation failed", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Email is required.", "error": "VALIDATION_ERROR" } } } },
+      "InvalidCredentials": { "description": "Wrong credentials", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Invalid credentials.", "error": "INVALID_CREDENTIALS" } } } },
+      "Unauthorized": { "description": "Missing or invalid JWT", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Authentication required.", "error": "NO_TOKEN" } } } },
+      "RateLimited": { "description": "Too many requests", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Too many requests. Please try again in 15 minutes.", "error": "RATE_LIMIT_EXCEEDED" } } } }
+    }
+  }
+}

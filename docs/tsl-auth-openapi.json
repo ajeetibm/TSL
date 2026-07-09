@@ -1,0 +1,256 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TSL Auth API",
+    "version": "2.0.0",
+    "description": "User authentication flow for The Startup Legal platform. Mock server v2 with real JWTs, rate limiting, and Google OAuth server-side verification."
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Mock server (local dev)" }
+  ],
+  "tags": [
+    { "name": "Auth", "description": "Authentication and session management" }
+  ],
+  "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Email + password login",
+        "description": "Authenticates user by email and password. Returns a signed JWT and AuthUser object. Rate limited: 10 req / 15 min.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" },
+              "example": { "email": "thabo@company.co.za", "password": "Test@1234", "portal": "sme" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/InvalidCredentials" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register new SME account",
+        "description": "Creates a new SME user account and returns a signed JWT. Rate limited: 10 req / 15 min.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterRequest" },
+              "example": { "fullName": "Thabo Molefe", "email": "thabo@company.co.za", "password": "Test@1234", "confirmPassword": "Test@1234", "acceptedTerms": true }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registration successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "409": {
+            "description": "Email already registered",
+            "content": { "application/json": { "example": { "success": false, "message": "An account with this email already exists.", "error": "EMAIL_TAKEN" } } }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/google": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Google OAuth login",
+        "description": "Accepts a Google OAuth2 access_token from @react-oauth/google. Server calls googleapis.com/userinfo to verify identity and map email to role. Frontend never calls the UserInfo API directly. Role mapping: tsl.admin.demo@gmail.com → admin, tsl.counsel.demo@gmail.com → counsel, tsl.user.demo@gmail.com → user.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/GoogleAuthRequest" },
+              "example": { "access_token": "ya29.a0AfB_byGHxxxx" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Google login successful", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } } } },
+          "400": { "description": "Missing access token", "content": { "application/json": { "example": { "success": false, "message": "Google access token is required.", "error": "MISSING_TOKEN" } } } },
+          "401": {
+            "description": "Invalid token or unauthorized Google account",
+            "content": { "application/json": { "examples": {
+              "invalidToken": { "summary": "Token rejected by Google", "value": { "success": false, "message": "Failed to verify Google token.", "error": "GOOGLE_TOKEN_INVALID" } },
+              "unauthorized": { "summary": "Email not registered", "value": { "success": false, "message": "This Google account is not registered for TSL access.", "error": "GOOGLE_ACCOUNT_NOT_AUTHORIZED" } }
+            } } }
+          },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset email",
+        "description": "Always returns 200 to prevent email enumeration. MOCK: no email is actually sent. Production: generates token, saves to DB, sends via SendGrid/SES.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" } } }, "example": { "email": "thabo@company.co.za" } } }
+        },
+        "responses": {
+          "200": { "description": "Reset link sent (always 200)", "content": { "application/json": { "example": { "success": true, "message": "If an account exists, a reset link has been sent." } } } }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password using token from email",
+        "description": "Resets the user password using the token received via email. MOCK: token not validated against DB.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ResetPasswordRequest" }, "example": { "token": "reset_token_abc123", "newPassword": "NewPass@1234", "confirmPassword": "NewPass@1234" } } }
+        },
+        "responses": {
+          "200": { "description": "Password reset successfully", "content": { "application/json": { "example": { "success": true, "message": "Password has been reset successfully." } } } },
+          "400": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/api/v1/auth/change-password": {
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Change password for logged-in user",
+        "description": "Changes the password for an authenticated user. Requires a valid Bearer JWT. Validates the current password before updating.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ChangePasswordRequest" }, "example": { "email": "thabo@company.co.za", "currentPassword": "Test@1234", "newPassword": "NewPass@5678", "confirmPassword": "NewPass@5678" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed successfully",
+            "content": { "application/json": { "example": { "success": true, "message": "Password changed successfully.", "data": { "userId": "usr_8f3k2m9x", "email": "thabo@company.co.za", "passwordUpdatedAt": "2026-07-09T10:30:00.000Z" } } } }
+          },
+          "400": {
+            "description": "Validation error or wrong current password",
+            "content": { "application/json": { "examples": {
+              "wrongCurrent": { "summary": "Wrong current password", "value": { "success": false, "message": "Current password is incorrect.", "error": "INVALID_CURRENT_PASSWORD" } },
+              "mismatch":     { "summary": "Passwords don't match",   "value": { "success": false, "message": "New password and confirm password must match.", "error": "PASSWORD_MISMATCH" } }
+            } } }
+          },
+          "401": {
+            "description": "Missing or expired JWT",
+            "content": { "application/json": { "examples": {
+              "noToken":      { "summary": "No token provided",  "value": { "success": false, "message": "Authentication required.", "error": "NO_TOKEN" } },
+              "invalidToken": { "summary": "Token invalid/expired", "value": { "success": false, "message": "Invalid or expired token.", "error": "INVALID_TOKEN" } }
+            } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT (HS256) issued by /auth/login, /auth/register, or /auth/google. Store as tsl-auth-token in localStorage."
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email":    { "type": "string", "format": "email" },
+          "password": { "type": "string", "minLength": 6 },
+          "portal":   { "type": "string", "enum": ["sme", "admin", "counsel"], "default": "sme" }
+        }
+      },
+      "RegisterRequest": {
+        "type": "object",
+        "required": ["fullName", "email", "password", "confirmPassword", "acceptedTerms"],
+        "properties": {
+          "fullName":        { "type": "string" },
+          "email":           { "type": "string", "format": "email" },
+          "password":        { "type": "string", "minLength": 6 },
+          "confirmPassword": { "type": "string" },
+          "acceptedTerms":   { "type": "boolean" }
+        }
+      },
+      "GoogleAuthRequest": {
+        "type": "object",
+        "required": ["access_token"],
+        "properties": {
+          "access_token": { "type": "string", "description": "OAuth2 access token from @react-oauth/google useGoogleLogin(). Server resolves identity via googleapis.com/userinfo internally." }
+        }
+      },
+      "ResetPasswordRequest": {
+        "type": "object",
+        "required": ["token", "newPassword", "confirmPassword"],
+        "properties": {
+          "token":           { "type": "string", "description": "Reset token received via email link" },
+          "newPassword":     { "type": "string", "minLength": 6 },
+          "confirmPassword": { "type": "string" }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "required": ["email", "currentPassword", "newPassword", "confirmPassword"],
+        "properties": {
+          "email":           { "type": "string", "format": "email" },
+          "currentPassword": { "type": "string" },
+          "newPassword":     { "type": "string", "minLength": 6 },
+          "confirmPassword": { "type": "string" }
+        }
+      },
+      "AuthUser": {
+        "type": "object",
+        "required": ["userId", "email", "token"],
+        "properties": {
+          "userId":            { "type": "string" },
+          "fullName":          { "type": "string" },
+          "email":             { "type": "string", "format": "email" },
+          "role":              { "type": "string", "enum": ["sme", "user", "admin", "counsel"] },
+          "portal":            { "type": "string", "enum": ["sme", "admin", "counsel"] },
+          "plan":              { "type": "string", "nullable": true },
+          "token":             { "type": "string", "description": "Signed JWT (HS256). Store as tsl-auth-token in localStorage." },
+          "tokenExpiry":       { "type": "string", "format": "date-time" },
+          "mustResetPassword": { "type": "boolean" },
+          "picture":           { "type": "string", "description": "Google profile picture URL — present on Google login only" }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "success":   { "type": "boolean", "example": true },
+          "data":      { "$ref": "#/components/schemas/AuthUser" },
+          "isNewUser": { "type": "boolean", "description": "true only on /auth/register" }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "properties": {
+          "success":  { "type": "boolean", "example": false },
+          "message":  { "type": "string" },
+          "error":    { "type": "string" },
+          "messages": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "responses": {
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Please enter your email address.", "error": "VALIDATION_ERROR" } } }
+      },
+      "InvalidCredentials": {
+        "description": "Authentication failed",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Invalid credentials.", "error": "INVALID_CREDENTIALS" } } }
+      },
+      "RateLimited": {
+        "description": "Too many requests",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ApiError" }, "example": { "success": false, "message": "Too many requests. Please try again in 15 minutes.", "error": "RATE_LIMIT_EXCEEDED" } } }
+      }
+    }
+  }
+}
