@@ -492,3 +492,30 @@
     flex-direction: column;
   }
 }
+
+/* ── Success toast ─────────────────────────────────────────────────── */
+.dashboard-counsel__toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #008a34;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 8px 24px rgba(0, 138, 52, 0.32);
+  animation: toast-slide-up 0.3s ease;
+  white-space: nowrap;
+}
+
+@keyframes toast-slide-up {
+  from { opacity: 0; transform: translateX(-50%) translateY(16px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

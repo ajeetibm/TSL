@@ -1,32 +1,93 @@
-import { useState } from 'react'
-import { Globe, Mail, Save } from 'lucide-react'
+import { Globe, Loader2, Mail } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { adminSettingsApi } from '../../../services/tslApi'
+
+type GeneralForm = {
+  platformName: string
+  supportEmail: string
+  timezone: string
+  language: string
+  dateFormat: string
+}
+
+const EMPTY: GeneralForm = {
+  platformName: '',
+  supportEmail: '',
+  timezone: 'UTC+02:00 (South Africa)',
+  language: 'English',
+  dateFormat: 'DD/MM/YYYY',
+}
+
+function isEqual(a: GeneralForm, b: GeneralForm) {
+  return (Object.keys(a) as (keyof GeneralForm)[]).every((k) => a[k] === b[k])
+}
 
 export default function GeneralSettings() {
-  const [formData, setFormData] = useState({
-    platformName: 'The Startup Legal',
-    supportEmail: 'support@startuplegal.com',
-    timezone: 'UTC+02:00 (South Africa)',
-    language: 'English',
-    dateFormat: 'DD/MM/YYYY',
-  })
+  const [baseline, setBaseline] = useState<GeneralForm>(EMPTY)
+  const [form, setForm]         = useState<GeneralForm>(EMPTY)
+  const [loadingData, setLoadingData] = useState(true)
+  const [saving, setSaving]     = useState(false)
+  const [message, setMessage]   = useState<string | null>(null)
+  const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingData(true)
+    adminSettingsApi.getGeneral().then((res) => {
+      if (cancelled) return
+      setLoadingData(false)
+      if (!res.success || !res.data) return
+      const d = res.data as Partial<GeneralForm>
+      const loaded: GeneralForm = {
+        platformName: d.platformName ?? EMPTY.platformName,
+        supportEmail: d.supportEmail ?? EMPTY.supportEmail,
+        timezone:     d.timezone     ?? EMPTY.timezone,
+        language:     d.language     ?? EMPTY.language,
+        dateFormat:   d.dateFormat   ?? EMPTY.dateFormat,
+      }
+      setBaseline(loaded)
+      setForm(loaded)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const isDirty = !isEqual(form, baseline)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setForm((prev) => ({ ...prev, [name]: value }))
+    setMessage(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('General settings saved:', formData)
-    // Handle save logic here
+    if (!isDirty || saving) return
+
+    setSaving(true)
+    setMessage(null)
+
+    const res = await adminSettingsApi.saveGeneral(form as unknown as Record<string, unknown>)
+    setSaving(false)
+
+    if (!res.success) {
+      setMessage('⚠ ' + (res.message ?? 'Failed to save settings.'))
+      return
+    }
+
+    const saved = (res.data as Partial<GeneralForm>) ?? {}
+    const next: GeneralForm = { ...form, ...saved }
+    setBaseline(next)
+    setForm(next)
+    setMessage(res.message ?? 'Settings saved successfully.')
+
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
+    msgTimerRef.current = setTimeout(() => setMessage(null), 4000)
   }
 
   return (
     <div className="admin-settings__card">
       <header className="admin-settings__heading">
-        <span>
-          <Globe size={24} />
-        </span>
+        <span><Globe size={24} /></span>
         <div>
           <h2>General Settings</h2>
           <p>Platform-wide configuration and preferences</p>
@@ -40,8 +101,9 @@ export default function GeneralSettings() {
             type="text"
             id="platformName"
             name="platformName"
-            value={formData.platformName}
+            value={form.platformName}
             onChange={handleChange}
+            disabled={loadingData}
             required
           />
         </div>
@@ -54,8 +116,9 @@ export default function GeneralSettings() {
               type="email"
               id="supportEmail"
               name="supportEmail"
-              value={formData.supportEmail}
+              value={form.supportEmail}
               onChange={handleChange}
+              disabled={loadingData}
               required
             />
           </div>
@@ -64,13 +127,7 @@ export default function GeneralSettings() {
         <div className="admin-settings__form-row">
           <div className="admin-settings__form-group">
             <label htmlFor="timezone">Timezone</label>
-            <select
-              id="timezone"
-              name="timezone"
-              value={formData.timezone}
-              onChange={handleChange}
-              required
-            >
+            <select id="timezone" name="timezone" value={form.timezone} onChange={handleChange} disabled={loadingData}>
               <option value="UTC+02:00 (South Africa)">UTC+02:00 (South Africa)</option>
               <option value="UTC+00:00 (GMT)">UTC+00:00 (GMT)</option>
               <option value="UTC+01:00 (CET)">UTC+01:00 (CET)</option>
@@ -81,13 +138,7 @@ export default function GeneralSettings() {
 
           <div className="admin-settings__form-group">
             <label htmlFor="language">Language</label>
-            <select
-              id="language"
-              name="language"
-              value={formData.language}
-              onChange={handleChange}
-              required
-            >
+            <select id="language" name="language" value={form.language} onChange={handleChange} disabled={loadingData}>
               <option value="English">English</option>
               <option value="Afrikaans">Afrikaans</option>
               <option value="Zulu">Zulu</option>
@@ -98,13 +149,7 @@ export default function GeneralSettings() {
 
         <div className="admin-settings__form-group">
           <label htmlFor="dateFormat">Date Format</label>
-          <select
-            id="dateFormat"
-            name="dateFormat"
-            value={formData.dateFormat}
-            onChange={handleChange}
-            required
-          >
+          <select id="dateFormat" name="dateFormat" value={form.dateFormat} onChange={handleChange} disabled={loadingData}>
             <option value="DD/MM/YYYY">DD/MM/YYYY</option>
             <option value="MM/DD/YYYY">MM/DD/YYYY</option>
             <option value="YYYY-MM-DD">YYYY-MM-DD</option>
@@ -112,15 +157,22 @@ export default function GeneralSettings() {
           </select>
         </div>
 
-        <footer className="admin-settings__footer">
-          <button type="submit">
-            <Save size={18} />
-            Save Changes
-          </button>
-        </footer>
+        {message && (
+          <p className={`admin-profile__message ${message.startsWith('⚠') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}>
+            {message}
+          </p>
+        )}
+
+        {isDirty && (
+          <footer className="admin-settings__footer">
+            <button type="submit" disabled={saving} className={saving ? 'admin-settings__save-btn--loading' : ''}>
+              {saving
+                ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
+                : 'Save Changes'}
+            </button>
+          </footer>
+        )}
       </form>
     </div>
   )
 }
-
-// Made with Bob

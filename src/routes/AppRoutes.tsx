@@ -27,6 +27,7 @@ const DashboardProfile = lazy(() => import('../pages/user-dashboard/DashboardPro
 const DashboardSettings = lazy(() => import('../pages/user-dashboard/DashboardSettings'))
 const DashboardWizards = lazy(() => import('../pages/user-dashboard/DashboardWizards'))
 const DashboardWizardDetails = lazy(() => import('../pages/user-dashboard/DashboardWizardDetails'))
+const CounselTopUpPayment = lazy(() => import('../pages/user-dashboard/CounselTopUpPayment'))
 const WizardCatalogue = lazy(() => import('../pages/WizardCatalogue'))
 const WizardDetails = lazy(() => import('../pages/WizardDetails'))
 
@@ -64,6 +65,7 @@ export function AppRoutes() {
           <Route element={<ProtectedRoute />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="dashboard/counsel" element={<DashboardCounsel />} />
+            <Route path="dashboard/counsel/topup" element={<CounselTopUpPayment />} />
             <Route path="dashboard/notifications" element={<DashboardNotifications />} />
             <Route path="dashboard/playbooks" element={<DashboardPlaybooks />} />
             <Route path="dashboard/profile" element={<DashboardProfile />} />

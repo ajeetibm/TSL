@@ -1,13 +1,27 @@
 import { Info, X } from 'lucide-react'
 import './CounselCreditsModal.css'
 
+export interface TopUpPlan {
+  name: string
+  credits: number
+  sla: string
+  ratePerCredit: number
+}
+
+const PLANS: TopUpPlan[] = [
+  { name: 'Launchpad', credits: 0, sla: '2 Business Days', ratePerCredit: 550 },
+  { name: 'Operator', credits: 2, sla: '1 Business Day', ratePerCredit: 500 },
+  { name: 'Boardroom', credits: 6, sla: '8 Business Hours', ratePerCredit: 450 },
+]
+
 interface CounselCreditsModalProps {
   isOpen: boolean
   onClose: () => void
   currentPlan: string
+  onTopUp: (plan: TopUpPlan) => void
 }
 
-export default function CounselCreditsModal({ isOpen, onClose, currentPlan }: CounselCreditsModalProps) {
+export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp }: CounselCreditsModalProps) {
   if (!isOpen) return null
 
   const normalizedCurrentPlan = currentPlan.trim().toLowerCase()
@@ -35,90 +49,81 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan }: Co
           <div className="counsel-credits-modal__table">
             <div className="counsel-credits-modal__row counsel-credits-modal__row--header">
               <div className="counsel-credits-modal__cell">Feature</div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <div className="counsel-credits-modal__header-content">
-                  Launchpad
-                  {isCurrentPlan('Launchpad') && (
-                    <span className="counsel-credits-modal__badge">Current Plan</span>
-                  )}
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
+                >
+                  <div className="counsel-credits-modal__header-content">
+                    {plan.name}
+                    {isCurrentPlan(plan.name) && (
+                      <span className="counsel-credits-modal__badge">Current Plan</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Operator') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <div className="counsel-credits-modal__header-content">
-                  Operator
-                  {isCurrentPlan('Operator') && (
-                    <span className="counsel-credits-modal__badge">Current Plan</span>
-                  )}
-                </div>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <div className="counsel-credits-modal__header-content">
-                  Boardroom
-                  {isCurrentPlan('Boardroom') && (
-                    <span className="counsel-credits-modal__badge">Current Plan</span>
-                  )}
-                </div>
-              </div>
+              ))}
             </div>
 
             <div className="counsel-credits-modal__row">
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Credits per month
               </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">0 credit</span>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Operator') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">2 credits</span>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">6 credits</span>
-              </div>
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
+                >
+                  <span className="counsel-credits-modal__price">
+                    {plan.credits === 0 ? '0 credit' : `${plan.credits} credits`}
+                  </span>
+                </div>
+              ))}
             </div>
 
             <div className="counsel-credits-modal__row">
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Response Time SLA
               </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__cell--highlight' : ''}`}>2 business days</div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Operator') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                1 business day
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__cell--highlight' : ''}`}>8 business hours</div>
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
+                >
+                  {plan.sla}
+                </div>
+              ))}
             </div>
 
             <div className="counsel-credits-modal__row">
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Top-up rate (per credit)
               </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">R550</span>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Operator') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">R500</span>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <span className="counsel-credits-modal__price">R450</span>
-              </div>
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
+                >
+                  <span className="counsel-credits-modal__price">R{plan.ratePerCredit}</span>
+                </div>
+              ))}
             </div>
 
             <div className="counsel-credits-modal__row counsel-credits-modal__row--actions">
               <div className="counsel-credits-modal__cell"></div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <button type="button" className={`counsel-credits-modal__button${isCurrentPlan('Launchpad') ? ' counsel-credits-modal__button--primary' : ''}`}>
-                  Top Up
-                </button>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Operator') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <button type="button" className={`counsel-credits-modal__button${isCurrentPlan('Operator') ? ' counsel-credits-modal__button--primary' : ''}`}>
-                  Top Up
-                </button>
-              </div>
-              <div className={`counsel-credits-modal__cell${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__cell--highlight' : ''}`}>
-                <button type="button" className={`counsel-credits-modal__button${isCurrentPlan('Boardroom') ? ' counsel-credits-modal__button--primary' : ''}`}>
-                  Top Up
-                </button>
-              </div>
+              {PLANS.map((plan) => (
+                <div
+                  key={plan.name}
+                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
+                >
+                  <button
+                    type="button"
+                    className={`counsel-credits-modal__button${isCurrentPlan(plan.name) ? ' counsel-credits-modal__button--primary' : ''}`}
+                    onClick={() => { onClose(); onTopUp(plan) }}
+                  >
+                    Top Up
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 

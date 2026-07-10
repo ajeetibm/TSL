@@ -1,11 +1,12 @@
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, MessageSquare, Scale, Send, Upload } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { counselApi } from '../../services/tslApi'
 import type { CounselCredits, CounselRequest } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { useCounselRequests } from '../../context/CounselRequestContext'
-import CounselCreditsModal from './CounselCreditsModal'
+import CounselCreditsModal, { type TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './DashboardCounsel.css'
 
@@ -126,6 +127,8 @@ function normalizeHistory(payload?: CounselRequestResponse): CounselHistoryReque
 
 export default function DashboardCounsel() {
   const { saveAttachments } = useCounselRequests()
+  const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState<'book' | 'history'>('book')
   const [credits, setCredits] = useState<CounselCredits>(fallbackCredits)
   const [history, setHistory] = useState<CounselHistoryRequest[]>(fallbackHistory)
@@ -140,10 +143,24 @@ export default function DashboardCounsel() {
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false)
+  const [topUpToast, setTopUpToast] = useState('')
   const submitInFlightRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
+
+  useEffect(() => {
+    // Show success toast after returning from payment
+    const state = location.state as { topUpSuccess?: boolean; creditsAdded?: number } | null
+    if (state?.topUpSuccess) {
+      const added = state.creditsAdded ?? 1
+      setTopUpToast(`${added} credit${added !== 1 ? 's' : ''} added successfully.`)
+      // Clear the navigation state so refresh doesn't re-show the toast
+      navigate('/dashboard/counsel', { replace: true, state: {} })
+      const timer = setTimeout(() => setTopUpToast(''), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [location.state, navigate])
 
   useEffect(() => {
     let isMounted = true
@@ -305,6 +322,13 @@ export default function DashboardCounsel() {
             <p>Connect with experienced attorneys for expert guidance</p>
           </div>
         </header>
+
+        {topUpToast && (
+          <div className="dashboard-counsel__toast" role="status" aria-live="polite">
+            <CheckCircle2 size={18} />
+            {topUpToast}
+          </div>
+        )}
 
         <div className="dashboard-counsel__content">
           <section className="dashboard-counsel__stats" aria-label="Counsel credit summary">
@@ -541,6 +565,9 @@ export default function DashboardCounsel() {
           isOpen={isCreditsModalOpen}
           onClose={() => setIsCreditsModalOpen(false)}
           currentPlan={credits.plan}
+          onTopUp={(plan: TopUpPlan) => {
+            navigate('/dashboard/counsel/topup', { state: { plan } })
+          }}
         />
       </main>
     </DashboardShell>

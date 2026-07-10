@@ -173,6 +173,7 @@ export const counselApi = {
   credits: () => request<CounselCredits>('/api/v1/sme/counsel/credits'),
   createRequest: (payload: JsonRecord) => request('/api/v1/sme/counsel/requests', 'POST', payload),
   requests: () => request<CounselRequest[]>('/api/v1/sme/counsel/requests'),
+  topUpCredits: (payload: JsonRecord) => request<CounselCredits>('/api/v1/sme/counsel/topup', 'POST', payload),
 }
 
 export const notificationApi = {
@@ -247,6 +248,23 @@ export const adminApi = {
     const query = qs.toString()
     return request(`/api/v1/admin/billing${query ? `?${query}` : ''}`)
   },
+  // Triggers an async server-side export job; backend emails the download link.
+  // PRODUCTION: replace mock endpoint with real export service — no frontend changes needed.
+  exportBilling: (payload?: { format?: 'pdf' | 'csv'; filters?: JsonRecord }) =>
+    request<{ jobId: string; status: string; notificationEmail: string }>(
+      '/api/v1/admin/billing/export',
+      'POST',
+      payload ?? {},
+    ),
+}
+
+export const adminSettingsApi = {
+  getGeneral:              () => request('/api/v1/admin/settings/general'),
+  saveGeneral:             (payload: JsonRecord) => request('/api/v1/admin/settings/general', 'PUT', payload),
+  getNotifications:        () => request('/api/v1/admin/settings/notifications'),
+  saveNotifications:       (payload: JsonRecord) => request('/api/v1/admin/settings/notifications', 'PUT', payload),
+  getSecurity:             () => request('/api/v1/admin/settings/security'),
+  saveSecurity:            (payload: JsonRecord) => request('/api/v1/admin/settings/security', 'PUT', payload),
 }
 
 export const counselPortalApi = {

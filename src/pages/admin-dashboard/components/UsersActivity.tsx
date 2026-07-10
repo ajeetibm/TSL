@@ -1,10 +1,16 @@
-import { Activity, Clock, FileText, Search, Shield, UsersRound } from 'lucide-react'
-import { useState, useMemo, useRef, useEffect } from 'react'
+import { Activity, CheckCircle2, Clock, FileText, Search, Shield, UsersRound, X } from 'lucide-react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import InviteSubAdminModal from './InviteSubAdminModal'
 import UserDetailsModal from './UserDetailsModal'
+import AdminEditModal from './AdminEditModal'
+import AdminRevokeDialog from './AdminRevokeDialog'
 import { useUserProfile } from '../../../context/UserProfileContext'
 import { adminApi } from '../../../services/tslApi'
+import { getAdmins } from '../services/adminManagementService'
+import type { AdminRecord } from '../types/adminManagement'
 import './UserDetailsModal.css'
+
+// ── User Management types / helpers (unchanged) ───────────────────────────
 
 interface User {
   name: string
@@ -37,6 +43,8 @@ interface AdminUsersApiData {
   users?: AdminUsersApiUser[]
 }
 
+type ToastState = { msg: string; type: 'success' | 'error' } | null
+
 function formatPlan(plan?: string) {
   if (!plan) return 'Operator'
   const normalized = plan.toLowerCase()
@@ -53,16 +61,11 @@ function formatJoinDate(joinedAt?: string) {
   if (!joinedAt) return ''
   const parsed = new Date(joinedAt)
   if (Number.isNaN(parsed.getTime())) return joinedAt
-  return parsed.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
+  return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 function mapApiUser(user: AdminUsersApiUser): User | null {
   if (!user.email) return null
-
   return {
     name: user.contactPerson || user.fullName || user.companyName || 'Unknown',
     email: user.email,
@@ -81,153 +84,143 @@ function isAdminLikeEmail(email: string) {
   return normalized.includes('admin') || normalized.includes('thestartuplegal')
 }
 
-const adminUsers: User[] = [
-  { name: 'John Doe', email: 'john@example.com', plan: 'Operator', status: 'Active', joinDate: 'Jan 15, 2025' },
-  { name: 'Sarah Smith', email: 'sarah@example.com', plan: 'Launchpad', status: 'Active', joinDate: 'Feb 20, 2025' },
-  { name: 'Mike Johnson', email: 'mike@example.com', plan: 'Operator', status: 'Active', joinDate: 'Mar 10, 2025' },
-  { name: 'Emily Brown', email: 'emily@example.com', plan: 'Operator', status: 'Active', joinDate: 'Apr 5, 2025' },
-  { name: 'David Wilson', email: 'david@example.com', plan: 'Launchpad', status: 'Inactive', joinDate: 'May 12, 2025' },
-  { name: 'Lisa Anderson', email: 'lisa@example.com', plan: 'Boardroom', status: 'Active', joinDate: 'Jun 8, 2025' },
-]
-
-const adminManagementRows = [
-  {
-    name: 'John Smith',
-    email: 'john.smith@admin.com',
-    status: 'Active',
-    lastActive: '2 hours ago',
-    invitedDate: 'Dec 15, 2024',
-    secondaryAction: 'Revoke',
-  },
-  {
-    name: 'Emily Davis',
-    email: 'emily.davis@admin.com',
-    status: 'Pending',
-    lastActive: 'Not yet active',
-    invitedDate: 'Jan 3, 2025',
-    secondaryAction: 'Cancel',
-  },
-  {
-    name: 'Michael Chen',
-    email: 'michael.chen@admin.com',
-    status: 'Active',
-    lastActive: '5 minutes ago',
-    invitedDate: 'Nov 20, 2024',
-    secondaryAction: 'Revoke',
-  },
-  {
-    name: 'Sarah Johnson',
-    email: 'sarah.j@admin.com',
-    status: 'Pending',
-    lastActive: 'Not yet active',
-    invitedDate: 'Jan 5, 2025',
-    secondaryAction: 'Cancel',
-  },
+const adminUsersFallback: User[] = [
+  { name: 'John Doe',      email: 'john@example.com',  plan: 'Operator',  status: 'Active',   joinDate: 'Jan 15, 2025' },
+  { name: 'Sarah Smith',   email: 'sarah@example.com', plan: 'Launchpad', status: 'Active',   joinDate: 'Feb 20, 2025' },
+  { name: 'Mike Johnson',  email: 'mike@example.com',  plan: 'Operator',  status: 'Active',   joinDate: 'Mar 10, 2025' },
+  { name: 'Emily Brown',   email: 'emily@example.com', plan: 'Operator',  status: 'Active',   joinDate: 'Apr 5, 2025' },
+  { name: 'David Wilson',  email: 'david@example.com', plan: 'Launchpad', status: 'Inactive', joinDate: 'May 12, 2025' },
+  { name: 'Lisa Anderson', email: 'lisa@example.com',  plan: 'Boardroom', status: 'Active',   joinDate: 'Jun 8, 2025' },
 ]
 
 type ManagementTab = 'users' | 'admins'
 
+// ── Toast component ───────────────────────────────────────────────────────
+
+interface AdminToastProps {
+  toast:   ToastState
+  onClose: () => void
+}
+
+function AdminToast({ toast, onClose }: AdminToastProps) {
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(onClose, 5000)
+    return () => clearTimeout(t)
+  }, [toast, onClose])
+
+  if (!toast) return null
+
+  return (
+    <div className={`adm-toast adm-toast--${toast.type}`} role={toast.type === 'success' ? 'status' : 'alert'} aria-live="polite">
+      <span className="adm-toast__icon">
+        {toast.type === 'success' ? <CheckCircle2 size={17} /> : <X size={17} />}
+      </span>
+      <p className="adm-toast__msg">{toast.msg}</p>
+      <button type="button" className="adm-toast__close" onClick={onClose} aria-label="Dismiss">
+        <X size={14} />
+      </button>
+    </div>
+  )
+}
+
+// ── Main component ────────────────────────────────────────────────────────
+
 export default function UsersActivity() {
   const { profile } = useUserProfile()
-  const [managementTab, setManagementTab] = useState<ManagementTab>('users')
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [managementTab, setManagementTab]   = useState<ManagementTab>('users')
+  const [isModalOpen, setIsModalOpen]       = useState(false)
+  const [selectedUser, setSelectedUser]     = useState<User | null>(null)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [apiUsers, setApiUsers] = useState<User[] | null>(null)
-  
-  // Filter states for User Management
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedRole, setSelectedRole] = useState('All Roles')
-  const [selectedPlan, setSelectedPlan] = useState('All Plans')
-  const [selectedStatus, setSelectedStatus] = useState('All Status')
-  
-  // Filter states for Admin Management
-  const [adminSearchQuery, setAdminSearchQuery] = useState('')
+  const [apiUsers, setApiUsers]             = useState<User[] | null>(null)
+
+  // ── Admin management state ─────────────────────────────────────────────
+  const [admins, setAdmins]                     = useState<AdminRecord[]>([])
+  const [editingAdmin, setEditingAdmin]         = useState<AdminRecord | null>(null)
+  const [revokingAdmin, setRevokingAdmin]       = useState<AdminRecord | null>(null)
+  const [toast, setToast]                       = useState<ToastState>(null)
+
+  const showToast = useCallback((msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type })
+  }, [])
+
+  const dismissToast = useCallback(() => setToast(null), [])
+
+  // ── User management filter state ───────────────────────────────────────
+  const [searchQuery, setSearchQuery]           = useState('')
+  const [selectedRole, setSelectedRole]         = useState('All Roles')
+  const [selectedPlan, setSelectedPlan]         = useState('All Plans')
+  const [selectedStatus, setSelectedStatus]     = useState('All Status')
+
+  // ── Admin management filter state ─────────────────────────────────────
+  const [adminSearchQuery, setAdminSearchQuery]       = useState('')
   const [adminSelectedStatus, setAdminSelectedStatus] = useState('All Status')
-  
-  // Dropdown open states
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false)
-  const [isPlanDropdownOpen, setIsPlanDropdownOpen] = useState(false)
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false)
-  const [isAdminStatusDropdownOpen, setIsAdminStatusDropdownOpen] = useState(false)
-  
-  // Refs for dropdown click outside detection
-  const roleDropdownRef = useRef<HTMLDivElement>(null)
-  const planDropdownRef = useRef<HTMLDivElement>(null)
-  const statusDropdownRef = useRef<HTMLDivElement>(null)
+
+  // ── Dropdown refs ──────────────────────────────────────────────────────
+  const roleDropdownRef        = useRef<HTMLDivElement>(null)
+  const planDropdownRef        = useRef<HTMLDivElement>(null)
+  const statusDropdownRef      = useRef<HTMLDivElement>(null)
   const adminStatusDropdownRef = useRef<HTMLDivElement>(null)
-  
+  const [isRoleDropdownOpen,        setIsRoleDropdownOpen]        = useState(false)
+  const [isPlanDropdownOpen,        setIsPlanDropdownOpen]        = useState(false)
+  const [isStatusDropdownOpen,      setIsStatusDropdownOpen]      = useState(false)
+  const [isAdminStatusDropdownOpen, setIsAdminStatusDropdownOpen] = useState(false)
+
+  // ── Data loading ───────────────────────────────────────────────────────
+
   useEffect(() => {
     let isCurrent = true
-
     adminApi.users().then((result) => {
       if (!isCurrent || !result.success) return
-      const data = result.data as AdminUsersApiData | undefined
-      const users = data?.users
-        ?.map(mapApiUser)
-        .filter((user): user is User => Boolean(user))
-
+      const data  = result.data as AdminUsersApiData | undefined
+      const users = data?.users?.map(mapApiUser).filter((u): u is User => Boolean(u))
       if (users?.length) setApiUsers(users)
     })
-
-    return () => {
-      isCurrent = false
-    }
+    return () => { isCurrent = false }
   }, [])
 
-  // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target as Node)) {
-        setIsRoleDropdownOpen(false)
-      }
-      if (planDropdownRef.current && !planDropdownRef.current.contains(event.target as Node)) {
-        setIsPlanDropdownOpen(false)
-      }
-      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
-        setIsStatusDropdownOpen(false)
-      }
-      if (adminStatusDropdownRef.current && !adminStatusDropdownRef.current.contains(event.target as Node)) {
-        setIsAdminStatusDropdownOpen(false)
-      }
-    }
-    
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    let isCurrent = true
+    getAdmins().then((result) => {
+      if (!isCurrent || !result.success || !result.data) return
+      setAdmins(result.data)
+    })
+    return () => { isCurrent = false }
   }, [])
 
-  const handleViewUser = (user: User) => {
-    setSelectedUser(user)
-    setIsModalOpen(true)
+  // ── Close dropdowns on outside click ──────────────────────────────────
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (roleDropdownRef.current        && !roleDropdownRef.current.contains(e.target as Node))        setIsRoleDropdownOpen(false)
+      if (planDropdownRef.current        && !planDropdownRef.current.contains(e.target as Node))        setIsPlanDropdownOpen(false)
+      if (statusDropdownRef.current      && !statusDropdownRef.current.contains(e.target as Node))      setIsStatusDropdownOpen(false)
+      if (adminStatusDropdownRef.current && !adminStatusDropdownRef.current.contains(e.target as Node)) setIsAdminStatusDropdownOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  // ── Handlers ───────────────────────────────────────────────────────────
+
+  const handleViewUser  = (user: User) => { setSelectedUser(user); setIsModalOpen(true) }
+  const handleCloseUser = () => { setIsModalOpen(false); setSelectedUser(null) }
+
+  const handleAdminSaved = (updated: AdminRecord) => {
+    setAdmins((prev) => prev.map((a) => (a.id === updated.id ? updated : a)))
   }
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false)
-    setSelectedUser(null)
+  const handleAdminRevoked = (id: string) => {
+    setAdmins((prev) => prev.filter((a) => a.id !== id))
+    setRevokingAdmin(null)
   }
 
-  const handleOpenInviteModal = () => {
-    setIsInviteModalOpen(true)
-  }
+  // ── Derived data ───────────────────────────────────────────────────────
 
-  const handleCloseInviteModal = () => {
-    setIsInviteModalOpen(false)
-  }
-
-  const handleSendInvitation = (data: { fullName: string; email: string; message: string }) => {
-    console.log('Sending invitation:', data)
-    // TODO: Implement API call to send invitation
-    // For now, just log the data
-  }
-
-  // Merge live profile data for the logged-in user into the API list for same-browser updates.
   const mergedUsers = useMemo(() => {
-    const sourceUsers = apiUsers?.length ? apiUsers : adminUsers
+    const sourceUsers = apiUsers?.length ? apiUsers : adminUsersFallback
     if (!profile.email || isAdminLikeEmail(profile.email)) return sourceUsers
-
-    const existingIndex = sourceUsers.findIndex(
-      (u) => u.email.toLowerCase() === profile.email.toLowerCase(),
-    )
+    const existingIndex = sourceUsers.findIndex((u) => u.email.toLowerCase() === profile.email.toLowerCase())
     const liveRow: User = {
       name: profile.contactPerson || profile.companyName || sourceUsers[existingIndex]?.name || 'Unknown',
       email: profile.email,
@@ -247,56 +240,37 @@ export default function UsersActivity() {
     return [liveRow, ...sourceUsers]
   }, [apiUsers, profile])
 
-  // Filter users based on search and filters
-  const filteredUsers = useMemo(() => {
-    return mergedUsers.filter((user) => {
-      // Search filter
-      const matchesSearch =
-        user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      // Role filter (currently not used in data, but keeping for future)
-      const matchesRole = selectedRole === 'All Roles'
-      
-      // Plan filter
-      const matchesPlan = selectedPlan === 'All Plans' || user.plan === selectedPlan
-      
-      // Status filter
-      const matchesStatus = selectedStatus === 'All Status' || user.status === selectedStatus
-      
+  const filteredUsers = useMemo(() =>
+    mergedUsers.filter((u) => {
+      const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesRole   = selectedRole   === 'All Roles'
+      const matchesPlan   = selectedPlan   === 'All Plans'   || u.plan   === selectedPlan
+      const matchesStatus = selectedStatus === 'All Status'  || u.status === selectedStatus
       return matchesSearch && matchesRole && matchesPlan && matchesStatus
-    })
-  }, [mergedUsers, searchQuery, selectedRole, selectedPlan, selectedStatus])
+    }), [mergedUsers, searchQuery, selectedRole, selectedPlan, selectedStatus])
 
-  // Filter admins based on search and filters
-  const filteredAdmins = useMemo(() => {
-    return adminManagementRows.filter((admin) => {
-      // Search filter
-      const matchesSearch =
-        admin.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) ||
-        admin.email.toLowerCase().includes(adminSearchQuery.toLowerCase())
-      
-      // Status filter
-      const matchesStatus = adminSelectedStatus === 'All Status' || admin.status === adminSelectedStatus
-      
+  const filteredAdmins = useMemo(() =>
+    admins.filter((a) => {
+      const matchesSearch = a.name.toLowerCase().includes(adminSearchQuery.toLowerCase()) || a.email.toLowerCase().includes(adminSearchQuery.toLowerCase())
+      const matchesStatus = adminSelectedStatus === 'All Status' || a.status === adminSelectedStatus
       return matchesSearch && matchesStatus
-    })
-  }, [adminSearchQuery, adminSelectedStatus])
+    }), [admins, adminSearchQuery, adminSelectedStatus])
 
-  // Get unique plans for filter dropdown
-  const uniquePlans = Array.from(new Set(mergedUsers.map(user => user.plan)))
+  const uniquePlans        = Array.from(new Set(mergedUsers.map((u) => u.plan)))
+  const uniqueStatuses     = Array.from(new Set(mergedUsers.map((u) => u.status)))
+  const uniqueAdminStatuses = Array.from(new Set(admins.map((a) => a.status)))
 
-  // Get unique statuses for filter dropdown
-  const uniqueStatuses = Array.from(new Set(mergedUsers.map(user => user.status)))
-  const uniqueAdminStatuses = Array.from(new Set(adminManagementRows.map(admin => admin.status)))
+  const activeAdminsCount  = admins.filter((a) => a.status === 'Active').length
+  const pendingAdminsCount = admins.filter((a) => a.status === 'Pending').length
+
+  // ── Render ─────────────────────────────────────────────────────────────
 
   return (
     <section className="admin-users">
+      {/* Stats row */}
       <div className="admin-users__stats" aria-label="User activity summary">
         <article className="admin-users__stat">
-          <span>
-            <Activity size={24} />
-          </span>
+          <span><Activity size={24} /></span>
           <div>
             <strong>2,847</strong>
             <h2>Actions Today</h2>
@@ -304,9 +278,7 @@ export default function UsersActivity() {
           </div>
         </article>
         <article className="admin-users__stat">
-          <span>
-            <UsersRound size={24} />
-          </span>
+          <span><UsersRound size={24} /></span>
           <div>
             <strong>234</strong>
             <h2>Active Users Now</h2>
@@ -314,9 +286,7 @@ export default function UsersActivity() {
           </div>
         </article>
         <article className="admin-users__stat">
-          <span>
-            <FileText size={24} />
-          </span>
+          <span><FileText size={24} /></span>
           <div>
             <strong>87</strong>
             <h2>{managementTab === 'admins' ? 'Wizards Started' : 'Workflows Started'}</h2>
@@ -325,46 +295,33 @@ export default function UsersActivity() {
         </article>
       </div>
 
+      {/* Tabs */}
       <div className="admin-users__tabs" aria-label="Management tabs">
-        <button
-          type="button"
-          className={managementTab === 'users' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
-          onClick={() => setManagementTab('users')}
-        >
-          User Management
-        </button>
-        <button
-          type="button"
-          className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'}
-          onClick={() => setManagementTab('admins')}
-        >
-          Admin Management
-        </button>
+        <button type="button" className={managementTab === 'users'  ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'} onClick={() => setManagementTab('users')}>User Management</button>
+        <button type="button" className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'} onClick={() => setManagementTab('admins')}>Admin Management</button>
       </div>
 
+      {/* Admin summary KPIs */}
       {managementTab === 'admins' && (
         <div className="admin-users__admin-stats" aria-label="Admin management summary">
           <article className="admin-users__admin-stat">
-            <span>
-              <Shield size={24} />
-            </span>
+            <span><Shield size={24} /></span>
             <div>
-              <strong>2</strong>
+              <strong>{activeAdminsCount}</strong>
               <p>Active Admins</p>
             </div>
           </article>
           <article className="admin-users__admin-stat admin-users__admin-stat--muted">
-            <span>
-              <Clock size={24} />
-            </span>
+            <span><Clock size={24} /></span>
             <div>
-              <strong>2</strong>
+              <strong>{pendingAdminsCount}</strong>
               <p>Pending Invites</p>
             </div>
           </article>
         </div>
       )}
 
+      {/* Table card */}
       <div className="admin-users__table-card">
         <div className={managementTab === 'admins' ? 'admin-users__filters admin-users__filters--admin' : 'admin-users__filters'}>
           <label className="admin-users__search">
@@ -376,183 +333,46 @@ export default function UsersActivity() {
               onChange={(e) => managementTab === 'users' ? setSearchQuery(e.target.value) : setAdminSearchQuery(e.target.value)}
             />
           </label>
+
           {managementTab === 'users' ? (
             <>
-              {/* All Roles Dropdown */}
+              {/* Role dropdown */}
               <div ref={roleDropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  className="admin-users__filter-button"
-                  onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                >
-                  {selectedRole}
-                  <span className="admin-users__select-arrow" aria-hidden="true" />
+                <button type="button" className="admin-users__filter-button" onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}>
+                  {selectedRole}<span className="admin-users__select-arrow" aria-hidden="true" />
                 </button>
                 {isRoleDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: '#ffffff',
-                    border: '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 1000,
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedRole('All Roles')
-                        setIsRoleDropdownOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: 'none',
-                        background: selectedRole === 'All Roles' ? '#f5f5f5' : 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      All Roles
-                    </button>
-                  </div>
-                )}
-              </div>
-              
-              {/* All Plans Dropdown */}
-              <div ref={planDropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  className="admin-users__filter-button"
-                  onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}
-                >
-                  {selectedPlan}
-                  <span className="admin-users__select-arrow" aria-hidden="true" />
-                </button>
-                {isPlanDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: '#ffffff',
-                    border: '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 1000,
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedPlan('All Plans')
-                        setIsPlanDropdownOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: 'none',
-                        background: selectedPlan === 'All Plans' ? '#f5f5f5' : 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      All Plans
-                    </button>
-                    {uniquePlans.map(plan => (
-                      <button
-                        key={plan}
-                        type="button"
-                        onClick={() => {
-                          setSelectedPlan(plan)
-                          setIsPlanDropdownOpen(false)
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: selectedPlan === plan ? '#f5f5f5' : 'transparent',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontSize: '16px'
-                        }}
-                      >
-                        {plan}
-                      </button>
+                  <div className="adm-dropdown">
+                    {['All Roles'].map((r) => (
+                      <button key={r} type="button" className={`adm-dropdown__item${selectedRole === r ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setSelectedRole(r); setIsRoleDropdownOpen(false) }}>{r}</button>
                     ))}
                   </div>
                 )}
               </div>
-              
-              {/* All Status Dropdown */}
+
+              {/* Plan dropdown */}
+              <div ref={planDropdownRef} style={{ position: 'relative' }}>
+                <button type="button" className="admin-users__filter-button" onClick={() => setIsPlanDropdownOpen(!isPlanDropdownOpen)}>
+                  {selectedPlan}<span className="admin-users__select-arrow" aria-hidden="true" />
+                </button>
+                {isPlanDropdownOpen && (
+                  <div className="adm-dropdown">
+                    {['All Plans', ...uniquePlans].map((p) => (
+                      <button key={p} type="button" className={`adm-dropdown__item${selectedPlan === p ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setSelectedPlan(p); setIsPlanDropdownOpen(false) }}>{p}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Status dropdown */}
               <div ref={statusDropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  className="admin-users__filter-button"
-                  onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}
-                >
-                  {selectedStatus}
-                  <span className="admin-users__select-arrow" aria-hidden="true" />
+                <button type="button" className="admin-users__filter-button" onClick={() => setIsStatusDropdownOpen(!isStatusDropdownOpen)}>
+                  {selectedStatus}<span className="admin-users__select-arrow" aria-hidden="true" />
                 </button>
                 {isStatusDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: '#ffffff',
-                    border: '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 1000,
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedStatus('All Status')
-                        setIsStatusDropdownOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: 'none',
-                        background: selectedStatus === 'All Status' ? '#f5f5f5' : 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      All Status
-                    </button>
-                    {uniqueStatuses.map(status => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => {
-                          setSelectedStatus(status)
-                          setIsStatusDropdownOpen(false)
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: selectedStatus === status ? '#f5f5f5' : 'transparent',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontSize: '16px'
-                        }}
-                      >
-                        {status}
-                      </button>
+                  <div className="adm-dropdown">
+                    {['All Status', ...uniqueStatuses].map((s) => (
+                      <button key={s} type="button" className={`adm-dropdown__item${selectedStatus === s ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setSelectedStatus(s); setIsStatusDropdownOpen(false) }}>{s}</button>
                     ))}
                   </div>
                 )}
@@ -560,177 +380,74 @@ export default function UsersActivity() {
             </>
           ) : (
             <>
-              {/* Admin Status Dropdown */}
+              {/* Admin status dropdown */}
               <div ref={adminStatusDropdownRef} style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  className="admin-users__filter-button"
-                  onClick={() => setIsAdminStatusDropdownOpen(!isAdminStatusDropdownOpen)}
-                >
-                  {adminSelectedStatus}
-                  <span className="admin-users__select-arrow" aria-hidden="true" />
+                <button type="button" className="admin-users__filter-button" onClick={() => setIsAdminStatusDropdownOpen(!isAdminStatusDropdownOpen)}>
+                  {adminSelectedStatus}<span className="admin-users__select-arrow" aria-hidden="true" />
                 </button>
                 {isAdminStatusDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: 0,
-                    right: 0,
-                    marginTop: '4px',
-                    background: '#ffffff',
-                    border: '2px solid #e5e5e5',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    zIndex: 1000,
-                    overflow: 'hidden'
-                  }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAdminSelectedStatus('All Status')
-                        setIsAdminStatusDropdownOpen(false)
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '12px 16px',
-                        border: 'none',
-                        background: adminSelectedStatus === 'All Status' ? '#f5f5f5' : 'transparent',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        fontSize: '16px'
-                      }}
-                    >
-                      All Status
-                    </button>
-                    {uniqueAdminStatuses.map(status => (
-                      <button
-                        key={status}
-                        type="button"
-                        onClick={() => {
-                          setAdminSelectedStatus(status)
-                          setIsAdminStatusDropdownOpen(false)
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '12px 16px',
-                          border: 'none',
-                          background: adminSelectedStatus === status ? '#f5f5f5' : 'transparent',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontSize: '16px'
-                        }}
-                      >
-                        {status}
-                      </button>
+                  <div className="adm-dropdown">
+                    {['All Status', ...uniqueAdminStatuses].map((s) => (
+                      <button key={s} type="button" className={`adm-dropdown__item${adminSelectedStatus === s ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setAdminSelectedStatus(s); setIsAdminStatusDropdownOpen(false) }}>{s}</button>
                     ))}
                   </div>
                 )}
               </div>
-              <button type="button" className="admin-users__invite" onClick={handleOpenInviteModal}>
+              <button type="button" className="admin-users__invite" onClick={() => setIsInviteModalOpen(true)}>
                 Invite Sub Admin
               </button>
             </>
           )}
         </div>
 
+        {/* Tables */}
         <div className="admin-users__table-wrap">
           {managementTab === 'users' ? (
             <table className="admin-users__table">
               <thead>
                 <tr>
-                  <th aria-label="Select all">
-                    <span className="admin-users__checkbox" />
-                  </th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Plan</th>
-                  <th>Status</th>
-                  <th>Join Date</th>
-                  <th>Actions</th>
+                  <th aria-label="Select all"><span className="admin-users__checkbox" /></th>
+                  <th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Join Date</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
-                      No users found matching your filters
-                    </td>
-                  </tr>
-                ) : (
-                  filteredUsers.map((user) => (
-                    <tr key={user.email}>
-                    <td>
-                      <span className="admin-users__checkbox" />
-                    </td>
-                    <td>
-                      <strong>{user.name}</strong>
-                    </td>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No users found matching your filters</td></tr>
+                ) : filteredUsers.map((user) => (
+                  <tr key={user.email}>
+                    <td><span className="admin-users__checkbox" /></td>
+                    <td><strong>{user.name}</strong></td>
                     <td>{user.email}</td>
+                    <td><span className="admin-users__pill admin-users__pill--plan">{user.plan}</span></td>
                     <td>
-                      <span className="admin-users__pill admin-users__pill--plan">{user.plan}</span>
-                    </td>
-                    <td>
-                      <span
-                        className={
-                          user.status === 'Active'
-                            ? 'admin-users__pill admin-users__pill--active'
-                            : 'admin-users__pill admin-users__pill--inactive'
-                        }
-                      >
+                      <span className={user.status === 'Active' ? 'admin-users__pill admin-users__pill--active' : 'admin-users__pill admin-users__pill--inactive'}>
                         {user.status}
                       </span>
                     </td>
                     <td>{user.joinDate}</td>
-                    <td>
-                      <button type="button" className="admin-users__view" onClick={() => handleViewUser(user)}>
-                        View
-                      </button>
-                    </td>
+                    <td><button type="button" className="admin-users__view" onClick={() => handleViewUser(user)}>View</button></td>
                   </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           ) : (
             <table className="admin-users__table admin-users__table--admins">
               <thead>
                 <tr>
-                  <th aria-label="Select all">
-                    <span className="admin-users__checkbox" />
-                  </th>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Status</th>
-                  <th>Last Active</th>
-                  <th>Invited Date</th>
-                  <th>Actions</th>
+                  <th aria-label="Select all"><span className="admin-users__checkbox" /></th>
+                  <th>Name</th><th>Email</th><th>Status</th><th>Last Active</th><th>Invited Date</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAdmins.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
-                      No admins found matching your filters
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAdmins.map((admin) => (
-                    <tr key={admin.email}>
-                    <td>
-                      <span className="admin-users__checkbox" />
-                    </td>
-                    <td>
-                      <strong>{admin.name}</strong>
-                    </td>
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No admins found matching your filters</td></tr>
+                ) : filteredAdmins.map((admin) => (
+                  <tr key={admin.id}>
+                    <td><span className="admin-users__checkbox" /></td>
+                    <td><strong>{admin.name}</strong></td>
                     <td>{admin.email}</td>
                     <td>
-                      <span
-                        className={
-                          admin.status === 'Active'
-                            ? 'admin-users__pill admin-users__pill--active'
-                            : 'admin-users__pill admin-users__pill--pending'
-                        }
-                      >
+                      <span className={admin.status === 'Active' ? 'admin-users__pill admin-users__pill--active' : 'admin-users__pill admin-users__pill--pending'}>
                         {admin.status}
                       </span>
                     </td>
@@ -740,44 +457,67 @@ export default function UsersActivity() {
                     <td>{admin.invitedDate}</td>
                     <td>
                       <span className="admin-users__action-group">
-                        <button type="button" className="admin-users__edit">
+                        <button
+                          type="button"
+                          className="admin-users__edit"
+                          onClick={() => setEditingAdmin(admin)}
+                        >
                           Edit
                         </button>
                         <span className="admin-users__divider" aria-hidden="true" />
                         <button
                           type="button"
-                          className={
-                            admin.secondaryAction === 'Revoke' ? 'admin-users__danger' : 'admin-users__muted-action'
-                          }
+                          className={admin.secondaryAction === 'Revoke' ? 'admin-users__danger' : 'admin-users__muted-action'}
+                          onClick={() => setRevokingAdmin(admin)}
                         >
                           {admin.secondaryAction}
                         </button>
                       </span>
                     </td>
                   </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           )}
         </div>
       </div>
 
+      {/* ── User detail modal ── */}
       {selectedUser && (
-        <UserDetailsModal
-          isOpen={isModalOpen}
-          onClose={handleCloseModal}
-          user={selectedUser}
+        <UserDetailsModal isOpen={isModalOpen} onClose={handleCloseUser} user={selectedUser} />
+      )}
+
+      {/* ── Invite sub-admin modal ── */}
+      <InviteSubAdminModal
+        isOpen={isInviteModalOpen}
+        onClose={() => setIsInviteModalOpen(false)}
+        onSendInvitation={(data) => { console.log('Invite:', data) }}
+      />
+
+      {/* ── Edit admin modal ── */}
+      {editingAdmin && (
+        <AdminEditModal
+          record={editingAdmin}
+          mode="edit"
+          onClose={() => setEditingAdmin(null)}
+          onSaved={handleAdminSaved}
+          onToast={showToast}
         />
       )}
 
-      <InviteSubAdminModal
-        isOpen={isInviteModalOpen}
-        onClose={handleCloseInviteModal}
-        onSendInvitation={handleSendInvitation}
-      />
+      {/* ── Revoke confirmation dialog ── */}
+      {revokingAdmin && (
+        <AdminRevokeDialog
+          record={revokingAdmin}
+          variant={revokingAdmin.secondaryAction === 'Revoke' ? 'revoke' : 'cancel'}
+          onCancel={() => setRevokingAdmin(null)}
+          onRevoked={handleAdminRevoked}
+          onToast={showToast}
+        />
+      )}
+
+      {/* ── Toast ── */}
+      <AdminToast toast={toast} onClose={dismissToast} />
     </section>
   )
 }
-
-// Made with Bob

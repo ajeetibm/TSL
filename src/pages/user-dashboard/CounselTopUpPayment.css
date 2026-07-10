@@ -1,0 +1,277 @@
+.counsel-topup-payment {
+  min-height: 100vh;
+  background: #f4f4f4;
+  color: #0b1c2f;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.counsel-topup-payment__header {
+  position: relative;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #dddddd;
+  padding: 24px 32px;
+  background: #ffffff;
+}
+
+.counsel-topup-payment__header-marker {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  margin-left: -48px;
+  border-radius: 999px;
+  background: #cf9b2f;
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(207, 155, 47, 0.28);
+}
+
+.counsel-topup-payment__header h1 {
+  margin: 0;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 30px;
+  line-height: 1.3;
+}
+
+.counsel-topup-payment__header p {
+  margin: 8px 0 0;
+  color: #0b1c2f;
+  font-size: 14px;
+}
+
+/* ── Content ────────────────────────────────────────────────────────── */
+.counsel-topup-payment__content {
+  max-width: 880px;
+  display: grid;
+  gap: 28px;
+  margin: 0;
+  padding: 32px;
+}
+
+/* ── Back button ─────────────────────────────────────────────────────── */
+.counsel-topup-payment__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #6d6d6d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.counsel-topup-payment__back:hover {
+  color: #0b1c2f;
+}
+
+/* ── Two-column layout ─────────────────────────────────────────────── */
+.counsel-topup-payment__layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ── Plan card ─────────────────────────────────────────────────────── */
+.counsel-topup-payment__plan-card {
+  border: 1px solid #dedede;
+  border-radius: 28px;
+  padding: 32px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(7, 25, 43, 0.08);
+}
+
+.counsel-topup-payment__plan-card h2 {
+  margin: 0 0 18px;
+  color: #6d6d6d;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.counsel-topup-payment__plan-name {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #d3a038, #e2b44f);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.counsel-topup-payment__plan-details {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.counsel-topup-payment__plan-details li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+}
+
+.counsel-topup-payment__plan-details li:last-child {
+  border-bottom: 0;
+}
+
+.counsel-topup-payment__plan-details li span {
+  color: #6d6d6d;
+  font-weight: 400;
+}
+
+.counsel-topup-payment__plan-details li strong {
+  color: #0b1c2f;
+  font-weight: 700;
+}
+
+/* ── Summary card ─────────────────────────────────────────────────── */
+.counsel-topup-payment__summary-card {
+  border: 2px solid #d3a038;
+  border-radius: 28px;
+  padding: 32px;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(207, 155, 47, 0.12);
+}
+
+.counsel-topup-payment__summary-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.counsel-topup-payment__summary-header svg {
+  color: #cf9b2f;
+}
+
+.counsel-topup-payment__summary-header h2 {
+  margin: 0;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.counsel-topup-payment__summary-rows {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.counsel-topup-payment__summary-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #6d6d6d;
+  font-size: 15px;
+}
+
+.counsel-topup-payment__summary-rows li:last-child {
+  border-bottom: 0;
+}
+
+.counsel-topup-payment__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0 24px;
+  padding: 16px 0 0;
+  border-top: 2px solid #0b1c2f;
+}
+
+.counsel-topup-payment__total span {
+  color: #0b1c2f;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.counsel-topup-payment__total strong {
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.counsel-topup-payment__error {
+  margin: 0 0 16px;
+  border: 1px solid #ffc9c9;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff3f3;
+  color: #c10007;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.counsel-topup-payment__cta {
+  width: 100%;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #cf9b2f;
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.counsel-topup-payment__cta:hover:not(:disabled) {
+  background: #c99125;
+}
+
+.counsel-topup-payment__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.counsel-topup-payment__secure-note {
+  margin: 14px 0 0;
+  text-align: center;
+  color: #a0a0a0;
+  font-size: 12px;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .counsel-topup-payment__content {
+    padding: 20px 16px 40px;
+  }
+
+  .counsel-topup-payment__layout {
+    grid-template-columns: 1fr;
+  }
+}
