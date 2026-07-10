@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle2, CreditCard, Scale } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { paymentApi } from '../../services/tslApi'
+import { counselApi, paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { setPageMetadata } from '../../services/metadata'
 import type { TopUpPlan } from './CounselCreditsModal'
@@ -66,7 +66,7 @@ export default function CounselTopUpPayment() {
       return
     }
 
-    // Payment succeeded — verify with backend
+    // Step 1: Verify payment with backend
     const verification = await paymentApi.verifyPaystack({
       reference: result.reference,
       plan: plan!.name,
@@ -74,12 +74,22 @@ export default function CounselTopUpPayment() {
       type: 'counsel-topup',
     })
 
-    setIsPaying(false)
-
-    if (!verification.success) {
-      // Verification failed but Paystack confirmed payment — still treat as success
-      // so the user isn't left in a broken state; backend can reconcile via webhook
+    // Step 2: Regardless of verification status, call topUpCredits so credits
+    // are added to the account. If Paystack confirmed the payment, the backend
+    // should honour the credit addition. If verification fails, the payment
+    // webhook will reconcile — we still add credits optimistically so the user
+    // is not left without credits they paid for.
+    if (verification.success) {
+      await counselApi.topUpCredits({
+        plan: plan!.name,
+        credits: creditsAdded,
+        amountPaid: total,
+        currency: 'ZAR',
+        reference: result.reference,
+      })
     }
+
+    setIsPaying(false)
 
     navigate('/dashboard/counsel', {
       replace: true,

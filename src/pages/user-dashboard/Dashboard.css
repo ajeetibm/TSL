@@ -800,6 +800,51 @@
   cursor: pointer;
 }
 
+/* ── Empty state ──────────────────────────────────────────── */
+.user-dashboard__empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 32px;
+  color: #aaaaaa;
+  text-align: center;
+}
+
+.user-dashboard__empty-state svg {
+  color: #cccccc;
+}
+
+.user-dashboard__empty-state p {
+  margin: 0;
+  font-size: 16px;
+  color: #999999;
+}
+
+.user-dashboard__empty-state .user-dashboard__gold-button {
+  margin-top: 0;
+}
+
+/* ── NDA toast ────────────────────────────────────────────── */
+.user-dashboard__nda-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #b8d4c8;
+  border-radius: 12px;
+  padding: 14px 20px;
+  background: #ecf7f1;
+  color: #1c6b43;
+  font-weight: 600;
+}
+
+.user-dashboard__nda-toast svg {
+  flex: 0 0 auto;
+  color: #1c6b43;
+}
+
 @media (max-width: 1180px) {
   .user-dashboard {
     grid-template-columns: 1fr;

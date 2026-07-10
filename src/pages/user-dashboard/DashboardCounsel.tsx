@@ -150,17 +150,21 @@ export default function DashboardCounsel() {
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
 
   useEffect(() => {
-    // Show success toast after returning from payment
+    // Show success toast after returning from payment — run once per navigation
     const state = location.state as { topUpSuccess?: boolean; creditsAdded?: number } | null
-    if (state?.topUpSuccess) {
-      const added = state.creditsAdded ?? 1
-      setTopUpToast(`${added} credit${added !== 1 ? 's' : ''} added successfully.`)
-      // Clear the navigation state so refresh doesn't re-show the toast
-      navigate('/dashboard/counsel', { replace: true, state: {} })
-      const timer = setTimeout(() => setTopUpToast(''), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [location.state, navigate])
+    if (!state?.topUpSuccess) return
+
+    const added = state.creditsAdded ?? 1
+    setTopUpToast(`${added} credit${added !== 1 ? 's' : ''} added successfully.`)
+
+    // Clear the navigation state immediately so a refresh won't re-show the toast.
+    // Use { state: null } to avoid triggering this effect again.
+    navigate('/dashboard/counsel', { replace: true, state: null })
+
+    const timer = setTimeout(() => setTopUpToast(''), 5000)
+    return () => clearTimeout(timer)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // intentionally empty — read location.state only on mount
 
   useEffect(() => {
     let isMounted = true

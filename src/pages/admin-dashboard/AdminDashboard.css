@@ -2591,10 +2591,10 @@
 
 .admin-billing__modal {
   background: #fff;
-  border-radius: 14px;
+  border-radius: 16px;
   width: 100%;
   max-width: 520px;
-  box-shadow: 0 12px 40px rgba(13, 27, 42, 0.18);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -2604,46 +2604,48 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 22px 24px 16px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 24px;
+  padding: 32px 32px 24px;
+  background: linear-gradient(135deg, #0d1f33 0%, #16334f 100%);
+  border-radius: 16px 16px 0 0;
 }
 
 .admin-billing__modal-header h2 {
-  font-size: 16px;
+  font-size: 28px;
   font-weight: 700;
-  color: #0d1b2a;
-  margin: 0 0 2px;
+  color: #ffffff;
+  margin: 0 0 6px;
   font-family: var(--font-display);
+  line-height: 1.2;
 }
 
 .admin-billing__modal-header p {
-  font-size: 13px;
-  color: #57606a;
+  font-size: 14px;
+  color: #d4a948;
   margin: 0;
+  line-height: 1.4;
 }
 
 .admin-billing__modal-close {
   border: 0;
-  background: transparent;
-  color: #57606a;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.2s ease;
 }
 
 .admin-billing__modal-close:hover {
-  background: #f3f4f6;
-  color: #0d1b2a;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .admin-billing__modal-body {
-  padding: 4px 24px 8px;
+  padding: 8px 32px 12px;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -2655,10 +2657,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
-  border-bottom: 1px solid #f3f4f6;
-  gap: 12px;
-  font-size: 13.5px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 16px;
+  font-size: 14px;
 }
 
 .admin-billing__modal-row:last-child {
@@ -2668,11 +2670,12 @@
 .admin-billing__modal-row > span:first-child {
   color: #57606a;
   flex-shrink: 0;
-  width: 110px;
+  width: 120px;
+  font-weight: 500;
 }
 
 .admin-billing__modal-row strong {
-  color: #0d1b2a;
+  color: #0b1c2f;
   font-weight: 600;
   text-align: right;
   word-break: break-all;
@@ -2687,44 +2690,49 @@
 .admin-billing__modal-footer {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid #e5e7eb;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 32px 32px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .admin-billing__btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 18px;
-  border-radius: 7px;
-  font-size: 13.5px;
-  font-weight: 500;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  flex: 1;
+  padding: 0 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 
 .admin-billing__btn--outline {
-  background: transparent;
-  border: 1px solid #d1d5db;
-  color: #48556a;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  color: #5a5a5a;
 }
 
 .admin-billing__btn--outline:hover {
-  background: #f9fafb;
-  border-color: #adb5bd;
+  background: #f8f8f8;
+  border-color: #d0d0d0;
 }
 
 .admin-billing__btn--primary {
-  background: #c79a3b;
-  border: 1px solid #c79a3b;
+  background: linear-gradient(135deg, #d4a948 0%, #e0b64f 100%);
+  border: 0;
   color: #fff;
+  box-shadow: 0 4px 12px rgba(212, 169, 72, 0.3);
 }
 
 .admin-billing__btn--primary:hover {
-  background: #b8882d;
-  border-color: #b8882d;
+  box-shadow: 0 6px 16px rgba(212, 169, 72, 0.4);
+  transform: translateY(-1px);
 }
 
 /* ── Download Invoices export button ─────────────────────────────────────── */

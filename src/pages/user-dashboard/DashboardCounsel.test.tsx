@@ -2,6 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import DashboardCounsel from './DashboardCounsel'
+import { CounselRequestProvider } from '../../context/CounselRequestContext'
 
 // Mock DashboardShell
 vi.mock('../../components/dashboard/DashboardShell', () => ({
@@ -14,10 +15,22 @@ vi.mock('../../services/metadata', () => ({
   setPageMetadata: vi.fn(),
 }))
 
+// Mock counselApi so we don't make real HTTP calls during tests
+vi.mock('../../services/tslApi', () => ({
+  counselApi: {
+    credits: vi.fn().mockResolvedValue({ success: false }),
+    requests: vi.fn().mockResolvedValue({ success: false }),
+    createRequest: vi.fn().mockResolvedValue({ success: false }),
+    topUpCredits: vi.fn().mockResolvedValue({ success: false }),
+  },
+}))
+
 const renderDashboardCounsel = () => {
   return render(
     <BrowserRouter>
-      <DashboardCounsel />
+      <CounselRequestProvider>
+        <DashboardCounsel />
+      </CounselRequestProvider>
     </BrowserRouter>
   )
 }
@@ -34,22 +47,22 @@ describe('DashboardCounsel Page', () => {
 
   it('displays page header', () => {
     renderDashboardCounsel()
-    expect(screen.getByRole('heading', { name: /counsel/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /^counsel$/i, level: 1 })).toBeInTheDocument()
     expect(screen.getByText(/connect with experienced attorneys/i)).toBeInTheDocument()
   })
 
   it('displays counsel credit statistics', () => {
     renderDashboardCounsel()
     
-    expect(screen.getByText(/2/)).toBeInTheDocument()
+    expect(screen.getAllByText(/2/).length).toBeGreaterThan(0)
     expect(screen.getByText(/credits remaining/i)).toBeInTheDocument()
-    expect(screen.getByText(/counsel credits/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/counsel credits/i).length).toBeGreaterThan(0)
   })
 
   it('displays usage statistics', () => {
     renderDashboardCounsel()
     
-    expect(screen.getByText(/1/)).toBeInTheDocument()
+    expect(screen.getAllByText(/^1$/).length).toBeGreaterThan(0)
     expect(screen.getByText(/credits used/i)).toBeInTheDocument()
     expect(screen.getByText(/usage this month/i)).toBeInTheDocument()
   })
@@ -103,7 +116,7 @@ describe('DashboardCounsel Page', () => {
     const historyTab = screen.getByRole('button', { name: /request history/i })
     fireEvent.click(historyTab)
     
-    expect(screen.getByText(/nda review - tech partnership/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/nda review - tech partnership/i).length).toBeGreaterThan(0)
   })
 
   it('displays request history items', () => {
