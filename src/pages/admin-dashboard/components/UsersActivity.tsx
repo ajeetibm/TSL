@@ -148,20 +148,20 @@ export default function UsersActivity() {
 
   // ── User management filter state ───────────────────────────────────────
   const [searchQuery, setSearchQuery]           = useState('')
-  const [selectedRole, setSelectedRole]         = useState('All Roles')
   const [selectedPlan, setSelectedPlan]         = useState('All Plans')
   const [selectedStatus, setSelectedStatus]     = useState('All Status')
+  const [dateSort, setDateSort]                 = useState<'newest' | 'oldest'>('newest')
 
   // ── Admin management filter state ─────────────────────────────────────
   const [adminSearchQuery, setAdminSearchQuery]       = useState('')
   const [adminSelectedStatus, setAdminSelectedStatus] = useState('All Status')
 
   // ── Dropdown refs ──────────────────────────────────────────────────────
-  const roleDropdownRef        = useRef<HTMLDivElement>(null)
+  const dateSortDropdownRef    = useRef<HTMLDivElement>(null)
   const planDropdownRef        = useRef<HTMLDivElement>(null)
   const statusDropdownRef      = useRef<HTMLDivElement>(null)
   const adminStatusDropdownRef = useRef<HTMLDivElement>(null)
-  const [isRoleDropdownOpen,        setIsRoleDropdownOpen]        = useState(false)
+  const [isDateSortDropdownOpen,    setIsDateSortDropdownOpen]    = useState(false)
   const [isPlanDropdownOpen,        setIsPlanDropdownOpen]        = useState(false)
   const [isStatusDropdownOpen,      setIsStatusDropdownOpen]      = useState(false)
   const [isAdminStatusDropdownOpen, setIsAdminStatusDropdownOpen] = useState(false)
@@ -192,7 +192,7 @@ export default function UsersActivity() {
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (roleDropdownRef.current        && !roleDropdownRef.current.contains(e.target as Node))        setIsRoleDropdownOpen(false)
+      if (dateSortDropdownRef.current    && !dateSortDropdownRef.current.contains(e.target as Node))    setIsDateSortDropdownOpen(false)
       if (planDropdownRef.current        && !planDropdownRef.current.contains(e.target as Node))        setIsPlanDropdownOpen(false)
       if (statusDropdownRef.current      && !statusDropdownRef.current.contains(e.target as Node))      setIsStatusDropdownOpen(false)
       if (adminStatusDropdownRef.current && !adminStatusDropdownRef.current.contains(e.target as Node)) setIsAdminStatusDropdownOpen(false)
@@ -240,14 +240,19 @@ export default function UsersActivity() {
     return [liveRow, ...sourceUsers]
   }, [apiUsers, profile])
 
-  const filteredUsers = useMemo(() =>
-    mergedUsers.filter((u) => {
+  const filteredUsers = useMemo(() => {
+    const filtered = mergedUsers.filter((u) => {
       const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesRole   = selectedRole   === 'All Roles'
-      const matchesPlan   = selectedPlan   === 'All Plans'   || u.plan   === selectedPlan
-      const matchesStatus = selectedStatus === 'All Status'  || u.status === selectedStatus
-      return matchesSearch && matchesRole && matchesPlan && matchesStatus
-    }), [mergedUsers, searchQuery, selectedRole, selectedPlan, selectedStatus])
+      const matchesPlan   = selectedPlan   === 'All Plans'  || u.plan   === selectedPlan
+      const matchesStatus = selectedStatus === 'All Status' || u.status === selectedStatus
+      return matchesSearch && matchesPlan && matchesStatus
+    })
+    return [...filtered].sort((a, b) => {
+      const da = a.joinDate ? new Date(a.joinDate).getTime() : 0
+      const db = b.joinDate ? new Date(b.joinDate).getTime() : 0
+      return dateSort === 'newest' ? db - da : da - db
+    })
+  }, [mergedUsers, searchQuery, selectedPlan, selectedStatus, dateSort])
 
   const filteredAdmins = useMemo(() =>
     admins.filter((a) => {
@@ -336,15 +341,17 @@ export default function UsersActivity() {
 
           {managementTab === 'users' ? (
             <>
-              {/* Role dropdown */}
-              <div ref={roleDropdownRef} style={{ position: 'relative' }}>
-                <button type="button" className="admin-users__filter-button" onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}>
-                  {selectedRole}<span className="admin-users__select-arrow" aria-hidden="true" />
+              {/* Date sort dropdown */}
+              <div ref={dateSortDropdownRef} style={{ position: 'relative' }}>
+                <button type="button" className="admin-users__filter-button" onClick={() => setIsDateSortDropdownOpen(!isDateSortDropdownOpen)}>
+                  {dateSort === 'newest' ? 'Newest First' : 'Oldest First'}<span className="admin-users__select-arrow" aria-hidden="true" />
                 </button>
-                {isRoleDropdownOpen && (
+                {isDateSortDropdownOpen && (
                   <div className="adm-dropdown">
-                    {['All Roles'].map((r) => (
-                      <button key={r} type="button" className={`adm-dropdown__item${selectedRole === r ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setSelectedRole(r); setIsRoleDropdownOpen(false) }}>{r}</button>
+                    {(['newest', 'oldest'] as const).map((opt) => (
+                      <button key={opt} type="button" className={`adm-dropdown__item${dateSort === opt ? ' adm-dropdown__item--active' : ''}`} onClick={() => { setDateSort(opt); setIsDateSortDropdownOpen(false) }}>
+                        {opt === 'newest' ? 'Newest First' : 'Oldest First'}
+                      </button>
                     ))}
                   </div>
                 )}
@@ -484,7 +491,23 @@ export default function UsersActivity() {
 
       {/* ── User detail modal ── */}
       {selectedUser && (
-        <UserDetailsModal isOpen={isModalOpen} onClose={handleCloseUser} user={selectedUser} />
+        <UserDetailsModal
+          isOpen={isModalOpen}
+          onClose={handleCloseUser}
+          user={selectedUser}
+          onSaved={(updated) => {
+            setApiUsers((prev) => {
+              const source = prev ?? adminUsersFallback
+              const idx = source.findIndex((u) => u.email === selectedUser.email)
+              if (idx === -1) return [updated, ...source]
+              const next = [...source]
+              next[idx] = updated
+              return next
+            })
+            handleCloseUser()
+          }}
+          onToast={showToast}
+        />
       )}
 
       {/* ── Invite sub-admin modal ── */}

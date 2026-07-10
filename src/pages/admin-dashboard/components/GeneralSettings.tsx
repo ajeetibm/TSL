@@ -163,15 +163,17 @@ export default function GeneralSettings() {
           </p>
         )}
 
-        {isDirty && (
-          <footer className="admin-settings__footer">
-            <button type="submit" disabled={saving} className={saving ? 'admin-settings__save-btn--loading' : ''}>
-              {saving
-                ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
-                : 'Save Changes'}
-            </button>
-          </footer>
-        )}
+        <footer className="admin-settings__footer">
+          <button
+            type="submit"
+            disabled={!isDirty || saving}
+            className={saving ? 'admin-settings__save-btn--loading' : ''}
+          >
+            {saving
+              ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
+              : 'Save Changes'}
+          </button>
+        </footer>
       </form>
     </div>
   )

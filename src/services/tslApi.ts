@@ -73,7 +73,7 @@ function authHeaders(): HeadersInit {
     : {}
 }
 
-async function request<T = unknown>(
+export async function request<T = unknown>(
   endpoint: string,
   method: HttpMethod = 'GET',
   body?: unknown,

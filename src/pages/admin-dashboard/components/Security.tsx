@@ -177,20 +177,18 @@ export default function Security() {
         </p>
       )}
 
-      {isDirty && (
-        <footer className="admin-settings__footer">
-          <button
-            type="button"
-            disabled={saving}
-            className={saving ? 'admin-settings__save-btn--loading' : ''}
-            onClick={handleSave}
-          >
-            {saving
-              ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
-              : 'Save Changes'}
-          </button>
-        </footer>
-      )}
+      <footer className="admin-settings__footer">
+        <button
+          type="button"
+          disabled={!isDirty || saving}
+          className={saving ? 'admin-settings__save-btn--loading' : ''}
+          onClick={handleSave}
+        >
+          {saving
+            ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
+            : 'Save Changes'}
+        </button>
+      </footer>
     </div>
   )
 }
