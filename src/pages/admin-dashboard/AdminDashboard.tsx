@@ -24,7 +24,7 @@ import {
   UserRound,
   UsersRound,
 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
@@ -276,6 +276,9 @@ export default function AdminDashboard() {
   // const [managementTab, setManagementTab] = useState<ManagementTab>('users')
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('billing')
   const [profileTab, setProfileTab] = useState<AdminProfileTab>('information')
+  const [adminAvatarSrc, setAdminAvatarSrc] = useState<string | null>(null)
+  const [adminAvatarPreview, setAdminAvatarPreview] = useState(false)
+  const adminFileInputRef = useRef<HTMLInputElement>(null)
   const [adminProfile, setAdminProfile] = useState<AdminProfileForm>(defaultAdminProfile)
   const [adminProfileBaseline, setAdminProfileBaseline] = useState<AdminProfileForm>(defaultAdminProfile)
   const [adminProfileSaving, setAdminProfileSaving] = useState(false)
@@ -564,6 +567,7 @@ export default function AdminDashboard() {
               : "Welcome back! Here's what's happening with your platform today."
 
   return (
+    <>
     <div className="admin-dashboard">
       <aside className="admin-dashboard__sidebar">
         <div className="admin-dashboard__brand">
@@ -651,10 +655,36 @@ export default function AdminDashboard() {
                 <form className="admin-profile__card">
                   <div className="admin-profile__summary">
                     <div className="admin-profile__avatar">
-                      <span>FG</span>
-                      <button type="button" aria-label="Change profile photo">
+                      {adminAvatarSrc ? (
+                        <img
+                          src={adminAvatarSrc}
+                          alt="Profile"
+                          className="admin-profile__avatar-img"
+                          onClick={() => setAdminAvatarPreview(true)}
+                        />
+                      ) : (
+                        <span>FG</span>
+                      )}
+                      <button
+                        type="button"
+                        aria-label="Change profile photo"
+                        onClick={() => adminFileInputRef.current?.click()}
+                      >
                         <Camera size={17} />
                       </button>
+                      <input
+                        ref={adminFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          const reader = new FileReader()
+                          reader.onload = () => setAdminAvatarSrc(reader.result as string)
+                          reader.readAsDataURL(file)
+                        }}
+                      />
                     </div>
                     <div className="admin-profile__identity">
                       <h2>Given</h2>
@@ -1310,5 +1340,31 @@ export default function AdminDashboard() {
         }}
       />
     </div>
+
+    {adminAvatarPreview && adminAvatarSrc && (
+      <div
+        className="admin-profile__lightbox"
+        onClick={() => setAdminAvatarPreview(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Profile photo preview"
+      >
+        <button
+          type="button"
+          className="admin-profile__lightbox-close"
+          onClick={() => setAdminAvatarPreview(false)}
+          aria-label="Close preview"
+        >
+          <X size={20} />
+        </button>
+        <img
+          src={adminAvatarSrc}
+          alt="Profile preview"
+          className="admin-profile__lightbox-img"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
+    </>
   )
 }

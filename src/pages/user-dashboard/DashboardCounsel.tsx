@@ -550,7 +550,7 @@ export default function DashboardCounsel() {
                         {request.status}
                       </span>
 
-                      <button type="button" className="dashboard-counsel__response" disabled={!request.responseUrl}>
+                      <button type="button" className="dashboard-counsel__response">
                         View Response
                       </button>
                     </article>

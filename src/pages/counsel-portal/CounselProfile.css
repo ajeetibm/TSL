@@ -197,6 +197,15 @@
   flex-shrink: 0;
 }
 
+.counsel-profile__avatar-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
 .counsel-profile__avatar-upload {
   position: absolute;
   bottom: -6px;
@@ -221,6 +230,45 @@
 .counsel-profile__avatar-upload svg {
   width: 18px;
   height: 18px;
+}
+
+.counsel-profile__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(7, 25, 43, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.counsel-profile__lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.counsel-profile__lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.counsel-profile__lightbox-img {
+  max-width: min(90vw, 520px);
+  max-height: 80vh;
+  border-radius: 12px;
+  object-fit: contain;
+  display: block;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
 }
 
 .counsel-profile__user-info {

@@ -130,6 +130,54 @@
   box-shadow: 0 8px 18px rgba(7, 25, 43, 0.18);
 }
 
+.dashboard-profile__avatar-img {
+  width: 96px;
+  height: 96px;
+  border-radius: 999px;
+  object-fit: cover;
+  display: block;
+  cursor: pointer;
+}
+
+.dashboard-profile__lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(7, 25, 43, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-profile__lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.dashboard-profile__lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.dashboard-profile__lightbox-img {
+  max-width: min(90vw, 520px);
+  max-height: 80vh;
+  border-radius: 12px;
+  object-fit: contain;
+  display: block;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+}
+
 .dashboard-profile__identity h2 {
   margin: 0;
   font-family: var(--font-display);

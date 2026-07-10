@@ -1,5 +1,5 @@
-import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { authApi, profileApi } from '../../services/tslApi'
@@ -15,6 +15,9 @@ export default function DashboardProfile() {
   const { profile, updateProfile } = useUserProfile()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
   const [formData, setFormData] = useState<UserProfile>(profile)
+  const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
+  const [avatarPreview, setAvatarPreview] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -184,17 +187,43 @@ export default function DashboardProfile() {
             <form className="dashboard-profile__card">
               <div className="dashboard-profile__summary">
                 <div className="dashboard-profile__avatar">
-                  <span>
-                    {formData.companyName
-                      .split(' ')
-                      .slice(0, 2)
-                      .map((w) => w[0])
-                      .join('')
-                      .toUpperCase() || '??'}
-                  </span>
-                  <button type="button" aria-label="Change profile photo">
+                  {avatarSrc ? (
+                    <img
+                      src={avatarSrc}
+                      alt="Profile"
+                      className="dashboard-profile__avatar-img"
+                      onClick={() => setAvatarPreview(true)}
+                    />
+                  ) : (
+                    <span>
+                      {formData.companyName
+                        .split(' ')
+                        .slice(0, 2)
+                        .map((w) => w[0])
+                        .join('')
+                        .toUpperCase() || '??'}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    aria-label="Change profile photo"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
                     <Camera size={18} />
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = () => setAvatarSrc(reader.result as string)
+                      reader.readAsDataURL(file)
+                    }}
+                  />
                 </div>
                 <div className="dashboard-profile__identity">
                   <h2>{formData.companyName || 'Your Company'}</h2>
@@ -445,6 +474,31 @@ export default function DashboardProfile() {
           )}
         </section>
       </main>
+
+      {avatarPreview && avatarSrc && (
+        <div
+          className="dashboard-profile__lightbox"
+          onClick={() => setAvatarPreview(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile photo preview"
+        >
+          <button
+            type="button"
+            className="dashboard-profile__lightbox-close"
+            onClick={() => setAvatarPreview(false)}
+            aria-label="Close preview"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={avatarSrc}
+            alt="Profile preview"
+            className="dashboard-profile__lightbox-img"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </DashboardShell>
   )
 }

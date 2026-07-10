@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import {
   Briefcase,
@@ -15,6 +15,7 @@ import {
   Shield,
   User,
   UsersRound,
+  X,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
@@ -91,6 +92,9 @@ function profileFromSession(fallback: ProfileData): ProfileData {
 export default function CounselProfile() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
+  const [counselAvatarSrc, setCounselAvatarSrc] = useState<string | null>(null)
+  const [counselAvatarPreview, setCounselAvatarPreview] = useState(false)
+  const counselFileInputRef = useRef<HTMLInputElement>(null)
   const [availability, setAvailability] = useState<Availability>('available')
   
   const [profileData, setProfileData] = useState<ProfileData>(() => profileFromSession(defaultProfileData))
@@ -322,10 +326,36 @@ export default function CounselProfile() {
             <div className="counsel-profile__card">
               <div className="counsel-profile__avatar-section">
                 <div className="counsel-profile__avatar">
-                  <span>FG</span>
-                  <button type="button" className="counsel-profile__avatar-upload">
+                  {counselAvatarSrc ? (
+                    <img
+                      src={counselAvatarSrc}
+                      alt="Profile"
+                      className="counsel-profile__avatar-img"
+                      onClick={() => setCounselAvatarPreview(true)}
+                    />
+                  ) : (
+                    <span>FG</span>
+                  )}
+                  <button
+                    type="button"
+                    className="counsel-profile__avatar-upload"
+                    onClick={() => counselFileInputRef.current?.click()}
+                  >
                     <Camera size={18} />
                   </button>
+                  <input
+                    ref={counselFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = () => setCounselAvatarSrc(reader.result as string)
+                      reader.readAsDataURL(file)
+                    }}
+                  />
                 </div>
                 <div className="counsel-profile__user-info">
                   <h2>Dr. Thabo Mbeki</h2>
@@ -665,6 +695,31 @@ export default function CounselProfile() {
           </div>
         )}
       </main>
+
+      {counselAvatarPreview && counselAvatarSrc && (
+        <div
+          className="counsel-profile__lightbox"
+          onClick={() => setCounselAvatarPreview(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile photo preview"
+        >
+          <button
+            type="button"
+            className="counsel-profile__lightbox-close"
+            onClick={() => setCounselAvatarPreview(false)}
+            aria-label="Close preview"
+          >
+            <X size={20} />
+          </button>
+          <img
+            src={counselAvatarSrc}
+            alt="Profile preview"
+            className="counsel-profile__lightbox-img"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   )
 }

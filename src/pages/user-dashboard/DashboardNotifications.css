@@ -225,13 +225,58 @@
 }
 
 .dashboard-notifications__settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   color: #4c5561;
   font-size: 16px;
   line-height: 1.5;
 }
 
+/* ── Toggle switch ── */
+.dashboard-notifications__toggle {
+  flex: 0 0 auto;
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: #d1d5db;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.dashboard-notifications__toggle--on {
+  background: #cf9b2f;
+}
+
+.dashboard-notifications__toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s;
+}
+
+.dashboard-notifications__toggle--on .dashboard-notifications__toggle-thumb {
+  transform: translateX(20px);
+}
+
+/* ── Save button ── */
 .dashboard-notifications__save {
   width: 100%;
+}
+
+.dashboard-notifications__save:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
 }
 
 .dashboard-notifications__summary {
