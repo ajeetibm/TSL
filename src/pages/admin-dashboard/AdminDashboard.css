@@ -3869,6 +3869,379 @@
   background: #ffffff;
 }
 
+/* ── Password Policy Modal ─────────────────────────────────── */
+
+/* Overlay */
+.pp-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(13, 27, 42, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+/* Card */
+.pp-modal {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Dark navy header — matches .modal-header / Invoice Details */
+.pp-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 32px 32px 24px;
+  background: #1a2332;
+  border-radius: 24px 24px 0 0;
+  flex-shrink: 0;
+}
+
+.pp-modal__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-modal__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.pp-modal__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #d4a84f;
+  line-height: 1.4;
+}
+
+/* Circular close button */
+.pp-modal__close {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pp-modal__close:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.pp-modal__close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Scrollable body */
+.pp-modal__body {
+  flex: 1;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+/* Section grouping */
+.pp-modal__section {
+  padding: 22px 32px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.pp-modal__section:last-child {
+  border-bottom: 0;
+}
+
+.pp-modal__section-title {
+  margin: 0 0 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+/* Toggle rows */
+.pp-modal__toggles {
+  display: grid;
+}
+
+.pp-modal__toggles--mt {
+  margin-top: 14px;
+}
+
+.pp-modal__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.pp-modal__toggle-row:last-child {
+  border-bottom: 0;
+}
+
+.pp-modal__toggle-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pp-modal__toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0d1b2a;
+  line-height: 1.4;
+}
+
+.pp-modal__toggle-hint {
+  font-size: 12.5px;
+  color: #57606a;
+  line-height: 1.4;
+}
+
+/* Number field */
+.pp-modal__nf {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-modal__nf-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #57606a;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pp-modal__field-hint {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  color: #8b949e;
+}
+
+.pp-modal__number-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-modal__number-input {
+  width: 88px;
+  height: 42px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #0d1b2a;
+  text-align: center;
+  background: #fff;
+  outline: none;
+  transition: border-color .15s;
+}
+
+.pp-modal__number-input:focus {
+  border-color: #c79a3b;
+}
+
+.pp-modal__number-input--error {
+  border-color: #dc2626 !important;
+}
+
+.pp-modal__number-suffix {
+  font-size: 13px;
+  color: #57606a;
+}
+
+.pp-modal__field-error {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #dc2626;
+}
+
+/* Select */
+.pp-modal__select {
+  height: 42px;
+  padding: 0 36px 0 12px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 14px;
+  color: #0d1b2a;
+  background: #fff;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236B7280' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 13px center;
+  outline: none;
+  transition: border-color .15s;
+  cursor: pointer;
+}
+
+.pp-modal__select:focus {
+  border-color: #c79a3b;
+}
+
+/* Two-column row */
+.pp-modal__row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* Footer */
+.pp-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 18px 32px;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+/* Pill buttons — match .modal-btn */
+.pp-modal__btn {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 28px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .15s, background .15s;
+}
+
+.pp-modal__btn--cancel {
+  background: #f3f4f6;
+  border: 0;
+  color: #0d1b2a;
+}
+
+.pp-modal__btn--cancel:hover { background: #e5e7eb; }
+
+.pp-modal__btn--save {
+  background: linear-gradient(135deg, #d3a038, #e0b64f);
+  border: 0;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(199, 154, 59, 0.35);
+}
+
+.pp-modal__btn--save:hover:not(:disabled) { opacity: 0.9; }
+
+.pp-modal__btn--save:disabled,
+.pp-modal__btn--loading {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* Saved badge */
+.pp-modal__saved-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: auto;
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #16a34a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Spinner — used in loading state and save button */
+.pp-modal__spinner {
+  animation: pp-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pp-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Loading state — centered spinner while fetching policy from server */
+.pp-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* Fetch-error message inside modal body */
+.pp-modal__load-error {
+  margin: 32px 24px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #fff3f3;
+  border: 1px solid #ffc9c9;
+  color: #b91c1c;
+  font-size: 14px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/* Save-error badge in footer — shown when PUT /password-policy fails */
+.pp-modal__save-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: auto;
+  padding: 5px 13px;
+  border-radius: 999px;
+  background: #fff3f3;
+  border: 1px solid #ffc9c9;
+  color: #b91c1c;
+  font-size: 13px;
+  font-weight: 600;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .pp-modal__row2 { grid-template-columns: 1fr; }
+  .pp-modal__header { padding: 24px 20px 20px; }
+  .pp-modal__section { padding: 18px 20px; }
+  .pp-modal__footer { padding: 16px 20px; }
+}
+
+
+
 @media (max-width: 768px) {
   .admin-settings__form-row {
     grid-template-columns: 1fr;

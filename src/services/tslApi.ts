@@ -188,6 +188,8 @@ export const billingApi = {
   summary: () => request<BillingData>('/api/v1/sme/billing'),
   paymentMethods: () => request<PaymentMethod[]>('/api/v1/sme/billing/payment-methods'),
   addPaymentMethod: (payload: JsonRecord) => request('/api/v1/sme/billing/payment-methods', 'POST', payload),
+  setDefaultMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}/default`, 'PATCH'),
+  removeMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}`, 'DELETE'),
 }
 
 export interface PaystackInitialization {
@@ -265,6 +267,10 @@ export const adminSettingsApi = {
   saveNotifications:       (payload: JsonRecord) => request('/api/v1/admin/settings/notifications', 'PUT', payload),
   getSecurity:             () => request('/api/v1/admin/settings/security'),
   saveSecurity:            (payload: JsonRecord) => request('/api/v1/admin/settings/security', 'PUT', payload),
+  // Password policy — fetched when modal opens, saved on modal submit.
+  // Switching to production only requires changing VITE_API_BASE_URL.
+  getPasswordPolicy:       () => request('/api/v1/admin/settings/password-policy'),
+  savePasswordPolicy:      (payload: JsonRecord) => request('/api/v1/admin/settings/password-policy', 'PUT', payload),
 }
 
 export const counselPortalApi = {

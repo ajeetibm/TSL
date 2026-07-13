@@ -5,7 +5,6 @@ import {
   FileText,
   HandCoins,
   Minus,
-  Play,
   Plus,
   Scale,
   Shield,
@@ -17,11 +16,7 @@ import {
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { useNdaWizard } from '../../hooks/useNdaWizard'
-import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { setPageMetadata } from '../../services/metadata'
-import NdaWizardModal from './NdaWizardModal'
-import EmploymentWizardModal from './EmploymentWizardModal'
 import './Dashboard.css'
 import './DashboardWizards.css'
 
@@ -75,6 +70,16 @@ const wizardCards = [
     popular: true,
   },
   {
+    title: 'Service Agreement',
+    description: 'Create a comprehensive service agreement for client engagements, covering scope, fees, SLAs, and legal terms.',
+    time: '15-20 minutes',
+    runs: '1 run',
+    audience: 'Service providers and their clients',
+    included: ['SLA clauses', 'Fee & billing terms', 'Termination & renewal'],
+    icon: FileText,
+    popular: true,
+  },
+  {
     title: 'Shareholder Resolutions',
     description: 'Draft approval documents for shareholders to authorize company actions and governance decisions.',
     time: '12-15 minutes',
@@ -92,10 +97,6 @@ export default function DashboardWizards() {
   const [quantities, setQuantities] = useState(() =>
     Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])),
   )
-  const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
-  const [isEmploymentModalOpen, setIsEmploymentModalOpen] = useState(false)
-  const { state: ndaState, startWizard: startNda, saveProgress: saveNdaProgress, completeWizard: completeNda } = useNdaWizard()
-  const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp } = useEmploymentWizard()
 
   setPageMetadata(
     'Browse All Wizards',
@@ -203,25 +204,7 @@ export default function DashboardWizards() {
                 </div>
               </div>
 
-              {title === 'Non-Disclosure Agreement (NDA)' ? (
-                <button
-                  type="button"
-                  className="dashboard-wizards__select"
-                  onClick={() => { startNda(); setIsNdaModalOpen(true) }}
-                >
-                  <Play size={18} />
-                  {ndaState.status === 'inProgress' ? 'Continue Wizard' : ndaState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
-                </button>
-              ) : title === 'Employment Offer Letter' ? (
-                <button
-                  type="button"
-                  className="dashboard-wizards__select"
-                  onClick={() => { startEmp(); setIsEmploymentModalOpen(true) }}
-                >
-                  <Play size={18} />
-                  {empState.status === 'inProgress' ? 'Continue Wizard' : empState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
-                </button>
-              ) : isSelected ? (
+              {isSelected ? (
                 <div className="dashboard-wizards__stepper" aria-label={`${title} selected quantity`}>
                   <button
                     type="button"
@@ -296,25 +279,6 @@ export default function DashboardWizards() {
         )}
       </div>
 
-      {isNdaModalOpen && (
-        <NdaWizardModal
-          onClose={() => setIsNdaModalOpen(false)}
-          initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
-          initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
-          onStepChange={(step, data) => saveNdaProgress(step, data)}
-          onComplete={(data) => { saveNdaProgress(6, data); completeNda() }}
-        />
-      )}
-
-      {isEmploymentModalOpen && (
-        <EmploymentWizardModal
-          onClose={() => setIsEmploymentModalOpen(false)}
-          initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
-          initialData={empState.status === 'completed' ? undefined : empState.data}
-          onStepChange={(step, data) => saveEmpProgress(step, data)}
-          onComplete={(data) => { saveEmpProgress(6, data); completeEmp() }}
-        />
-      )}
     </DashboardShell>
   )
 }
