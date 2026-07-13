@@ -1,12 +1,12 @@
 import {
   BadgeCheck,
-  Building2,
   CalendarDays,
   CheckCircle2,
   CreditCard,
   Download,
   FileText,
   Landmark,
+  Loader2,
   Plus,
   Settings,
   ShoppingCart,
@@ -16,8 +16,11 @@ import {
   X,
   Zap,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { billingApi } from '../../services/tslApi'
+import { openPaystackCheckout } from '../../services/paystackClient'
+import type { PaymentMethod } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './DashboardSettings.css'
@@ -74,28 +77,6 @@ const planStats = [
   { label: 'Team Members', value: '10' },
 ]
 
-const paymentMethods = [
-  {
-    title: 'Visa Credit Card',
-    detail: 'Ending in 4242 • Expires 12/2026',
-    action: 'Manage',
-    icon: CreditCard,
-    isDefault: true,
-  },
-  {
-    title: 'Instant EFT (Ozow)',
-    detail: 'Standard Bank • Connected',
-    action: 'Set Default',
-    icon: Building2,
-  },
-  {
-    title: 'SnapScan',
-    detail: 'Mobile Payment • Active',
-    action: 'Set Default',
-    icon: Smartphone,
-  },
-]
-
 const supportedMethods = [
   { label: 'Cards', icon: CreditCard },
   { label: 'Ozow EFT', icon: Landmark },
@@ -104,6 +85,33 @@ const supportedMethods = [
   { label: 'Capitec Pay', icon: Landmark },
   { label: 'Debit Order', icon: WalletCards },
 ]
+
+function getStoredUserEmail() {
+  try {
+    const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
+    return user.email || 'user@example.com'
+  } catch {
+    return 'user@example.com'
+  }
+}
+
+function cardBrandIcon(brand?: string) {
+  const b = (brand ?? '').toLowerCase()
+  if (b === 'visa' || b === 'mastercard') return CreditCard
+  return CreditCard
+}
+
+function cardLabel(method: PaymentMethod): string {
+  if (method.brand && method.last4) return `${method.brand} •••• ${method.last4}`
+  if (method.bank) return method.bank
+  return method.type
+}
+
+function cardDetail(method: PaymentMethod): string {
+  const parts: string[] = []
+  if (method.expiry) parts.push(`Expires ${method.expiry}`)
+  return parts.join(' · ')
+}
 
 const invoices = [
   { id: 'INV-2025-001', date: 'Dec 1, 2025', amount: 'R999' },
@@ -114,6 +122,82 @@ const invoices = [
 export default function DashboardSettings() {
   const [activeTab, setActiveTab] = useState<'billing' | 'history'>('billing')
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+
+  // ── Payment methods state ────────────────────────────────────────────────
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
+  const [pmLoading, setPmLoading] = useState(true)
+  const [pmError, setPmError] = useState<string | null>(null)
+  const [addingMethod, setAddingMethod] = useState(false)
+  const [addError, setAddError] = useState<string | null>(null)
+  const addErrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    setPmLoading(true)
+    billingApi.paymentMethods().then((res) => {
+      if (cancelled) return
+      setPmLoading(false)
+      if (!res.success || !res.data) {
+        setPmError('Failed to load payment methods.')
+        return
+      }
+      // Only display card-type methods (brand + last4)
+      const cards = (res.data as PaymentMethod[]).filter(
+        (m) => m.type === 'card' && m.last4
+      )
+      setPaymentMethods(cards)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  async function handleAddMethod() {
+    if (addingMethod) return
+    setAddError(null)
+    setAddingMethod(true)
+
+    // Open Paystack checkout for a R1 card authorization — the backend
+    // stores the card after a successful authorization. PRODUCTION: replace
+    // amount with your real card-authorization amount (e.g. R0 charge via
+    // Paystack's charge-and-refund flow, or a R1 setup fee).
+    const result = await openPaystackCheckout({
+      amount: 1,
+      currency: 'ZAR',
+      email: getStoredUserEmail(),
+      plan: 'card-setup',
+      paymentMethod: 'card',
+      selectedWizards: [],
+      totalWizards: 0,
+    })
+
+    if (result.status === 'cancelled') {
+      setAddingMethod(false)
+      return
+    }
+
+    if (result.status === 'failed') {
+      setAddingMethod(false)
+      const msg = result.message || 'Payment failed. Please try again.'
+      setAddError(msg)
+      if (addErrTimerRef.current) clearTimeout(addErrTimerRef.current)
+      addErrTimerRef.current = setTimeout(() => setAddError(null), 5000)
+      return
+    }
+
+    // Notify backend — it stores the card. PRODUCTION: pass real card token
+    // returned by Paystack (result.reference) to your save-card endpoint.
+    await billingApi.addPaymentMethod({ reference: result.reference })
+
+    // Refresh the payment methods list
+    const fresh = await billingApi.paymentMethods()
+    if (fresh.success && fresh.data) {
+      const cards = (fresh.data as PaymentMethod[]).filter(
+        (m) => m.type === 'card' && m.last4
+      )
+      setPaymentMethods(cards)
+    }
+
+    setAddingMethod(false)
+  }
 
   setPageMetadata('Settings', 'Manage your account, billing, and notification preferences.')
 
@@ -195,36 +279,65 @@ export default function DashboardSettings() {
                 <section className="dashboard-settings__section" aria-labelledby="payment-methods-title">
                   <div className="dashboard-settings__section-heading">
                     <h2 id="payment-methods-title">Payment Methods</h2>
-                    <button type="button">
-                      <Plus size={16} />
-                      Add Method
+                    <button
+                      type="button"
+                      onClick={handleAddMethod}
+                      disabled={addingMethod}
+                    >
+                      {addingMethod
+                        ? <><Loader2 size={14} className="dashboard-settings__pm-spinner" /> Adding…</>
+                        : <><Plus size={16} /> Add Method</>}
                     </button>
                   </div>
 
+                  {addError && (
+                    <p className="dashboard-settings__pm-error" role="alert">{addError}</p>
+                  )}
+
                   <article className="dashboard-settings__payments">
                     <div className="dashboard-settings__payment-list">
-                      {paymentMethods.map(({ title, detail, action, icon: Icon, isDefault }) => (
-                        <div
-                          className={
-                            isDefault
-                              ? 'dashboard-settings__payment dashboard-settings__payment--default'
-                              : 'dashboard-settings__payment'
-                          }
-                          key={title}
-                        >
-                          <span className="dashboard-settings__payment-icon">
-                            <Icon size={20} />
-                          </span>
-                          <div>
-                            <h3>
-                              {title}
-                              {isDefault && <BadgeCheck size={14} />}
-                            </h3>
-                            <p>{detail}</p>
-                          </div>
-                          <button type="button">{action}</button>
+                      {pmLoading ? (
+                        <div className="dashboard-settings__pm-loading">
+                          <Loader2 size={20} className="dashboard-settings__pm-spinner" />
+                          <span>Loading payment methods…</span>
                         </div>
-                      ))}
+                      ) : pmError ? (
+                        <p className="dashboard-settings__pm-error" role="alert">{pmError}</p>
+                      ) : paymentMethods.length === 0 ? (
+                        <div className="dashboard-settings__pm-empty">
+                          <CreditCard size={32} />
+                          <p>No saved payment methods.</p>
+                          <p>Add a payment method to use for future subscription renewals.</p>
+                        </div>
+                      ) : (
+                        paymentMethods.map((method) => {
+                          const Icon = cardBrandIcon(method.brand)
+                          return (
+                            <div
+                              key={method.methodId}
+                              className={
+                                method.isDefault
+                                  ? 'dashboard-settings__payment dashboard-settings__payment--default'
+                                  : 'dashboard-settings__payment'
+                              }
+                            >
+                              <span className="dashboard-settings__payment-icon">
+                                <Icon size={20} />
+                              </span>
+                              <div>
+                                <h3>
+                                  {cardLabel(method)}
+                                  {method.isDefault && <BadgeCheck size={14} />}
+                                </h3>
+                                <p>{cardDetail(method)}</p>
+                              </div>
+                              <button type="button">
+                                {method.isDefault ? 'Manage' : 'Set Default'}
+                              </button>
+                            </div>
+                          )
+                        })
+                      )}
                     </div>
 
                     <div className="dashboard-settings__supported">
