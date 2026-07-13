@@ -183,17 +183,35 @@ export default function DashboardSettings() {
       return
     }
 
-    // Notify backend — it stores the card. PRODUCTION: pass real card token
-    // returned by Paystack (result.reference) to your save-card endpoint.
-    await billingApi.addPaymentMethod({ reference: result.reference })
+    // Notify backend — it stores the card and returns the saved card object.
+    // PRODUCTION: pass real Paystack reusable-authorization token here.
+    const saveRes = await billingApi.addPaymentMethod({ reference: result.reference })
 
-    // Refresh the payment methods list
+    // Step 1: Immediately append the new card from the POST response so the
+    // UI updates right away, regardless of what the GET re-fetch returns.
+    if (saveRes.success && saveRes.data) {
+      const newCard = saveRes.data as PaymentMethod
+      if (newCard.type === 'card' && newCard.last4) {
+        setPaymentMethods((prev) => {
+          // Avoid duplicates if the card already exists
+          const exists = prev.some((m) => m.methodId === newCard.methodId)
+          return exists ? prev : [...prev, newCard]
+        })
+      }
+    }
+
+    // Step 2: Refresh from server to get the authoritative list
+    // (dynamic route returns the full accumulated store after restart)
     const fresh = await billingApi.paymentMethods()
     if (fresh.success && fresh.data) {
-      const cards = (fresh.data as PaymentMethod[]).filter(
+      const freshCards = (fresh.data as PaymentMethod[]).filter(
         (m) => m.type === 'card' && m.last4
       )
-      setPaymentMethods(cards)
+      // Only replace local state if the server returned MORE cards than we
+      // already have — prevents the static mock from wiping a just-added card
+      setPaymentMethods((prev) =>
+        freshCards.length >= prev.length ? freshCards : prev
+      )
     }
 
     setAddingMethod(false)
