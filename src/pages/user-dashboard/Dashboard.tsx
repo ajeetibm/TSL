@@ -11,6 +11,7 @@ import {
   Folder,
   Gauge,
   Info,
+  Loader2,
   Play,
   Scale,
   Shield,
@@ -21,7 +22,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { formatDate } from '../../services/dashboardTypes'
-import type { DashboardData } from '../../services/dashboardTypes'
+import type { DashboardData, QuickAccessLinks } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { smeApi } from '../../services/tslApi'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
@@ -63,18 +64,21 @@ const quickStartCards = [
     description: 'Learn how to use the platform effectively',
     action: 'Read Guide',
     icon: FileText,
+    urlKey: 'gettingStartedGuideUrl' as keyof QuickAccessLinks,
   },
   {
     title: 'Video Tutorials',
     description: 'Watch step-by-step wizard walkthroughs',
     action: 'Watch Now',
     icon: Gauge,
+    urlKey: 'videoTutorialUrl' as keyof QuickAccessLinks,
   },
   {
     title: 'Schedule Consultation',
     description: 'Get expert help from our legal team',
     action: 'Book Now',
     icon: Calendar,
+    urlKey: 'consultationBookingUrl' as keyof QuickAccessLinks,
   },
 ]
 
@@ -1188,6 +1192,10 @@ export default function Dashboard() {
   const [ndaToast, setNdaToast] = useState('')
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // ── Quick Access Links ───────────────────────────────────────────────────
+  const [quickLinks, setQuickLinks] = useState<QuickAccessLinks | null>(null)
+  const [quickLinksLoading, setQuickLinksLoading] = useState(true)
+
   setPageMetadata(
     'Dashboard',
     'TSL user dashboard for reviewing legal workflows, plan usage, and completed documents.',
@@ -1212,6 +1220,18 @@ export default function Dashboard() {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    smeApi.quickAccessLinks().then((res) => {
+      if (cancelled) return
+      setQuickLinksLoading(false)
+      if (res.success && res.data) {
+        setQuickLinks(res.data as QuickAccessLinks)
+      }
+    })
+    return () => { cancelled = true }
   }, [])
 
   // Clean up the old legacy key so it never interferes again
@@ -1310,19 +1330,46 @@ export default function Dashboard() {
           )}
 
           <section className="user-dashboard__quick-start" aria-label="Quick start resources">
-            {quickStartCards.map(({ title, description, action, icon: Icon }) => (
-              <article className="user-dashboard__quick-start-card" key={title}>
-                <span className="user-dashboard__quick-start-icon">
-                  <Icon size={24} />
-                </span>
-                <h3>{title}</h3>
-                <p>{description}</p>
-                <button type="button" onClick={browseWizards}>
-                  {action}
-                  <ArrowRight size={16} />
-                </button>
-              </article>
-            ))}
+            {quickStartCards.map(({ title, description, action, icon: Icon, urlKey }) => {
+              const href = quickLinks?.[urlKey] ?? null
+              const isLoading = quickLinksLoading
+              const isDisabled = !isLoading && !href
+              return (
+                <article className="user-dashboard__quick-start-card" key={title}>
+                  <span className="user-dashboard__quick-start-icon">
+                    <Icon size={24} />
+                  </span>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                  {isLoading ? (
+                    <button type="button" disabled className="user-dashboard__quick-start-btn--loading">
+                      <Loader2 size={14} className="user-dashboard__quick-start-spinner" />
+                      Loading…
+                    </button>
+                  ) : isDisabled ? (
+                    <button
+                      type="button"
+                      disabled
+                      title="Coming Soon"
+                      className="user-dashboard__quick-start-btn--disabled"
+                    >
+                      {action}
+                      <ArrowRight size={16} />
+                    </button>
+                  ) : (
+                    <a
+                      href={href!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="user-dashboard__quick-start-link"
+                    >
+                      {action}
+                      <ArrowRight size={16} />
+                    </a>
+                  )}
+                </article>
+              )
+            })}
           </section>
 
           <div className="user-dashboard__landing-grid">

@@ -281,7 +281,8 @@
   line-height: 1.5;
 }
 
-.user-dashboard__quick-start-card button {
+.user-dashboard__quick-start-card button,
+.user-dashboard__quick-start-link {
   width: fit-content;
   display: inline-flex;
   align-items: center;
@@ -292,6 +293,28 @@
   color: #c9922e;
   font-weight: 600;
   cursor: pointer;
+  text-decoration: none;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.user-dashboard__quick-start-link:hover {
+  text-decoration: underline;
+}
+
+.user-dashboard__quick-start-btn--disabled,
+.user-dashboard__quick-start-btn--loading {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@keyframes qs-spin {
+  to { transform: rotate(360deg); }
+}
+
+.user-dashboard__quick-start-spinner {
+  animation: qs-spin 0.8s linear infinite;
+  flex-shrink: 0;
 }
 
 .user-dashboard__landing-grid {

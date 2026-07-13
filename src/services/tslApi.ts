@@ -149,11 +149,13 @@ import type {
   NotificationsData,
   PaymentMethod,
   PlaybooksData,
+  QuickAccessLinks,
   WizardItem,
 } from './dashboardTypes'
 
 export const smeApi = {
   dashboard: () => request<DashboardData>('/api/v1/sme/dashboard'),
+  quickAccessLinks: () => request<QuickAccessLinks>('/api/v1/sme/quick-access-links'),
   downloadWorkflow: (workflowId: string, type = 'pdf') =>
     request(`/api/v1/sme/workflows/${workflowId}/download?type=${encodeURIComponent(type)}`),
   startWizard: (wizardId: string, notes = '') =>

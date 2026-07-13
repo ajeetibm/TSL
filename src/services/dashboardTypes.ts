@@ -145,6 +145,12 @@ export interface AdminBillingData {
   total: number
 }
 
+export interface QuickAccessLinks {
+  gettingStartedGuideUrl: string | null
+  videoTutorialUrl: string | null
+  consultationBookingUrl: string | null
+}
+
 export interface PaymentMethod {
   methodId: string
   type: string
