@@ -1,5 +1,5 @@
-import { Bell, Settings } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { Bell, CheckCircle2, Settings, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNotificationCount } from '../../context/NotificationContext'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
@@ -93,6 +93,41 @@ const SETTINGS_OPTIONS = [
 
 type SettingsOption = (typeof SETTINGS_OPTIONS)[number]
 
+// ── Toast ─────────────────────────────────────────────────────────────────────
+
+type ToastState = { msg: string; type: 'success' | 'error' } | null
+
+interface NotifToastProps {
+  toast: ToastState
+  onClose: () => void
+}
+
+function NotifToast({ toast, onClose }: NotifToastProps) {
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(onClose, 5000)
+    return () => clearTimeout(t)
+  }, [toast, onClose])
+
+  if (!toast) return null
+
+  return (
+    <div
+      className={`dn-toast dn-toast--${toast.type}`}
+      role={toast.type === 'success' ? 'status' : 'alert'}
+      aria-live="polite"
+    >
+      <span className="dn-toast__icon">
+        {toast.type === 'success' ? <CheckCircle2 size={17} /> : <X size={17} />}
+      </span>
+      <p className="dn-toast__msg">{toast.msg}</p>
+      <button type="button" className="dn-toast__close" onClick={onClose} aria-label="Dismiss">
+        <X size={14} />
+      </button>
+    </div>
+  )
+}
+
 const DEFAULT_PREFS: Record<SettingsOption, boolean> = {
   'Document updates': true,
   'Signature requests': true,
@@ -141,12 +176,19 @@ export default function DashboardNotifications() {
   const [savedPrefs, setSavedPrefs] = useState<Record<SettingsOption, boolean>>(DEFAULT_PREFS)
   const isDirty = SETTINGS_OPTIONS.some((opt) => prefs[opt] !== savedPrefs[opt])
 
+  const [toast, setToast] = useState<ToastState>(null)
+  const showToast = useCallback((msg: string, type: 'success' | 'error') => {
+    setToast({ msg, type })
+  }, [])
+  const dismissToast = useCallback(() => setToast(null), [])
+
   function togglePref(option: SettingsOption) {
     setPrefs((prev) => ({ ...prev, [option]: !prev[option] }))
   }
 
   function savePrefs() {
     setSavedPrefs(prefs)
+    showToast('Notification preferences saved.', 'success')
   }
 
   useEffect(() => {
@@ -347,6 +389,7 @@ export default function DashboardNotifications() {
           </aside>
         </div>
       </main>
+      <NotifToast toast={toast} onClose={dismissToast} />
     </DashboardShell>
   )
 }

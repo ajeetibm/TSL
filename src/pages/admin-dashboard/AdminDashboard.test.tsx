@@ -47,6 +47,7 @@ vi.mock('../../services/tslApi', () => ({
     users: vi.fn().mockResolvedValue({ success: false }),
     issues: vi.fn().mockResolvedValue({ success: false }),
     billing: vi.fn().mockResolvedValue({ success: false }),
+    getProfilePreferences: vi.fn().mockResolvedValue({ success: false }),
   },
   adminSettingsApi: {
     getGeneral: vi.fn().mockResolvedValue({ success: false }),

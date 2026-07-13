@@ -209,10 +209,9 @@
 
 .admin-dashboard__all-requests-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
 }
 
 .admin-dashboard__back-btn {
@@ -274,13 +273,19 @@
   height: 40px;
   border: 1.5px solid #dfdfdf;
   border-radius: 999px;
-  padding: 0 14px;
-  background: #ffffff;
+  padding: 0 36px 0 18px;
+  background: #ffffff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpolygon points='0,0 10,0 5,6' fill='%230d1b2a'/%3E%3C/svg%3E")
+    no-repeat right 16px center;
   color: #0d1b2a;
   font: inherit;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
   outline: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
 }
 
 .admin-dashboard__all-requests-empty {
