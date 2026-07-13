@@ -188,6 +188,8 @@ export const billingApi = {
   summary: () => request<BillingData>('/api/v1/sme/billing'),
   paymentMethods: () => request<PaymentMethod[]>('/api/v1/sme/billing/payment-methods'),
   addPaymentMethod: (payload: JsonRecord) => request('/api/v1/sme/billing/payment-methods', 'POST', payload),
+  setDefaultMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}/default`, 'PATCH'),
+  removeMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}`, 'DELETE'),
 }
 
 export interface PaystackInitialization {

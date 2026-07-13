@@ -370,6 +370,15 @@
   font-size: 13px;
 }
 
+.dashboard-settings__pm-toast {
+  margin: 8px 0 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f0faf3;
+  color: #1a7a45;
+  font-size: 13px;
+}
+
 @keyframes ds-spin {
   to { transform: rotate(360deg); }
 }

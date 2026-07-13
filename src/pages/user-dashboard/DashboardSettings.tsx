@@ -130,6 +130,9 @@ export default function DashboardSettings() {
   const [addingMethod, setAddingMethod] = useState(false)
   const [addError, setAddError] = useState<string | null>(null)
   const addErrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
+  const [pmToast, setPmToast] = useState<string>('')
+  const pmToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -215,6 +218,42 @@ export default function DashboardSettings() {
     }
 
     setAddingMethod(false)
+  }
+
+  async function handleSetDefault(methodId: string) {
+    if (settingDefaultId) return
+    setSettingDefaultId(methodId)
+    // Optimistically flip & move the chosen card to position 0
+    setPaymentMethods((prev) => {
+      const updated = prev.map((m) => ({ ...m, isDefault: m.methodId === methodId }))
+      return [...updated.filter((m) => m.isDefault), ...updated.filter((m) => !m.isDefault)]
+    })
+
+    const res = await billingApi.setDefaultMethod(methodId)
+
+    if (!res.success) {
+      // Roll back on failure
+      setSettingDefaultId(null)
+      const fresh = await billingApi.paymentMethods()
+      if (fresh.success && fresh.data) {
+        setPaymentMethods(
+          (fresh.data as PaymentMethod[]).filter((m) => m.type === 'card' && m.last4)
+        )
+      }
+      return
+    }
+
+    // Sync authoritative list from server response, default card first
+    if (res.data) {
+      const cards = (res.data as PaymentMethod[]).filter((m) => m.type === 'card' && m.last4)
+      setPaymentMethods([...cards.filter((m) => m.isDefault), ...cards.filter((m) => !m.isDefault)])
+    }
+
+    setSettingDefaultId(null)
+
+    if (pmToastTimerRef.current) clearTimeout(pmToastTimerRef.current)
+    setPmToast('Default payment method updated.')
+    pmToastTimerRef.current = setTimeout(() => setPmToast(''), 4000)
   }
 
   setPageMetadata('Settings', 'Manage your account, billing, and notification preferences.')
@@ -349,14 +388,26 @@ export default function DashboardSettings() {
                                 </h3>
                                 <p>{cardDetail(method)}</p>
                               </div>
-                              <button type="button">
-                                {method.isDefault ? 'Manage' : 'Set Default'}
+                              <button
+                                type="button"
+                                disabled={!method.isDefault && settingDefaultId !== null}
+                                onClick={method.isDefault ? undefined : () => handleSetDefault(method.methodId)}
+                              >
+                                {settingDefaultId === method.methodId
+                                  ? <Loader2 size={14} className="dashboard-settings__pm-spinner" />
+                                  : method.isDefault ? 'Manage' : 'Set Default'}
                               </button>
                             </div>
                           )
                         })
                       )}
                     </div>
+
+                    {pmToast && (
+                      <p className="dashboard-settings__pm-toast" role="status" aria-live="polite">
+                        {pmToast}
+                      </p>
+                    )}
 
                     <div className="dashboard-settings__supported">
                       <p>Supported Methods:</p>
