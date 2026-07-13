@@ -22,7 +22,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { formatDate } from '../../services/dashboardTypes'
-import type { DashboardData, QuickAccessLinks } from '../../services/dashboardTypes'
+import type { DashboardData, LegalLinks, QuickAccessLinks } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { smeApi } from '../../services/tslApi'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
@@ -132,9 +132,9 @@ const newWizards = [
 
 
 const notices = [
-  { label: 'Terms of Service', icon: FileText },
-  { label: 'Privacy & POPIA Compliance', icon: Shield },
-  { label: 'Legal Advice Disclaimer', icon: Gauge },
+  { label: 'Terms of Service',         icon: FileText, urlKey: 'termsOfServiceUrl'  as keyof LegalLinks },
+  { label: 'Privacy & POPIA Compliance', icon: Shield, urlKey: 'privacyPolicyUrl'   as keyof LegalLinks },
+  { label: 'Legal Advice Disclaimer',  icon: Gauge,    urlKey: 'legalDisclaimerUrl' as keyof LegalLinks },
 ]
 
 function relativeUpdated(value?: string) {
@@ -1196,6 +1196,10 @@ export default function Dashboard() {
   const [quickLinks, setQuickLinks] = useState<QuickAccessLinks | null>(null)
   const [quickLinksLoading, setQuickLinksLoading] = useState(true)
 
+  // ── Legal Notices Links ──────────────────────────────────────────────────
+  const [legalLinks, setLegalLinks] = useState<LegalLinks | null>(null)
+  const [legalLinksLoading, setLegalLinksLoading] = useState(true)
+
   setPageMetadata(
     'Dashboard',
     'TSL user dashboard for reviewing legal workflows, plan usage, and completed documents.',
@@ -1229,6 +1233,18 @@ export default function Dashboard() {
       setQuickLinksLoading(false)
       if (res.success && res.data) {
         setQuickLinks(res.data as QuickAccessLinks)
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    smeApi.legalLinks().then((res) => {
+      if (cancelled) return
+      setLegalLinksLoading(false)
+      if (res.success && res.data) {
+        setLegalLinks(res.data as LegalLinks)
       }
     })
     return () => { cancelled = true }
@@ -1473,15 +1489,53 @@ export default function Dashboard() {
                 </div>
                 <p>Review important policies</p>
                 <div>
-                  {notices.map(({ label, icon: Icon }) => (
-                    <button type="button" className="user-dashboard__notice-link" key={label}>
-                      <span>
-                        <Icon size={18} />
-                      </span>
-                      {label}
-                      <ChevronRight size={16} />
-                    </button>
-                  ))}
+                  {notices.map(({ label, icon: Icon, urlKey }) => {
+                    const href = legalLinks?.[urlKey] ?? null
+                    const isLoading = legalLinksLoading
+                    const isDisabled = !isLoading && !href
+                    if (isLoading) {
+                      return (
+                        <button
+                          type="button"
+                          key={label}
+                          disabled
+                          className="user-dashboard__notice-link user-dashboard__notice-link--loading"
+                        >
+                          <span><Icon size={18} /></span>
+                          {label}
+                          <Loader2 size={16} className="user-dashboard__notice-spinner" />
+                        </button>
+                      )
+                    }
+                    if (isDisabled) {
+                      return (
+                        <button
+                          type="button"
+                          key={label}
+                          disabled
+                          title="Document coming soon"
+                          className="user-dashboard__notice-link user-dashboard__notice-link--disabled"
+                        >
+                          <span><Icon size={18} /></span>
+                          {label}
+                          <ChevronRight size={16} />
+                        </button>
+                      )
+                    }
+                    return (
+                      <a
+                        key={label}
+                        href={href!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="user-dashboard__notice-link"
+                      >
+                        <span><Icon size={18} /></span>
+                        {label}
+                        <ChevronRight size={16} />
+                      </a>
+                    )
+                  })}
                 </div>
               </section>
             </aside>

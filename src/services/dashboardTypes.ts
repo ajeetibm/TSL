@@ -151,6 +151,12 @@ export interface QuickAccessLinks {
   consultationBookingUrl: string | null
 }
 
+export interface LegalLinks {
+  termsOfServiceUrl: string | null
+  privacyPolicyUrl: string | null
+  legalDisclaimerUrl: string | null
+}
+
 export interface PaymentMethod {
   methodId: string
   type: string
