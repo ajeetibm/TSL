@@ -563,7 +563,7 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { state: ndaState, startWizard, saveProgress, completeWizard, resetWizard } = useNdaWizard()
+  const { state: ndaState, startWizard, saveProgress, completeWizard } = useNdaWizard()
   const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp } = useEmploymentWizard()
 
   // Any active wizard shows the paid dashboard

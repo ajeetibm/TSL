@@ -199,6 +199,99 @@
   padding: 26px 66px 64px;
 }
 
+/* ── All Counsel Requests view ───────────────────────────────────────────── */
+.admin-dashboard__all-requests {
+  padding: 32px 66px 64px;
+  display: grid;
+  gap: 28px;
+  background: #f4f4f4;
+}
+
+.admin-dashboard__all-requests-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard__back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #dfdfdf;
+  border-radius: 999px;
+  padding: 0 18px;
+  height: 40px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.admin-dashboard__back-btn:hover {
+  background: #f4f4f4;
+}
+
+.admin-dashboard__all-requests-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-dashboard__all-requests-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  border: 1.5px solid #dfdfdf;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #6d6d6d;
+  min-width: 420px;
+}
+
+.admin-dashboard__all-requests-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: #0d1b2a;
+  min-width: 0;
+  flex: 1;
+}
+
+.admin-dashboard__all-requests-search input::placeholder {
+  color: #9ba7b6;
+}
+
+.admin-dashboard__all-requests-select {
+  height: 40px;
+  border: 1.5px solid #dfdfdf;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  outline: 0;
+}
+
+.admin-dashboard__all-requests-empty {
+  text-align: center;
+  padding: 64px;
+  color: #6d6d6d;
+  margin: 0;
+}
+
+
+
 .admin-dashboard__requests,
 .admin-dashboard__quick-actions,
 .admin-dashboard__top-wizards,
@@ -263,6 +356,12 @@
   border-radius: 24px;
   padding: 26px 26px 20px;
   background: #f4f4f4;
+}
+
+.admin-dashboard__all-requests .admin-dashboard__request-card {
+  border: 1px solid #dfdfdf;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(7, 25, 43, 0.08);
 }
 
 .admin-dashboard__request-card > div {

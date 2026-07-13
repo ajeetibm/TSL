@@ -56,9 +56,28 @@ function makeNotification(overrides: Partial<NotificationItem> = {}): Notificati
     title: 'Document completed',
     message: 'Your document is ready.',
     isRead: false,
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
+    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago — within 3 months
     ...overrides,
   }
+}
+
+/** Returns an ISO date string N months before now. */
+function monthsAgo(n: number): string {
+  const d = new Date()
+  d.setMonth(d.getMonth() - n)
+  return d.toISOString()
+}
+
+/** Builds an array of N read notifications, all within the last 3 months. */
+function makeEarlierBatch(count: number, baseId = 'e'): NotificationItem[] {
+  return Array.from({ length: count }, (_, i) => ({
+    notificationId: `${baseId}-${i + 1}`,
+    type: 'document',
+    title: `Earlier ${i + 1}`,
+    message: `Message ${i + 1}`,
+    isRead: true,
+    createdAt: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000).toISOString(), // i+1 days ago
+  }))
 }
 
 const SUCCESS_EMPTY = { success: true, data: { notifications: [], unreadCount: 0 } }
@@ -156,11 +175,12 @@ describe('DashboardNotifications', () => {
     expect(screen.getByText('Doc ready')).toBeInTheDocument()
   })
 
-  it('renders earlier (read) notification cards from the API', async () => {
+  it('renders earlier (read) notification cards within the last 3 months', async () => {
     mockList.mockResolvedValue({
       success: true,
       data: {
         unreadCount: 0,
+        // createdAt defaults to 2 hours ago — well within 3 months
         notifications: [makeNotification({ isRead: true, title: 'Old notice' })],
       },
     })
@@ -258,6 +278,129 @@ describe('DashboardNotifications', () => {
 
     expect(screen.queryByRole('button', { name: /mark as read/i })).not.toBeInTheDocument()
     expect(mockMarkAllRead).toHaveBeenCalled()
+  })
+
+  // ── 3-month filter ──────────────────────────────────────────────────────────
+
+  it('excludes read notifications older than 3 months from the earlier section', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: {
+        unreadCount: 0,
+        notifications: [
+          makeNotification({ notificationId: 'old', isRead: true, title: 'Too old', createdAt: monthsAgo(4) }),
+        ],
+      },
+    })
+    await renderComponent()
+    expect(screen.queryByText('Too old')).not.toBeInTheDocument()
+    expect(screen.getByText(/no earlier notifications/i)).toBeInTheDocument()
+  })
+
+  it('includes a read notification created exactly at the 3-month boundary', async () => {
+    // Set createdAt to just after the 3-month cutoff (1 minute inside the window)
+    const justInside = new Date()
+    justInside.setMonth(justInside.getMonth() - 3)
+    justInside.setMinutes(justInside.getMinutes() + 1)
+    mockList.mockResolvedValue({
+      success: true,
+      data: {
+        unreadCount: 0,
+        notifications: [
+          makeNotification({ notificationId: 'boundary', isRead: true, title: 'Boundary notice', createdAt: justInside.toISOString() }),
+        ],
+      },
+    })
+    await renderComponent()
+    expect(screen.getByText('Boundary notice')).toBeInTheDocument()
+  })
+
+  it('shows a read notification from 1 month ago but not one from 4 months ago', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: {
+        unreadCount: 0,
+        notifications: [
+          makeNotification({ notificationId: 'recent', isRead: true, title: 'Recent read', createdAt: monthsAgo(1) }),
+          makeNotification({ notificationId: 'stale', isRead: true, title: 'Stale read', createdAt: monthsAgo(4) }),
+        ],
+      },
+    })
+    await renderComponent()
+    expect(screen.getByText('Recent read')).toBeInTheDocument()
+    expect(screen.queryByText('Stale read')).not.toBeInTheDocument()
+  })
+
+  // ── Load more ───────────────────────────────────────────────────────────────
+
+  it('does not show the Load more button when earlier list has 5 or fewer items', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: { unreadCount: 0, notifications: makeEarlierBatch(5) },
+    })
+    await renderComponent()
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument()
+  })
+
+  it('shows the Load more button when earlier list has more than 5 items', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: { unreadCount: 0, notifications: makeEarlierBatch(6) },
+    })
+    await renderComponent()
+    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument()
+  })
+
+  it('initially shows only 5 earlier notifications when more than 5 exist', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: { unreadCount: 0, notifications: makeEarlierBatch(8) },
+    })
+    await renderComponent()
+    // Items 1–5 visible, item 6 hidden
+    expect(screen.getByText('Earlier 5')).toBeInTheDocument()
+    expect(screen.queryByText('Earlier 6')).not.toBeInTheDocument()
+  })
+
+  it('reveals 5 more notifications on each Load more click', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: { unreadCount: 0, notifications: makeEarlierBatch(12) },
+    })
+    await renderComponent()
+
+    // First page: items 1–5 visible, item 6 not
+    expect(screen.queryByText('Earlier 6')).not.toBeInTheDocument()
+
+    // Click once → items 1–10 visible
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /load more/i }))
+    })
+    expect(screen.getByText('Earlier 6')).toBeInTheDocument()
+    expect(screen.getByText('Earlier 10')).toBeInTheDocument()
+    expect(screen.queryByText('Earlier 11')).not.toBeInTheDocument()
+
+    // Click again → items 1–12 visible
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /load more/i }))
+    })
+    expect(screen.getByText('Earlier 11')).toBeInTheDocument()
+    expect(screen.getByText('Earlier 12')).toBeInTheDocument()
+  })
+
+  it('hides the Load more button once all earlier notifications are visible', async () => {
+    mockList.mockResolvedValue({
+      success: true,
+      data: { unreadCount: 0, notifications: makeEarlierBatch(7) },
+    })
+    await renderComponent()
+    expect(screen.getByRole('button', { name: /load more/i })).toBeInTheDocument()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: /load more/i }))
+    })
+    // After one click: 10 slots > 7 items → button gone
+    expect(screen.queryByRole('button', { name: /load more/i })).not.toBeInTheDocument()
   })
 
   // ── Notification counts ─────────────────────────────────────────────────────

@@ -132,6 +132,7 @@ export default function DashboardNotifications() {
 
   const [unread, setUnread] = useState<NotificationItem[]>([])
   const [earlier, setEarlier] = useState<NotificationItem[]>([])
+  const [earlierVisible, setEarlierVisible] = useState(5)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { setUnreadCount } = useNotificationCount()
@@ -159,8 +160,10 @@ export default function DashboardNotifications() {
         return
       }
       const all = res.data?.notifications ?? []
+      const threeMonthsAgo = new Date()
+      threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3)
       setUnread(all.filter((n) => !n.isRead))
-      setEarlier(all.filter((n) => n.isRead))
+      setEarlier(all.filter((n) => n.isRead && new Date(n.createdAt) >= threeMonthsAgo))
       setLoading(false)
     })
     return () => {
@@ -250,7 +253,7 @@ export default function DashboardNotifications() {
                   {earlier.length === 0 && (
                     <p className="dashboard-notifications__empty">No earlier notifications.</p>
                   )}
-                  {earlier.map((item) => (
+                  {earlier.slice(0, earlierVisible).map((item) => (
                     <article className="dashboard-notifications__card" key={item.notificationId}>
                       <span className="dashboard-notifications__item-icon">
                         <NotificationIcon type={item.type} />
@@ -267,6 +270,15 @@ export default function DashboardNotifications() {
                     </article>
                   ))}
                 </div>
+                {earlierVisible < earlier.length && (
+                  <button
+                    type="button"
+                    className="dashboard-notifications__load-more"
+                    onClick={() => setEarlierVisible((v) => v + 5)}
+                  >
+                    Load more
+                  </button>
+                )}
               </>
             )}
           </section>

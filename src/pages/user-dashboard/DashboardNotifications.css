@@ -165,6 +165,22 @@
   margin: 32px 0 16px;
 }
 
+.dashboard-notifications__load-more {
+  display: block;
+  margin: 16px auto 0;
+  border: 0;
+  background: transparent;
+  color: #cf9b2f;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.dashboard-notifications__load-more:hover {
+  text-decoration: underline;
+}
+
 .dashboard-notifications__sidebar {
   display: grid;
   gap: 28px;

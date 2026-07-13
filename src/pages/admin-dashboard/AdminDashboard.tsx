@@ -267,6 +267,9 @@ export default function AdminDashboard() {
     const nav = searchParams.get('nav')
     return (nav === 'profile' ? 'profile' : 'dashboard') as AdminNavKey
   })
+  const [showAllRequests, setShowAllRequests] = useState(false)
+  const [requestSearch, setRequestSearch] = useState('')
+  const [requestFilterStatus, setRequestFilterStatus] = useState('All Status')
 
   // Assign modal filters
   const [counselSearch, setCounselSearch] = useState('')
@@ -552,7 +555,9 @@ export default function AdminDashboard() {
             ? 'Settings'
             : activeNav === 'profile'
               ? 'Profile'
-              : 'Dashboard Overview'
+              : showAllRequests
+                ? 'Counsel Requests'
+                : 'Dashboard Overview'
   const headerDescription =
     activeNav === 'users'
       ? 'Manage platform administrators, permissions, and user access'
@@ -564,7 +569,9 @@ export default function AdminDashboard() {
             ? 'Configure billing, notifications, and platform security'
             : activeNav === 'profile'
               ? 'Manage your account settings and preferences'
-              : "Welcome back! Here's what's happening with your platform today."
+              : showAllRequests
+                ? 'All counsel requests submitted by users'
+                : "Welcome back! Here's what's happening with your platform today."
 
   return (
     <>
@@ -590,7 +597,7 @@ export default function AdminDashboard() {
                   .filter(Boolean)
                   .join(' ')}
                 key={item.label}
-                onClick={() => setActiveNav(item.key)}
+                onClick={() => { setActiveNav(item.key); setShowAllRequests(false) }}
               >
                 <Icon size={17} />
                 <span>{item.label}</span>
@@ -604,7 +611,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             className={activeNav === 'profile' ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
-            onClick={() => setActiveNav('profile')}
+            onClick={() => { setActiveNav('profile'); setShowAllRequests(false) }}
           >
             <UserRound size={17} />
             <span>Profile</span>
@@ -951,6 +958,72 @@ export default function AdminDashboard() {
             counselMembers={counselList}
             onCounselAdded={(c) => setCounselList((prev) => [...prev, c])}
           />
+        ) : showAllRequests ? (
+          <section className="admin-dashboard__all-requests">
+            <div className="admin-dashboard__all-requests-bar">
+              <button
+                type="button"
+                className="admin-dashboard__back-btn"
+                onClick={() => {
+                  setShowAllRequests(false)
+                  setRequestSearch('')
+                  setRequestFilterStatus('All Status')
+                }}
+              >
+                <ArrowLeft size={16} />
+                Back to Dashboard
+              </button>
+              <div className="admin-dashboard__all-requests-filters">
+                <label className="admin-dashboard__all-requests-search">
+                  <Search size={15} />
+                  <input
+                    type="search"
+                    placeholder="Search by subject or user…"
+                    value={requestSearch}
+                    onChange={(e) => setRequestSearch(e.target.value)}
+                  />
+                </label>
+                <select
+                  className="admin-dashboard__all-requests-select"
+                  value={requestFilterStatus}
+                  onChange={(e) => setRequestFilterStatus(e.target.value)}
+                >
+                  <option>All Status</option>
+                  <option>Pending</option>
+                  <option>Assigned</option>
+                  <option>Resolved</option>
+                </select>
+              </div>
+            </div>
+            {(() => {
+              const filtered = counselRequests.filter((r) => {
+                const q = requestSearch.toLowerCase()
+                const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.fromUser.toLowerCase().includes(q)
+                const matchStatus = requestFilterStatus === 'All Status' || r.status.toLowerCase() === requestFilterStatus.toLowerCase()
+                return matchSearch && matchStatus
+              })
+              return filtered.length === 0 ? (
+                <p className="admin-dashboard__all-requests-empty">No counsel requests match your filters.</p>
+              ) : (
+                <div className="admin-dashboard__request-grid">
+                  {filtered.map((request) => (
+                    <article className="admin-dashboard__request-card" key={request.requestId}>
+                      <div>
+                        <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
+                        <time>{formatTimeAgo(request.receivedAt)}</time>
+                      </div>
+                      <p>
+                        From: <strong>{request.fromUser || 'Michael Chen'}</strong>
+                      </p>
+                      <button type="button" onClick={() => openPreviewModal(request)}>
+                        Preview &amp; Assign to Counsel
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )
+            })()}
+          </section>
         ) : (
           <>
         <section className="admin-dashboard__kpis" aria-label="Admin KPI summary">
@@ -993,7 +1066,7 @@ export default function AdminDashboard() {
                 <h2>Counsel Requests</h2>
                 <p>counsel requests from users</p>
               </div>
-              <button type="button">View All</button>
+              <button type="button" onClick={() => setShowAllRequests(true)}>View All</button>
             </div>
             <div className="admin-dashboard__request-grid">
               {counselRequests.map((request) => (
