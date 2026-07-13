@@ -19,9 +19,15 @@ import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
+import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
+import { useFounderAgreementWizard } from '../../hooks/useFounderAgreementWizard'
+import { useServiceAgreementWizard } from '../../hooks/useServiceAgreementWizard'
 import { setPageMetadata } from '../../services/metadata'
 import NdaWizardModal from './NdaWizardModal'
 import EmploymentWizardModal from './EmploymentWizardModal'
+import PrivacyPolicyWizardModal from './PrivacyPolicyWizardModal'
+import FounderAgreementWizardModal from './FounderAgreementWizardModal'
+import ServiceAgreementWizardModal from './ServiceAgreementWizardModal'
 import './Dashboard.css'
 import './DashboardWizards.css'
 
@@ -75,6 +81,16 @@ const wizardCards = [
     popular: true,
   },
   {
+    title: 'Service Agreement',
+    description: 'Create a comprehensive service agreement for client engagements, covering scope, fees, SLAs, and legal terms.',
+    time: '15-20 minutes',
+    runs: '1 run',
+    audience: 'Service providers and their clients',
+    included: ['SLA clauses', 'Fee & billing terms', 'Termination & renewal'],
+    icon: FileText,
+    popular: true,
+  },
+  {
     title: 'Shareholder Resolutions',
     description: 'Draft approval documents for shareholders to authorize company actions and governance decisions.',
     time: '12-15 minutes',
@@ -94,8 +110,14 @@ export default function DashboardWizards() {
   )
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
   const [isEmploymentModalOpen, setIsEmploymentModalOpen] = useState(false)
+  const [isPPModalOpen, setIsPPModalOpen] = useState(false)
+  const [isFAModalOpen, setIsFAModalOpen] = useState(false)
+  const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const { state: ndaState, startWizard: startNda, saveProgress: saveNdaProgress, completeWizard: completeNda } = useNdaWizard()
   const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp } = useEmploymentWizard()
+  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP } = usePrivacyPolicyWizard()
+  const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA } = useFounderAgreementWizard()
+  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA } = useServiceAgreementWizard()
 
   setPageMetadata(
     'Browse All Wizards',
@@ -221,6 +243,33 @@ export default function DashboardWizards() {
                   <Play size={18} />
                   {empState.status === 'inProgress' ? 'Continue Wizard' : empState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
                 </button>
+              ) : title === 'Privacy Policy (POPIA Compliant)' ? (
+                <button
+                  type="button"
+                  className="dashboard-wizards__select"
+                  onClick={() => { startPP(); setIsPPModalOpen(true) }}
+                >
+                  <Play size={18} />
+                  {ppState.status === 'inProgress' ? 'Continue Wizard' : ppState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
+                </button>
+              ) : title === 'Founder Agreement' ? (
+                <button
+                  type="button"
+                  className="dashboard-wizards__select"
+                  onClick={() => { startFA(); setIsFAModalOpen(true) }}
+                >
+                  <Play size={18} />
+                  {faState.status === 'inProgress' ? 'Continue Wizard' : faState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
+                </button>
+              ) : title === 'Service Agreement' ? (
+                <button
+                  type="button"
+                  className="dashboard-wizards__select"
+                  onClick={() => { startSA(); setIsSAModalOpen(true) }}
+                >
+                  <Play size={18} />
+                  {saState.status === 'inProgress' ? 'Continue Wizard' : saState.status === 'completed' ? 'Re-run Wizard' : 'Start Wizard'}
+                </button>
               ) : isSelected ? (
                 <div className="dashboard-wizards__stepper" aria-label={`${title} selected quantity`}>
                   <button
@@ -313,6 +362,36 @@ export default function DashboardWizards() {
           initialData={empState.status === 'completed' ? undefined : empState.data}
           onStepChange={(step, data) => saveEmpProgress(step, data)}
           onComplete={(data) => { saveEmpProgress(6, data); completeEmp() }}
+        />
+      )}
+
+      {isPPModalOpen && (
+        <PrivacyPolicyWizardModal
+          onClose={() => setIsPPModalOpen(false)}
+          initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
+          initialData={ppState.status === 'completed' ? undefined : ppState.data}
+          onStepChange={(step, data) => savePPProgress(step, data)}
+          onComplete={(data) => { savePPProgress(7, data); completePP() }}
+        />
+      )}
+
+      {isFAModalOpen && (
+        <FounderAgreementWizardModal
+          onClose={() => setIsFAModalOpen(false)}
+          initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
+          initialData={faState.status === 'completed' ? undefined : faState.data}
+          onStepChange={(step, data) => saveFAProgress(step, data)}
+          onComplete={(data) => { saveFAProgress(8, data); completeFA() }}
+        />
+      )}
+
+      {isSAModalOpen && (
+        <ServiceAgreementWizardModal
+          onClose={() => setIsSAModalOpen(false)}
+          initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
+          initialData={saState.status === 'completed' ? undefined : saState.data}
+          onStepChange={(step, data) => saveSAProgress(step, data)}
+          onComplete={(data) => { saveSAProgress(8, data); completeSA() }}
         />
       )}
     </DashboardShell>

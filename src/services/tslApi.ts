@@ -265,6 +265,10 @@ export const adminSettingsApi = {
   saveNotifications:       (payload: JsonRecord) => request('/api/v1/admin/settings/notifications', 'PUT', payload),
   getSecurity:             () => request('/api/v1/admin/settings/security'),
   saveSecurity:            (payload: JsonRecord) => request('/api/v1/admin/settings/security', 'PUT', payload),
+  // Password policy — fetched when modal opens, saved on modal submit.
+  // Switching to production only requires changing VITE_API_BASE_URL.
+  getPasswordPolicy:       () => request('/api/v1/admin/settings/password-policy'),
+  savePasswordPolicy:      (payload: JsonRecord) => request('/api/v1/admin/settings/password-policy', 'PUT', payload),
 }
 
 export const counselPortalApi = {
