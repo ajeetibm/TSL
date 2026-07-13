@@ -145,6 +145,27 @@ export interface AdminBillingData {
   total: number
 }
 
+// ── Admin Failed Payments ──────────────────────────────────────────────────
+
+export interface FailedPayment {
+  id: string
+  client: string
+  invoiceId: string
+  amount: number
+  currency: string
+  paymentMethod: string
+  failedAt: string
+  status: 'Failed'
+  errorCode: string
+  errorMessage: string
+}
+
+export interface FailedPaymentsResponse {
+  success: boolean
+  data: FailedPayment[]
+  message?: string
+}
+
 export interface QuickAccessLinks {
   gettingStartedGuideUrl: string | null
   videoTutorialUrl: string | null

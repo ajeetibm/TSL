@@ -146,6 +146,7 @@ import type {
   CounselCredits,
   CounselRequest,
   DashboardData,
+  FailedPayment,
   LegalLinks,
   NotificationsData,
   PaymentMethod,
@@ -158,6 +159,8 @@ export const smeApi = {
   dashboard: () => request<DashboardData>('/api/v1/sme/dashboard'),
   quickAccessLinks: () => request<QuickAccessLinks>('/api/v1/sme/quick-access-links'),
   legalLinks: () => request<LegalLinks>('/api/v1/sme/legal-links'),
+  getProfilePreferences: () => request<JsonRecord>('/api/v1/sme/profile/preferences'),
+  saveProfilePreferences: (payload: JsonRecord) => request('/api/v1/sme/profile/preferences', 'PUT', payload),
   downloadWorkflow: (workflowId: string, type = 'pdf') =>
     request(`/api/v1/sme/workflows/${workflowId}/download?type=${encodeURIComponent(type)}`),
   startWizard: (wizardId: string, notes = '') =>
@@ -234,6 +237,8 @@ export const profileApi = {
 export const adminApi = {
   dashboard: () => request('/api/v1/admin/dashboard'),
   profile: () => request('/api/v1/admin/profile'),
+  getProfilePreferences: () => request<JsonRecord>('/api/v1/admin/profile/preferences'),
+  saveProfilePreferences: (payload: JsonRecord) => request('/api/v1/admin/profile/preferences', 'PUT', payload),
   updateProfile: (payload: JsonRecord) => request('/api/v1/admin/profile', 'PUT', payload),
   changePassword: (payload: JsonRecord) => request('/api/v1/admin/change-password', 'PUT', payload),
   users: () => request('/api/v1/admin/users'),
@@ -245,6 +250,10 @@ export const adminApi = {
   assignCounselRequest: (requestId: string, payload: JsonRecord) =>
     request(`/api/v1/admin/counsel-requests/${requestId}/assign`, 'POST', payload),
   issues: () => request('/api/v1/admin/issues'),
+  // Fetch failed payment transactions.
+  // PRODUCTION: backend populates this from payment gateway webhooks / subscription failures.
+  // Replace mock endpoint with real API — no frontend changes needed.
+  failedPayments: () => request<FailedPayment[]>('/api/v1/admin/payments/failed'),
   billing: (params?: { search?: string; client?: string; plan?: string; month?: string }) => {
     const qs = new URLSearchParams()
     if (params?.search) qs.set('search', params.search)

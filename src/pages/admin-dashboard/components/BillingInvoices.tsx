@@ -13,6 +13,7 @@ import { AlertTriangle, CheckCircle2, CircleX, Clock, DollarSign, Download, Load
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { AdminBillingData, AdminInvoice } from '../../../services/dashboardTypes'
 import { adminApi } from '../../../services/tslApi'
+import FailedPaymentsModal from './FailedPaymentsModal'
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -334,6 +335,9 @@ export default function BillingInvoices() {
   // view modal
   const [viewingInvoice, setViewingInvoice] = useState<AdminInvoice | null>(null)
 
+  // failed payments modal
+  const [showFailedPayments, setShowFailedPayments] = useState(false)
+
   // export state
   const [exporting, setExporting]       = useState(false)
   const [exportToast, setExportToast]   = useState<ToastState | null>(null)
@@ -424,7 +428,7 @@ export default function BillingInvoices() {
           <div>
             <h2>Payment Reconciliation Required</h2>
             <p>{alert.message}</p>
-            <button type="button" onClick={() => void fetchBilling()}>
+            <button type="button" onClick={() => setShowFailedPayments(true)}>
               Review Failed Payments
             </button>
           </div>
@@ -585,6 +589,11 @@ export default function BillingInvoices() {
       {/* ── View Invoice Modal ── */}
       {viewingInvoice && (
         <ViewModal invoice={viewingInvoice} onClose={() => setViewingInvoice(null)} />
+      )}
+
+      {/* ── Failed Payments Modal ── */}
+      {showFailedPayments && (
+        <FailedPaymentsModal onClose={() => setShowFailedPayments(false)} />
       )}
 
       {/* ── Export Toast ── */}
