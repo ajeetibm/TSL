@@ -639,3 +639,17 @@
   line-height: 1.5;
   color: #6d6d6d;
 }
+
+.dashboard-profile__pref-footer {
+  margin-top: 28px;
+}
+
+@keyframes dp-spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-profile__pref-spinner {
+  animation: dp-spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+

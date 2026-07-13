@@ -1,8 +1,8 @@
-import { BriefcaseBusiness, Camera, Mail, MapPin, Phone, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, Camera, Loader2, Mail, MapPin, Phone, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { authApi, profileApi } from '../../services/tslApi'
+import { authApi, profileApi, smeApi } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
 import { useUserProfile } from '../../context/UserProfileContext'
 import type { UserProfile } from '../../context/UserProfileContext'
@@ -29,6 +29,17 @@ export default function DashboardProfile() {
   const [isPasswordSaving, setIsPasswordSaving] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+
+  // ── Email preferences ─────────────────────────────────────────────────────
+  type UserPrefs = { workflowUpdates: boolean; weeklySummary: boolean; productUpdates: boolean }
+  const EMPTY_PREFS: UserPrefs = { workflowUpdates: true, weeklySummary: true, productUpdates: true }
+  const [prefBaseline, setPrefBaseline] = useState<UserPrefs>(EMPTY_PREFS)
+  const [prefs, setPrefs] = useState<UserPrefs>(EMPTY_PREFS)
+  const [prefLoading, setPrefLoading] = useState(true)
+  const [prefSaving, setPrefSaving] = useState(false)
+  const [prefMessage, setPrefMessage] = useState<string | null>(null)
+  const prefMsgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isPrefDirty = (Object.keys(EMPTY_PREFS) as (keyof UserPrefs)[]).some((k) => prefs[k] !== prefBaseline[k])
 
   setPageMetadata('Profile', 'Manage your account settings and preferences.')
 
@@ -58,6 +69,44 @@ export default function DashboardProfile() {
       isCurrent = false
     }
   }, [profile.email, updateProfile])
+
+  useEffect(() => {
+    let cancelled = false
+    smeApi.getProfilePreferences().then((res) => {
+      if (cancelled) return
+      setPrefLoading(false)
+      if (res.success && res.data) {
+        const d = res.data as Partial<UserPrefs>
+        const loaded: UserPrefs = {
+          workflowUpdates: d.workflowUpdates ?? EMPTY_PREFS.workflowUpdates,
+          weeklySummary:   d.weeklySummary   ?? EMPTY_PREFS.weeklySummary,
+          productUpdates:  d.productUpdates  ?? EMPTY_PREFS.productUpdates,
+        }
+        setPrefBaseline(loaded)
+        setPrefs(loaded)
+      }
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const handlePrefSave = async () => {
+    if (!isPrefDirty || prefSaving) return
+    setPrefSaving(true)
+    setPrefMessage(null)
+    const res = await smeApi.saveProfilePreferences(prefs as unknown as Record<string, unknown>)
+    setPrefSaving(false)
+    if (!res.success) {
+      setPrefMessage('⚠ ' + (res.message ?? 'Failed to save preferences.'))
+      return
+    }
+    const saved = (res.data as Partial<UserPrefs>) ?? {}
+    const next: UserPrefs = { ...prefs, ...saved }
+    setPrefBaseline(next)
+    setPrefs(next)
+    setPrefMessage(res.message ?? 'Preferences saved successfully.')
+    if (prefMsgTimerRef.current) clearTimeout(prefMsgTimerRef.current)
+    prefMsgTimerRef.current = setTimeout(() => setPrefMessage(null), 4000)
+  }
 
   const handleInputChange = (field: keyof UserProfile, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -436,38 +485,55 @@ export default function DashboardProfile() {
             <div className="dashboard-profile__preferences">
               <section className="dashboard-profile__card">
                 <h2 className="dashboard-profile__preferences-title">Email Preferences</h2>
-                
-                <div className="dashboard-profile__preference-item">
-                  <div className="dashboard-profile__preference-content">
-                    <h3>Workflow Updates</h3>
-                    <p>Notifications about wizard progress and completions</p>
-                  </div>
-                  <label className="dashboard-profile__toggle">
-                    <input type="checkbox" defaultChecked />
-                    <span className="dashboard-profile__toggle-slider"></span>
-                  </label>
-                </div>
 
-                <div className="dashboard-profile__preference-item">
-                  <div className="dashboard-profile__preference-content">
-                    <h3>Weekly Summary</h3>
-                    <p>Receive a weekly digest of your activity</p>
+                {(
+                  [
+                    { key: 'workflowUpdates' as keyof UserPrefs, title: 'Workflow Updates',  desc: 'Notifications about wizard progress and completions' },
+                    { key: 'weeklySummary'   as keyof UserPrefs, title: 'Weekly Summary',    desc: 'Receive a weekly digest of your activity' },
+                    { key: 'productUpdates'  as keyof UserPrefs, title: 'Product Updates',   desc: 'News about new features and improvements' },
+                  ] as { key: keyof UserPrefs; title: string; desc: string }[]
+                ).map(({ key, title, desc }) => (
+                  <div className="dashboard-profile__preference-item" key={key}>
+                    <div className="dashboard-profile__preference-content">
+                      <h3>{title}</h3>
+                      <p>{desc}</p>
+                    </div>
+                    <label className="dashboard-profile__toggle">
+                      <input
+                        type="checkbox"
+                        checked={prefs[key]}
+                        disabled={prefLoading}
+                        onChange={() => {
+                          setPrefs((prev) => ({ ...prev, [key]: !prev[key] }))
+                          setPrefMessage(null)
+                        }}
+                      />
+                      <span className="dashboard-profile__toggle-slider" />
+                    </label>
                   </div>
-                  <label className="dashboard-profile__toggle">
-                    <input type="checkbox" defaultChecked />
-                    <span className="dashboard-profile__toggle-slider"></span>
-                  </label>
-                </div>
+                ))}
 
-                <div className="dashboard-profile__preference-item">
-                  <div className="dashboard-profile__preference-content">
-                    <h3>Product Updates</h3>
-                    <p>News about new features and improvements</p>
-                  </div>
-                  <label className="dashboard-profile__toggle">
-                    <input type="checkbox" defaultChecked />
-                    <span className="dashboard-profile__toggle-slider"></span>
-                  </label>
+                {prefMessage && (
+                  <p
+                    className={`dashboard-profile__save-message ${prefMessage.startsWith('⚠') ? 'dashboard-profile__save-message--error' : 'dashboard-profile__save-message--success'}`}
+                    style={{ marginTop: '16px' }}
+                    role={prefMessage.startsWith('⚠') ? 'alert' : 'status'}
+                  >
+                    {prefMessage}
+                  </p>
+                )}
+
+                <div className="dashboard-profile__pref-footer">
+                  <button
+                    type="button"
+                    className="dashboard-profile__update-button"
+                    disabled={!isPrefDirty || prefSaving}
+                    onClick={handlePrefSave}
+                  >
+                    {prefSaving
+                      ? <><Loader2 size={16} className="dashboard-profile__pref-spinner" /> Saving…</>
+                      : 'Save Preferences'}
+                  </button>
                 </div>
               </section>
             </div>
