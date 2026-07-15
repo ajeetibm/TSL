@@ -150,16 +150,21 @@ export default function DashboardCounsel() {
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
 
   useEffect(() => {
-    // Show success toast after returning from payment — run once per navigation
+    // Show success toast after returning from top-up payment — run once on mount.
     const state = location.state as { topUpSuccess?: boolean; creditsAdded?: number } | null
     if (!state?.topUpSuccess) return
 
     const added = state.creditsAdded ?? 1
     setTopUpToast(`${added} credit${added !== 1 ? 's' : ''} added successfully.`)
 
-    // Clear the navigation state immediately so a refresh won't re-show the toast.
-    // Use { state: null } to avoid triggering this effect again.
+    // Clear nav state immediately so a refresh won't re-show the toast.
     navigate('/dashboard/counsel', { replace: true, state: null })
+
+    // Re-fetch credits from the server so all counters reflect the new total
+    // immediately — no page reload needed.
+    counselApi.credits().then((res) => {
+      if (res.success && res.data) setCredits(res.data)
+    })
 
     const timer = setTimeout(() => setTopUpToast(''), 5000)
     return () => clearTimeout(timer)
@@ -570,7 +575,8 @@ export default function DashboardCounsel() {
           onClose={() => setIsCreditsModalOpen(false)}
           currentPlan={credits.plan}
           onTopUp={(plan: TopUpPlan) => {
-            navigate('/dashboard/counsel/topup', { state: { plan } })
+            // Pass current credits so the payment page can show used/remaining
+            navigate('/dashboard/counsel/topup', { state: { plan, credits } })
           }}
         />
       </main>

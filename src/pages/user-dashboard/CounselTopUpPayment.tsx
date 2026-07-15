@@ -1,13 +1,18 @@
-import { ArrowLeft, CheckCircle2, CreditCard, Scale } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CreditCard, Minus, Plus, Scale } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { counselApi, paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { setPageMetadata } from '../../services/metadata'
+import type { CounselCredits } from '../../services/dashboardTypes'
 import type { TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './CounselTopUpPayment.css'
+
+const VAT_RATE = 0.15
+const MIN_CREDITS = 1
+const MAX_CREDITS = 20
 
 function getStoredUserEmail() {
   try {
@@ -18,15 +23,22 @@ function getStoredUserEmail() {
   }
 }
 
+function fmtZAR(amount: number) {
+  return `R${amount.toLocaleString('en-ZA')}`
+}
+
 export default function CounselTopUpPayment() {
   const location = useLocation()
-  const navigate = useNavigate()
-  const plan = location.state?.plan as TopUpPlan | undefined
+  const navigate  = useNavigate()
+
+  const plan    = location.state?.plan    as TopUpPlan      | undefined
+  const credits = location.state?.credits as CounselCredits | undefined
 
   setPageMetadata('Top Up Credits', 'Purchase additional counsel credits.')
 
+  const [qty,      setQty]      = useState(1)
   const [isPaying, setIsPaying] = useState(false)
-  const [error, setError] = useState('')
+  const [error,    setError]    = useState('')
 
   // Guard: if no plan was passed, redirect back
   if (!plan) {
@@ -34,24 +46,35 @@ export default function CounselTopUpPayment() {
     return null
   }
 
-  const creditsAdded = plan.credits === 0 ? 1 : plan.credits
-  const amount = plan.ratePerCredit
-  const vat = Math.round(amount * 0.15)
-  const total = amount + vat
+  // ── order calculations ───────────────────────────────────────────────────
+  const unitPrice  = plan.ratePerCredit
+  const subtotal   = unitPrice * qty
+  const vat        = Math.round(subtotal * VAT_RATE)
+  const total      = subtotal + vat
 
+  // ── quantity handlers ────────────────────────────────────────────────────
+  const clamp = (n: number) => Math.max(MIN_CREDITS, Math.min(MAX_CREDITS, n))
+
+  function handleQtyInput(raw: string) {
+    const n = parseInt(raw, 10)
+    if (!Number.isNaN(n)) setQty(clamp(n))
+    else if (raw === '') setQty(MIN_CREDITS)
+  }
+
+  // ── payment handler ──────────────────────────────────────────────────────
   async function handleProceedToPay() {
     if (isPaying) return
     setError('')
     setIsPaying(true)
 
     const result = await openPaystackCheckout({
-      amount: total,
-      currency: 'ZAR',
-      email: getStoredUserEmail(),
-      plan: plan!.name,
-      paymentMethod: 'card',
+      amount:          total,
+      currency:        'ZAR',
+      email:           getStoredUserEmail(),
+      plan:            plan!.name,
+      paymentMethod:   'card',
       selectedWizards: [],
-      totalWizards: 0,
+      totalWizards:    0,
     })
 
     if (result.status === 'cancelled') {
@@ -66,26 +89,26 @@ export default function CounselTopUpPayment() {
       return
     }
 
-    // Step 1: Verify payment with backend
+    // Verify with backend — this records the transaction and activates credits
     const verification = await paymentApi.verifyPaystack({
-      reference: result.reference,
-      plan: plan!.name,
-      credits: creditsAdded,
-      type: 'counsel-topup',
+      reference:  result.reference,
+      plan:       plan!.name,
+      credits:    qty,
+      amountPaid: total,
+      type:       'counsel-topup',
     })
 
-    // Step 2: Regardless of verification status, call topUpCredits so credits
-    // are added to the account. If Paystack confirmed the payment, the backend
-    // should honour the credit addition. If verification fails, the payment
-    // webhook will reconcile — we still add credits optimistically so the user
-    // is not left without credits they paid for.
+    // Credit the account. If verification succeeded, the backend already added
+    // credits inside verifyPayment (counsel-topup branch). We also call
+    // topUpCredits explicitly so the credits GET reflects the new total
+    // immediately — the handler is idempotent on duplicate references.
     if (verification.success) {
       await counselApi.topUpCredits({
-        plan: plan!.name,
-        credits: creditsAdded,
+        plan:       plan!.name,
+        credits:    qty,
         amountPaid: total,
-        currency: 'ZAR',
-        reference: result.reference,
+        currency:   'ZAR',
+        reference:  result.reference,
       })
     }
 
@@ -93,7 +116,7 @@ export default function CounselTopUpPayment() {
 
     navigate('/dashboard/counsel', {
       replace: true,
-      state: { topUpSuccess: true, creditsAdded },
+      state:   { topUpSuccess: true, creditsAdded: qty },
     })
   }
 
@@ -121,56 +144,104 @@ export default function CounselTopUpPayment() {
           </button>
 
           <div className="counsel-topup-payment__layout">
-            {/* Plan summary card */}
+
+            {/* ── Plan summary card ── */}
             <section className="counsel-topup-payment__plan-card">
               <h2>Selected Plan</h2>
-              <div className="counsel-topup-payment__plan-name">
-                {plan.name}
-              </div>
+              <div className="counsel-topup-payment__plan-name">{plan.name}</div>
 
               <ul className="counsel-topup-payment__plan-details">
-                <li>
-                  <span>Credits included</span>
-                  <strong>{plan.credits === 0 ? '0 credits' : `${plan.credits} credits`}</strong>
-                </li>
+                {credits && (
+                  <>
+                    <li>
+                      <span>Included monthly credits</span>
+                      <strong>{credits.creditsTotal}</strong>
+                    </li>
+                    <li>
+                      <span>Credits used</span>
+                      <strong>{credits.creditsUsed}</strong>
+                    </li>
+                    <li>
+                      <span>Credits remaining</span>
+                      <strong>{credits.creditsRemaining}</strong>
+                    </li>
+                  </>
+                )}
                 <li>
                   <span>Response Time SLA</span>
                   <strong>{plan.sla}</strong>
                 </li>
                 <li>
                   <span>Rate per credit</span>
-                  <strong>R{plan.ratePerCredit.toLocaleString('en-ZA')}</strong>
+                  <strong>{fmtZAR(plan.ratePerCredit)}</strong>
                 </li>
               </ul>
             </section>
 
-            {/* Payment summary card */}
+            {/* ── Payment summary card ── */}
             <section className="counsel-topup-payment__summary-card">
               <div className="counsel-topup-payment__summary-header">
                 <CreditCard size={22} />
                 <h2>Payment Summary</h2>
               </div>
 
+              {/* Quantity selector */}
+              <div className="counsel-topup-payment__qty-row">
+                <span className="counsel-topup-payment__qty-label">Credits to purchase</span>
+                <div className="counsel-topup-payment__qty-controls">
+                  <button
+                    type="button"
+                    className="counsel-topup-payment__qty-btn"
+                    aria-label="Remove one credit"
+                    disabled={qty <= MIN_CREDITS || isPaying}
+                    onClick={() => setQty((q) => clamp(q - 1))}
+                  >
+                    <Minus size={15} />
+                  </button>
+                  <input
+                    type="number"
+                    className="counsel-topup-payment__qty-input"
+                    min={MIN_CREDITS}
+                    max={MAX_CREDITS}
+                    value={qty}
+                    disabled={isPaying}
+                    aria-label="Number of credits"
+                    onChange={(e) => handleQtyInput(e.target.value)}
+                    onBlur={() => setQty(clamp(qty))}
+                  />
+                  <button
+                    type="button"
+                    className="counsel-topup-payment__qty-btn"
+                    aria-label="Add one credit"
+                    disabled={qty >= MAX_CREDITS || isPaying}
+                    onClick={() => setQty((q) => clamp(q + 1))}
+                  >
+                    <Plus size={15} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Order breakdown */}
               <ul className="counsel-topup-payment__summary-rows">
                 <li>
-                  <span>{plan.name} Top-Up (1 credit)</span>
-                  <span>R{amount.toLocaleString('en-ZA')}</span>
+                  <span>
+                    {plan.name} Top-Up ({qty} credit{qty !== 1 ? 's' : ''} × {fmtZAR(unitPrice)})
+                  </span>
+                  <span>{fmtZAR(subtotal)}</span>
                 </li>
                 <li>
                   <span>VAT (15%)</span>
-                  <span>R{vat.toLocaleString('en-ZA')}</span>
+                  <span>{fmtZAR(vat)}</span>
                 </li>
               </ul>
 
               <div className="counsel-topup-payment__total">
                 <span>Total</span>
-                <strong>R{total.toLocaleString('en-ZA')}</strong>
+                <strong>{fmtZAR(total)}</strong>
               </div>
 
               {error && (
-                <p className="counsel-topup-payment__error" role="alert">
-                  {error}
-                </p>
+                <p className="counsel-topup-payment__error" role="alert">{error}</p>
               )}
 
               <button
@@ -180,13 +251,14 @@ export default function CounselTopUpPayment() {
                 disabled={isPaying}
               >
                 <CheckCircle2 size={18} />
-                {isPaying ? 'Processing...' : 'Proceed to Pay'}
+                {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
               </button>
 
               <p className="counsel-topup-payment__secure-note">
                 Secured via Paystack · ZAR · VAT incl.
               </p>
             </section>
+
           </div>
         </div>
       </main>

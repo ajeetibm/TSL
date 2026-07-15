@@ -197,6 +197,82 @@
   border-bottom: 0;
 }
 
+
+/* ── Quantity selector ──────────────────────────────────────────────── */
+.counsel-topup-payment__qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0 18px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 4px;
+}
+
+.counsel-topup-payment__qty-label {
+  color: #0b1c2f;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.counsel-topup-payment__qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid #d3a038;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.counsel-topup-payment__qty-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  color: #cf9b2f;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.counsel-topup-payment__qty-btn:hover:not(:disabled) {
+  background: rgba(211, 160, 56, 0.1);
+}
+
+.counsel-topup-payment__qty-btn:disabled {
+  color: #cccccc;
+  cursor: not-allowed;
+}
+
+.counsel-topup-payment__qty-input {
+  width: 48px;
+  height: 36px;
+  border: 0;
+  border-left: 1.5px solid #e8d5a0;
+  border-right: 1.5px solid #e8d5a0;
+  text-align: center;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b1c2f;
+  background: #fffdf5;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.counsel-topup-payment__qty-input::-webkit-inner-spin-button,
+.counsel-topup-payment__qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+.counsel-topup-payment__qty-input:disabled {
+  background: #f7f7f7;
+  color: #aaaaaa;
+}
+
+
 .counsel-topup-payment__total {
   display: flex;
   justify-content: space-between;
