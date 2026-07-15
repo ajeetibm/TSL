@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { billingApi } from '../../services/tslApi'
+import { billingApi, paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { PaymentMethod } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
@@ -158,10 +158,9 @@ export default function DashboardSettings() {
     setAddError(null)
     setAddingMethod(true)
 
-    // Open Paystack checkout for a R1 card authorization — the backend
-    // stores the card after a successful authorization. PRODUCTION: replace
-    // amount with your real card-authorization amount (e.g. R0 charge via
-    // Paystack's charge-and-refund flow, or a R1 setup fee).
+    // Step 1: Open Paystack checkout for a R1 card authorization.
+    // Paystack only returns a reference — card details are NOT available
+    // in the popup callback. We must verify via the server to get them.
     const result = await openPaystackCheckout({
       amount: 1,
       currency: 'ZAR',
@@ -186,34 +185,66 @@ export default function DashboardSettings() {
       return
     }
 
-    // Notify backend — it stores the card and returns the saved card object.
-    // PRODUCTION: pass real Paystack reusable-authorization token here.
-    const saveRes = await billingApi.addPaymentMethod({ reference: result.reference })
+    // Step 2: Verify server-side. Paystack's inline callback only returns a
+    // reference; the Verify API is the source of exact card metadata.
+    const verifyRes = await paymentApi.verifyPaystack({
+      reference: result.reference,
+      type: 'card-setup',
+    })
 
-    // Step 1: Immediately append the new card from the POST response so the
-    // UI updates right away, regardless of what the GET re-fetch returns.
-    if (saveRes.success && saveRes.data) {
-      const newCard = saveRes.data as PaymentMethod
-      if (newCard.type === 'card' && newCard.last4) {
-        setPaymentMethods((prev) => {
-          // Avoid duplicates if the card already exists
-          const exists = prev.some((m) => m.methodId === newCard.methodId)
-          return exists ? prev : [...prev, newCard]
-        })
-      }
+    if (!verifyRes.success || verifyRes.data?.status !== 'success') {
+      setAddingMethod(false)
+      setAddError(verifyRes.message || 'Unable to verify this Paystack payment. Please try again.')
+      return
     }
 
-    // Step 2: Refresh from server to get the authoritative list
-    // (dynamic route returns the full accumulated store after restart)
+    // Real Paystack: data.authorization.{ card_type, last4, exp_month, exp_year }
+    const auth = verifyRes.data?.authorization ?? {}
+
+    if (!auth.card_type || !auth.last4 || !auth.exp_month || !auth.exp_year) {
+      setAddingMethod(false)
+      setAddError('Paystack did not return verified card details. Configure PAYSTACK_SECRET_KEY on the server, then try again.')
+      return
+    }
+
+    // Step 3: Save the card — pass verified authorization fields so the mock
+    // stores the exact card returned by Paystack, never a guessed value.
+    const saveRes = await billingApi.addPaymentMethod({
+      reference: result.reference,
+      brand:     auth.card_type  ?? '',
+      last4:     auth.last4      ?? '',
+      exp_month: auth.exp_month  ?? '',
+      exp_year:  auth.exp_year   ?? '',
+    })
+
+    if (!saveRes.success) {
+      setAddingMethod(false)
+      const msg = saveRes.message || 'Failed to save payment method.'
+      setAddError(msg)
+      if (addErrTimerRef.current) clearTimeout(addErrTimerRef.current)
+      addErrTimerRef.current = setTimeout(() => setAddError(null), 5000)
+      return
+    }
+
+    // Step 4: Optimistically append the new card from the POST response so
+    // the UI updates immediately without waiting for the re-fetch.
+    const newCard = saveRes.data as PaymentMethod | undefined
+    if (newCard?.type === 'card' && newCard.last4) {
+      setPaymentMethods((prev) => {
+        const exists = prev.some((m) => m.methodId === newCard.methodId)
+        return exists ? prev : [...prev, newCard]
+      })
+    }
+
+    // Step 5: Re-fetch the authoritative list — always reflects the
+    // persisted file store so cards survive server restarts.
     const fresh = await billingApi.paymentMethods()
     if (fresh.success && fresh.data) {
       const freshCards = (fresh.data as PaymentMethod[]).filter(
         (m) => m.type === 'card' && m.last4
       )
-      // Only replace local state if the server returned MORE cards than we
-      // already have — prevents the static mock from wiping a just-added card
       setPaymentMethods((prev) =>
-        freshCards.length >= prev.length ? freshCards : prev
+        freshCards.length > 0 ? freshCards : prev
       )
     }
 

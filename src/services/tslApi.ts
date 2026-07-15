@@ -213,12 +213,24 @@ export interface PaystackInitialization {
   plan: string
 }
 
+export interface PaystackCardAuthorization {
+  authorization_code?: string
+  card_type?: string
+  last4?: string
+  exp_month?: string
+  exp_year?: string
+  bank?: string
+  reusable?: boolean
+}
+
 export interface PaystackVerification {
   provider: 'paystack'
   reference: string
   status: 'success' | 'failed' | 'cancelled'
   gatewayResponse: string
   paidAt?: string
+  /** Present on successful verification — real Paystack card authorization object */
+  authorization?: PaystackCardAuthorization
 }
 
 export const paymentApi = {
