@@ -53,6 +53,7 @@ export interface GoogleAuthPayload {
 
 export interface ForgotPasswordPayload {
   email: string
+  portal?: 'user' | 'admin' | 'counsel'
 }
 
 export interface ResetPasswordPayload {

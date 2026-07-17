@@ -1,6 +1,6 @@
 import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authApi, saveAuthSession } from '../../services/tslApi'
 import './CounselLogin.css'
 
@@ -105,6 +105,10 @@ export default function CounselLogin() {
           </label>
 
           {error && <p role="alert">{error}</p>}
+
+          <div className="counsel-login__forgot">
+            <Link to="/forgot-password?role=counsel">Forgot password?</Link>
+          </div>
 
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in...' : 'Sign In'}

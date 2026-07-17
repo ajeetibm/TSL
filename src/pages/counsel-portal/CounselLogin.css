@@ -124,6 +124,22 @@
   font-weight: 700;
 }
 
+.counsel-login__forgot {
+  text-align: right;
+  margin-top: -8px;
+}
+
+.counsel-login__forgot a {
+  font-size: 13px;
+  color: #c79a3b;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.counsel-login__forgot a:hover {
+  text-decoration: underline;
+}
+
 .counsel-login__card > button {
   min-height: 52px;
   border: 0;
