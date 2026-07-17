@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, MessageSquare, Scale, Send, Upload } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -318,6 +319,7 @@ export default function DashboardCounsel() {
     <DashboardShell activeSection="Counsel">
       <main className="dashboard-counsel">
         <header className="dashboard-counsel__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-counsel__header-marker" aria-hidden="true">
             <Scale size={18} />
           </span>

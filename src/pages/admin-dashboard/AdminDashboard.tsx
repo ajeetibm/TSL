@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
   Briefcase,
@@ -675,6 +676,12 @@ export default function AdminDashboard() {
 
       <main className="admin-dashboard__main">
         <header className="admin-dashboard__header">
+          {activeNav !== 'dashboard' && (
+            <BackButton
+              onClick={() => setActiveNav('dashboard')}
+              label="Back to Dashboard"
+            />
+          )}
           <h1>{headerTitle}</h1>
           <p>{headerDescription}</p>
         </header>

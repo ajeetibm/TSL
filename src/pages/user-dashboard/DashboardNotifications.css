@@ -5,14 +5,23 @@
 }
 
 .dashboard-notifications__header {
+  position: relative;
   min-height: 120px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 24px;
+  gap: 20px;
   border-bottom: 1px solid #dddddd;
   padding: 24px 32px;
   background: #ffffff;
+}
+
+.dashboard-notifications__header > div {
+  flex: 1;
+}
+
+.dashboard-notifications__header > button:last-child {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .dashboard-notifications__header h1 {
@@ -37,6 +46,22 @@
   color: #ffffff;
   font-weight: 800;
   cursor: pointer;
+}
+
+/* ── Back button reset — undoes the header button rule above ── */
+.dashboard-notifications__header .dashboard-back-btn {
+  min-height: 36px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #d3a038;
+  flex-shrink: 0;
+  transition: background 160ms ease;
+}
+
+.dashboard-notifications__header .dashboard-back-btn:hover {
+  background: #b8892e;
 }
 
 .dashboard-notifications__content {

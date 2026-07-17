@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   BadgeCheck,
   CalendarDays,
@@ -293,6 +294,7 @@ export default function DashboardSettings() {
     <DashboardShell activeSection="Settings">
       <main className="dashboard-settings">
         <header className="dashboard-settings__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-settings__header-marker" aria-hidden="true">
             <Settings size={18} />
           </span>

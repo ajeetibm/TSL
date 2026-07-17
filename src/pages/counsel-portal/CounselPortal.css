@@ -95,6 +95,7 @@
 }
 
 .counsel-portal__header {
+  position: relative;
   min-height: 147px;
   display: grid;
   gap: 12px;
@@ -102,6 +103,41 @@
   padding: 16px 32px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Back-navigation button — shared by portal header and profile header ─── */
+.counsel-portal__header .dashboard-back-btn,
+.counsel-profile__header .dashboard-back-btn {
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: #d3a038;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.counsel-portal__header .dashboard-back-btn:hover,
+.counsel-profile__header .dashboard-back-btn:hover {
+  background: #b8892e;
+}
+
+.counsel-portal__header .dashboard-back-btn:focus-visible,
+.counsel-profile__header .dashboard-back-btn:focus-visible {
+  outline: 2px solid #d3a038;
+  outline-offset: 2px;
 }
 
 .counsel-portal__header-row {

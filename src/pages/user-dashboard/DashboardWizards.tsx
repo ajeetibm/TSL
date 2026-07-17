@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   CheckCircle2,
   ChevronRight,
@@ -133,6 +134,7 @@ export default function DashboardWizards() {
     <DashboardShell activeSection="Wizards">
       <div className="dashboard-wizards">
         <header className="dashboard-wizards__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-wizards__header-marker" aria-hidden="true">
             <WandSparkles size={18} />
           </span>

@@ -95,12 +95,45 @@
 }
 
 .admin-dashboard__header {
+  position: relative;
   min-height: 120px;
   display: grid;
   align-content: center;
   border-bottom: 1px solid #dddddd;
   padding: 26px 66px;
   background: #ffffff;
+}
+
+/* ── Back-navigation button — matches the gold circle in the user dashboard ── */
+.admin-dashboard__header .dashboard-back-btn {
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: #d3a038;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.admin-dashboard__header .dashboard-back-btn:hover {
+  background: #b8892e;
+}
+
+.admin-dashboard__header .dashboard-back-btn:focus-visible {
+  outline: 2px solid #d3a038;
+  outline-offset: 2px;
 }
 
 .admin-dashboard__header h1 {

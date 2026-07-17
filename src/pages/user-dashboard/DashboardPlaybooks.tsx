@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
   BookOpen,
@@ -367,6 +368,7 @@ export default function DashboardPlaybooks() {
     <DashboardShell activeSection="Playbooks">
       <main className="dashboard-playbooks">
         <header className="dashboard-playbooks__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-playbooks__header-marker" aria-hidden="true">
             <BookOpen size={18} />
           </span>

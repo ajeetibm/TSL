@@ -1,6 +1,7 @@
 /* Counsel Profile Styles */
 
 .counsel-profile__header {
+  position: relative;
   min-height: 100px;
   display: flex;
   align-items: center;

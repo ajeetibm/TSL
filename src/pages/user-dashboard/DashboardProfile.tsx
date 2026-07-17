@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import { BriefcaseBusiness, Camera, Loader2, Mail, MapPin, Phone, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -186,6 +187,7 @@ export default function DashboardProfile() {
     <DashboardShell activeSection="Profile">
       <main className="dashboard-profile">
         <header className="dashboard-profile__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-profile__header-marker" aria-hidden="true">
             <UserRound size={18} />
           </span>

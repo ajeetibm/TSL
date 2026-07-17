@@ -29,6 +29,10 @@ vi.mock('../../services/tslApi', () => ({
   authApi: {
     changePassword: (...args: unknown[]) => mockAuthChangePassword(...args),
   },
+  smeApi: {
+    getProfilePreferences: vi.fn().mockResolvedValue({ success: false }),
+    updateProfilePreferences: vi.fn().mockResolvedValue({ success: true }),
+  },
 }))
 
 const mockProfile = {

@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import { Bell, CheckCircle2, Settings, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useNotificationCount } from '../../context/NotificationContext'
@@ -236,6 +237,7 @@ export default function DashboardNotifications() {
     <DashboardShell activeSection="Notifications">
       <main className="dashboard-notifications">
         <header className="dashboard-notifications__header">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <div>
             <h1>Notifications</h1>
             <p>Stay updated with your legal workflow activities</p>

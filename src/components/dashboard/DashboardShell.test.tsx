@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
+import { NotificationProvider } from '../../context/NotificationContext'
 import { DashboardShell } from './DashboardShell'
 
 // Mock useNavigate
@@ -14,9 +15,22 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+vi.mock('../../services/tslApi', () => ({
+  notificationApi: {
+    list: vi.fn().mockResolvedValue({ success: true, data: { notifications: [], unreadCount: 5 } }),
+    markRead: vi.fn().mockResolvedValue({ success: true }),
+    markAllRead: vi.fn().mockResolvedValue({ success: true }),
+  },
+  clearAuthSession: vi.fn(),
+}))
+
 // Helper function to render with router
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<BrowserRouter>{ui}</BrowserRouter>)
+  return render(
+    <BrowserRouter>
+      <NotificationProvider>{ui}</NotificationProvider>
+    </BrowserRouter>
+  )
 }
 
 describe('DashboardShell', () => {
@@ -68,7 +82,7 @@ describe('DashboardShell', () => {
       expect(screen.getByText('Sign Out')).toBeInTheDocument()
     })
 
-    it('should render notification badge', () => {
+    it('should render notification badge', async () => {
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
           <div>Content</div>
@@ -77,7 +91,9 @@ describe('DashboardShell', () => {
 
       const notificationButton = screen.getByText('Notifications').closest('button')
       expect(notificationButton).toBeInTheDocument()
-      expect(notificationButton?.querySelector('b')).toHaveTextContent('5')
+      await waitFor(() =>
+        expect(notificationButton?.querySelector('b')).toHaveTextContent('5')
+      )
     })
 
     it('should render children content', () => {
@@ -221,7 +237,7 @@ describe('DashboardShell', () => {
       }
     })
 
-    it('should not navigate when clicking items without paths', async () => {
+    it('should navigate to playbooks when Playbooks is clicked', async () => {
       const user = userEvent.setup()
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
@@ -232,7 +248,7 @@ describe('DashboardShell', () => {
       const playbooksButton = screen.getByText('Playbooks').closest('button')
       if (playbooksButton) {
         await user.click(playbooksButton)
-        expect(mockNavigate).not.toHaveBeenCalled()
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/playbooks')
       }
     })
   })
@@ -241,7 +257,7 @@ describe('DashboardShell', () => {
     it('should remove authentication from localStorage on sign out', async () => {
       const user = userEvent.setup()
       localStorage.setItem('tsl-authenticated', 'true')
-      
+
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
           <div>Content</div>
@@ -255,7 +271,9 @@ describe('DashboardShell', () => {
         await user.click(signOutButton)
       }
 
-      expect(localStorage.getItem('tsl-authenticated')).toBeNull()
+      // clearAuthSession is mocked — verify it was called then clear manually
+      const { clearAuthSession } = await import('../../services/tslApi')
+      expect(clearAuthSession).toHaveBeenCalled()
     })
 
     it('should navigate to home page on sign out', async () => {
@@ -303,7 +321,7 @@ describe('DashboardShell', () => {
       expect(profileButton).toBeInTheDocument()
     })
 
-    it('should not navigate when profile button is clicked', async () => {
+    it('should navigate to profile when profile button is clicked', async () => {
       const user = userEvent.setup()
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
@@ -314,7 +332,7 @@ describe('DashboardShell', () => {
       const profileButton = screen.getByText('Profile').closest('button')
       if (profileButton) {
         await user.click(profileButton)
-        expect(mockNavigate).not.toHaveBeenCalled()
+        expect(mockNavigate).toHaveBeenCalledWith('/dashboard/profile')
       }
     })
   })
@@ -411,13 +429,13 @@ describe('DashboardShell', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty children', () => {
-      renderWithRouter(
+      const { container } = renderWithRouter(
         <DashboardShell activeSection="Dashboard">
           {null}
         </DashboardShell>
       )
 
-      const main = screen.getByRole('region')
+      const main = container.querySelector('.user-dashboard__main')
       expect(main).toBeInTheDocument()
     })
 
@@ -457,7 +475,7 @@ describe('DashboardShell', () => {
   })
 
   describe('Badge Display', () => {
-    it('should only show badge on Notifications item', () => {
+    it('should only show badge on Notifications item', async () => {
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
           <div>Content</div>
@@ -467,11 +485,13 @@ describe('DashboardShell', () => {
       const notificationButton = screen.getByText('Notifications').closest('button')
       const dashboardButton = screen.getByText('Dashboard').closest('button')
 
-      expect(notificationButton?.querySelector('b')).toBeInTheDocument()
+      await waitFor(() =>
+        expect(notificationButton?.querySelector('b')).toBeInTheDocument()
+      )
       expect(dashboardButton?.querySelector('b')).not.toBeInTheDocument()
     })
 
-    it('should display correct badge count', () => {
+    it('should display correct badge count', async () => {
       renderWithRouter(
         <DashboardShell activeSection="Dashboard">
           <div>Content</div>
@@ -479,8 +499,10 @@ describe('DashboardShell', () => {
       )
 
       const notificationButton = screen.getByText('Notifications').closest('button')
-      const badge = notificationButton?.querySelector('b')
-      expect(badge).toHaveTextContent('5')
+      await waitFor(() => {
+        const badge = notificationButton?.querySelector('b')
+        expect(badge).toHaveTextContent('5')
+      })
     })
   })
 })

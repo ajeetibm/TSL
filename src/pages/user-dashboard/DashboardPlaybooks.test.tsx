@@ -16,7 +16,40 @@ vi.mock('../../services/metadata', () => ({
 
 vi.mock('../../services/tslApi', () => ({
   playbookApi: {
-    playBookList: vi.fn().mockResolvedValue({ success: false }),
+    playBookList: vi.fn().mockResolvedValue({
+      success: true,
+      data: {
+        playbookSections: [
+          {
+            title: 'Hiring',
+            icon: 'UsersRound',
+            cards: [
+              { title: 'Hiring Your First Employee', steps: '8 steps', time: '15 min', description: 'A comprehensive guide to compliant employee onboarding in South Africa, including BCEA requirements, contracts, and payroll setup.', wizards: ['Employment Contract (BCEA)', 'Employee Handbook'], icon: 'UsersRound' },
+              { title: 'Contractor vs Employee Classification', steps: '5 steps', time: '10 min', description: 'Understand the legal differences between contractors and employees, and ensure proper classification under South African labour law.', wizards: ['Independent Contractor Agreement'], icon: 'UsersRound' },
+              { title: 'Building an Employee Handbook', steps: '12 steps', time: '20 min', description: 'Create a comprehensive employee handbook that covers policies, procedures, and workplace expectations while ensuring legal compliance.', wizards: ['Employee Handbook Generator'], icon: 'FileText' },
+            ],
+          },
+          {
+            title: 'Compliance',
+            icon: 'Shield',
+            cards: [
+              { title: 'POPIA Compliance Basics', steps: '7 steps', time: '12 min', description: 'Set up practical privacy controls, consent language, and data handling processes for South African businesses.', wizards: ['Privacy Policy (POPIA Compliant)'], icon: 'Shield' },
+              { title: 'Document Retention Checklist', steps: '6 steps', time: '9 min', description: 'Know which company, employment, tax, and customer records to keep, and how long to retain them.', wizards: ['Records Retention Policy'], icon: 'FileText' },
+              { title: 'Website Legal Readiness', steps: '9 steps', time: '14 min', description: 'Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.', wizards: ['Terms of Service', 'Privacy Policy'], icon: 'WandSparkles' },
+            ],
+          },
+          {
+            title: 'Fundraising',
+            icon: 'TrendingUp',
+            cards: [
+              { title: 'Investor Meeting Prep', steps: '6 steps', time: '11 min', description: 'Prepare the core legal documents and confidentiality steps needed before sharing sensitive startup materials.', wizards: ['Non-Disclosure Agreement (NDA)', 'Founder Agreement'], icon: 'TrendingUp' },
+              { title: 'Founder Equity Readiness', steps: '8 steps', time: '16 min', description: 'Review founder roles, equity splits, vesting expectations, and decision-making before funding conversations.', wizards: ['Founder Agreement'], icon: 'UsersRound' },
+              { title: 'Due Diligence Pack', steps: '10 steps', time: '18 min', description: 'Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.', wizards: ['Board Resolution', 'Service Agreement'], icon: 'BookOpen' },
+            ],
+          },
+        ],
+      },
+    }),
   },
 }))
 
@@ -39,6 +72,13 @@ const renderDashboardPlaybooks = () => {
       <DashboardPlaybooks />
     </BrowserRouter>
   )
+}
+
+// jsdom does not implement ResizeObserver — polyfill it for tests that open the PDF modal
+window.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
 }
 
 describe('DashboardPlaybooks Page', () => {

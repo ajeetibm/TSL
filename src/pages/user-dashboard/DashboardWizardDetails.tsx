@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowLeft,
   ArrowRight,
@@ -652,6 +653,7 @@ export default function DashboardWizardDetails() {
     <DashboardShell activeSection="Wizards">
       <main className="dashboard-wizard-details">
         <section className="dashboard-wizard-details__page-head">
+          <BackButton to="/dashboard" label="Back to Dashboard" />
           <h1>Browse All Wizards</h1>
           <p>Select a legal wizard to generate your document</p>
         </section>

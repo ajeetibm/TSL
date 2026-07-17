@@ -1,3 +1,4 @@
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   BadgeDollarSign,
   CalendarDays,
@@ -372,6 +373,12 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
 
       <main className="counsel-portal__main">
         <header className="counsel-portal__header">
+          {mode !== 'dashboard' && (
+            <BackButton
+              onClick={() => navigate('/counsel/dashboard')}
+              label="Back to Dashboard"
+            />
+          )}
           <div className="counsel-portal__header-row">
             <div>
               <h2>Welcome, Counsel</h2>

@@ -18,6 +18,7 @@ import {
   X,
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
+import { BackButton } from '../../components/dashboard/BackButton'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 import './CounselProfile.css'
@@ -268,6 +269,7 @@ export default function CounselProfile() {
 
       <main className="counsel-portal__main">
         <header className="counsel-profile__header">
+          <BackButton to="/counsel/dashboard" label="Back to Dashboard" />
           <div>
             <h1>Profile</h1>
             <p>Manage your account settings and preferences</p>

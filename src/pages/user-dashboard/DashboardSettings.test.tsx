@@ -13,6 +13,21 @@ vi.mock('../../services/metadata', () => ({
   setPageMetadata: vi.fn(),
 }))
 
+vi.mock('../../services/tslApi', () => ({
+  billingApi: {
+    paymentMethods: vi.fn().mockResolvedValue({ success: true, data: [] }),
+    addPaymentMethod: vi.fn().mockResolvedValue({ success: false }),
+    setDefaultMethod: vi.fn().mockResolvedValue({ success: false }),
+  },
+  paymentApi: {
+    invoices: vi.fn().mockResolvedValue({ success: false }),
+  },
+}))
+
+vi.mock('../../services/paystackClient', () => ({
+  openPaystackCheckout: vi.fn().mockResolvedValue({ status: 'cancelled' }),
+}))
+
 const renderDashboardSettings = () => {
   return render(
     <BrowserRouter>
@@ -39,14 +54,14 @@ describe('DashboardSettings Page', () => {
 
   it('displays billing and history tabs', () => {
     renderDashboardSettings()
-    
-    expect(screen.getByRole('button', { name: /billing/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /history/i })).toBeInTheDocument()
+
+    expect(screen.getByRole('button', { name: /billing & subscription/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /billing history/i })).toBeInTheDocument()
   })
 
   it('shows billing tab by default', () => {
     renderDashboardSettings()
-    expect(screen.getByText(/payment methods/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/payment methods/i).length).toBeGreaterThan(0)
   })
 
   it('has accessible structure', () => {

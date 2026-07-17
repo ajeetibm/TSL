@@ -6,6 +6,7 @@
 }
 
 .dashboard-wizard-details__page-head {
+  position: relative;
   min-height: 126px;
   display: grid;
   align-content: center;
