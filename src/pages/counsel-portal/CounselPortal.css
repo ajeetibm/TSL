@@ -480,6 +480,28 @@
   color: #0d1b2a;
 }
 
+.counsel-dashboard__request-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.counsel-dashboard__request-status-badge--completed {
+  background: rgba(0, 166, 62, 0.1);
+  color: #00a63e;
+}
+
+.counsel-dashboard__request-status-badge--progress {
+  background: #fff6e7;
+  color: #bc7e12;
+}
+
 .counsel-dashboard__admin-requests {
   align-self: start;
 }
@@ -824,7 +846,8 @@
   font-weight: 800;
 }
 
-.counsel-requests__status--accepted {
+.counsel-requests__status--accepted,
+.counsel-requests__status--completed {
   background: rgba(0, 166, 62, 0.1);
   color: #00a63e;
 }
@@ -833,6 +856,72 @@
   background: #fef2f2;
   color: #fb2c36;
 }
+
+.counsel-requests__status--progress { background: #fff6e7; color: #bc7e12; }
+.counsel-requests__row { cursor: pointer; }
+
+.counsel-request-modal__backdrop { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; padding: 24px; background: rgba(0, 0, 0, .62); }
+.counsel-request-modal { width: min(900px, 100%); max-height: calc(100vh - 48px); overflow: auto; border-radius: 28px; background: #fff; box-shadow: 0 24px 60px rgba(0, 0, 0, .34); }
+.counsel-request-modal > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 30px 36px; background: #0d1b2a; color: #fff; }
+.counsel-request-modal > header p, .counsel-request-modal > header h2 { margin: 0; }
+.counsel-request-modal > header p { color: #d5a842; font-weight: 700; font-size: 13px; }
+.counsel-request-modal > header h2 { margin-top: 6px; font-family: var(--font-display); }
+.counsel-request-modal__close {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: #304156;
+  color: #fff;
+  cursor: pointer;
+}
+.counsel-request-modal__body { display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; padding: 30px 36px; }
+.counsel-request-modal__body section { border-radius: 18px; padding: 22px; background: #f5f6f7; }
+.counsel-request-modal h3, .counsel-request-modal h4 { margin: 0 0 14px; color: #0d1b2a; }
+.counsel-request-modal__details dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.counsel-request-modal dt { color: #667085; font-size: 12px; }
+.counsel-request-modal dd { margin: 3px 0 0; font-weight: 700; overflow-wrap: anywhere; }
+.counsel-request-modal__details > p, .counsel-request-modal__response > p { line-height: 1.6; white-space: pre-wrap; }
+.counsel-request-modal__details h4 { margin-top: 22px; }
+.counsel-request-modal__files p { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 14px; }
+.counsel-request-modal__response { display: grid; align-content: start; gap: 12px; }
+.counsel-request-modal__response label { display: grid; gap: 7px; color: #344054; font-size: 14px; font-weight: 700; }
+.counsel-request-modal textarea { min-height: 126px; resize: vertical; border: 1px solid #d0d5dd; border-radius: 12px; padding: 12px; font: inherit; font-weight: 400; }
+.counsel-request-modal__done, .counsel-request-modal__start { min-height: 44px; border: 0; border-radius: 999px; background: #d1a13b; color: #fff; font-weight: 800; cursor: pointer; }
+
+/* upload area */
+.counsel-request-modal__upload { display: grid; gap: 8px; }
+.counsel-request-modal__upload > span { color: #344054; font-size: 14px; font-weight: 700; }
+.counsel-request-modal__upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: 2px dashed #c8cdd5;
+  border-radius: 10px;
+  background: #f9fafb;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.counsel-request-modal__upload-btn:hover {
+  border-color: #d1a13b;
+  background: #fffbf0;
+  color: #a07020;
+}
+.counsel-request-modal__upload-btn input { display: none; }
+.counsel-request-modal__upload-list { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.counsel-request-modal__upload-list li { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #344054; }
+.counsel-request-modal__reject { margin-top: 10px; padding-top: 16px; border-top: 1px solid #d0d5dd; color: #b42318 !important; }
+.counsel-request-modal__reject textarea { min-height: 70px; }
+.counsel-request-modal__reject button { min-height: 38px; border: 0; border-radius: 9px; background: #fff0f0; color: #b42318; font-weight: 800; cursor: pointer; }
+.counsel-request-modal__error { margin: 0; color: #b42318; font-size: 13px; }
 
 .counsel-requests__row-details p {
   display: flex;
@@ -895,4 +984,7 @@
     grid-column: auto;
     justify-self: start;
   }
+
+  .counsel-request-modal__body { grid-template-columns: 1fr; padding: 20px; }
+  .counsel-request-modal > header { padding: 22px; }
 }

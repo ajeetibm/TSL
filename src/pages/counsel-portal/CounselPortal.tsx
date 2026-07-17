@@ -12,6 +12,7 @@ import {
   Scale,
   Search,
   TrendingUp,
+  Upload,
   UserRound,
   UsersRound,
   X,
@@ -23,20 +24,7 @@ import './CounselPortal.css'
 
 type CounselMode = 'dashboard' | 'requests'
 type Availability = 'available' | 'unavailable'
-type RequestStatus = 'pending' | 'accepted' | 'rejected'
-
-type CounselAcceptEmail = {
-  to?: string
-  cc?: string
-  from?: string
-  subject?: string
-  calendlyLink?: string
-  availabilityWindow?: string
-}
-
-type CounselAcceptResponse = {
-  email?: CounselAcceptEmail
-}
+type RequestStatus = 'pending' | 'in_progress' | 'completed' | 'rejected'
 
 type DashboardRequest = {
   requestId: string
@@ -54,6 +42,11 @@ type DashboardRequest = {
 type CounselRequest = DashboardRequest & {
   status: RequestStatus
   date: string
+  description?: string
+  relatedWizard?: string | null
+  attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
+  counselResponse?: string | null
+  supportingDocuments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
 }
 
 type EarningsMonth = {
@@ -65,8 +58,8 @@ type EarningsMonth = {
 type DashboardData = {
   kpis?: {
     totalRequests?: number
-    accepted?: number
-    acceptedRate?: string
+    completed?: number
+    completedRate?: string
     rejected?: number
     rejectedRate?: string
     totalEarnings?: number
@@ -145,7 +138,7 @@ const fallbackRequests: CounselRequest[] = [
     fromUser: 'David Brown',
     userEmail: 'david.brown@tech.com',
     earnings: 550,
-    status: 'accepted',
+    status: 'completed',
     assignedBy: 'Admin John',
     date: '2026-01-11',
   },
@@ -155,7 +148,7 @@ const fallbackRequests: CounselRequest[] = [
     fromUser: 'Sarah Johnson',
     userEmail: 'sarah.j@business.co.za',
     earnings: 500,
-    status: 'accepted',
+    status: 'completed',
     assignedBy: 'Admin Sarah',
     date: '2026-01-10',
   },
@@ -165,7 +158,7 @@ const fallbackRequests: CounselRequest[] = [
     fromUser: 'Robert Smith',
     userEmail: 'robert.s@ventures.com',
     earnings: 500,
-    status: 'accepted',
+    status: 'completed',
     assignedBy: 'Admin John',
     date: '2026-01-10',
   },
@@ -185,7 +178,7 @@ const fallbackRequests: CounselRequest[] = [
     fromUser: 'Thomas Wilson',
     userEmail: 'thomas.w@franchise.com',
     earnings: 550,
-    status: 'accepted',
+    status: 'completed',
     assignedBy: 'Admin John',
     date: '2026-01-08',
   },
@@ -195,7 +188,7 @@ const fallbackRequests: CounselRequest[] = [
     fromUser: 'Linda Martinez',
     userEmail: 'linda.m@corporate.co.za',
     earnings: 550,
-    status: 'accepted',
+    status: 'completed',
     assignedBy: 'Admin Sarah',
     date: '2026-01-08',
   },
@@ -213,10 +206,17 @@ function formatDate(value?: string) {
   return parsed.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+function normalizeStatus(status: RequestStatus | string): RequestStatus {
+  // Map legacy/API statuses to the approved workflow statuses
+  if (status === 'accepted' || status === 'assigned') return 'in_progress'
+  return status as RequestStatus
+}
+
 function normalizeRequests(payload: unknown): CounselRequest[] {
   const data = payload as { requests?: CounselRequest[] } | CounselRequest[] | undefined
-  if (Array.isArray(data)) return data.length ? data : fallbackRequests
-  return data?.requests?.length ? data.requests : fallbackRequests
+  const raw = Array.isArray(data) ? data : (data?.requests ?? [])
+  const list = raw.length ? raw : fallbackRequests
+  return list.map((r) => ({ ...r, status: normalizeStatus(r.status) }))
 }
 
 export default function CounselPortal({ mode }: { mode: CounselMode }) {
@@ -227,6 +227,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const [availability, setAvailability] = useState<Availability>('available')
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
+  const [selectedRequest, setSelectedRequest] = useState<CounselRequest | null>(null)
 
   useEffect(() => {
     try {
@@ -279,7 +280,10 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   }, [location.pathname])
 
   const kpis = dashboardData?.kpis ?? {}
-  const pendingRequests = dashboardData ? (dashboardData.pendingRequests ?? []) : fallbackPending
+  // Derive from live `requests` state so the dashboard reflects completions/rejections immediately
+  const pendingRequests = requests.length > 0
+    ? requests.filter((r) => r.status === 'pending')
+    : (dashboardData ? (dashboardData.pendingRequests ?? []) : fallbackPending)
   const acceptedRequests = dashboardData ? (dashboardData.acceptedRequests ?? []) : fallbackAccepted
   const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
   const chartYear = dashboardData?.earningsChart?.year ?? 2025
@@ -305,32 +309,26 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
     navigate('/')
   }
 
-  const setRequestStatus = async (requestId: string, status: RequestStatus) => {
-    const request = requests.find((item) => item.requestId === requestId)
-    setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status } : item)))
+  const setRequestStatus = async (requestId: string, status: RequestStatus, rejectionReason = 'Unavailable') => {
+    const normStatus = normalizeStatus(status)
+    setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status: normStatus } : item)))
 
-    if (status === 'accepted') {
+    if (normStatus === 'in_progress') {
       const response = await counselPortalApi.acceptRequest(requestId)
       if (response.success) {
-        const data = (response.data ?? {}) as CounselAcceptResponse
-        const email = data.email ?? {}
-        const emailState = {
-          requestId,
-          subject: request?.subject ?? email.subject,
-          to: email.to,
-          cc: email.cc,
-          from: email.from,
-          emailSubject: email.subject,
-          calendlyLink: email.calendlyLink,
-          availabilityWindow: email.availabilityWindow,
-        }
-
-        sessionStorage.setItem('tsl-counsel-email-preview', JSON.stringify(emailState))
-        navigate('/counsel/email-sent', { state: emailState })
+        setSelectedRequest((current) => current?.requestId === requestId ? { ...current, status: 'in_progress' } : current)
       }
-    } else if (status === 'rejected') {
-      await counselPortalApi.rejectRequest(requestId, 'Unavailable')
+    } else if (normStatus === 'rejected') {
+      await counselPortalApi.rejectRequest(requestId, rejectionReason)
     }
+  }
+
+  const completeRequest = async (requestId: string, response: string, supportingDocuments: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>) => {
+    const result = await counselPortalApi.completeRequest(requestId, { response, supportingDocuments })
+    if (!result.success) return result.message || 'Unable to complete this request.'
+    setRequests((current) => current.map((item) => item.requestId === requestId ? { ...item, status: 'completed', counselResponse: response, supportingDocuments } : item))
+    setSelectedRequest(null)
+    return ''
   }
 
   const toggleAvailability = async () => {
@@ -417,23 +415,97 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             chartYear={chartYear}
             months={months}
             pendingRequests={pendingRequests}
+            requests={requests}
             setRequestStatus={setRequestStatus}
+            onOpenRequest={setSelectedRequest}
             summary={summary}
           />
         ) : (
           <RequestsView
             requests={filteredRequests}
             search={search}
-            setRequestStatus={setRequestStatus}
             setSearch={setSearch}
             setStatusFilter={setStatusFilter}
             statusFilter={statusFilter}
             total={requests.length}
+            onOpenRequest={setSelectedRequest}
           />
         )}
+        {selectedRequest ? <RequestDetailsModal request={selectedRequest} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => setRequestStatus(id, 'rejected', reason)} /> : null}
       </main>
     </div>
   )
+}
+
+type DocMeta = { name: string; size?: number; type?: string; dataUrl?: string }
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+function RequestDetailsModal({
+  request, onClose, onComplete, onReject, onStartReview,
+}: {
+  request: CounselRequest
+  onClose: () => void
+  onComplete: (id: string, response: string, documents: DocMeta[]) => Promise<string>
+  onReject: (id: string, reason: string) => void
+  onStartReview: (id: string) => void
+}) {
+  const [response, setResponse] = useState(request.counselResponse || '')
+  const [reason, setReason] = useState('')
+  const [error, setError] = useState('')
+  const [documents, setDocuments] = useState<DocMeta[]>([])
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    const metas = await Promise.all(
+      files.map(async (f) => ({
+        name: f.name,
+        size: f.size,
+        type: f.type,
+        dataUrl: await readFileAsDataUrl(f),
+      }))
+    )
+    setDocuments(metas)
+  }
+
+  const finish = async () => {
+    if (!response.trim()) return setError('Please add your review comments before marking this request as done.')
+    setError(await onComplete(request.requestId, response.trim(), documents))
+  }
+  const reject = () => {
+    if (!reason.trim()) return setError('A rejection reason is required for the admin.')
+    onReject(request.requestId, reason.trim())
+    onClose()
+  }
+
+  return <div className="counsel-request-modal__backdrop" role="presentation" onMouseDown={onClose}>
+    <section className="counsel-request-modal" role="dialog" aria-modal="true" aria-labelledby="counsel-request-modal-title" onMouseDown={(event) => event.stopPropagation()}>
+      <header>
+        <div><p>Request details</p><h2 id="counsel-request-modal-title">{request.subject}</h2></div>
+        <button type="button" className="counsel-request-modal__close" aria-label="Close" onClick={onClose}><X size={18} /></button>
+      </header>
+      <div className="counsel-request-modal__body">
+        <section className="counsel-request-modal__details">
+          <h3>Request information</h3>
+          <dl><div><dt>From</dt><dd>{request.fromUser}</dd></div><div><dt>Email</dt><dd>{request.userEmail}</dd></div><div><dt>Assigned by</dt><dd>{request.assignedBy}</dd></div><div><dt>Assigned date</dt><dd>{formatDate(request.assignedAt || request.date)}</dd></div>{request.relatedWizard ? <div><dt>Related wizard</dt><dd>{request.relatedWizard}</dd></div> : null}</dl>
+          <h4>Request description</h4><p>{request.description || 'No additional description was provided.'}</p>
+          {request.attachments?.length ? <div className="counsel-request-modal__files"><h4>Uploaded documents</h4>{request.attachments.map((file) => <p key={file.name}><FileText size={16} />{file.name}</p>)}</div> : null}
+        </section>
+        {request.status !== 'completed' && request.status !== 'rejected' ? <section className="counsel-request-modal__response"><h3>Counsel response</h3>
+          {request.status === 'pending' ? <button type="button" className="counsel-request-modal__start" onClick={() => onStartReview(request.requestId)}>Accept &amp; start review</button> : <><label>Comments / recommendations<textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write the final advice and recommendations for the user..." /></label><div className="counsel-request-modal__upload"><span>Supporting documents (optional)</span><label className="counsel-request-modal__upload-btn" title="Click to upload supporting documents"><Upload size={15} />Upload documents<input type="file" multiple onChange={handleFiles} /></label>{documents.length > 0 && <ul className="counsel-request-modal__upload-list">{documents.map((file) => <li key={file.name}><FileText size={13} />{file.name}</li>)}</ul>}</div><button type="button" className="counsel-request-modal__done" onClick={finish}>Mark as Done</button></>}
+          <label className="counsel-request-modal__reject">Reject request (admin only)<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Mandatory reason for reassignment" /><button type="button" onClick={reject}>Reject &amp; return to admin</button></label>
+          {error ? <p className="counsel-request-modal__error">{error}</p> : null}
+        </section> : <section className="counsel-request-modal__response"><h3>{request.status === 'completed' ? 'Completed response' : 'Returned to admin'}</h3><p>{request.counselResponse || 'This request is no longer actionable.'}</p></section>}
+      </div>
+    </section>
+  </div>
 }
 
 function DashboardView({
@@ -442,7 +514,9 @@ function DashboardView({
   chartYear,
   months,
   pendingRequests,
+  requests,
   setRequestStatus,
+  onOpenRequest,
   summary,
 }: {
   acceptedRequests: NonNullable<DashboardData['acceptedRequests']>
@@ -450,14 +524,16 @@ function DashboardView({
   chartYear: number
   months: EarningsMonth[]
   pendingRequests: DashboardRequest[]
+  requests: CounselRequest[]
   setRequestStatus: (requestId: string, status: RequestStatus) => void
+  onOpenRequest: (request: CounselRequest) => void
   summary: NonNullable<NonNullable<DashboardData['earningsChart']>['summary']>
 }) {
   return (
     <div className="counsel-dashboard">
       <section className="counsel-dashboard__kpis" aria-label="Counsel summary">
         <KpiCard icon={<FileText size={27} />} value={kpis.totalRequests ?? 39} label="Total Requests" caption="All time requests" />
-        <KpiCard icon={<CircleCheckBig size={29} />} value={kpis.accepted ?? 32} label="Accepted" caption={`${kpis.acceptedRate ?? '68%'} success rate`} />
+        <KpiCard icon={<CircleCheckBig size={29} />} value={kpis.completed ?? 32} label="Completed" caption={`${kpis.completedRate ?? '68%'} completion rate`} />
         <KpiCard icon={<CircleX size={29} />} value={kpis.rejected ?? 7} label="Rejected" caption={`${kpis.rejectedRate ?? '15%'} rejection rate`} />
         <KpiCard dark icon={<BadgeDollarSign size={29} />} value={formatMoney(kpis.totalEarnings ?? 28450)} label="Total Earnings" caption="Revenue generated" />
       </section>
@@ -472,38 +548,51 @@ function DashboardView({
             <Link to="/counsel/requests">View All</Link>
           </div>
           <div className="counsel-dashboard__request-cards">
-            {pendingRequests.slice(0, 2).map((request) => (
-              <article className="counsel-dashboard__request-card" key={request.requestId}>
-                <div className="counsel-dashboard__request-title">
-                  <h4>{request.subject}</h4>
-                  <time>{request.timeAgo ?? '12 min ago'}</time>
-                </div>
-                <p className="counsel-dashboard__person">
-                  <UserRound size={14} />
-                  <strong>{request.fromUser}</strong>
-                </p>
-                <p>{request.userEmail}</p>
-                <p>
-                  Submitted by: <strong>{request.assignedBy}</strong>
-                </p>
-                <div className="counsel-dashboard__request-actions">
-                  <button type="button" onClick={() => setRequestStatus(request.requestId, 'accepted')}>
-                    <CircleCheck size={16} />
-                    Accept
-                  </button>
-                  <button type="button" onClick={() => setRequestStatus(request.requestId, 'rejected')}>
-                    <X size={16} />
-                    Reject
-                  </button>
-                </div>
-              </article>
-            ))}
+            {/* Show up to 2: pending first, then in_progress/completed so counsel sees their recent work */}
+            {[...pendingRequests, ...requests.filter((r) => r.status === 'in_progress' || r.status === 'completed')].slice(0, 2).map((request) => {
+              const isPending   = request.status === 'pending'
+              const isCompleted = request.status === 'completed'
+              const isInProgress = request.status === 'in_progress'
+              return (
+                <article className="counsel-dashboard__request-card" key={request.requestId}>
+                  <div className="counsel-dashboard__request-title">
+                    <h4>{request.subject}</h4>
+                    <time>{request.timeAgo ?? '12 min ago'}</time>
+                  </div>
+                  <p className="counsel-dashboard__person">
+                    <UserRound size={14} />
+                    <strong>{request.fromUser}</strong>
+                  </p>
+                  <p>{request.userEmail}</p>
+                  <p>
+                    Submitted by: <strong>{request.assignedBy}</strong>
+                  </p>
+                  {isPending ? (
+                    <div className="counsel-dashboard__request-actions">
+                      <button type="button" onClick={() => onOpenRequest({ ...request, status: 'pending', date: request.assignedAt ?? '' })}>
+                        <CircleCheck size={16} />
+                        Review
+                      </button>
+                      <button type="button" onClick={() => setRequestStatus(request.requestId, 'rejected')}>
+                        <X size={16} />
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <span className={`counsel-dashboard__request-status-badge counsel-dashboard__request-status-badge--${isCompleted ? 'completed' : 'progress'}`}>
+                      {isCompleted ? <CircleCheckBig size={15} /> : <CircleCheck size={15} />}
+                      {isCompleted ? 'Completed' : 'In Progress'}
+                    </span>
+                  )}
+                </article>
+              )
+            })}
           </div>
         </section>
 
         <section className="counsel-dashboard__accepted">
           <div className="counsel-dashboard__section-heading">
-            <h3>Requests Accepted</h3>
+            <h3>In Progress &amp; Completed</h3>
             <Link to="/counsel/requests">View All</Link>
           </div>
           {acceptedRequests.slice(0, 3).map((request) => (
@@ -646,16 +735,16 @@ function EarningsChart({
 
 function RequestsView({
   requests,
+  onOpenRequest,
   search,
-  setRequestStatus,
   setSearch,
   setStatusFilter,
   statusFilter,
   total,
 }: {
   requests: CounselRequest[]
+  onOpenRequest: (request: CounselRequest) => void
   search: string
-  setRequestStatus: (requestId: string, status: RequestStatus) => void
   setSearch: (value: string) => void
   setStatusFilter: (value: 'all' | RequestStatus) => void
   statusFilter: 'all' | RequestStatus
@@ -671,7 +760,8 @@ function RequestsView({
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'all' | RequestStatus)}>
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
-          <option value="accepted">Accepted</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
           <option value="rejected">Rejected</option>
         </select>
       </div>
@@ -684,24 +774,24 @@ function RequestsView({
 
         <div className="counsel-requests__list">
           {requests.map((request) => (
-            <article className="counsel-requests__row" key={request.requestId}>
+            <article className="counsel-requests__row" key={request.requestId} role="button" tabIndex={0} onClick={() => onOpenRequest(request)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') onOpenRequest(request) }}>
               <div className="counsel-requests__row-title">
                 <h4>{request.subject}</h4>
                 {request.status === 'pending' ? (
                   <div className="counsel-requests__row-actions">
-                    <button type="button" onClick={() => setRequestStatus(request.requestId, 'accepted')}>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onOpenRequest(request) }}>
                       <CircleCheck size={14} />
-                      Accept
+                      Review
                     </button>
-                    <button type="button" onClick={() => setRequestStatus(request.requestId, 'rejected')}>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onOpenRequest(request) }}>
                       <X size={14} />
                       Reject
                     </button>
                   </div>
                 ) : (
-                  <span className={request.status === 'accepted' ? 'counsel-requests__status counsel-requests__status--accepted' : 'counsel-requests__status counsel-requests__status--rejected'}>
-                    {request.status === 'accepted' ? <CircleCheck size={14} /> : <X size={14} />}
-                    {request.status === 'accepted' ? 'Accepted' : 'Rejected'}
+                  <span className={request.status === 'completed' ? 'counsel-requests__status counsel-requests__status--completed' : request.status === 'rejected' ? 'counsel-requests__status counsel-requests__status--rejected' : 'counsel-requests__status counsel-requests__status--progress'}>
+                    {request.status === 'completed' ? <CircleCheck size={14} /> : request.status === 'rejected' ? <X size={14} /> : <CircleCheck size={14} />}
+                    {request.status === 'completed' ? 'Completed' : request.status === 'rejected' ? 'Rejected' : 'In Progress'}
                   </span>
                 )}
               </div>

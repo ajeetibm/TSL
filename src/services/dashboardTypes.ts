@@ -55,6 +55,13 @@ export interface CounselRequest {
   status: string
   assignedCounsel?: string
   submittedAt: string
+  description?: string
+  relatedWizard?: string | null
+  attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
+  counselResponse?: string | null
+  responseDate?: string | null
+  completedAt?: string | null
+  supportingDocuments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
   responseUrl?: string | null
 }
 

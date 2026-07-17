@@ -514,7 +514,11 @@ export default function AdminDashboard() {
       if (!current?.recentCounselRequests) return current
       return {
         ...current,
-        recentCounselRequests: current.recentCounselRequests.filter((request) => request.requestId !== activeRequest.requestId),
+        recentCounselRequests: current.recentCounselRequests.map((request) =>
+          request.requestId === activeRequest.requestId
+            ? { ...request, status: 'in_progress' }
+            : request,
+        ),
       }
     })
     closeAssignmentModal()
@@ -1071,42 +1075,53 @@ export default function AdminDashboard() {
                   />
                 </label>
                 <select
-                  className="admin-dashboard__all-requests-select"
-                  value={requestFilterStatus}
-                  onChange={(e) => setRequestFilterStatus(e.target.value)}
-                >
-                  <option>All Status</option>
-                  <option>Pending</option>
-                  <option>Assigned</option>
-                  <option>Resolved</option>
-                </select>
+                 className="admin-dashboard__all-requests-select"
+                 value={requestFilterStatus}
+                 onChange={(e) => setRequestFilterStatus(e.target.value)}
+               >
+                 <option>All Status</option>
+                 <option>Pending</option>
+                 <option>In Progress</option>
+                 <option>Completed</option>
+               </select>
               </div>
             </div>
             {(() => {
               const filtered = counselRequests.filter((r) => {
                 const q = requestSearch.toLowerCase()
                 const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.fromUser.toLowerCase().includes(q)
-                const matchStatus = requestFilterStatus === 'All Status' || r.status.toLowerCase() === requestFilterStatus.toLowerCase()
+                // normalise both sides: 'in_progress' ↔ 'in progress'
+                const normStatus = r.status.toLowerCase().replace(/_/g, ' ')
+                const matchStatus = requestFilterStatus === 'All Status' || normStatus === requestFilterStatus.toLowerCase()
                 return matchSearch && matchStatus
               })
               return filtered.length === 0 ? (
                 <p className="admin-dashboard__all-requests-empty">No counsel requests match your filters.</p>
               ) : (
                 <div className="admin-dashboard__request-grid">
-                  {filtered.map((request) => (
-                    <article className="admin-dashboard__request-card" key={request.requestId}>
-                      <div>
-                        <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
-                        <time>{formatTimeAgo(request.receivedAt)}</time>
-                      </div>
-                      <p>
-                        From: <strong>{request.fromUser || 'Michael Chen'}</strong>
-                      </p>
-                      <button type="button" onClick={() => openPreviewModal(request)}>
-                        Preview &amp; Assign to Counsel
-                      </button>
-                    </article>
-                  ))}
+                  {filtered.map((request) => {
+                    const normStatus = request.status?.toLowerCase().replace(/_/g, ' ')
+                    const statusLabel = normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status
+                    return (
+                      <article className="admin-dashboard__request-card" key={request.requestId}>
+                        <div>
+                          <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
+                          <time>{formatTimeAgo(request.receivedAt)}</time>
+                        </div>
+                        <p>
+                          From: <strong>{request.fromUser || 'Michael Chen'}</strong>
+                        </p>
+                        <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
+                          {statusLabel}
+                        </span>
+                        {normStatus === 'pending' && (
+                          <button type="button" onClick={() => openPreviewModal(request)}>
+                            Preview &amp; Assign to Counsel
+                          </button>
+                        )}
+                      </article>
+                    )
+                  })}
                 </div>
               )
             })()}
@@ -1156,20 +1171,29 @@ export default function AdminDashboard() {
               <button type="button" onClick={() => setShowAllRequests(true)}>View All</button>
             </div>
             <div className="admin-dashboard__request-grid">
-              {counselRequests.map((request) => (
-                <article className="admin-dashboard__request-card" key={request.requestId}>
-                  <div>
-                    <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
-                    <time>{formatTimeAgo(request.receivedAt)}</time>
-                  </div>
-                  <p>
-                    From: <strong>{request.fromUser || 'Michael Chen'}</strong>
-                  </p>
-                  <button type="button" onClick={() => openPreviewModal(request)}>
-                    Preview &amp; Assign to Counsel
-                  </button>
-                </article>
-              ))}
+              {counselRequests.map((request) => {
+                const normStatus = request.status?.toLowerCase().replace(/_/g, ' ')
+                const statusLabel = normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status
+                return (
+                  <article className="admin-dashboard__request-card" key={request.requestId}>
+                    <div>
+                      <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
+                      <time>{formatTimeAgo(request.receivedAt)}</time>
+                    </div>
+                    <p>
+                      From: <strong>{request.fromUser || 'Michael Chen'}</strong>
+                    </p>
+                    <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
+                      {statusLabel}
+                    </span>
+                    {normStatus === 'pending' && (
+                      <button type="button" onClick={() => openPreviewModal(request)}>
+                        Preview &amp; Assign to Counsel
+                      </button>
+                    )}
+                  </article>
+                )
+              })}
             </div>
           </section>
 

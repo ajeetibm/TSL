@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, ArrowRight, Check, Loader2, Pencil, X } from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, X } from 'lucide-react'
 import { useState } from 'react'
 import { calcNdaProgress, NDA_TOTAL_REQUIRED, type NdaWizardData } from '../../hooks/useNdaWizard'
 import './NdaWizardModal.css'
@@ -510,6 +510,11 @@ export default function NdaWizardModal({
               >
                 <Check size={15} />
                 Generate NDA
+              </button>
+            ) : step === 5 ? (
+              <button type="button" className="nda-modal__btn nda-modal__btn--preview" onClick={next}>
+                <Eye size={15} />
+                Preview
               </button>
             ) : (
               <button type="button" className="nda-modal__btn nda-modal__btn--primary" onClick={next}>

@@ -137,7 +137,7 @@ const mockDashboardWithRequests = {
         subject: 'Employment Contract Review',
         fromUser: 'Sarah Dlamini',
         receivedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-        status: 'Assigned',
+        status: 'in_progress',
       },
     ],
     revenueChart: [],
@@ -480,11 +480,12 @@ describe('AdminDashboard — View All Requests', () => {
     expect(screen.getByText('Sarah Dlamini')).toBeInTheDocument()
   })
 
-  it('renders "Preview & Assign to Counsel" buttons for each card', async () => {
+  it('renders "Preview & Assign to Counsel" button only for pending cards', async () => {
     await renderAdminDashboard()
     await openViewAll()
+    // req-1 is 'Pending' → shows the button; req-2 is 'in_progress' → shows a status badge instead
     const assignBtns = screen.getAllByRole('button', { name: /preview & assign to counsel/i })
-    expect(assignBtns).toHaveLength(2)
+    expect(assignBtns).toHaveLength(1)
   })
 
   it('returns to the dashboard when Back to Dashboard is clicked', async () => {
@@ -533,7 +534,7 @@ describe('AdminDashboard — View All Requests', () => {
     await openViewAll()
     const select = screen.getByRole('combobox')
     await act(async () => {
-      fireEvent.change(select, { target: { value: 'Assigned' } })
+      fireEvent.change(select, { target: { value: 'In Progress' } })
     })
     expect(screen.getByText('Employment Contract Review')).toBeInTheDocument()
     expect(screen.queryByText('Review of SaaS Service Agreement')).not.toBeInTheDocument()
