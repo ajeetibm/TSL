@@ -1,0 +1,273 @@
+/* ── Auth Pages (Forgot Password / Reset Password / Reset Success) ─────────── */
+
+.auth-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+  background: #f4f4f4;
+  color: #0d1b2a;
+}
+
+.auth-page button,
+.auth-page input {
+  font: inherit;
+}
+
+.auth-page__panel {
+  width: min(100%, 460px);
+}
+
+/* ── Brand header ── */
+.auth-page__brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.auth-page__brand > span {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0d1b2a;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.auth-page__brand svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.auth-page__brand h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.auth-page__brand p {
+  margin: 3px 0 0;
+  color: #666666;
+  font-size: 13px;
+}
+
+/* ── Card ── */
+.auth-page__card {
+  display: grid;
+  gap: 22px;
+  border: 1px solid #e5e5e5;
+  border-radius: 28px;
+  padding: 34px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(13, 27, 42, 0.1);
+}
+
+.auth-page__card--center {
+  text-align: center;
+  justify-items: center;
+}
+
+.auth-page__card h2 {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.auth-page__card p {
+  margin: 8px 0 0;
+  color: #666666;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── Fields ── */
+.auth-page__card label {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0d1b2a;
+}
+
+.auth-page__field {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #d7d7d7;
+  border-radius: 999px;
+  padding: 0 16px;
+  color: #7a7a7a;
+  transition: border-color 150ms ease;
+}
+
+.auth-page__field:focus-within {
+  border-color: #c79a3b;
+  color: #0d1b2a;
+}
+
+.auth-page__field--error {
+  border-color: #c10007 !important;
+}
+
+.auth-page__field input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0d1b2a;
+}
+
+.auth-page__field button {
+  border: 0;
+  background: transparent;
+  color: #6d6d6d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.auth-page__field-error {
+  font-size: 12px;
+  font-weight: 600;
+  color: #c10007;
+  padding-left: 4px;
+}
+
+.auth-page__error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #c10007;
+}
+
+/* ── Password rules checklist ── */
+.auth-page__rules {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.auth-page__rules li {
+  font-size: 12px;
+  font-weight: 500;
+  color: #9e9e9e;
+  padding-left: 18px;
+  position: relative;
+  transition: color 150ms ease;
+}
+
+.auth-page__rules li::before {
+  content: '○';
+  position: absolute;
+  left: 0;
+  font-size: 10px;
+}
+
+.auth-page__rule--pass {
+  color: #00a83e !important;
+}
+
+.auth-page__rule--pass::before {
+  content: '✓' !important;
+}
+
+/* ── Buttons ── */
+.auth-page__btn--primary {
+  min-height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.auth-page__btn--primary:hover:not(:disabled) {
+  background: #b8882f;
+}
+
+.auth-page__btn--primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-page__btn--ghost {
+  min-height: 44px;
+  border: 1.5px solid #d7d7d7;
+  border-radius: 999px;
+  background: transparent;
+  color: #555555;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color 150ms ease, color 150ms ease;
+}
+
+.auth-page__btn--ghost:hover {
+  border-color: #c79a3b;
+  color: #c79a3b;
+}
+
+/* ── Spinner ── */
+.auth-page__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e5e5;
+  border-top-color: #c79a3b;
+  border-radius: 50%;
+  animation: auth-spin 0.7s linear infinite;
+}
+
+@keyframes auth-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Success icon ── */
+.auth-page__success-icon {
+  display: flex;
+  justify-content: center;
+  color: #00a83e;
+}
+
+/* ── Expired / invalid token block ── */
+.auth-page__expired {
+  display: grid;
+  gap: 10px;
+  text-align: center;
+  justify-items: center;
+  color: #c10007;
+}
+
+.auth-page__expired h2 {
+  color: #0d1b2a;
+}
+
+.auth-page__expired p {
+  color: #555555 !important;
+}

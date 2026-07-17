@@ -136,6 +136,7 @@ export const authApi = {
   register: (payload: RegisterPayload) => request<AuthUser>('/api/v1/auth/register', 'POST', payload, false),
   login: (payload: LoginPayload) => request<AuthUser>('/api/v1/auth/login', 'POST', payload, false),
   forgotPassword: (payload: ForgotPasswordPayload) => request('/api/v1/auth/forgot-password', 'POST', payload, false),
+  verifyResetToken: (token: string) => request(`/api/v1/auth/verify-reset-token?token=${encodeURIComponent(token)}`, 'GET', undefined, false),
   resetPassword: (payload: ResetPasswordPayload) => request('/api/v1/auth/reset-password', 'POST', payload, false),
   google: (payload: GoogleAuthPayload) => request<AuthUser>('/api/v1/auth/google', 'POST', payload, false),
   changePassword: (payload: JsonRecord) => request('/api/v1/auth/change-password', 'PUT', payload),

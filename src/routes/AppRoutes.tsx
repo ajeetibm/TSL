@@ -6,6 +6,9 @@ import { CounselRequestProvider } from '../context/CounselRequestContext'
 import { RootLayout } from '../layouts/RootLayout'
 import { ProtectedRoute } from './ProtectedRoute'
 
+const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'))
+const ResetPassword  = lazy(() => import('../pages/auth/ResetPassword'))
+const ResetSuccess   = lazy(() => import('../pages/auth/ResetSuccess'))
 const Home = lazy(() => import('../pages/Home'))
 const About = lazy(() => import('../pages/About'))
 const Features = lazy(() => import('../pages/Features'))
@@ -55,6 +58,11 @@ export function AppRoutes() {
           <Route path="playbooks-insights" element={<PlaybooksInsights />} />
           <Route path="wizard-catalogue" element={<WizardCatalogue />} />
           <Route path="wizard-details" element={<WizardDetails />} />
+
+          {/* Password reset flow — public */}
+          <Route path="forgot-password" element={<ForgotPassword />} />
+          <Route path="reset-password"  element={<ResetPassword />} />
+          <Route path="reset-success"   element={<ResetSuccess />} />
 
           {/* Counsel login is public */}
           <Route path="counsel/login" element={<CounselLogin />} />

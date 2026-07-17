@@ -334,6 +334,7 @@ function SignInModalContent({
               <div className="signin-modal__forgot">
                 <button
                   type="button"
+                  onClick={() => { onClose(); navigate('/forgot-password') }}
                 >
                   Forgot password?
                 </button>
