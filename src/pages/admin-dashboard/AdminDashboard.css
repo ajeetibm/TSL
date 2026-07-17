@@ -418,6 +418,37 @@
   box-shadow: 0 10px 18px rgba(207, 155, 47, 0.26);
 }
 
+/* ── Counsel request status badge ─────────────────────────────────────────── */
+.admin-dashboard__request-status {
+  display: inline-flex;
+  align-items: center;
+  margin: 10px 0 12px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: capitalize;
+  width: fit-content;
+}
+
+.admin-dashboard__request-status--pending {
+  background: #fff7e6;
+  color: #b07b00;
+  border: 1px solid #f0c44a;
+}
+
+.admin-dashboard__request-status--in-progress {
+  background: #e8f0fe;
+  color: #1a56c4;
+  border: 1px solid #a0bcf8;
+}
+
+.admin-dashboard__request-status--completed {
+  background: #e6f9f0;
+  color: #1a7a46;
+  border: 1px solid #6fcf97;
+}
+
 .admin-dashboard__side {
   display: grid;
   gap: 26px;

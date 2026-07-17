@@ -305,6 +305,8 @@ export const counselPortalApi = {
     request(email ? `/api/v1/counsel/profile?email=${encodeURIComponent(email)}` : '/api/v1/counsel/profile'),
   availability: (availability: string) => request('/api/v1/counsel/availability', 'PATCH', { availability }),
   acceptRequest: (requestId: string) => request(`/api/v1/counsel/requests/${requestId}/accept`, 'POST'),
+  completeRequest: (requestId: string, payload: JsonRecord) =>
+    request(`/api/v1/counsel/requests/${requestId}/complete`, 'POST', payload),
   rejectRequest: (requestId: string, reason: string) =>
     request(`/api/v1/counsel/requests/${requestId}/reject`, 'POST', { reason }),
   requests: (email?: string) =>

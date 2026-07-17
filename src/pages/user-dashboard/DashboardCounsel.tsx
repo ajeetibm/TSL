@@ -1,4 +1,4 @@
-import { CheckCircle2, ChevronRight, CircleDot, DollarSign, MessageSquare, Scale, Send, Upload } from 'lucide-react'
+import { CheckCircle2, ChevronRight, CircleDot, DollarSign, FileText, MessageSquare, Scale, Send, Upload, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -27,6 +27,12 @@ type CounselHistoryRequest = {
   reviewer: string
   status: string
   responseUrl?: string | null
+  description?: string
+  relatedWizard?: string | null
+  attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
+  counselResponse?: string | null
+  responseDate?: string | null
+  supportingDocuments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
 }
 
 type CreatedCounselRequest = {
@@ -37,6 +43,13 @@ type CreatedCounselRequest = {
   submittedAt?: string
   creditsRemaining?: number
   responseUrl?: string | null
+  description?: string
+  relatedWizard?: string | null
+  attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
+  counselResponse?: string | null
+  responseDate?: string | null
+  completedAt?: string | null
+  supportingDocuments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
 }
 
 type CounselRequestResponse = CounselRequest[] | { requests?: CounselRequest[] }
@@ -98,24 +111,33 @@ function formatStatus(status?: string) {
 }
 
 function toHistoryRequest(request: CounselRequest | CreatedCounselRequest): CounselHistoryRequest {
-  const status = formatStatus(request.status)
-  const isPending = status.toLowerCase() === 'pending'
-  const isAssigned = status.toLowerCase() === 'assigned'
+  const rawStatus = (request.status ?? '').toLowerCase()
+  // Normalise legacy / API statuses so the user never sees "Assigned" or "Accepted"
+  const normalisedStatus =
+    rawStatus === 'assigned' ? 'in_progress' :
+    rawStatus === 'accepted' ? 'completed' :
+    request.status ?? 'pending'
+  const status = formatStatus(normalisedStatus)
+  const isPending = rawStatus === 'pending'
   const reviewer = request.assignedCounsel
     ? `Reviewed by ${request.assignedCounsel}`
     : isPending
       ? 'Awaiting admin assignment'
-      : isAssigned
-        ? 'Assigned to counsel'
-        : 'Submitted'
+      : 'Under review'
 
   return {
     requestId: request.requestId ?? `local-${Date.now()}`,
     title: request.subject ?? 'Counsel Request',
     date: formatRequestDate(request.submittedAt),
     reviewer,
-    status,
+    status: normalisedStatus === 'in_progress' ? 'In Progress' : status,
     responseUrl: request.responseUrl ?? null,
+    description: request.description,
+    relatedWizard: request.relatedWizard,
+    attachments: request.attachments,
+    counselResponse: request.counselResponse,
+    responseDate: request.responseDate ?? request.completedAt,
+    supportingDocuments: request.supportingDocuments,
   }
 }
 
@@ -144,6 +166,7 @@ export default function DashboardCounsel() {
   const [errorMessage, setErrorMessage] = useState('')
   const [isCreditsModalOpen, setIsCreditsModalOpen] = useState(false)
   const [topUpToast, setTopUpToast] = useState('')
+  const [activeRequest, setActiveRequest] = useState<CounselHistoryRequest | null>(null)
   const submitInFlightRef = useRef(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -266,6 +289,7 @@ export default function DashboardCounsel() {
         fromUser: 'Thabo Molefe',
         userEmail: 'thabo@company.co.za',
         company: 'FibreGents (Pty) Ltd',
+        attachments: attachments.map((file) => ({ name: file.name, size: file.size, type: file.type })),
       })
 
       if (!response.success) {
@@ -280,6 +304,10 @@ export default function DashboardCounsel() {
         status: created?.status ?? 'pending',
         submittedAt: created?.submittedAt ?? new Date().toISOString(),
         responseUrl: created?.responseUrl ?? null,
+        // Carry the fields the user typed/uploaded so the modal shows them immediately
+        description: created?.description ?? description,
+        relatedWizard: created?.relatedWizard ?? (formData.relatedWizard || undefined),
+        attachments: created?.attachments ?? attachments.map((f) => ({ name: f.name, size: f.size, type: f.type })),
       })
 
       // Save attachments so admin Preview modal can access them
@@ -532,9 +560,9 @@ export default function DashboardCounsel() {
                 {successMessage ? (
                   <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
                 ) : null}
-                {history.map((request) => {
+                {history.filter((request) => request.status.toLowerCase() !== 'rejected').map((request) => {
                   const statusKey = request.status.toLowerCase()
-                  const isCompleted = statusKey === 'completed' || statusKey === 'accepted'
+                  const isCompleted = statusKey === 'completed'
                   const StatusIcon = isCompleted ? CheckCircle2 : CircleDot
 
                   return (
@@ -559,7 +587,7 @@ export default function DashboardCounsel() {
                         {request.status}
                       </span>
 
-                      <button type="button" className="dashboard-counsel__response">
+                      <button type="button" className="dashboard-counsel__response" onClick={() => setActiveRequest(request)}>
                         View Response
                       </button>
                     </article>
@@ -579,7 +607,88 @@ export default function DashboardCounsel() {
             navigate('/dashboard/counsel/topup', { state: { plan, credits } })
           }}
         />
+        {activeRequest ? (() => {
+          const statusKey = activeRequest.status.toLowerCase()
+          const isPending   = statusKey === 'pending'
+          const isInProgress = statusKey === 'in progress' || statusKey === 'in_progress'
+          const isCompleted  = statusKey === 'completed'
+          const headerLabel  = isCompleted ? 'Completed counsel request' : 'Counsel request'
+          return (
+            <div className="dashboard-counsel__response-modal-backdrop" role="presentation" onMouseDown={() => setActiveRequest(null)}>
+              <section className="dashboard-counsel__response-modal" role="dialog" aria-modal="true" aria-labelledby="counsel-modal-title" onMouseDown={(e) => e.stopPropagation()}>
+                <header>
+                  <div>
+                    <p>{headerLabel}</p>
+                    <h2 id="counsel-modal-title">{activeRequest.title}</h2>
+                  </div>
+                  <button type="button" className="dashboard-counsel__modal-close" aria-label="Close" onClick={() => setActiveRequest(null)}><X size={18} /></button>
+                </header>
+                <div className="dashboard-counsel__response-modal-body">
+                  {/* ── Your submitted request ── */}
+                  <section>
+                    <h3>Your request</h3>
+                    <dl>
+                      <div><dt>Request ID</dt><dd>{activeRequest.requestId}</dd></div>
+                      <div><dt>Submitted</dt><dd>{activeRequest.date}</dd></div>
+                      <div><dt>Status</dt><dd>{activeRequest.status}</dd></div>
+                      {activeRequest.relatedWizard ? <div><dt>Related wizard</dt><dd>{activeRequest.relatedWizard}</dd></div> : null}
+                    </dl>
+                    {activeRequest.description ? <p>{activeRequest.description}</p> : null}
+                    {activeRequest.attachments?.length ? <FileList title="Your attachments" files={activeRequest.attachments} /> : null}
+                  </section>
+
+                  {/* ── Status-specific bottom section ── */}
+                  {isPending && (
+                    <section className="dashboard-counsel__view-request-notice">
+                      <CircleDot size={18} />
+                      <p>Your request is awaiting admin assignment. You will be notified once a counsel member has been assigned.</p>
+                    </section>
+                  )}
+                  {isInProgress && (
+                    <section className="dashboard-counsel__view-request-notice dashboard-counsel__view-request-notice--blue">
+                      <CircleDot size={18} />
+                      <p>Your request is currently under review by a counsel member. You will be notified once completed.</p>
+                    </section>
+                  )}
+                  {isCompleted && (
+                    <section className="dashboard-counsel__counsel-reply">
+                      <h3>Counsel response</h3>
+                      <p>{activeRequest.counselResponse || 'The counsel response is available.'}</p>
+                      <small>{activeRequest.responseDate ? `Completed ${formatRequestDate(activeRequest.responseDate)}` : 'Completed'}</small>
+                      {activeRequest.supportingDocuments?.length ? <FileList title="Supporting documents" files={activeRequest.supportingDocuments} /> : null}
+                    </section>
+                  )}
+                </div>
+              </section>
+            </div>
+          )
+        })() : null}
       </main>
     </DashboardShell>
+  )
+}
+
+function FileList({ files, title }: { files: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>; title: string }) {
+  return (
+    <div className="dashboard-counsel__response-files">
+      <h4>{title}</h4>
+      {files.map((file) => (
+        <p key={file.name}>
+          <FileText size={16} />
+          {file.dataUrl ? (
+            <a
+              href={file.dataUrl}
+              download={file.name}
+              className="dashboard-counsel__file-download"
+            >
+              {file.name}
+            </a>
+          ) : (
+            file.name
+          )}
+          {file.size ? <small>{Math.ceil(file.size / 1024)} KB</small> : null}
+        </p>
+      ))}
+    </div>
   )
 }
