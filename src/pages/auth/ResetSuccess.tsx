@@ -1,9 +1,28 @@
 import { CheckCircle2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import './Auth.css'
+
+type Role = 'user' | 'admin' | 'counsel' | ''
+
+const LOGIN_PATHS: Record<string, string> = {
+  admin:   '/admin/dashboard',
+  counsel: '/counsel/login',
+  user:    '/',
+}
+
+const LOGIN_LABELS: Record<string, string> = {
+  admin:   'Go to Admin Login',
+  counsel: 'Go to Counsel Login',
+  user:    'Back to Login',
+}
 
 export default function ResetSuccess() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const role: Role = (location.state as { role?: Role })?.role ?? ''
+
+  const loginPath  = LOGIN_PATHS[role]  ?? '/'
+  const loginLabel = LOGIN_LABELS[role] ?? 'Back to Login'
 
   return (
     <main className="auth-page">
@@ -12,24 +31,34 @@ export default function ResetSuccess() {
           <span><TslIcon /></span>
           <div>
             <h1>The Startup Legal</h1>
-            <p>Legal Platform</p>
+            <p>Password Reset</p>
           </div>
         </div>
 
         <div className="auth-page__card">
           <div className="auth-page__success-icon">
-            <CheckCircle2 size={48} />
+            <CheckCircle2 size={52} />
           </div>
+
           <div>
-            <h2>Password Updated</h2>
-            <p>Your password has been updated successfully. You can now sign in with your new password.</p>
+            <h2>Password Updated!</h2>
+            <p>
+              Your password has been updated successfully. You can now sign in
+              using your new password.
+            </p>
+            {role && (
+              <p className="auth-page__success-note">
+                Your new password will remain active until the mock server is restarted.
+              </p>
+            )}
           </div>
+
           <button
             type="button"
             className="auth-page__btn--primary"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(loginPath)}
           >
-            Back to Login
+            {loginLabel}
           </button>
         </div>
       </section>

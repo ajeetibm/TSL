@@ -1,5 +1,5 @@
 import { Eye, EyeOff, LockKeyhole, ShieldAlert } from 'lucide-react'
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../../services/tslApi'
 import './Auth.css'
@@ -7,14 +7,21 @@ import './Auth.css'
 type PasswordRule = { label: string; test: (v: string) => boolean }
 
 const PASSWORD_RULES: PasswordRule[] = [
-  { label: 'At least 8 characters',       test: (v) => v.length >= 8 },
-  { label: 'One uppercase letter (A–Z)',   test: (v) => /[A-Z]/.test(v) },
-  { label: 'One lowercase letter (a–z)',   test: (v) => /[a-z]/.test(v) },
-  { label: 'One number (0–9)',             test: (v) => /[0-9]/.test(v) },
-  { label: 'One special character (!@#…)', test: (v) => /[^A-Za-z0-9]/.test(v) },
+  { label: 'At least 8 characters',        test: (v) => v.length >= 8 },
+  { label: 'One uppercase letter (A–Z)',    test: (v) => /[A-Z]/.test(v) },
+  { label: 'One lowercase letter (a–z)',    test: (v) => /[a-z]/.test(v) },
+  { label: 'One number (0–9)',              test: (v) => /[0-9]/.test(v) },
+  { label: 'One special character (!@#…)',  test: (v) => /[^A-Za-z0-9]/.test(v) },
 ]
 
 type TokenStatus = 'checking' | 'valid' | 'invalid'
+type Role = 'user' | 'admin' | 'counsel' | ''
+
+const ROLE_LABELS: Record<string, string> = {
+  user:    'User Account',
+  admin:   'Admin Account',
+  counsel: 'Counsel Account',
+}
 
 export default function ResetPassword() {
   const navigate = useNavigate()
@@ -23,6 +30,8 @@ export default function ResetPassword() {
 
   const [tokenStatus, setTokenStatus] = useState<TokenStatus>('checking')
   const [tokenMessage, setTokenMessage] = useState('')
+  const [tokenRole, setTokenRole]       = useState<Role>('')
+  const [tokenEmail, setTokenEmail]     = useState('')
 
   const [password, setPassword]         = useState('')
   const [confirm, setConfirm]           = useState('')
@@ -32,18 +41,26 @@ export default function ResetPassword() {
   const [apiError, setApiError]         = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Verify token on mount
+  // Guard against StrictMode double-invoke
+  const verifiedRef = useRef(false)
+
   useEffect(() => {
+    if (verifiedRef.current) return
+    verifiedRef.current = true
+
     if (!token) {
       setTokenStatus('invalid')
       setTokenMessage('No reset token found. Please request a new reset link.')
       return
     }
+
     authApi.verifyResetToken(token)
       .then((res) => {
-        const data = res as unknown as { valid?: boolean; message?: string }
+        const data = res as unknown as { valid?: boolean; message?: string; role?: Role; email?: string }
         if (data.valid) {
           setTokenStatus('valid')
+          setTokenRole(data.role ?? '')
+          setTokenEmail(data.email ?? '')
         } else {
           setTokenStatus('invalid')
           setTokenMessage(data.message ?? 'Reset link has expired.')
@@ -51,25 +68,28 @@ export default function ResetPassword() {
       })
       .catch(() => {
         setTokenStatus('invalid')
-        setTokenMessage('Cannot verify your reset link. Please check the server is running.')
+        setTokenMessage('Cannot verify reset link. Please check the mock server is running on port 8080.')
       })
   }, [token])
 
   function validateForm() {
-    const errors: { password?: string; confirm?: string } = {}
-    const failedRule = PASSWORD_RULES.find((r) => !r.test(password))
-    if (!password) errors.password = 'New password is required.'
-    else if (failedRule) errors.password = failedRule.label + ' required.'
-    if (!confirm) errors.confirm = 'Please confirm your password.'
-    else if (password !== confirm) errors.confirm = 'Passwords do not match.'
-    return errors
+    const errs: { password?: string; confirm?: string } = {}
+    if (!password) {
+      errs.password = 'New password is required.'
+    } else {
+      const failed = PASSWORD_RULES.find((r) => !r.test(password))
+      if (failed) errs.password = failed.label + ' required.'
+    }
+    if (!confirm) errs.confirm = 'Please confirm your password.'
+    else if (password !== confirm) errs.confirm = 'Passwords do not match.'
+    return errs
   }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setApiError('')
-    const errors = validateForm()
-    if (Object.keys(errors).length) { setFieldErrors(errors); return }
+    const errs = validateForm()
+    if (Object.keys(errs).length) { setFieldErrors(errs); return }
     setFieldErrors({})
     setIsSubmitting(true)
     try {
@@ -78,7 +98,8 @@ export default function ResetPassword() {
         setApiError(response.message ?? 'Unable to reset password. Please try again.')
         return
       }
-      navigate('/reset-success')
+      const data = response as unknown as { role?: Role }
+      navigate('/reset-success', { state: { role: data.role ?? tokenRole } })
     } catch {
       setApiError('Cannot reach the server. Please confirm the mock server is running on port 8080.')
     } finally {
@@ -86,6 +107,7 @@ export default function ResetPassword() {
     }
   }
 
+  // ── Checking spinner ──
   if (tokenStatus === 'checking') {
     return (
       <main className="auth-page">
@@ -99,13 +121,14 @@ export default function ResetPassword() {
     )
   }
 
+  // ── Invalid / expired ──
   if (tokenStatus === 'invalid') {
     return (
       <main className="auth-page">
         <section className="auth-page__panel">
           <div className="auth-page__brand">
             <span><TslIcon /></span>
-            <div><h1>The Startup Legal</h1><p>Legal Platform</p></div>
+            <div><h1>The Startup Legal</h1><p>Password Reset</p></div>
           </div>
           <div className="auth-page__card">
             <div className="auth-page__expired">
@@ -113,11 +136,7 @@ export default function ResetPassword() {
               <h2>Link Expired</h2>
               <p>{tokenMessage}</p>
             </div>
-            <button
-              type="button"
-              className="auth-page__btn--primary"
-              onClick={() => navigate('/forgot-password')}
-            >
+            <button type="button" className="auth-page__btn--primary" onClick={() => navigate('/forgot-password')}>
               Request a New Reset Link
             </button>
           </div>
@@ -126,18 +145,26 @@ export default function ResetPassword() {
     )
   }
 
+  // ── Valid — show form ──
   return (
     <main className="auth-page">
       <section className="auth-page__panel">
         <div className="auth-page__brand">
           <span><TslIcon /></span>
-          <div><h1>The Startup Legal</h1><p>Legal Platform</p></div>
+          <div><h1>The Startup Legal</h1><p>Password Reset</p></div>
         </div>
 
         <form className="auth-page__card" onSubmit={handleSubmit} noValidate>
           <div>
             <h2>Reset Your Password</h2>
-            <p>Create a new password for your TSL account.</p>
+            {tokenRole && (
+              <div className="auth-page__role-badge">
+                <span className={`auth-page__role-dot auth-page__role-dot--${tokenRole}`} />
+                {ROLE_LABELS[tokenRole] ?? tokenRole}
+                {tokenEmail && <span className="auth-page__role-email"> · {tokenEmail}</span>}
+              </div>
+            )}
+            <p style={{ marginTop: 8 }}>Create a strong new password for your TSL account.</p>
           </div>
 
           <label>
@@ -150,6 +177,7 @@ export default function ResetPassword() {
                 onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined })) }}
                 placeholder="Enter new password"
                 autoComplete="new-password"
+                autoFocus
               />
               <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide' : 'Show'}>
                 {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}

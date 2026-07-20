@@ -108,6 +108,112 @@ export interface BillingData {
   invoices: BillingInvoice[]
 }
 
+// ── Subscription Plans ────────────────────────────────────────────────────
+
+export interface SubscriptionPlan {
+  planId: string
+  name: string
+  price: number       // in ZAR
+  currency: string
+  tagline: string
+  wizardRuns: number  // per month; -1 = unlimited
+  teamMembers: number // -1 = unlimited
+  storage: string
+  features: string[]
+}
+
+export interface SubscriptionUsage {
+  runsUsed: number
+  runsTotal: number
+  runsRemaining: number
+  teamMembers: number
+}
+
+export interface PendingDowngrade {
+  toPlanId: string
+  toPlanName: string
+  effectiveDate: string // ISO date
+}
+
+export interface SubscriptionData {
+  planId: string
+  planName: string
+  price: number
+  currency: string
+  tagline: string
+  wizardRuns: number
+  teamMembers: number
+  usage: SubscriptionUsage
+  nextBillingDate: string
+  paymentMethod: {
+    brand: string
+    last4: string
+  } | null
+  pendingDowngrade: PendingDowngrade | null
+}
+
+export interface ProratedUpgradePreview {
+  currentPlanName: string
+  newPlanName: string
+  currentPrice: number
+  newPrice: number
+  daysRemaining: number
+  daysInCycle: number
+  creditUnusedTime: number   // negative value = credit
+  proratedNewCharge: number
+  totalDueToday: number
+  nextBillingDate: string
+  paymentMethod: {
+    brand: string
+    last4: string
+  } | null
+}
+
+export interface UpgradeResult {
+  planId: string
+  planName: string
+  price: number
+  tagline: string
+  wizardRuns: number
+  teamMembers: number
+  usage: SubscriptionUsage
+  nextBillingDate: string
+  transactionId: string
+  invoiceId: string
+  invoiceNumber: string
+  amountCharged: number
+  paidAt: string
+}
+
+export interface DowngradeResult {
+  scheduledPlanId: string
+  scheduledPlanName: string
+  effectiveDate: string
+}
+
+// ── Billing History Invoice ────────────────────────────────────────────────
+// Returned by GET /api/v1/subscription/invoices.
+// All fields present for upgrade/downgrade invoices; seed invoices may have
+// previousPlan === newPlan when the plan did not change.
+
+export interface BillingHistoryInvoice {
+  invoiceId:     string
+  invoiceNumber: string
+  invoiceDate:   string   // ISO date string  e.g. "2025-12-01"
+  transactionId: string
+  type:          'upgrade' | 'downgrade' | 'subscription'
+  previousPlan:  string
+  newPlan:       string
+  billingPeriod: string   // e.g. "2025-12-01 – 2025-12-31"
+  plan:          string   // current plan name at time of invoice
+  amount:        number   // subscription amount before tax (ZAR)
+  tax:           number   // 15% VAT
+  total:         number   // amount + tax
+  status:        'paid' | 'pending' | 'failed'
+  paymentMethod: { brand: string; last4: string } | null
+  date:          string   // display date (ISO)
+}
+
 // ── Admin Billing & Invoices ───────────────────────────────────────────────
 
 export type AdminInvoiceStatus = 'paid' | 'pending' | 'failed'
