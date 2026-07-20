@@ -37,6 +37,7 @@ type DashboardRequest = {
   timeAgo?: string
   earnings?: number
   currency?: string
+  status?: RequestStatus
 }
 
 type CounselRequest = DashboardRequest & {
@@ -552,7 +553,6 @@ function DashboardView({
             {[...pendingRequests, ...requests.filter((r) => r.status === 'in_progress' || r.status === 'completed')].slice(0, 2).map((request) => {
               const isPending   = request.status === 'pending'
               const isCompleted = request.status === 'completed'
-              const isInProgress = request.status === 'in_progress'
               return (
                 <article className="counsel-dashboard__request-card" key={request.requestId}>
                   <div className="counsel-dashboard__request-title">

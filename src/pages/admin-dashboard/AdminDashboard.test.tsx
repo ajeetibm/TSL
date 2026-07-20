@@ -116,6 +116,12 @@ const openViewAll = async () => {
   await act(async () => { fireEvent.click(viewAllBtn) })
 }
 
+/** Return to the dashboard from the View All screen by clicking the sidebar Dashboard nav item */
+const closeViewAll = async () => {
+  const dashboardBtn = screen.getByRole('button', { name: /^dashboard$/i })
+  await act(async () => { fireEvent.click(dashboardBtn) })
+}
+
 // ---------------------------------------------------------------------------
 // Shared mock data for dashboard with counsel requests
 // ---------------------------------------------------------------------------
@@ -463,7 +469,8 @@ describe('AdminDashboard — View All Requests', () => {
   it('navigates to the View All screen when View All is clicked', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    expect(screen.getByRole('button', { name: /back to dashboard/i })).toBeInTheDocument()
+    // The "All Requests" heading confirms the View All screen is shown
+    expect(screen.getByRole('heading', { name: /all requests/i })).toBeInTheDocument()
   })
 
   it('renders all request cards in the View All screen', async () => {
@@ -480,27 +487,41 @@ describe('AdminDashboard — View All Requests', () => {
     expect(screen.getByText('Sarah Dlamini')).toBeInTheDocument()
   })
 
-  it('renders "Preview & Assign to Counsel" button only for pending cards', async () => {
+  it('renders "Accept" button only for pending cards', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    // req-1 is 'Pending' → shows the button; req-2 is 'in_progress' → shows a status badge instead
-    const assignBtns = screen.getAllByRole('button', { name: /preview & assign to counsel/i })
-    expect(assignBtns).toHaveLength(1)
+    // req-1 is 'Pending' → shows Accept button; req-2 is 'in_progress' → no Accept button
+    const acceptBtns = screen.getAllByRole('button', { name: /^accept$/i })
+    expect(acceptBtns).toHaveLength(1)
   })
 
-  it('returns to the dashboard when Back to Dashboard is clicked', async () => {
+  it('does not render a Reject button on any request card', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    const backBtn = screen.getByRole('button', { name: /back to dashboard/i })
-    await act(async () => { fireEvent.click(backBtn) })
-    expect(screen.queryByRole('button', { name: /back to dashboard/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument()
+  })
+
+  it('does not render a price/amount on any request card', async () => {
+    await renderAdminDashboard()
+    await openViewAll()
+    // Amount section was removed — no "R" currency prefix should appear on cards
+    const cards = document.querySelectorAll('.ar-card__price')
+    expect(cards).toHaveLength(0)
+  })
+
+  it('returns to the dashboard when Dashboard nav item is clicked', async () => {
+    await renderAdminDashboard()
+    await openViewAll()
+    await closeViewAll()
+    // All Requests heading disappears; View All button is back
+    expect(screen.queryByRole('heading', { name: /all requests/i })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /view all/i })).toBeInTheDocument()
   })
 
   it('filters cards by search term', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    const searchInput = screen.getByPlaceholderText(/search by subject or user/i)
+    const searchInput = screen.getByPlaceholderText(/search users/i)
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'SaaS' } })
     })
@@ -511,7 +532,7 @@ describe('AdminDashboard — View All Requests', () => {
   it('filters cards by user name', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    const searchInput = screen.getByPlaceholderText(/search by subject or user/i)
+    const searchInput = screen.getByPlaceholderText(/search users/i)
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'Sarah' } })
     })
@@ -522,7 +543,7 @@ describe('AdminDashboard — View All Requests', () => {
   it('shows empty state message when search has no matches', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    const searchInput = screen.getByPlaceholderText(/search by subject or user/i)
+    const searchInput = screen.getByPlaceholderText(/search users/i)
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'xyznonexistent' } })
     })
@@ -543,22 +564,21 @@ describe('AdminDashboard — View All Requests', () => {
   it('clears search when returning to the dashboard', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    const searchInput = screen.getByPlaceholderText(/search by subject or user/i)
+    const searchInput = screen.getByPlaceholderText(/search users/i)
     await act(async () => {
       fireEvent.change(searchInput, { target: { value: 'SaaS' } })
     })
-    const backBtn = screen.getByRole('button', { name: /back to dashboard/i })
-    await act(async () => { fireEvent.click(backBtn) })
+    await closeViewAll()
     // Re-open: search should be reset
     await openViewAll()
-    const freshInput = screen.getByPlaceholderText(/search by subject or user/i)
+    const freshInput = screen.getByPlaceholderText(/search users/i)
     expect((freshInput as HTMLInputElement).value).toBe('')
   })
 
   it('renders the search input and status select in the View All toolbar', async () => {
     await renderAdminDashboard()
     await openViewAll()
-    expect(screen.getByPlaceholderText(/search by subject or user/i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/search users/i)).toBeInTheDocument()
     expect(screen.getByRole('combobox')).toBeInTheDocument()
   })
 })

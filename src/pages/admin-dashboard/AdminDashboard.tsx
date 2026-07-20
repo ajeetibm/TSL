@@ -652,7 +652,7 @@ export default function AdminDashboard() {
                   .filter(Boolean)
                   .join(' ')}
                 key={item.label}
-                onClick={() => { setActiveNav(item.key); setShowAllRequests(false) }}
+                onClick={() => { setActiveNav(item.key); setShowAllRequests(false); setRequestSearch('') }}
               >
                 <Icon size={17} />
                 <span>{item.label}</span>
@@ -666,7 +666,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             className={activeNav === 'profile' ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
-            onClick={() => { setActiveNav('profile'); setShowAllRequests(false) }}
+            onClick={() => { setActiveNav('profile'); setShowAllRequests(false); setRequestSearch('') }}
           >
             <UserRound size={17} />
             <span>Profile</span>
@@ -1051,80 +1051,102 @@ export default function AdminDashboard() {
           />
         ) : showAllRequests ? (
           <section className="admin-dashboard__all-requests">
-            <div className="admin-dashboard__all-requests-bar">
-              <button
-                type="button"
-                className="admin-dashboard__back-btn"
-                onClick={() => {
-                  setShowAllRequests(false)
-                  setRequestSearch('')
-                  setRequestFilterStatus('All Status')
-                }}
-              >
-                <ArrowLeft size={16} />
-                Back to Dashboard
-              </button>
-              <div className="admin-dashboard__all-requests-filters">
-                <label className="admin-dashboard__all-requests-search">
-                  <Search size={15} />
+            {/* ── Single white container: search bar + divider + list ── */}
+            <div className="ar-container">
+              {/* Search + filter row */}
+              <div className="ar-container__search">
+                <label className="ar-search-input">
+                  <Search size={16} />
                   <input
                     type="search"
-                    placeholder="Search by subject or user…"
+                    placeholder="Search users..."
                     value={requestSearch}
                     onChange={(e) => setRequestSearch(e.target.value)}
                   />
                 </label>
                 <select
-                 className="admin-dashboard__all-requests-select"
-                 value={requestFilterStatus}
-                 onChange={(e) => setRequestFilterStatus(e.target.value)}
-               >
-                 <option>All Status</option>
-                 <option>Pending</option>
-                 <option>In Progress</option>
-                 <option>Completed</option>
-               </select>
+                  className="ar-search-select"
+                  value={requestFilterStatus}
+                  onChange={(e) => setRequestFilterStatus(e.target.value)}
+                >
+                  <option>All Status</option>
+                  <option>Pending</option>
+                  <option>In Progress</option>
+                  <option>Completed</option>
+                </select>
               </div>
+
+              {/* Divider */}
+              <hr className="ar-container__divider" />
+
+              {/* Heading + cards */}
+              {(() => {
+                const filtered = counselRequests.filter((r) => {
+                  const q = requestSearch.toLowerCase()
+                  const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.fromUser.toLowerCase().includes(q)
+                  const normStatus = r.status.toLowerCase().replace(/_/g, ' ')
+                  const matchStatus = requestFilterStatus === 'All Status' || normStatus === requestFilterStatus.toLowerCase()
+                  return matchSearch && matchStatus
+                })
+                return (
+                  <div className="ar-list">
+                    <div className="ar-list__heading">
+                      <h2>All Requests</h2>
+                      <p>{filtered.length} request(s) found</p>
+                    </div>
+                    {filtered.length === 0 ? (
+                      <p className="admin-dashboard__all-requests-empty">No counsel requests match your filters.</p>
+                    ) : (
+                      <div className="ar-cards">
+                        {filtered.map((request) => {
+                          const normStatus = request.status?.toLowerCase().replace(/_/g, ' ')
+                          const assignedBy = (request as Record<string, unknown>).assignedCounselName as string | undefined
+                          const email = (request as Record<string, unknown>).fromUserEmail as string | undefined
+                          return (
+                            <article className="ar-card" key={request.requestId}>
+                              {/* Row 1: title */}
+                              <div className="ar-card__top">
+                                <h3 className="ar-card__title">{request.subject || 'Contract Review for SaaS Agreement'}</h3>
+                              </div>
+                              {/* Row 2: user | status+date+by | accept */}
+                              <div className="ar-card__bottom">
+                                <div className="ar-card__user">
+                                  <UserRound size={15} className="ar-card__user-icon" />
+                                  <div className="ar-card__user-info">
+                                    <span className="ar-card__user-name">{request.fromUser || 'Michael Chen'}</span>
+                                    <span className="ar-card__user-email">{email ?? `${(request.fromUser || 'user').toLowerCase().replace(/\s+/g, '.')}@company.com`}</span>
+                                  </div>
+                                </div>
+                                <div className="ar-card__mid">
+                                  <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
+                                    {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status}
+                                  </span>
+                                  <div className="ar-card__date">
+                                    <CalendarDays size={15} />
+                                    <span>{request.receivedAt ? new Date(request.receivedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Jan 12, 2026'}</span>
+                                  </div>
+                                  <span className="ar-card__assigned-by">By: <strong>{assignedBy ?? 'Admin'}</strong></span>
+                                </div>
+                                {normStatus === 'pending' && (
+                                  <button
+                                    type="button"
+                                    className="ar-card__btn ar-card__btn--accept"
+                                    onClick={() => openPreviewModal(request)}
+                                  >
+                                    <Check size={14} />
+                                    Accept
+                                  </button>
+                                )}
+                              </div>
+                            </article>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
-            {(() => {
-              const filtered = counselRequests.filter((r) => {
-                const q = requestSearch.toLowerCase()
-                const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.fromUser.toLowerCase().includes(q)
-                // normalise both sides: 'in_progress' ↔ 'in progress'
-                const normStatus = r.status.toLowerCase().replace(/_/g, ' ')
-                const matchStatus = requestFilterStatus === 'All Status' || normStatus === requestFilterStatus.toLowerCase()
-                return matchSearch && matchStatus
-              })
-              return filtered.length === 0 ? (
-                <p className="admin-dashboard__all-requests-empty">No counsel requests match your filters.</p>
-              ) : (
-                <div className="admin-dashboard__request-grid">
-                  {filtered.map((request) => {
-                    const normStatus = request.status?.toLowerCase().replace(/_/g, ' ')
-                    const statusLabel = normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status
-                    return (
-                      <article className="admin-dashboard__request-card" key={request.requestId}>
-                        <div>
-                          <h3>{request.subject || 'Contract Review for SaaS Agreement'}</h3>
-                          <time>{formatTimeAgo(request.receivedAt)}</time>
-                        </div>
-                        <p>
-                          From: <strong>{request.fromUser || 'Michael Chen'}</strong>
-                        </p>
-                        <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
-                          {statusLabel}
-                        </span>
-                        {normStatus === 'pending' && (
-                          <button type="button" onClick={() => openPreviewModal(request)}>
-                            Preview &amp; Assign to Counsel
-                          </button>
-                        )}
-                      </article>
-                    )
-                  })}
-                </div>
-              )
-            })()}
           </section>
         ) : (
           <>
