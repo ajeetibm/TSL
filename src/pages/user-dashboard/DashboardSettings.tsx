@@ -1,91 +1,115 @@
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
+  AlertTriangle,
   BadgeCheck,
   CalendarDays,
   CheckCircle2,
   CreditCard,
   Download,
-  FileText,
   Landmark,
   Loader2,
   Plus,
+  Receipt,
   Settings,
-  ShoppingCart,
   Smartphone,
-  Sparkles,
   WalletCards,
-  X,
   Zap,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { billingApi, paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
-import type { PaymentMethod } from '../../services/dashboardTypes'
+import type { BillingHistoryInvoice, PaymentMethod } from '../../services/dashboardTypes'
+import { formatDate } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
+import { useBillingSubscription } from '../../hooks/useBillingSubscription'
+import { ComparePlansModal } from './billing/ComparePlansModal'
+import { UpgradePlansModal } from './billing/UpgradePlansModal'
+import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
+import { DowngradeConfirmModal } from './billing/DowngradeConfirmModal'
+import { CancelDowngradeModal } from './billing/CancelDowngradeModal'
+import { InvoiceViewModal } from './billing/InvoiceViewModal'
 import './Dashboard.css'
 import './DashboardSettings.css'
 
-const pricingComparisonPlans = [
-  {
-    title: 'Launchpad',
-    price: 'R499',
-    icon: FileText,
-    highlighted: true,
-    features: [
-      { label: '5 essential wizards', included: true },
-      { label: '3 runs per wizard/month', included: true },
-      { label: 'Basic email support', included: true },
-      { label: '6 months storage', included: true },
-      { label: 'No API access', included: false },
-      { label: 'No white-label', included: false },
-    ],
-  },
-  {
-    title: 'Operator',
-    price: 'R999',
-    icon: ShoppingCart,
-    popular: true,
-    features: [
-      { label: 'All 12 legal wizards', included: true },
-      { label: 'Unlimited runs', included: true },
-      { label: 'Priority support (24-48hr)', included: true },
-      { label: 'Unlimited storage', included: true },
-      { label: 'API access', included: true },
-      { label: 'No white-label', included: false },
-    ],
-  },
-  {
-    title: 'Boardroom',
-    price: 'R2,499',
-    icon: ShoppingCart,
-    features: [
-      { label: 'All 30 legal wizards', included: true },
-      { label: 'Unlimited runs', included: true },
-      { label: 'Dedicated support (SLA)', included: true },
-      { label: 'Unlimited storage', included: true },
-      { label: 'API access', included: true },
-      { label: 'White-label options', included: true },
-      { label: 'Custom workflows', included: true },
-      { label: 'Custom wizard development', included: true },
-    ],
-  },
-]
+// ── PDF invoice download — uses browser print on a hidden iframe ───────────
+// No external dependency required.  Replace with jsPDF / Puppeteer on the
+// backend in production.
 
-const planStats = [
-  { label: 'Wizard Runs', value: '12/month' },
-  { label: 'Runs Remaining', value: '9' },
-  { label: 'Team Members', value: '10' },
-]
+function downloadInvoicePdf(inv: BillingHistoryInvoice) {
+  function fmtZAR(n: number) {
+    return `R${n.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+  const pm = inv.paymentMethod
+    ? `${inv.paymentMethod.brand} •••• ${inv.paymentMethod.last4}`
+    : '—'
+
+  const changeRow = inv.type === 'upgrade'
+    ? `Upgrade: ${inv.previousPlan} → ${inv.newPlan}`
+    : inv.type === 'downgrade'
+      ? `Downgrade: ${inv.previousPlan} → ${inv.newPlan}`
+      : `Subscription: ${inv.plan}`
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>${inv.invoiceNumber}</title>
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; color: #0d1b2a; padding: 40px; max-width: 680px; margin: 0 auto; }
+  h1  { font-size: 26px; margin: 0 0 4px; }
+  .sub{ color: #6b7280; font-size: 14px; margin: 0 0 32px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  td  { padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+  td:last-child { text-align: right; }
+  .label { color: #6b7280; }
+  .total td { font-weight: 700; font-size: 16px; border-bottom: none; padding-top: 16px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; background: #edfaf3; color: #1a7a45; font-size: 12px; font-weight: 700; }
+  .logo { font-size: 20px; font-weight: 800; color: #cf9b2f; margin-bottom: 32px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="logo">The Startup Legal</div>
+  <h1>${inv.invoiceNumber}</h1>
+  <p class="sub">${inv.invoiceDate} &nbsp;·&nbsp; <span class="badge">Paid</span></p>
+  <table>
+    <tr><td class="label">Transaction ID</td><td>${inv.transactionId}</td></tr>
+    <tr><td class="label">Plan change</td><td>${changeRow}</td></tr>
+    <tr><td class="label">Billing period</td><td>${inv.billingPeriod}</td></tr>
+    <tr><td class="label">Payment method</td><td>${pm}</td></tr>
+  </table>
+  <table>
+    <tr><td class="label">Subscription amount</td><td>${fmtZAR(inv.amount)}</td></tr>
+    <tr><td class="label">VAT (15%)</td><td>${fmtZAR(inv.tax)}</td></tr>
+    <tr class="total"><td>Total</td><td>${fmtZAR(inv.total)}</td></tr>
+  </table>
+</body>
+</html>`
+
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0'
+  document.body.appendChild(iframe)
+  iframe.contentDocument!.open()
+  iframe.contentDocument!.write(html)
+  iframe.contentDocument!.close()
+  iframe.contentWindow!.focus()
+  iframe.contentWindow!.print()
+  setTimeout(() => document.body.removeChild(iframe), 2000)
+}
+
+// ── Static data ────────────────────────────────────────────────────────────────
 
 const supportedMethods = [
-  { label: 'Cards', icon: CreditCard },
-  { label: 'Ozow EFT', icon: Landmark },
-  { label: 'SnapScan', icon: Smartphone },
-  { label: 'Zapper', icon: Smartphone },
-  { label: 'Capitec Pay', icon: Landmark },
-  { label: 'Debit Order', icon: WalletCards },
+  { label: 'Cards',       icon: CreditCard },
+  { label: 'Ozow EFT',   icon: Landmark },
+  { label: 'SnapScan',   icon: Smartphone },
+  { label: 'Zapper',     icon: Smartphone },
+  { label: 'Capitec Pay',icon: Landmark },
+  { label: 'Debit Order',icon: WalletCards },
 ]
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function getStoredUserEmail() {
   try {
@@ -96,9 +120,7 @@ function getStoredUserEmail() {
   }
 }
 
-function cardBrandIcon(brand?: string) {
-  const b = (brand ?? '').toLowerCase()
-  if (b === 'visa' || b === 'mastercard') return CreditCard
+function cardBrandIcon() {
   return CreditCard
 }
 
@@ -109,35 +131,105 @@ function cardLabel(method: PaymentMethod): string {
 }
 
 function cardDetail(method: PaymentMethod): string {
-  const parts: string[] = []
-  if (method.expiry) parts.push(`Expires ${method.expiry}`)
-  return parts.join(' · ')
+  if (method.expiry) return `Expires ${method.expiry}`
+  return ''
 }
 
-const invoices = [
-  { id: 'INV-2025-001', date: 'Dec 1, 2025', amount: 'R999' },
-  { id: 'INV-2024-012', date: 'Nov 1, 2024', amount: 'R999' },
-  { id: 'INV-2024-011', date: 'Oct 1, 2024', amount: 'R999' },
-]
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export default function DashboardSettings() {
   const [activeTab, setActiveTab] = useState<'billing' | 'history'>('billing')
-  const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+
+  // ── Payment callback injected into the subscription hook ─────────────────
+  // Opens Paystack checkout for the prorated amount, verifies server-side,
+  // and returns the reference on success or null on cancel/failure.
+  // PRODUCTION: swap to a different provider here — hook stays unchanged.
+  const [upgradePayError, setUpgradePayError] = useState<string | null>(null)
+
+  const upgradePayFn = useCallback(async (amountZAR: number, planName: string): Promise<string | null> => {
+    setUpgradePayError(null)
+
+    // Step 1 — open Paystack popup
+    const checkoutResult = await openPaystackCheckout({
+      amount: amountZAR,
+      currency: 'ZAR',
+      email: getStoredUserEmail(),
+      plan: planName.toLowerCase(),
+      paymentMethod: 'card',
+      selectedWizards: [],
+      totalWizards: 0,
+    })
+
+    if (checkoutResult.status === 'cancelled') return null
+
+    if (checkoutResult.status === 'failed') {
+      setUpgradePayError(checkoutResult.message || 'Payment failed. Please try again.')
+      return null
+    }
+
+    // Step 2 — verify payment server-side
+    const verifyRes = await paymentApi.verifyPaystack({
+      reference: checkoutResult.reference,
+      type: 'subscription-upgrade',
+    })
+
+    if (!verifyRes.success || verifyRes.data?.status !== 'success') {
+      setUpgradePayError(verifyRes.message || 'Payment could not be verified. Please try again.')
+      return null
+    }
+
+    return checkoutResult.reference
+  }, [])
+
+  // ── Subscription hook ────────────────────────────────────────────────────
+  const {
+    subscription,
+    subLoading,
+    subError,
+    plans,
+    plansLoading,
+    plansError,
+    upgradePreview,
+    previewLoading,
+    previewError,
+    selectedPlan,
+    upgradeResult,
+    activeModal,
+    closeModal,
+    toast,
+    actionLoading,
+    actionError,
+    invoices,
+    invoicesLoading,
+    invoicesError,
+    openUpgradePlans,
+    openComparePlans,
+    selectPlan,
+    confirmUpgrade,
+    confirmDowngrade,
+    cancelUpgradeConfirm,
+    cancelDowngradeConfirm,
+    cancelDowngrade,
+    openCancelDowngradeConfirm,
+  } = useBillingSubscription(upgradePayFn)
+
+  // ── Invoice view modal state ─────────────────────────────────────────────
+  const [viewingInvoice, setViewingInvoice] = useState<typeof invoices[number] | null>(null)
 
   // ── Payment methods state ────────────────────────────────────────────────
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([])
-  const [pmLoading, setPmLoading] = useState(true)
-  const [pmError, setPmError] = useState<string | null>(null)
-  const [addingMethod, setAddingMethod] = useState(false)
-  const [addError, setAddError] = useState<string | null>(null)
+  const [pmLoading, setPmLoading]           = useState(true)  // true = loading on mount
+  const [pmError, setPmError]               = useState<string | null>(null)
+  const [addingMethod, setAddingMethod]     = useState(false)
+  const [addError, setAddError]             = useState<string | null>(null)
   const addErrTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null)
-  const [pmToast, setPmToast] = useState<string>('')
+  const [pmToast, setPmToast]               = useState<string>('')
   const pmToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Load payment methods
   useEffect(() => {
     let cancelled = false
-    setPmLoading(true)
     billingApi.paymentMethods().then((res) => {
       if (cancelled) return
       setPmLoading(false)
@@ -145,9 +237,8 @@ export default function DashboardSettings() {
         setPmError('Failed to load payment methods.')
         return
       }
-      // Only display card-type methods (brand + last4)
       const cards = (res.data as PaymentMethod[]).filter(
-        (m) => m.type === 'card' && m.last4
+        (m) => m.type === 'card' && m.last4,
       )
       setPaymentMethods(cards)
     })
@@ -159,9 +250,6 @@ export default function DashboardSettings() {
     setAddError(null)
     setAddingMethod(true)
 
-    // Step 1: Open Paystack checkout for a R1 card authorization.
-    // Paystack only returns a reference — card details are NOT available
-    // in the popup callback. We must verify via the server to get them.
     const result = await openPaystackCheckout({
       amount: 1,
       currency: 'ZAR',
@@ -186,8 +274,6 @@ export default function DashboardSettings() {
       return
     }
 
-    // Step 2: Verify server-side. Paystack's inline callback only returns a
-    // reference; the Verify API is the source of exact card metadata.
     const verifyRes = await paymentApi.verifyPaystack({
       reference: result.reference,
       type: 'card-setup',
@@ -199,7 +285,6 @@ export default function DashboardSettings() {
       return
     }
 
-    // Real Paystack: data.authorization.{ card_type, last4, exp_month, exp_year }
     const auth = verifyRes.data?.authorization ?? {}
 
     if (!auth.card_type || !auth.last4 || !auth.exp_month || !auth.exp_year) {
@@ -208,8 +293,6 @@ export default function DashboardSettings() {
       return
     }
 
-    // Step 3: Save the card — pass verified authorization fields so the mock
-    // stores the exact card returned by Paystack, never a guessed value.
     const saveRes = await billingApi.addPaymentMethod({
       reference: result.reference,
       brand:     auth.card_type  ?? '',
@@ -227,8 +310,6 @@ export default function DashboardSettings() {
       return
     }
 
-    // Step 4: Optimistically append the new card from the POST response so
-    // the UI updates immediately without waiting for the re-fetch.
     const newCard = saveRes.data as PaymentMethod | undefined
     if (newCard?.type === 'card' && newCard.last4) {
       setPaymentMethods((prev) => {
@@ -237,16 +318,12 @@ export default function DashboardSettings() {
       })
     }
 
-    // Step 5: Re-fetch the authoritative list — always reflects the
-    // persisted file store so cards survive server restarts.
     const fresh = await billingApi.paymentMethods()
     if (fresh.success && fresh.data) {
       const freshCards = (fresh.data as PaymentMethod[]).filter(
-        (m) => m.type === 'card' && m.last4
+        (m) => m.type === 'card' && m.last4,
       )
-      setPaymentMethods((prev) =>
-        freshCards.length > 0 ? freshCards : prev
-      )
+      setPaymentMethods((prev) => (freshCards.length > 0 ? freshCards : prev))
     }
 
     setAddingMethod(false)
@@ -255,7 +332,6 @@ export default function DashboardSettings() {
   async function handleSetDefault(methodId: string) {
     if (settingDefaultId) return
     setSettingDefaultId(methodId)
-    // Optimistically flip & move the chosen card to position 0
     setPaymentMethods((prev) => {
       const updated = prev.map((m) => ({ ...m, isDefault: m.methodId === methodId }))
       return [...updated.filter((m) => m.isDefault), ...updated.filter((m) => !m.isDefault)]
@@ -264,25 +340,22 @@ export default function DashboardSettings() {
     const res = await billingApi.setDefaultMethod(methodId)
 
     if (!res.success) {
-      // Roll back on failure
       setSettingDefaultId(null)
       const fresh = await billingApi.paymentMethods()
       if (fresh.success && fresh.data) {
         setPaymentMethods(
-          (fresh.data as PaymentMethod[]).filter((m) => m.type === 'card' && m.last4)
+          (fresh.data as PaymentMethod[]).filter((m) => m.type === 'card' && m.last4),
         )
       }
       return
     }
 
-    // Sync authoritative list from server response, default card first
     if (res.data) {
       const cards = (res.data as PaymentMethod[]).filter((m) => m.type === 'card' && m.last4)
       setPaymentMethods([...cards.filter((m) => m.isDefault), ...cards.filter((m) => !m.isDefault)])
     }
 
     setSettingDefaultId(null)
-
     if (pmToastTimerRef.current) clearTimeout(pmToastTimerRef.current)
     setPmToast('Default payment method updated.')
     pmToastTimerRef.current = setTimeout(() => setPmToast(''), 4000)
@@ -290,9 +363,37 @@ export default function DashboardSettings() {
 
   setPageMetadata('Settings', 'Manage your account, billing, and notification preferences.')
 
+  // ── Derived display values ────────────────────────────────────────────────
+  const planName      = subscription?.planName  ?? '—'
+  const planTagline   = subscription?.tagline   ?? ''
+  const planPrice     = subscription?.price     ?? 0
+  const wizardRuns    = subscription?.wizardRuns ?? 0
+  const teamMembers   = subscription?.teamMembers ?? 0
+  const runsUsed      = subscription?.usage.runsUsed      ?? 0
+  const runsTotal     = subscription?.usage.runsTotal     ?? 0
+  const runsRemaining = subscription?.usage.runsRemaining ?? 0
+  const nextBillingDate = subscription?.nextBillingDate ?? ''
+  const pendingDowngrade = subscription?.pendingDowngrade ?? null
+
+  const tax      = parseFloat((planPrice * 0.15).toFixed(2))
+  const totalInv = planPrice + tax
+  const progressPct = runsTotal > 0 ? Math.min(100, Math.round((runsUsed / runsTotal) * 100)) : 0
+
   return (
     <DashboardShell activeSection="Settings">
       <main className="dashboard-settings">
+        {/* ── Global toast ─────────────────────────────────────────────── */}
+        {toast && (
+          <div
+            className={`bs-toast bs-toast--${toast.type}`}
+            role="status"
+            aria-live="polite"
+          >
+            {toast.type === 'success' ? <CheckCircle2 size={16} /> : <AlertTriangle size={16} />}
+            {toast.message}
+          </div>
+        )}
+
         <header className="dashboard-settings__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-settings__header-marker" aria-hidden="true">
@@ -307,22 +408,14 @@ export default function DashboardSettings() {
         <nav className="dashboard-settings__tabs" aria-label="Settings sections">
           <button
             type="button"
-            className={
-              activeTab === 'billing'
-                ? 'dashboard-settings__tab dashboard-settings__tab--active'
-                : 'dashboard-settings__tab'
-            }
+            className={activeTab === 'billing' ? 'dashboard-settings__tab dashboard-settings__tab--active' : 'dashboard-settings__tab'}
             onClick={() => setActiveTab('billing')}
           >
             Billing &amp; Subscription
           </button>
           <button
             type="button"
-            className={
-              activeTab === 'history'
-                ? 'dashboard-settings__tab dashboard-settings__tab--active'
-                : 'dashboard-settings__tab'
-            }
+            className={activeTab === 'history' ? 'dashboard-settings__tab dashboard-settings__tab--active' : 'dashboard-settings__tab'}
             onClick={() => setActiveTab('history')}
           >
             Billing History
@@ -333,39 +426,126 @@ export default function DashboardSettings() {
           <section className="dashboard-settings__main-column">
             {activeTab === 'billing' ? (
               <>
+                {/* ── Pending-downgrade banner ─────────────────────────── */}
+                {pendingDowngrade && (
+                  <div className="bs-downgrade-banner" role="alert">
+                    <span className="bs-downgrade-banner__icon">
+                      <AlertTriangle size={16} />
+                    </span>
+                    <div className="bs-downgrade-banner__body">
+                      <p>
+                        <strong>Scheduled change:</strong> switching to{' '}
+                        <strong>{pendingDowngrade.toPlanName}</strong> on{' '}
+                        {formatDate(pendingDowngrade.effectiveDate)}
+                      </p>
+                      <p className="bs-downgrade-banner__upcoming">
+                        Upcoming: <strong>{pendingDowngrade.toPlanName} plan</strong>,
+                        starts {formatDate(pendingDowngrade.effectiveDate)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="bs-downgrade-banner__cancel-btn"
+                      onClick={openCancelDowngradeConfirm}
+                    >
+                      Cancel scheduled change
+                    </button>
+                  </div>
+                )}
+
+                {/* ── Upgrade success banner ───────────────────────────── */}
+                {upgradeResult && (
+                  <div className="bs-upgrade-success-banner" role="status">
+                    <CheckCircle2 size={16} />
+                    You're now on the <strong>{upgradeResult.planName} plan</strong> —
+                    effective today, {formatDate(upgradeResult.paidAt)}
+                  </div>
+                )}
+
+                {/* ── Current Plan card ────────────────────────────────── */}
                 <section className="dashboard-settings__section" aria-labelledby="current-plan-title">
                   <h2 id="current-plan-title">Current Plan</h2>
-                  <article className="dashboard-settings__plan">
-                    <div className="dashboard-settings__plan-top">
-                      <div>
-                        <h3>
-                          <BadgeCheck size={32} />
-                          Boardroom Plan
-                        </h3>
-                        <p>For growing businesses with ongoing legal needs</p>
-                      </div>
-                      <div className="dashboard-settings__price">
-                        <strong>R2,499</strong>
-                        <span>per month</span>
+
+                  {subLoading && (
+                    <div className="bs-plan-skeleton" aria-label="Loading plan…">
+                      <div className="bs-plan-skeleton__bar bs-plan-skeleton__bar--title" />
+                      <div className="bs-plan-skeleton__bar bs-plan-skeleton__bar--sub" />
+                      <div className="bs-plan-skeleton__stats">
+                        <div className="bs-plan-skeleton__stat" />
+                        <div className="bs-plan-skeleton__stat" />
+                        <div className="bs-plan-skeleton__stat" />
                       </div>
                     </div>
+                  )}
 
-                    <div className="dashboard-settings__plan-stats">
-                      {planStats.map((item) => (
-                        <div key={item.label}>
-                          <span>{item.label}</span>
-                          <strong>{item.value}</strong>
+                  {subError && (
+                    <p className="dashboard-settings__pm-error" role="alert">{subError}</p>
+                  )}
+
+                  {!subLoading && !subError && subscription && (
+                    <article className="dashboard-settings__plan">
+                      {pendingDowngrade && (
+                        <p className="bs-plan-active-until">
+                          Active until {formatDate(pendingDowngrade.effectiveDate)}
+                        </p>
+                      )}
+                      <div className="dashboard-settings__plan-top">
+                        <div>
+                          <h3>
+                            <BadgeCheck size={32} />
+                            {planName} plan
+                          </h3>
+                          <p>{planTagline}</p>
                         </div>
-                      ))}
-                    </div>
+                        <div className="dashboard-settings__price">
+                          <strong>R{planPrice.toLocaleString('en-ZA')}</strong>
+                          <span>per month</span>
+                        </div>
+                      </div>
 
-                    <div className="dashboard-settings__plan-actions">
-                      <button type="button">Upgrade Plan</button>
-                      <button type="button" onClick={() => setIsPricingModalOpen(true)}>Compare Plans</button>
-                    </div>
-                  </article>
+                      <div className="dashboard-settings__plan-stats">
+                        <div>
+                          <span>Wizard runs</span>
+                          <strong>{wizardRuns}/month</strong>
+                        </div>
+                        <div>
+                          <span>Runs remaining</span>
+                          <strong>{runsRemaining}</strong>
+                        </div>
+                        <div>
+                          <span>Team members</span>
+                          <strong>{teamMembers}</strong>
+                        </div>
+                      </div>
+
+                      <div className="dashboard-settings__plan-actions">
+                        <button type="button" onClick={openUpgradePlans}>
+                          Upgrade plan
+                        </button>
+                        <button type="button" onClick={openComparePlans}>
+                          Compare plans
+                        </button>
+                      </div>
+
+                      {pendingDowngrade && (
+                        <p className="bs-plan-next-charge">
+                          Upcoming: <strong>{pendingDowngrade.toPlanName} plan</strong>,
+                          R{plans.find(p => p.planId === pendingDowngrade.toPlanId)?.price.toLocaleString('en-ZA') ?? '—'}/mo,
+                          starts {formatDate(pendingDowngrade.effectiveDate)}
+                        </p>
+                      )}
+
+                      {!pendingDowngrade && upgradeResult && (
+                        <p className="bs-plan-next-charge">
+                          Next charge: full R{planPrice.toLocaleString('en-ZA')} on{' '}
+                          {formatDate(nextBillingDate)} — no further action needed
+                        </p>
+                      )}
+                    </article>
+                  )}
                 </section>
 
+                {/* ── Payment Methods ──────────────────────────────────── */}
                 <section className="dashboard-settings__section" aria-labelledby="payment-methods-title">
                   <div className="dashboard-settings__section-heading">
                     <h2 id="payment-methods-title">Payment Methods</h2>
@@ -401,7 +581,7 @@ export default function DashboardSettings() {
                         </div>
                       ) : (
                         paymentMethods.map((method) => {
-                          const Icon = cardBrandIcon(method.brand)
+                          const Icon = cardBrandIcon()
                           return (
                             <div
                               key={method.methodId}
@@ -457,62 +637,101 @@ export default function DashboardSettings() {
                 </section>
               </>
             ) : (
+              /* ── Billing History tab ────────────────────────────────── */
               <section className="dashboard-settings__section" aria-labelledby="billing-history-title">
                 <h2 id="billing-history-title">Billing History</h2>
-                <article className="dashboard-settings__invoice-card">
-                  {invoices.map((invoice) => (
-                    <div className="dashboard-settings__invoice" key={invoice.id}>
-                      <span className="dashboard-settings__invoice-icon">
-                        <BadgeCheck size={20} />
-                      </span>
-                      <div>
-                        <h3>{invoice.id}</h3>
-                        <p>{invoice.date}</p>
+
+                {invoicesLoading && (
+                  <div className="bs-invoices-loading">
+                    <Loader2 size={20} className="bs-spin" />
+                    <span>Loading invoices…</span>
+                  </div>
+                )}
+
+                {invoicesError && (
+                  <p className="dashboard-settings__pm-error" role="alert">{invoicesError}</p>
+                )}
+
+                {!invoicesLoading && !invoicesError && invoices.length === 0 && (
+                  <div className="bs-invoices-empty">
+                    <Receipt size={32} style={{ opacity: 0.35, marginBottom: 8 }} />
+                    <p>No invoices yet. Your billing history will appear here after your first payment.</p>
+                  </div>
+                )}
+
+                {!invoicesLoading && invoices.length > 0 && (
+                  <article className="dashboard-settings__invoice-card">
+                    {invoices.map((invoice) => (
+                      /* Clicking anywhere on the row (except the download btn) opens the detail modal */
+                      <div
+                        className="dashboard-settings__invoice"
+                        key={invoice.invoiceId}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`View invoice ${invoice.invoiceNumber}`}
+                        onClick={() => setViewingInvoice(invoice)}
+                        onKeyDown={(e) => e.key === 'Enter' && setViewingInvoice(invoice)}
+                      >
+                        <span className="dashboard-settings__invoice-icon">
+                          <BadgeCheck size={20} />
+                        </span>
+                        <div className="bs-invoice-info">
+                          <h3>{invoice.invoiceNumber}</h3>
+                          <p>{invoice.plan} · {invoice.invoiceDate}</p>
+                        </div>
+                        <div className="bs-invoice-amount">
+                          <strong>R{invoice.total.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                          <span className={`bs-invoice-status bs-invoice-status--${invoice.status}`}>
+                            {invoice.status.toUpperCase()}
+                          </span>
+                        </div>
+                        {/* Single icon-only download button — matches Figma */}
+                        <button
+                          type="button"
+                          className="bs-invoice-download-btn"
+                          aria-label={`Download ${invoice.invoiceNumber}`}
+                          onClick={(e) => { e.stopPropagation(); downloadInvoicePdf(invoice) }}
+                        >
+                          <Download size={20} />
+                        </button>
                       </div>
-                      <strong>{invoice.amount}</strong>
-                      <button type="button" aria-label={`Download ${invoice.id}`}>
-                        <Download size={18} />
-                      </button>
-                    </div>
-                  ))}
-                </article>
+                    ))}
+                  </article>
+                )}
               </section>
             )}
           </section>
 
+          {/* ── Aside ─────────────────────────────────────────────────────── */}
           <aside className="dashboard-settings__aside">
             <section className="dashboard-settings__billing-card">
               <div className="dashboard-settings__aside-heading">
-                <span>
-                  <CalendarDays size={24} />
-                </span>
+                <span><CalendarDays size={24} /></span>
                 <div>
                   <h2>Next Billing Date</h2>
-                  <p>January 1, 2026</p>
+                  <p>{nextBillingDate ? formatDate(nextBillingDate) : '—'}</p>
                 </div>
               </div>
 
               <dl>
                 <div>
                   <dt>Subscription</dt>
-                  <dd>R2,499</dd>
+                  <dd>R{planPrice.toLocaleString('en-ZA')}</dd>
                 </div>
                 <div>
                   <dt>Tax (15%)</dt>
-                  <dd>R149.85</dd>
+                  <dd>R{tax.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
                 </div>
                 <div>
                   <dt>Total</dt>
-                  <dd>R2,549.85</dd>
+                  <dd>R{totalInv.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</dd>
                 </div>
               </dl>
             </section>
 
             <section className="dashboard-settings__usage-card">
               <div className="dashboard-settings__aside-heading">
-                <span>
-                  <Zap size={24} />
-                </span>
+                <span><Zap size={24} /></span>
                 <div>
                   <h2>Usage This Month</h2>
                   <p>Current billing cycle</p>
@@ -521,96 +740,80 @@ export default function DashboardSettings() {
 
               <div className="dashboard-settings__usage-copy">
                 <span>Runs Used</span>
-                <strong>3 of 30</strong>
+                <strong>{runsUsed} of {runsTotal}</strong>
               </div>
               <div className="dashboard-settings__progress">
-                <span />
+                <span style={{ width: `${progressPct}%` }} />
               </div>
-              <p className="dashboard-settings__remaining">27 runs remaining</p>
+              <p className="dashboard-settings__remaining">{runsRemaining} runs remaining</p>
             </section>
           </aside>
         </div>
       </main>
-        {isPricingModalOpen && (
-          <div
-            className="dashboard-settings__modal-backdrop"
-            role="presentation"
-            onClick={() => setIsPricingModalOpen(false)}
-          >
-            <section
-              className="dashboard-settings__pricing-modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="settings-pricing-title"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                className="dashboard-settings__modal-close"
-                aria-label="Close pricing comparison"
-                onClick={() => setIsPricingModalOpen(false)}
-              >
-                <X size={20} />
-              </button>
 
-              <header className="dashboard-settings__modal-header">
-                <h2 id="settings-pricing-title">Pricing Comparison</h2>
-                <p>Compare the features and pricing of our different tiers to find the best fit for your needs.</p>
-              </header>
+      {/* ── Modals ──────────────────────────────────────────────────────────── */}
 
-              <div className="dashboard-settings__comparison-grid">
-                {pricingComparisonPlans.map(({ title, price, icon: Icon, highlighted, popular, features }) => (
-                  <article
-                    className={
-                      highlighted
-                        ? 'dashboard-settings__comparison-card dashboard-settings__comparison-card--highlighted'
-                        : 'dashboard-settings__comparison-card'
-                    }
-                    key={title}
-                  >
-                    {popular && (
-                      <span className="dashboard-settings__popular-badge">
-                        <Sparkles size={14} />
-                        Popular
-                      </span>
-                    )}
-                    <h3>
-                      <Icon size={20} />
-                      {title}
-                    </h3>
-                    <div className="dashboard-settings__comparison-price">
-                      <strong>{price}</strong>
-                      <span>/month</span>
-                    </div>
-                    <ul>
-                      {features.map((feature) => (
-                        <li
-                          className={
-                            feature.included
-                              ? 'dashboard-settings__comparison-feature'
-                              : 'dashboard-settings__comparison-feature dashboard-settings__comparison-feature--muted'
-                          }
-                          key={feature.label}
-                        >
-                          {feature.included ? <CheckCircle2 size={16} /> : <X size={16} />}
-                          {feature.label}
-                        </li>
-                      ))}
-                    </ul>
-                  </article>
-                ))}
-              </div>
+      {activeModal === 'upgrade-plans' && subscription && (
+        <UpgradePlansModal
+          currentPlanId={subscription.planId}
+          plans={plans}
+          plansLoading={plansLoading}
+          plansError={plansError}
+          onSelectUpgrade={(plan) => void selectPlan(plan, 'upgrade')}
+          onSelectDowngrade={(plan) => void selectPlan(plan, 'downgrade')}
+          onClose={closeModal}
+        />
+      )}
 
-              <button
-                type="button"
-                className="dashboard-settings__modal-action"
-                onClick={() => setIsPricingModalOpen(false)}
-              >
-                Close
-              </button>
-            </section>
-          </div>
-        )}
+      {activeModal === 'compare-plans' && (
+        <ComparePlansModal
+          plans={plans}
+          plansLoading={plansLoading}
+          plansError={plansError}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === 'upgrade-confirm' && selectedPlan && (
+        <UpgradeConfirmModal
+          plan={selectedPlan}
+          preview={upgradePreview}
+          previewLoading={previewLoading}
+          previewError={previewError}
+          actionLoading={actionLoading}
+          actionError={upgradePayError ?? actionError}
+          onConfirm={() => void confirmUpgrade()}
+          onCancel={cancelUpgradeConfirm}
+        />
+      )}
+
+      {activeModal === 'downgrade-confirm' && selectedPlan && subscription && (
+        <DowngradeConfirmModal
+          plan={selectedPlan}
+          subscription={subscription}
+          actionLoading={actionLoading}
+          actionError={actionError}
+          onConfirm={() => void confirmDowngrade()}
+          onCancel={cancelDowngradeConfirm}
+        />
+      )}
+
+      {activeModal === 'cancel-downgrade-confirm' && (
+        <CancelDowngradeModal
+          actionLoading={actionLoading}
+          actionError={actionError}
+          onConfirm={() => void cancelDowngrade()}
+          onCancel={closeModal}
+        />
+      )}
+
+      {viewingInvoice && (
+        <InvoiceViewModal
+          invoice={viewingInvoice}
+          onClose={() => setViewingInvoice(null)}
+          onDownload={downloadInvoicePdf}
+        />
+      )}
     </DashboardShell>
   )
 }

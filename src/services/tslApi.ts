@@ -145,15 +145,21 @@ export const authApi = {
 
 import type {
   BillingData,
+  BillingHistoryInvoice,
   CounselCredits,
   CounselRequest,
   DashboardData,
+  DowngradeResult,
   FailedPayment,
   LegalLinks,
   NotificationsData,
   PaymentMethod,
   PlaybooksData,
+  ProratedUpgradePreview,
   QuickAccessLinks,
+  SubscriptionData,
+  SubscriptionPlan,
+  UpgradeResult,
   WizardItem,
 } from './dashboardTypes'
 
@@ -199,6 +205,39 @@ export const billingApi = {
   addPaymentMethod: (payload: JsonRecord) => request('/api/v1/sme/billing/payment-methods', 'POST', payload),
   setDefaultMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}/default`, 'PATCH'),
   removeMethod: (methodId: string) => request(`/api/v1/sme/billing/payment-methods/${methodId}`, 'DELETE'),
+}
+
+// ── Subscription (Upgrade / Downgrade) API ────────────────────────────────
+// All subscription mutation calls go through this namespace.
+// To switch to production: update VITE_API_BASE_URL — no UI changes required.
+
+export const subscriptionApi = {
+  /** GET  /api/v1/subscription — current plan, usage, billing date, pending downgrade */
+  get: () => request<SubscriptionData>('/api/v1/subscription'),
+
+  /** GET  /api/v1/plans — all available plans with features */
+  plans: () => request<SubscriptionPlan[]>('/api/v1/plans'),
+
+  /** GET  /api/v1/subscription/upgrade/preview?toPlanId=X — prorated charge preview */
+  upgradePreview: (toPlanId: string) =>
+    request<ProratedUpgradePreview>(`/api/v1/subscription/upgrade/preview?toPlanId=${encodeURIComponent(toPlanId)}`),
+
+  /** POST /api/v1/subscription/upgrade — confirm & charge immediately.
+   *  paymentReference is the Paystack reference returned after a successful
+   *  checkout. When present, the server records it on the invoice.
+   *  When absent (mock/test), the server simulates the charge internally. */
+  upgrade: (payload: { currentPlanId: string; toPlanId: string; paymentReference?: string }) =>
+    request<UpgradeResult>('/api/v1/subscription/upgrade', 'POST', payload),
+
+  /** POST /api/v1/subscription/downgrade — schedule downgrade for next billing cycle */
+  downgrade: (payload: { currentPlanId: string; toPlanId: string }) =>
+    request<DowngradeResult>('/api/v1/subscription/downgrade', 'POST', payload),
+
+  /** DELETE /api/v1/subscription/downgrade — cancel scheduled downgrade */
+  cancelDowngrade: () => request('/api/v1/subscription/downgrade', 'DELETE'),
+
+  /** GET /api/v1/subscription/invoices — full billing history */
+  invoices: () => request<BillingHistoryInvoice[]>('/api/v1/subscription/invoices'),
 }
 
 export interface PaystackInitialization {
