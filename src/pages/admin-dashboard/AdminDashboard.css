@@ -344,23 +344,26 @@
   gap: 16px;
 }
 
-/* Individual card — light gray background, rounded */
+/* Individual card — single 3-col × 2-row grid */
 .ar-card {
   background: #f7f8fa;
-  border: 1px solid #e8e8e8;
-  border-radius: 18px;
-  padding: 20px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 32px;
+  padding: 21px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 160px 120px;
+  grid-template-rows: auto auto;
+  column-gap: 18px;
+  row-gap: 10px;
+  align-items: center;
 }
 
-/* Top row: title left, buttons right */
+/* Top row: title spans col 1-2, right col holds status+accept stack */
 .ar-card__top {
+  grid-column: 1 / 2;
+  grid-row: 1;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 16px;
 }
 
 .ar-card__title {
@@ -369,7 +372,37 @@
   font-size: 16px;
   font-weight: 700;
   line-height: 1.4;
-  flex: 1;
+}
+
+/* Bottom row: user col 1, mid col 2 */
+.ar-card__bottom {
+  grid-column: 1 / 2;
+  grid-row: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+
+/* Right column: spans both rows, stacks status badge + accept button */
+.ar-card__right {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Mid column: spans col 2, both rows — date + by centred */
+.ar-card__mid {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
 }
 
 .ar-card__btn {
@@ -393,20 +426,12 @@
   color: #ffffff;
   border: 0;
   box-shadow: 0 4px 12px rgba(207, 155, 47, 0.28);
-  align-self: baseline;
 }
 
 .ar-card__btn--reject {
   background: #efefef;
   color: #0d1b2a;
   border: 1px solid #dfdfdf;
-}
-
-/* Bottom row: user | mid (status+date+by) | accept */
-.ar-card__bottom {
-  display: flex;
-  align-items: baseline;
-  gap: 0;
 }
 
 /* User column */
@@ -438,15 +463,6 @@
 .ar-card__user-email {
   color: #6d6d6d;
   font-size: 13px;
-}
-
-/* Middle column — date stacked above "By:" */
-.ar-card__mid {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-  flex: 1;
 }
 
 .ar-card__date {

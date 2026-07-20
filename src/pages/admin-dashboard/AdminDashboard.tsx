@@ -1104,29 +1104,23 @@ export default function AdminDashboard() {
                           const email = (request as Record<string, unknown>).fromUserEmail as string | undefined
                           return (
                             <article className="ar-card" key={request.requestId}>
-                              {/* Row 1: title */}
+                              {/* Col 1 row 1: title */}
                               <div className="ar-card__top">
                                 <h3 className="ar-card__title">{request.subject || 'Contract Review for SaaS Agreement'}</h3>
                               </div>
-                              {/* Row 2: user | status+date+by | accept */}
-                              <div className="ar-card__bottom">
-                                <div className="ar-card__user">
-                                  <UserRound size={15} className="ar-card__user-icon" />
-                                  <div className="ar-card__user-info">
-                                    <span className="ar-card__user-name">{request.fromUser || 'Michael Chen'}</span>
-                                    <span className="ar-card__user-email">{email ?? `${(request.fromUser || 'user').toLowerCase().replace(/\s+/g, '.')}@company.com`}</span>
-                                  </div>
+                              {/* Col 2 rows 1-2: date + by (spans via CSS grid-row) */}
+                              <div className="ar-card__mid">
+                                <div className="ar-card__date">
+                                  <CalendarDays size={15} />
+                                  <span>{request.receivedAt ? new Date(request.receivedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Jan 12, 2026'}</span>
                                 </div>
-                                <div className="ar-card__mid">
-                                  <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
-                                    {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status}
-                                  </span>
-                                  <div className="ar-card__date">
-                                    <CalendarDays size={15} />
-                                    <span>{request.receivedAt ? new Date(request.receivedAt).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Jan 12, 2026'}</span>
-                                  </div>
-                                  <span className="ar-card__assigned-by">By: <strong>{assignedBy ?? 'Admin'}</strong></span>
-                                </div>
+                                <span className="ar-card__assigned-by">By: <strong>{assignedBy ?? 'Admin'}</strong></span>
+                              </div>
+                              {/* Col 3 rows 1-2: status badge + accept button stacked */}
+                              <div className="ar-card__right">
+                                <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
+                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status}
+                                </span>
                                 {normStatus === 'pending' && (
                                   <button
                                     type="button"
@@ -1137,6 +1131,16 @@ export default function AdminDashboard() {
                                     Accept
                                   </button>
                                 )}
+                              </div>
+                              {/* Col 1 row 2: user */}
+                              <div className="ar-card__bottom">
+                                <div className="ar-card__user">
+                                  <UserRound size={15} className="ar-card__user-icon" />
+                                  <div className="ar-card__user-info">
+                                    <span className="ar-card__user-name">{request.fromUser || 'Michael Chen'}</span>
+                                    <span className="ar-card__user-email">{email ?? `${(request.fromUser || 'user').toLowerCase().replace(/\s+/g, '.')}@company.com`}</span>
+                                  </div>
+                                </div>
                               </div>
                             </article>
                           )
