@@ -7,7 +7,7 @@
  *
  * PRODUCTION: swap the updateAdmin() service call for the real API — no JSX changes needed.
  */
-import { Loader2, Lock, Mail, Phone, Shield, User, X } from 'lucide-react'
+import { Loader2, Lock, Mail, User, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { AdminEditForm, AdminRecord, ModalMode } from '../types/adminManagement'
 import type { UpdateAdminPayload } from '../types/adminManagement'
@@ -191,30 +191,8 @@ export default function AdminEditModal({ record, mode, onClose, onSaved, onToast
               {errors.email && <p className="adm-modal__error">{errors.email}</p>}
             </div>
 
-            {/* Role + Status row */}
+            {/* Status */}
             <div className="adm-modal__row">
-              <div className="adm-modal__field">
-                <label className="adm-modal__label" htmlFor="adm-role">
-                  <span className="adm-modal__label-icon"><Shield size={15} /></span>
-                  Role
-                </label>
-                {isView ? (
-                  <input id="adm-role" type="text" className="adm-modal__input" value={form.role} readOnly />
-                ) : (
-                  <select
-                    id="adm-role"
-                    className="adm-modal__select"
-                    value={form.role}
-                    onChange={(e) => set('role', e.target.value as AdminEditForm['role'])}
-                    disabled={saving}
-                  >
-                    <option value="Super Admin">Super Admin</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Sub Admin">Sub Admin</option>
-                  </select>
-                )}
-              </div>
-
               <div className="adm-modal__field">
                 <label className="adm-modal__label" htmlFor="adm-status">
                   <span className="adm-modal__label-icon"><Lock size={15} /></span>
@@ -235,24 +213,6 @@ export default function AdminEditModal({ record, mode, onClose, onSaved, onToast
                   </select>
                 )}
               </div>
-            </div>
-
-            {/* Phone */}
-            <div className="adm-modal__field">
-              <label className="adm-modal__label" htmlFor="adm-phone">
-                <span className="adm-modal__label-icon"><Phone size={15} /></span>
-                Phone Number
-              </label>
-              <input
-                id="adm-phone"
-                type="tel"
-                className="adm-modal__input"
-                value={form.phone}
-                onChange={(e) => set('phone', e.target.value)}
-                placeholder={isView ? '—' : '+27 82 000 0000'}
-                readOnly={isView}
-                disabled={saving}
-              />
             </div>
 
             {/* Meta info */}

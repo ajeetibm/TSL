@@ -300,6 +300,7 @@ export default function AdminDashboard() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
+  const [adminRole, setAdminRole] = useState<string | null>(null)
 
   // ── Admin profile preferences ─────────────────────────────────────────────
   type AdminPrefs = { workflowUpdates: boolean; weeklySummary: boolean; productUpdates: boolean }
@@ -319,7 +320,7 @@ export default function AdminDashboard() {
 
     adminApi.profile().then((response) => {
       if (cancelled || !response.success || !response.data) return
-      const data = response.data as Partial<AdminProfileForm>
+      const data = response.data as Partial<AdminProfileForm> & { role?: string }
       const nextProfile = {
         ...defaultAdminProfile,
         firstName: typeof data.firstName === 'string' ? data.firstName : defaultAdminProfile.firstName,
@@ -331,6 +332,7 @@ export default function AdminDashboard() {
       }
       setAdminProfile(nextProfile)
       setAdminProfileBaseline(nextProfile)
+      if (typeof data.role === 'string') setAdminRole(data.role)
     })
 
     adminApi.counsel().then((response) => {
@@ -998,7 +1000,7 @@ export default function AdminDashboard() {
             </div>
           </section>
         ) : activeNav === 'users' ? (
-          <UsersActivity />
+          <UsersActivity adminRole={adminRole} />
         ) : activeNav === 'settings' ? (
           <section className="admin-settings">
             <div className="admin-settings__tabs" aria-label="Settings tabs">
@@ -1224,6 +1226,7 @@ export default function AdminDashboard() {
           </section>
 
           <aside className="admin-dashboard__side">
+            {adminRole !== 'admin' && (
             <section className="admin-dashboard__quick-actions">
               <h2>Quick Actions</h2>
               {quickActions.map(({ label, icon: Icon }) => (
@@ -1245,6 +1248,7 @@ export default function AdminDashboard() {
                   </button>
                 ))}
             </section>
+            )}
 
             <section className="admin-dashboard__top-wizards">
               <h2>Top Performing Wizards</h2>

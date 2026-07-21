@@ -95,6 +95,10 @@ const adminUsersFallback: User[] = [
 
 type ManagementTab = 'users' | 'admins'
 
+interface UsersActivityProps {
+  adminRole?: string | null
+}
+
 // ── Toast component ───────────────────────────────────────────────────────
 
 interface AdminToastProps {
@@ -126,7 +130,8 @@ function AdminToast({ toast, onClose }: AdminToastProps) {
 
 // ── Main component ────────────────────────────────────────────────────────
 
-export default function UsersActivity() {
+export default function UsersActivity({ adminRole }: UsersActivityProps) {
+  const isAdmin = adminRole === 'admin'
   const { profile } = useUserProfile()
   const [managementTab, setManagementTab]   = useState<ManagementTab>('users')
   const [isModalOpen, setIsModalOpen]       = useState(false)
@@ -303,11 +308,13 @@ export default function UsersActivity() {
       {/* Tabs */}
       <div className="admin-users__tabs" aria-label="Management tabs">
         <button type="button" className={managementTab === 'users'  ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'} onClick={() => setManagementTab('users')}>User Management</button>
-        <button type="button" className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'} onClick={() => setManagementTab('admins')}>Admin Management</button>
+        {!isAdmin && (
+          <button type="button" className={managementTab === 'admins' ? 'admin-users__tab admin-users__tab--active' : 'admin-users__tab'} onClick={() => setManagementTab('admins')}>Admin Management</button>
+        )}
       </div>
 
       {/* Admin summary KPIs */}
-      {managementTab === 'admins' && (
+      {!isAdmin && managementTab === 'admins' && (
         <div className="admin-users__admin-stats" aria-label="Admin management summary">
           <article className="admin-users__admin-stat">
             <span><Shield size={24} /></span>
@@ -514,7 +521,22 @@ export default function UsersActivity() {
       <InviteSubAdminModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSendInvitation={(data) => { console.log('Invite:', data) }}
+        onSendInvitation={(data) => {
+          const newAdmin: AdminRecord = {
+            id: `invite-${Date.now()}`,
+            name: data.fullName,
+            email: data.email,
+            role: 'Sub Admin',
+            status: 'Pending',
+            phone: '',
+            lastActive: '—',
+            invitedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+            secondaryAction: 'Cancel',
+          }
+          setAdmins((prev) => [newAdmin, ...prev])
+          setManagementTab('admins')
+          setIsInviteModalOpen(false)
+        }}
       />
 
       {/* ── Edit admin modal ── */}
