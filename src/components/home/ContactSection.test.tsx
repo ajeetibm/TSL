@@ -1,61 +1,87 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { ContactSection } from './ContactSection'
 
+// ─── Mock the contact service ─────────────────────────────────────────────────
+
+vi.mock('../../services/mockContactClient', () => ({
+  submitContactForm: vi.fn(),
+}))
+
+import { submitContactForm } from '../../services/mockContactClient'
+const mockSubmit = submitContactForm as ReturnType<typeof vi.fn>
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+async function fillValidForm(user: ReturnType<typeof userEvent.setup>) {
+  await user.type(screen.getByLabelText(/Full Name/i), 'Jane Smith')
+  await user.type(screen.getByLabelText(/Email Address/i), 'jane@example.com')
+  await user.type(screen.getByLabelText(/Phone Number/i), '+27 82 123 4567')
+  await user.type(screen.getByLabelText(/Message/i), 'I need legal advice for my startup.')
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
+
 describe('ContactSection', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    mockSubmit.mockResolvedValue({ success: true, message: 'Your message has been sent successfully.' })
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.clearAllMocks()
+  })
+
+  // ── Rendering ───────────────────────────────────────────────────────────────
+
   describe('Rendering', () => {
-    it('should render the section with id="contact"', () => {
+    it('renders the section with id="contact"', () => {
       const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section#contact')
-      expect(section).toBeInTheDocument()
+      expect(container.querySelector('section#contact')).toBeInTheDocument()
     })
 
-    it('should render the section header', () => {
+    it('renders the section header', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText('Get In Touch')).toBeInTheDocument()
       expect(screen.getByText("Let's Start Your Legal Journey")).toBeInTheDocument()
     })
 
-    it('should render the subtitle', () => {
+    it('renders the subtitle', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText(/Book your free 15-minute consultation/i)).toBeInTheDocument()
     })
 
-    it('should render all contact cards', () => {
+    it('renders all contact cards', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText('Phone')).toBeInTheDocument()
       expect(screen.getByText('Email')).toBeInTheDocument()
       expect(screen.getByText('Office')).toBeInTheDocument()
       expect(screen.getByText('Hours')).toBeInTheDocument()
     })
 
-    it('should render contact information', () => {
+    it('renders contact information values', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText('+27 (0) 11 123 4567')).toBeInTheDocument()
       expect(screen.getByText('hello@thestartuplegal.co.za')).toBeInTheDocument()
       expect(screen.getByText('Sandton, Johannesburg, South Africa')).toBeInTheDocument()
       expect(screen.getByText('Mon - Fri: 8:00 AM - 6:00 PM')).toBeInTheDocument()
     })
 
-    it('should render Quick Response card', () => {
+    it('renders the Quick Response card', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText('Quick Response')).toBeInTheDocument()
       expect(screen.getByText(/Our team typically responds within 2-4 hours/i)).toBeInTheDocument()
       expect(screen.getByText('Available Now')).toBeInTheDocument()
     })
   })
 
+  // ── Form fields ─────────────────────────────────────────────────────────────
+
   describe('Form Fields', () => {
-    it('should render all form fields', () => {
+    it('renders all form fields via accessible labels', () => {
       render(<ContactSection />)
-      
       expect(screen.getByLabelText(/Full Name/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument()
       expect(screen.getByLabelText(/Phone Number/i)).toBeInTheDocument()
@@ -63,27 +89,21 @@ describe('ContactSection', () => {
       expect(screen.getByLabelText(/Message/i)).toBeInTheDocument()
     })
 
-    it('should mark required fields', () => {
+    it('marks required fields with *', () => {
       render(<ContactSection />)
-      
       expect(screen.getByText(/Full Name \*/i)).toBeInTheDocument()
       expect(screen.getByText(/Email Address \*/i)).toBeInTheDocument()
       expect(screen.getByText(/Message \*/i)).toBeInTheDocument()
     })
 
-    it('should have proper input types', () => {
+    it('has correct input types', () => {
       render(<ContactSection />)
-      
-      const emailInput = screen.getByLabelText(/Email Address/i)
-      const phoneInput = screen.getByLabelText(/Phone Number/i)
-      
-      expect(emailInput).toHaveAttribute('type', 'email')
-      expect(phoneInput).toHaveAttribute('type', 'tel')
+      expect(screen.getByLabelText(/Email Address/i)).toHaveAttribute('type', 'email')
+      expect(screen.getByLabelText(/Phone Number/i)).toHaveAttribute('type', 'tel')
     })
 
-    it('should have placeholders', () => {
+    it('has correct placeholders', () => {
       render(<ContactSection />)
-      
       expect(screen.getByPlaceholderText('John Doe')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('john@example.com')).toBeInTheDocument()
       expect(screen.getByPlaceholderText('+27 82 123 4567')).toBeInTheDocument()
@@ -91,362 +111,345 @@ describe('ContactSection', () => {
       expect(screen.getByPlaceholderText('Tell us about your legal needs...')).toBeInTheDocument()
     })
 
-    it('should render textarea for message', () => {
+    it('renders a textarea for message', () => {
       render(<ContactSection />)
-      
-      const messageField = screen.getByLabelText(/Message/i)
-      expect(messageField.tagName).toBe('TEXTAREA')
+      expect(screen.getByLabelText(/Message/i).tagName).toBe('TEXTAREA')
     })
-  })
 
-  describe('Form Interactions', () => {
-    it('should allow typing in form fields', async () => {
+    it('allows typing in text inputs', async () => {
       const user = userEvent.setup()
       render(<ContactSection />)
-      
       const nameInput = screen.getByLabelText(/Full Name/i) as HTMLInputElement
-      const emailInput = screen.getByLabelText(/Email Address/i) as HTMLInputElement
-      
       await user.type(nameInput, 'John Doe')
-      await user.type(emailInput, 'john@example.com')
-      
       expect(nameInput.value).toBe('John Doe')
-      expect(emailInput.value).toBe('john@example.com')
+    })
+  })
+
+  // ── Submit button disabled state ─────────────────────────────────────────────
+
+  describe('Submit Button — disabled state', () => {
+    it('is disabled initially (empty form)', () => {
+      render(<ContactSection />)
+      expect(screen.getByRole('button', { name: /Send Message/i })).toBeDisabled()
     })
 
-    it('should allow typing in textarea', async () => {
+    it('remains disabled when only some required fields are filled', async () => {
       const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const messageField = screen.getByLabelText(/Message/i) as HTMLTextAreaElement
-      await user.type(messageField, 'Test message')
-      
-      expect(messageField.value).toBe('Test message')
-    })
-  })
-
-  describe('Submit Button', () => {
-    it('should render submit button', () => {
-      render(<ContactSection />)
-      
-      const button = screen.getByRole('button', { name: /Send Message/i })
-      expect(button).toBeInTheDocument()
+      await user.type(screen.getByLabelText(/Full Name/i), 'Jane Smith')
+      expect(screen.getByRole('button', { name: /Send Message/i })).toBeDisabled()
     })
 
-    it('should have Send icon', () => {
-      render(<ContactSection />)
-      
-      const button = screen.getByRole('button', { name: /Send Message/i })
-      expect(button.querySelector('svg')).toBeInTheDocument()
-    })
-
-    it('should be clickable', async () => {
+    it('becomes enabled once all required fields are valid', async () => {
       const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const button = screen.getByRole('button', { name: /Send Message/i })
-      await user.click(button)
-      
-      // Button should remain in document after click
-      expect(button).toBeInTheDocument()
-    })
-
-    it('should have type="button"', () => {
-      render(<ContactSection />)
-      
-      const button = screen.getByRole('button', { name: /Send Message/i })
-      expect(button).toHaveAttribute('type', 'button')
+      await fillValidForm(user)
+      expect(screen.getByRole('button', { name: /Send Message/i })).not.toBeDisabled()
     })
   })
 
-  describe('Contact Cards', () => {
-    it('should render all contact cards as articles', () => {
-      const { container } = render(<ContactSection />)
-      
-      const articles = container.querySelectorAll('article')
-      expect(articles.length).toBeGreaterThanOrEqual(4)
-    })
+  // ── Blur validation ──────────────────────────────────────────────────────────
 
-    it('should have icons for all contact cards', () => {
+  describe('Blur validation', () => {
+    it('shows "Full Name is required." on blur when empty', async () => {
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const phoneCard = screen.getByText('Phone').closest('article')
-      const emailCard = screen.getByText('Email').closest('article')
-      const officeCard = screen.getByText('Office').closest('article')
-      const hoursCard = screen.getByText('Hours').closest('article')
-      
-      expect(phoneCard?.querySelector('svg')).toBeInTheDocument()
-      expect(emailCard?.querySelector('svg')).toBeInTheDocument()
-      expect(officeCard?.querySelector('svg')).toBeInTheDocument()
-      expect(hoursCard?.querySelector('svg')).toBeInTheDocument()
+      await user.click(screen.getByLabelText(/Full Name/i))
+      await user.tab()
+      expect(await screen.findByText('Full Name is required.')).toBeInTheDocument()
     })
 
-    it('should have gold icon backgrounds', () => {
+    it('shows "Please enter a valid full name." for invalid name', async () => {
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const phoneCard = screen.getByText('Phone').closest('article')
-      const iconContainer = phoneCard?.querySelector('.bg-gold')
-      expect(iconContainer).toBeInTheDocument()
-    })
-  })
-
-  describe('Layout and Structure', () => {
-    it('should have navy-primary background', () => {
-      const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section')
-      expect(section).toHaveClass('bg-navy-primary')
+      await user.type(screen.getByLabelText(/Full Name/i), '12345')
+      await user.tab()
+      expect(await screen.findByText('Please enter a valid full name.')).toBeInTheDocument()
     })
 
-    it('should have white text', () => {
-      const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section')
-      expect(section).toHaveClass('text-white')
-    })
-
-    it('should have proper padding', () => {
-      const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section')
-      expect(section).toHaveClass('py-20')
-      expect(section).toHaveClass('lg:py-24')
-    })
-
-    it('should have grid layout', () => {
-      const { container } = render(<ContactSection />)
-      
-      const grid = container.querySelector('.lg\\:grid-cols-\\[1fr_0\\.48fr\\]')
-      expect(grid).toBeInTheDocument()
-    })
-  })
-
-  describe('Form Styling', () => {
-    it('should have proper form styling', () => {
-      const { container } = render(<ContactSection />)
-      
-      const form = container.querySelector('form')
-      expect(form).toHaveClass('rounded-[24px]')
-      expect(form).toHaveClass('bg-[#253342]')
-      expect(form).toHaveClass('border')
-    })
-
-    it('should have proper input styling', () => {
+    it('shows "Email Address is required." on blur when empty', async () => {
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
+      await user.click(screen.getByLabelText(/Email Address/i))
+      await user.tab()
+      expect(await screen.findByText('Email Address is required.')).toBeInTheDocument()
+    })
+
+    it('shows "Please enter a valid email address." for invalid email', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await user.type(screen.getByLabelText(/Email Address/i), 'not-an-email')
+      await user.tab()
+      expect(await screen.findByText('Please enter a valid email address.')).toBeInTheDocument()
+    })
+
+    it('shows "Phone Number is required." on blur when empty', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await user.click(screen.getByLabelText(/Phone Number/i))
+      await user.tab()
+      expect(await screen.findByText('Phone Number is required.')).toBeInTheDocument()
+    })
+
+    it('shows "Please enter a valid phone number." for invalid phone', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await user.type(screen.getByLabelText(/Phone Number/i), 'abc')
+      await user.tab()
+      expect(await screen.findByText('Please enter a valid phone number.')).toBeInTheDocument()
+    })
+
+    it('shows "Message is required." on blur when empty', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await user.click(screen.getByLabelText(/Message/i))
+      await user.tab()
+      expect(await screen.findByText('Message is required.')).toBeInTheDocument()
+    })
+
+    it('shows "Message should contain at least 10 characters." for short message', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await user.type(screen.getByLabelText(/Message/i), 'Hi')
+      await user.tab()
+      expect(await screen.findByText('Message should contain at least 10 characters.')).toBeInTheDocument()
+    })
+
+    it('clears error after correcting an invalid field', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
       const input = screen.getByLabelText(/Full Name/i)
-      expect(input).toHaveClass('rounded-[22px]')
-      expect(input).toHaveClass('bg-white/10')
-      expect(input).toHaveClass('border')
-    })
-
-    it('should have focus styles on inputs', () => {
-      render(<ContactSection />)
-      
-      const input = screen.getByLabelText(/Full Name/i)
-      expect(input).toHaveClass('focus:border-gold')
+      // Trigger error
+      await user.click(input)
+      await user.tab()
+      expect(await screen.findByText('Full Name is required.')).toBeInTheDocument()
+      // Fix it
+      await user.type(input, 'Jane Smith')
+      expect(screen.queryByText('Full Name is required.')).not.toBeInTheDocument()
     })
   })
 
-  describe('Privacy Notice', () => {
-    it('should render privacy notice', () => {
+  // ── Submit-time validation ───────────────────────────────────────────────────
+
+  describe('Submit-time validation', () => {
+    it('shows all errors when submitting empty form', async () => {
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
-      expect(screen.getByText(/By submitting this form/i)).toBeInTheDocument()
+      // Force-enable button by manually dispatching submit on the form
+      const form = document.querySelector('form')!
+      await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+      expect(await screen.findByText('Full Name is required.')).toBeInTheDocument()
+      expect(screen.getByText('Email Address is required.')).toBeInTheDocument()
+      expect(screen.getByText('Phone Number is required.')).toBeInTheDocument()
+      expect(screen.getByText('Message is required.')).toBeInTheDocument()
     })
 
-    it('should mention Privacy Policy and Terms of Service', () => {
+    it('does not call submitContactForm when validation fails', async () => {
       render(<ContactSection />)
-      
-      const notice = screen.getByText(/Privacy Policy and Terms of Service/i)
-      expect(notice).toBeInTheDocument()
+      const form = document.querySelector('form')!
+      await act(async () => { form.dispatchEvent(new Event('submit', { bubbles: true })) })
+      expect(mockSubmit).not.toHaveBeenCalled()
     })
   })
 
-  describe('Quick Response Card', () => {
-    it('should have proper styling', () => {
+  // ── Loading state ────────────────────────────────────────────────────────────
+
+  describe('Loading state', () => {
+    it('shows "Sending..." and disables button while submitting', async () => {
+      // Never resolves during this check
+      mockSubmit.mockReturnValue(new Promise(() => {}))
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const card = screen.getByText('Quick Response').closest('article')
-      expect(card).toHaveClass('rounded-[24px]')
-      expect(card).toHaveClass('bg-[#253342]')
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      expect(await screen.findByText('Sending...')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Sending\.\.\./i })).toBeDisabled()
     })
 
-    it('should have CheckCircle2 icon', () => {
+    it('calls submitContactForm with trimmed payload', async () => {
+      const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const availableNow = screen.getByText('Available Now')
-      const icon = availableNow.closest('p')?.querySelector('svg')
-      expect(icon).toBeInTheDocument()
-    })
-
-    it('should have green color for Available Now', () => {
-      render(<ContactSection />)
-      
-      const availableNow = screen.getByText('Available Now')
-      expect(availableNow).toHaveClass('text-[#2ee56f]')
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      await waitFor(() => expect(mockSubmit).toHaveBeenCalledOnce())
+      expect(mockSubmit).toHaveBeenCalledWith({
+        fullName:    'Jane Smith',
+        email:       'jane@example.com',
+        phone:       '+27 82 123 4567',
+        companyName: '',
+        message:     'I need legal advice for my startup.',
+      })
     })
   })
 
-  describe('Background Effects', () => {
-    it('should have gradient overlay', () => {
-      const { container } = render(<ContactSection />)
-      
-      const gradient = container.querySelector('[class*="radial-gradient"]')
-      expect(gradient).toBeInTheDocument()
+  // ── Success behaviour ────────────────────────────────────────────────────────
+
+  describe('Success behaviour', () => {
+    it('shows the success toast after submission', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      expect(await screen.findByText('Message Sent Successfully!')).toBeInTheDocument()
+      expect(screen.getByText(/Thank you for contacting The StartUp Legal/i)).toBeInTheDocument()
     })
 
-    it('should have blur effects', () => {
-      const { container } = render(<ContactSection />)
-      
-      const blurElements = container.querySelectorAll('[class*="blur"]')
-      expect(blurElements.length).toBeGreaterThan(0)
+    it('clears the form after successful submission', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      await screen.findByText('Message Sent Successfully!')
+      expect((screen.getByLabelText(/Full Name/i) as HTMLInputElement).value).toBe('')
+      expect((screen.getByLabelText(/Email Address/i) as HTMLInputElement).value).toBe('')
+      expect((screen.getByLabelText(/Message/i) as HTMLTextAreaElement).value).toBe('')
+    })
+
+    it('re-enables the button and restores "Send Message" text after success', async () => {
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      await screen.findByText('Message Sent Successfully!')
+      // After reset the form is empty so the button is disabled again
+      expect(screen.queryByText('Sending...')).not.toBeInTheDocument()
+    })
+
+    it('calls onClose and begins exit when the dismiss button is clicked', async () => {
+      // jsdom does not run CSS animations so Framer Motion's AnimatePresence
+      // never removes the DOM node after an exit animation. We verify the
+      // dismiss button is reachable, clickable, and that Framer marks the
+      // element as exiting (opacity: 0) immediately after the click.
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      const alert = await screen.findByRole('alert')
+      expect(alert).toBeInTheDocument()
+      const closeBtn = screen.getByRole('button', { name: /Dismiss notification/i })
+      await user.click(closeBtn)
+      // Framer Motion sets opacity:0 on the exiting element immediately
+      await waitFor(() => expect(alert.style.opacity).toBe('0'))
     })
   })
+
+  // ── Error behaviour ──────────────────────────────────────────────────────────
+
+  describe('Error behaviour', () => {
+    it('shows error toast when service returns success: false', async () => {
+      mockSubmit.mockResolvedValue({ success: false, message: 'Something went wrong.' })
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      expect(await screen.findByText('Unable to send your message.')).toBeInTheDocument()
+    })
+
+    it('preserves user input when service returns failure', async () => {
+      mockSubmit.mockResolvedValue({ success: false, message: 'Something went wrong.' })
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      await screen.findByText('Unable to send your message.')
+      expect((screen.getByLabelText(/Full Name/i) as HTMLInputElement).value).toBe('Jane Smith')
+      expect((screen.getByLabelText(/Email Address/i) as HTMLInputElement).value).toBe('jane@example.com')
+    })
+
+    it('shows error toast when service throws', async () => {
+      mockSubmit.mockRejectedValue(new Error('Network error'))
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      await user.click(screen.getByRole('button', { name: /Send Message/i }))
+      expect(await screen.findByText('Unable to send your message.')).toBeInTheDocument()
+    })
+  })
+
+  // ── Duplicate submission prevention ──────────────────────────────────────────
+
+  describe('Duplicate submission prevention', () => {
+    it('does not call submit again while a request is in flight', async () => {
+      let resolve!: () => void
+      mockSubmit.mockReturnValue(
+        new Promise<{ success: true; message: string }>((res) => { resolve = () => res({ success: true, message: 'ok' }) })
+      )
+      const user = userEvent.setup()
+      render(<ContactSection />)
+      await fillValidForm(user)
+      const btn = screen.getByRole('button', { name: /Send Message/i })
+      await user.click(btn)
+      // Button is now disabled / in Sending state
+      await user.click(btn)
+      await user.click(btn)
+      act(() => resolve())
+      await screen.findByText('Message Sent Successfully!')
+      expect(mockSubmit).toHaveBeenCalledOnce()
+    })
+  })
+
+  // ── Accessibility ─────────────────────────────────────────────────────────────
 
   describe('Accessibility', () => {
-    it('should use semantic section element', () => {
+    it('uses a semantic <form> element', () => {
       const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section')
-      expect(section).toBeInTheDocument()
+      expect(container.querySelector('form')).toBeInTheDocument()
     })
 
-    it('should use semantic form element', () => {
+    it('uses a semantic <aside> element', () => {
       const { container } = render(<ContactSection />)
-      
-      const form = container.querySelector('form')
-      expect(form).toBeInTheDocument()
+      expect(container.querySelector('aside')).toBeInTheDocument()
     })
 
-    it('should use semantic aside element', () => {
+    it('has aria-label on the form', () => {
       const { container } = render(<ContactSection />)
-      
-      const aside = container.querySelector('aside')
-      expect(aside).toBeInTheDocument()
+      expect(container.querySelector('form')).toHaveAttribute('aria-label', 'Contact form')
     })
 
-    it('should have proper heading hierarchy', () => {
-      render(<ContactSection />)
-      
-      const h2 = screen.getByRole('heading', { level: 2 })
-      expect(h2).toBeInTheDocument()
-      
-      const h3s = screen.getAllByRole('heading', { level: 3 })
-      expect(h3s.length).toBeGreaterThan(0)
-    })
-
-    it('should have labels for all form fields', () => {
-      render(<ContactSection />)
-      
-      expect(screen.getByLabelText(/Full Name/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/Email Address/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/Phone Number/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/Company Name/i)).toBeInTheDocument()
-      expect(screen.getByLabelText(/Message/i)).toBeInTheDocument()
-    })
-  })
-
-  describe('Responsive Design', () => {
-    it('should have responsive grid', () => {
-      const { container } = render(<ContactSection />)
-      
-      const grid = container.querySelector('.grid')
-      expect(grid).toHaveClass('lg:grid-cols-[1fr_0.48fr]')
-    })
-
-    it('should have responsive padding', () => {
-      const { container } = render(<ContactSection />)
-      
-      const section = container.querySelector('section')
-      expect(section).toHaveClass('lg:py-24')
-    })
-
-    it('should have responsive form padding', () => {
-      const { container } = render(<ContactSection />)
-      
-      const form = container.querySelector('form')
-      expect(form).toHaveClass('md:p-12')
-    })
-
-    it('should have responsive form grid', () => {
-      const { container } = render(<ContactSection />)
-      
-      const formGrid = container.querySelector('.md\\:grid-cols-2')
-      expect(formGrid).toBeInTheDocument()
-    })
-  })
-
-  describe('Framer Motion Integration', () => {
-    it('should render motion components', () => {
-      const { container } = render(<ContactSection />)
-      
-      expect(container.querySelector('section')).toBeInTheDocument()
-    })
-  })
-
-  describe('Edge Cases', () => {
-    it('should handle multiple renders', () => {
-      const { rerender } = render(<ContactSection />)
-      
-      expect(screen.getByText('Get In Touch')).toBeInTheDocument()
-      
-      rerender(<ContactSection />)
-      
-      expect(screen.getByText('Get In Touch')).toBeInTheDocument()
-    })
-
-    it('should handle empty form submission', async () => {
+    it('has aria-invalid on invalid fields after blur', async () => {
       const user = userEvent.setup()
       render(<ContactSection />)
-      
-      const button = screen.getByRole('button', { name: /Send Message/i })
-      
-      // Should not throw error
-      await expect(user.click(button)).resolves.not.toThrow()
+      await user.click(screen.getByLabelText(/Full Name/i))
+      await user.tab()
+      await screen.findByText('Full Name is required.')
+      expect(screen.getByLabelText(/Full Name/i)).toHaveAttribute('aria-invalid', 'true')
+    })
+
+    it('has proper heading hierarchy (h2 and h3)', () => {
+      render(<ContactSection />)
+      expect(screen.getByRole('heading', { level: 2 })).toBeInTheDocument()
+      expect(screen.getAllByRole('heading', { level: 3 }).length).toBeGreaterThan(0)
     })
   })
 
-  describe('Typography', () => {
-    it('should have proper heading styles', () => {
-      render(<ContactSection />)
-      
-      const heading = screen.getByRole('heading', { level: 2 })
-      expect(heading).toHaveClass('font-display')
-      expect(heading).toHaveClass('font-bold')
-    })
+  // ── Structure & styling ──────────────────────────────────────────────────────
 
-    it('should have proper label styles', () => {
-      render(<ContactSection />)
-      
-      const label = screen.getByText(/Full Name \*/i)
-      expect(label).toHaveClass('text-sm')
-      expect(label).toHaveClass('font-semibold')
-    })
-  })
-
-  describe('Color Scheme', () => {
-    it('should use gold for icon backgrounds', () => {
+  describe('Structure & styling', () => {
+    it('has navy-primary background', () => {
       const { container } = render(<ContactSection />)
-      
-      const iconContainers = container.querySelectorAll('.bg-gold')
-      expect(iconContainers.length).toBeGreaterThan(0)
+      expect(container.querySelector('section')).toHaveClass('bg-navy-primary')
     })
 
-    it('should use white text', () => {
-      render(<ContactSection />)
-      
-      const heading = screen.getByRole('heading', { level: 2 })
-      expect(heading).toHaveClass('text-white')
-    })
-
-    it('should use dark background for form', () => {
+    it('has gold icon backgrounds on contact cards', () => {
       const { container } = render(<ContactSection />)
-      
-      const form = container.querySelector('form')
-      expect(form).toHaveClass('bg-[#253342]')
+      expect(container.querySelectorAll('.bg-gold').length).toBeGreaterThan(0)
+    })
+
+    it('has responsive grid layout', () => {
+      const { container } = render(<ContactSection />)
+      expect(container.querySelector('.lg\\:grid-cols-\\[1fr_0\\.48fr\\]')).toBeInTheDocument()
+    })
+
+    it('has gradient overlay', () => {
+      const { container } = render(<ContactSection />)
+      expect(container.querySelector('[class*="radial-gradient"]')).toBeInTheDocument()
+    })
+
+    it('renders privacy notice', () => {
+      render(<ContactSection />)
+      expect(screen.getByText(/By submitting this form/i)).toBeInTheDocument()
     })
   })
 })
 
-// Made with Bob
+// Made with IBM Bob

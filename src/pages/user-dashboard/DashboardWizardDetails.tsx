@@ -33,6 +33,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import { openPaystackCheckout } from '../../services/paystackClient'
+import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import './Dashboard.css'
 import './DashboardWizardDetails.css'
 
@@ -53,14 +54,16 @@ type PaymentMessage = {
   text: string
 }
 
+type PaymentMethod = 'Bank Transfers' | 'Credit/Debit Cards' | 'E-wallets' | 'PayPal' | 'Scan to Pay'
+
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
 
-const paymentMethods = [
+const paymentMethods: Array<{ title: PaymentMethod; icon: LucideIcon | null; className: string }> = [
   { title: 'Bank Transfers', icon: Building2, className: 'dashboard-wizard-details__payment-method-icon--bank' },
   { title: 'Credit/Debit Cards', icon: CreditCard, className: 'dashboard-wizard-details__payment-method-icon--card' },
   { title: 'E-wallets', icon: WalletCards, className: 'dashboard-wizard-details__payment-method-icon--wallet' },
   { title: 'PayPal', icon: null, className: 'dashboard-wizard-details__payment-method-icon--paypal' },
-  { title: 'MasterPass', icon: null, className: 'dashboard-wizard-details__payment-method-icon--masterpass' },
+  { title: 'Scan to Pay', icon: WalletCards, className: 'dashboard-wizard-details__payment-method-icon--wallet' },
 ]
 
 const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
@@ -276,7 +279,7 @@ export default function DashboardWizardDetails() {
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('')
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('')
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
   const [isInitializingPayment, setIsInitializingPayment] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
@@ -340,7 +343,7 @@ export default function DashboardWizardDetails() {
   }, [totalWizards])
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
-  const handlePaymentMethodSelect = (method: string) => {
+  const handlePaymentMethodSelect = (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
     setPaymentMessage(null)
   }
@@ -357,7 +360,7 @@ export default function DashboardWizardDetails() {
     setPaymentMessage(null)
     setIsInitializingPayment(true)
 
-    const result = await openPaystackCheckout({
+    const paymentPayload = {
       amount: getPlanAmount(activePlan),
       currency: 'ZAR',
       email: getStoredUserEmail(),
@@ -365,7 +368,14 @@ export default function DashboardWizardDetails() {
       plan: activePlan,
       selectedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })),
       totalWizards,
-    })
+    }
+
+    const result = selectedPaymentMethod === 'Credit/Debit Cards' && import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+      ? await openPaystackCheckout(paymentPayload)
+      : await openMockPaymentCheckout({
+        ...paymentPayload,
+        paymentMethod: selectedPaymentMethod === 'Scan to Pay' ? 'E-wallets' : selectedPaymentMethod,
+      })
 
     setIsInitializingPayment(false)
 
@@ -610,12 +620,6 @@ export default function DashboardWizardDetails() {
                     <span className={`dashboard-wizard-details__payment-method-icon ${className}`}>
                       {Icon ? <Icon size={54} strokeWidth={2.8} /> : null}
                       {title === 'PayPal' && <b>PP</b>}
-                      {title === 'MasterPass' && (
-                        <i>
-                          <span />
-                          <span />
-                        </i>
-                      )}
                     </span>
                     <h2>{title}</h2>
                     {selectedPaymentMethod === title ? (

@@ -4,6 +4,7 @@ import {
   Box,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   CircleCheckBig,
   Download,
@@ -21,10 +22,10 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { formatDate } from '../../services/dashboardTypes'
-import type { DashboardData, LegalLinks, QuickAccessLinks } from '../../services/dashboardTypes'
+import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
+import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
-import { smeApi } from '../../services/tslApi'
+import { smeApi, subscriptionApi } from '../../services/tslApi'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
@@ -44,19 +45,100 @@ import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
-const landingPlanBenefits = [
-  '12 wizard runs per month',
-  'Access to all legal wizards',
-  'Priority support',
-  'Legal counsel credits',
-]
+// Per-plan benefit lines shown in the top-right hero card.
+// Numeric values (runs, team members) come from the live SubscriptionData so they
+// stay accurate after an upgrade/downgrade without any frontend changes.
+// The label copy below matches the exact wording required by product.
+function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | undefined): string[] {
+  const runs    = sub.wizardRuns === -1  ? 'Unlimited' : `${sub.wizardRuns}`
+  const members = sub.teamMembers === -1 ? 'Unlimited' : `${sub.teamMembers}`
 
-const paidPlanBenefits = [
-  '12 wizard runs per month',
-  'Access to all legal wizards',
-  'Priority support',
-  'Legal counsel credits',
-]
+  const id = sub.planId?.toLowerCase() ?? ''
+
+  if (id === 'launchpad') {
+    return [
+      `${runs} essential wizards`,
+      `${runs} runs per month`,
+      `${members} team member`,
+      'Basic email support',
+      '6 months document storage',
+    ]
+  }
+
+  if (id === 'operator') {
+    return [
+      'All 12 legal wizards',
+      `${runs} runs per month`,
+      `${members} team members`,
+      'Priority support (24–48 hr)',
+      'Unlimited document storage',
+    ]
+  }
+
+  if (id === 'boardroom') {
+    return [
+      'All 30 legal wizards',
+      `${runs} runs per month`,
+      `${members} team members`,
+      'Dedicated support (SLA)',
+      'Unlimited document storage',
+      'API access',
+      'White-label options',
+      'Custom workflows',
+    ]
+  }
+
+  // Fallback: generic list built from API fields
+  return [
+    `${runs} wizard runs per month`,
+    `${members} team member${sub.teamMembers === 1 ? '' : 's'}`,
+  ]
+}
+
+const PREVIEW_COUNT = 4
+
+interface PlanCardProps {
+  planName: string
+  benefits: string[]
+  variant: 'landing' | 'paid'
+}
+
+function PlanCard({ planName, benefits, variant }: PlanCardProps) {
+  const [showAll, setShowAll] = useState(false)
+  const hasMore = benefits.length > PREVIEW_COUNT
+  const visible = showAll ? benefits : benefits.slice(0, PREVIEW_COUNT)
+
+  return (
+    <div className={`user-dashboard__plan-card user-dashboard__plan-card--${variant}`}>
+      <h3>
+        Your <span>{planName} Plan</span> Includes:
+      </h3>
+      <ul>
+        {visible.map((benefit) => (
+          <li key={benefit}>
+            <CheckCircle2 size={18} />
+            {benefit}
+          </li>
+        ))}
+      </ul>
+
+      {hasMore && (
+        <button
+          type="button"
+          className="user-dashboard__plan-card-toggle"
+          onClick={() => setShowAll((s) => !s)}
+          aria-expanded={showAll}
+        >
+          {showAll ? 'Show Less' : 'View All Features'}
+          <ChevronDown
+            size={13}
+            className={`user-dashboard__plan-card-chevron${showAll ? ' user-dashboard__plan-card-chevron--open' : ''}`}
+          />
+        </button>
+      )}
+    </div>
+  )
+}
 
 const quickStartCards = [
   {
@@ -1200,6 +1282,10 @@ export default function Dashboard() {
   const [legalLinks, setLegalLinks] = useState<LegalLinks | null>(null)
   const [legalLinksLoading, setLegalLinksLoading] = useState(true)
 
+  // ── Live subscription + plan data (drives the plan card benefits) ────────
+  const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
+  const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | undefined>(undefined)
+
   setPageMetadata(
     'Dashboard',
     'TSL user dashboard for reviewing legal workflows, plan usage, and completed documents.',
@@ -1253,6 +1339,26 @@ export default function Dashboard() {
   // Clean up the old legacy key so it never interferes again
   useEffect(() => {
     localStorage.removeItem('tsl-dashboard-payment-complete')
+  }, [])
+
+  // ── Fetch live subscription + plan data ───────────────────────────────────
+  // Runs once on mount. Fetches both subscription (wizardRuns, teamMembers, planName)
+  // and the plans list (storage, features[]) so the plan card is fully dynamic.
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([subscriptionApi.get(), subscriptionApi.plans()]).then(([subRes, plansRes]) => {
+      if (cancelled) return
+      if (subRes.success && subRes.data) {
+        setSubscription(subRes.data)
+        if (plansRes.success && plansRes.data) {
+          const matched = plansRes.data.find(
+            (p) => p.planId.toLowerCase() === subRes.data!.planId.toLowerCase(),
+          )
+          setCurrentPlan(matched)
+        }
+      }
+    })
+    return () => { cancelled = true }
   }, [])
 
   // Derive active tab from wizard states — computed on every render, no effect needed
@@ -1313,7 +1419,8 @@ export default function Dashboard() {
           <div>
             <h2>Welcome to The Startup Legal! 🎉</h2>
             <p>
-              You're all set up with your <strong>Operator Plan</strong>. Let's get your first legal
+              You're all set up with your{' '}
+              <strong>{capitalizePlan(user?.plan)} Plan</strong>. Let's get your first legal
               document created.
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
@@ -1322,19 +1429,11 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="user-dashboard__plan-card user-dashboard__plan-card--landing">
-            <h3>
-              Your <span>Operator Plan</span> Includes:
-            </h3>
-            <ul>
-              {landingPlanBenefits.map((benefit) => (
-                <li key={benefit}>
-                  <CheckCircle2 size={18} />
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <PlanCard
+            planName={subscription?.planName ?? capitalizePlan(user?.plan)}
+            benefits={subscription ? buildPlanBenefits(subscription, currentPlan) : []}
+            variant="landing"
+          />
         </header>
 
         <main className="user-dashboard__landing-content">
@@ -1610,19 +1709,11 @@ export default function Dashboard() {
           </button>
         </div>
 
-        <div className="user-dashboard__plan-card user-dashboard__plan-card--paid">
-          <h3>
-            Your <span>Operator Plan</span> Includes:
-          </h3>
-          <ul>
-            {paidPlanBenefits.map((benefit) => (
-              <li key={benefit}>
-                <CheckCircle2 size={18} />
-                {benefit}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <PlanCard
+          planName={subscription?.planName ?? capitalizePlan(user?.plan)}
+          benefits={subscription ? buildPlanBenefits(subscription, currentPlan) : []}
+          variant="paid"
+        />
       </header>
 
       <main className="user-dashboard__content">
@@ -1673,7 +1764,7 @@ export default function Dashboard() {
               <div className="user-dashboard__stat-date">Jan 1</div>
               <div className="user-dashboard__stat-year">2026</div>
               <div className="user-dashboard__stat-billing">Next Billing</div>
-              <div className="user-dashboard__stat-plan">Operator Plan - R999</div>
+              <div className="user-dashboard__stat-plan">{subscription?.planName ?? capitalizePlan(user?.plan)} Plan</div>
             </div>
           </article>
         </section>
