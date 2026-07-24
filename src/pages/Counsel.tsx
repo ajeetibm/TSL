@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Archive,
-  BadgeCheck,
   Bell,
   Calendar,
   BriefcaseBusiness,
@@ -15,7 +14,6 @@ import {
   CircleX,
   Clock3,
   Eye,
-  FileCheck2,
   GitBranch,
   MessageSquare,
   MessageSquareText,
@@ -23,7 +21,6 @@ import {
   Shield,
   Target,
   Timer,
-  TimerReset,
   UserCheck,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
