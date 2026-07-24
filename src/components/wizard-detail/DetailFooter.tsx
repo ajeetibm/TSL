@@ -1,9 +1,33 @@
+import { type MouseEvent } from 'react'
 import './DetailFooter.css'
 
 const footerGroups = {
   'Quick Links': ['About Us', 'How It Works', 'Pricing', 'FAQ', 'Contact'],
   Services: ['Wizards', 'Get Counsel', 'Playbooks', 'CIPC Services', 'Company Registration'],
   Legal: ['Privacy Policy', 'Terms & Conditions', 'POPIA Compliance', 'Refund Policy'],
+}
+
+const sectionAnchors: Record<string, string> = {
+  'About Us': 'about',
+  'How It Works': 'features',
+  Pricing: 'pricing',
+  Contact: 'contact',
+}
+
+const routeLinks: Record<string, string> = {
+  'Get Counsel': '/counsel',
+  Playbooks: '/playbooks-insights',
+  Wizards: '/wizard-catalogue'
+}
+
+function handleSectionClick(sectionId: string) {
+  return (e: MouseEvent<HTMLAnchorElement>) => {
+    const el = document.getElementById(sectionId)
+    if (el) {
+      e.preventDefault()
+      el.scrollIntoView({ block: 'start' })
+    }
+  }
 }
 
 export function DetailFooter() {
@@ -30,11 +54,19 @@ export function DetailFooter() {
           {Object.entries(footerGroups).map(([title, links]) => (
             <nav className="detail-footer__group" key={title}>
               <h3>{title}</h3>
-              {links.map((link) => (
-                <a key={link} href="/contact">
-                  {link}
-                </a>
-              ))}
+              {links.map((link) => {
+                const sectionId = sectionAnchors[link]
+                const href = sectionId ? `/#${sectionId}` : (routeLinks[link] ?? '/contact')
+                return (
+                  <a
+                    key={link}
+                    href={href}
+                    onClick={sectionId ? handleSectionClick(sectionId) : undefined}
+                  >
+                    {link}
+                  </a>
+                )
+              })}
             </nav>
           ))}
         </div>

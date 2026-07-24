@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   Activity,
   AlertCircle,
@@ -31,6 +32,8 @@ import { Link } from 'react-router-dom'
 import { defaultViewport, revealUp, staggerContainer } from '../hooks/useScrollReveal'
 import { setPageMetadata } from '../services/metadata'
 import { DetailFooter } from '../components/wizard-detail/DetailFooter'
+import { documentsApi } from '../services/tslApi'
+import type { DocumentItem } from '../services/dashboardTypes'
 import './PlaybooksInsights.css'
 
 const investorCards = [
@@ -172,6 +175,31 @@ export default function PlaybooksInsights() {
     'Guidance and visibility to help you make the right legal decisions without consuming runs.'
   )
 
+  const [sampleDoc, setSampleDoc] = useState<DocumentItem | null>(null)
+  const [docLoading, setDocLoading] = useState(true)
+
+  useEffect(() => {
+    documentsApi.list().then((res) => {
+      if (res.success && res.data && res.data.length > 0) {
+        setSampleDoc(res.data[0])
+      }
+    }).finally(() => {
+      setDocLoading(false)
+    })
+  }, [])
+
+  function handleDownloadSample() {
+    if (!sampleDoc) return
+    const a = document.createElement('a')
+    a.href = sampleDoc.url
+    a.download = `${sampleDoc.name}.pdf`
+    a.target = '_blank'
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }
+
   return (
     <div className="pi-page">
       {/* ── Hero ──────────────────────────────────────────────────── */}
@@ -306,45 +334,53 @@ export default function PlaybooksInsights() {
                 </li>
               </ul>
               <div className="pi-guide__btn-wrap">
-                <button className="pi-guide__btn">
-                  <Download size={16} strokeWidth={2.2} />
-                  Download Sample
-                </button>
-              </div>
-            </motion.article>
+                 <button
+                   className="pi-guide__btn"
+                   onClick={handleDownloadSample}
+                   disabled={docLoading || !sampleDoc}
+                 >
+                   <Download size={16} strokeWidth={2.2} />
+                   {docLoading ? 'Loading…' : 'Download Sample'}
+                 </button>
+               </div>
+             </motion.article>
 
-            <motion.article className="pi-guide" variants={revealUp}>
-              <div className="pi-guide__header">
-                <span className="pi-guide__icon">
-                  <Globe size={22} strokeWidth={1.8} />
-                </span>
-                <div>
-                  <h3>Founders Guide</h3>
-                  <p className="pi-guide__sub">FOUNDERS</p>
-                </div>
-              </div>
-              <p className="pi-guide__body">Guidance on offshore structures, compliance reporting, cap table planning and investor readiness.</p>
-              <ul className="pi-guide__list">
-                <li className="pi-guide__list-meta">
-                  <FileText size={14} strokeWidth={2} />
-                  <span>PDF Guide • 3.2 MB • 32 pages</span>
-                </li>
-                <li>
-                  <CircleCheck size={14} strokeWidth={2.2} />
-                  <span>No signup required</span>
-                </li>
-                <li>
-                  <CircleCheck size={14} strokeWidth={2.2} />
-                  <span>Instant download</span>
-                </li>
-              </ul>
-              <div className="pi-guide__btn-wrap">
-                <button className="pi-guide__btn">
-                  <Download size={16} strokeWidth={2.2} />
-                  Download Sample
-                </button>
-              </div>
-            </motion.article>
+             <motion.article className="pi-guide" variants={revealUp}>
+               <div className="pi-guide__header">
+                 <span className="pi-guide__icon">
+                   <Globe size={22} strokeWidth={1.8} />
+                 </span>
+                 <div>
+                   <h3>Founders Guide</h3>
+                   <p className="pi-guide__sub">FOUNDERS</p>
+                 </div>
+               </div>
+               <p className="pi-guide__body">Guidance on offshore structures, compliance reporting, cap table planning and investor readiness.</p>
+               <ul className="pi-guide__list">
+                 <li className="pi-guide__list-meta">
+                   <FileText size={14} strokeWidth={2} />
+                   <span>PDF Guide • 3.2 MB • 32 pages</span>
+                 </li>
+                 <li>
+                   <CircleCheck size={14} strokeWidth={2.2} />
+                   <span>No signup required</span>
+                 </li>
+                 <li>
+                   <CircleCheck size={14} strokeWidth={2.2} />
+                   <span>Instant download</span>
+                 </li>
+               </ul>
+               <div className="pi-guide__btn-wrap">
+                 <button
+                   className="pi-guide__btn"
+                   onClick={handleDownloadSample}
+                   disabled={docLoading || !sampleDoc}
+                 >
+                   <Download size={16} strokeWidth={2.2} />
+                   {docLoading ? 'Loading…' : 'Download Sample'}
+                 </button>
+               </div>
+             </motion.article>
           </motion.div>
         </div>
       </motion.section>
@@ -462,7 +498,7 @@ export default function PlaybooksInsights() {
             })}
           </motion.div>
 
-          <motion.div className="pi-banner pi-banner--gold" variants={revealUp}>
+          <motion.div className="pi-banner pi-banner--warm" variants={revealUp}>
             <span className="pi-banner__icon pi-banner__icon--gold">
               <AlertCircle size={16} strokeWidth={2.2} />
             </span>

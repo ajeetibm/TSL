@@ -47,7 +47,6 @@ const comparisonCards = [
     icon: Scale,
     itemIcon: CircleCheck,
     featured: true,
-    badge: 'TSLIA',
     items: [
       'Counsel operates inside workflows, not via email',
       'Reviews, comments, and approvals stay with the transaction',
@@ -241,7 +240,6 @@ export default function Counsel() {
                       )
                     })}
                   </ul>
-                  {card.badge ? <span className="counsel-card__badge">{card.badge}</span> : null}
                 </motion.article>
               )
             })}
