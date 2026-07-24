@@ -15,6 +15,14 @@ vi.mock('../../services/metadata', () => ({
 }))
 
 vi.mock('../../services/tslApi', () => ({
+  documentsApi: {
+    list: vi.fn().mockResolvedValue({
+      success: true,
+      data: [
+        { documentId: 'doc-1', name: 'Hiring Your First Employee', url: '/pdfs/hiring-your-first-employee.pdf' },
+      ],
+    }),
+  },
   playbookApi: {
     playBookList: vi.fn().mockResolvedValue({
       success: true,

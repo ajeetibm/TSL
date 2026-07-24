@@ -62,7 +62,7 @@ export interface ResetPasswordPayload {
   confirmPassword: string
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8080').replace(/\/$/, '')
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem('tsl-auth-token')
@@ -149,6 +149,7 @@ import type {
   CounselCredits,
   CounselRequest,
   DashboardData,
+  DocumentItem,
   DowngradeResult,
   FailedPayment,
   LegalLinks,
@@ -359,4 +360,9 @@ export const counselPortalApi = {
 
 export const playbookApi = {
   playBookList: () => request<PlaybooksData>('/api/v1/playbooks', 'GET', undefined, false),
+}
+
+export const documentsApi = {
+  /** GET /api/v1/documents — returns a flat array of PDF playbook documents */
+  list: () => request<DocumentItem[]>('/api/v1/documents'),
 }

@@ -310,6 +310,22 @@ export interface PlaybookItem {
   pdfUrl?: string
 }
 
+// ── Documents ─────────────────────────────────────────────────────────────
+// Returned by GET /api/v1/documents — list of PDF playbook documents.
+
+export interface DocumentItem {
+  documentId: string
+  /** Matches the playbook card title exactly, e.g. "Hiring Your First Employee" */
+  name: string
+  description?: string
+  category?: string
+  /** Publicly accessible PDF URL */
+  url: string
+  mimeType?: string
+  sizeKb?: number
+  updatedAt?: string
+}
+
 export interface PlaybookSection {
   title: string
   icon: string

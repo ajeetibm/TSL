@@ -1,353 +1,448 @@
-import { ArrowRight, Check, Shield, FileText, Scale, Users, Clock, AlertCircle } from 'lucide-react'
+import { Fragment } from 'react'
+import { motion } from 'framer-motion'
+import {
+  ArrowRight,
+  Archive,
+  BadgeCheck,
+  Bell,
+  Calendar,
+  BriefcaseBusiness,
+  Fingerprint,
+  Lock,
+  CircleAlert,
+  CircleCheck,
+  CircleDot,
+  CircleX,
+  Clock3,
+  Eye,
+  FileCheck2,
+  GitBranch,
+  MessageSquare,
+  MessageSquareText,
+  Scale,
+  Shield,
+  Target,
+  Timer,
+  TimerReset,
+  UserCheck,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ContactSection } from '../components/home/ContactSection'
+import { defaultViewport, revealUp, staggerContainer } from '../hooks/useScrollReveal'
 import { setPageMetadata } from '../services/metadata'
+import { DetailFooter } from '../components/wizard-detail/DetailFooter'
 import './Counsel.css'
+
+const comparisonCards = [
+  {
+    title: 'Traditional Legal Support',
+    icon: BriefcaseBusiness,
+    itemIcon: CircleX,
+    items: [
+      'Email documents to counsel for review',
+      'Feedback arrives in separate files or messages',
+      'No connection to transaction history or workflow',
+      'Manual tracking of attorney time and billing',
+    ],
+  },
+  {
+    title: 'Counsel on TSL',
+    icon: Scale,
+    itemIcon: CircleCheck,
+    featured: true,
+    badge: 'TSLIA',
+    items: [
+      'Counsel operates inside workflows, not via email',
+      'Reviews, comments, and approvals stay with the transaction',
+      'Full context: negotiation history, parties, risk flags',
+      'All actions are time-tracked and audit-ready',
+    ],
+  },
+]
+
+const gateCards = [
+  {
+    title: 'Document Review Gates',
+    icon: Target,
+    description: 'Counsel reviews complex or high-risk documents before they proceed to signature',
+    example: 'Examples: Shareholder agreements, investment terms, IP assignments',
+  },
+  {
+    title: 'Negotiation Escalations',
+    icon: MessageSquare,
+    description: 'When counterparty positions require legal expertise or risk assessment',
+    example: 'Examples: Material redlines, liability clauses, non-standard terms',
+  },
+  {
+    title: 'Edge Case Resolution',
+    icon: CircleAlert,
+    description: 'When workflow logic encounters scenarios not covered by standard paths',
+    example: 'Examples: Unusual ownership structures, cross-border issues, custom clauses',
+  },
+  {
+    title: 'Approval Requirements',
+    icon: UserCheck,
+    description: 'Workflows configured to require attorney approval before completion',
+    example: 'Examples: M&A transactions, financing rounds, director changes',
+  },
+]
+
+const supportPackageCards = [
+  {
+    title: 'Monthly Attorney Hours',
+    icon: Clock3,
+    description: 'Defined hours based on your plan tier—does not roll over to the next month',
+    note: 'Unused hours expire at month end',
+  },
+  {
+    title: 'In-Workflow Reviews',
+    icon: Eye,
+    description: 'Counsel reviews documents and negotiation history inside the platform',
+    note: 'No email attachments or external files',
+  },
+  {
+    title: 'Inline Guidance',
+    icon: MessageSquareText,
+    description: 'Attorneys provide comments, redlines, and guidance directly in the workflow',
+    note: 'All feedback is contextual and audit-ready',
+  },
+  {
+    title: 'Risk Assessments',
+    icon: Shield,
+    description: 'Counsel flags issues, assigns risk levels, and recommends next steps',
+    note: 'Clear decision support for your team',
+  },
+  {
+    title: 'Alternative Positions',
+    icon: GitBranch,
+    description: 'Suggested alternative clauses or negotiation positions with rationale',
+    note: 'Options tailored to your risk appetite',
+  },
+  {
+    title: 'Audit Trail Inclusion',
+    icon: Archive,
+    description: 'All counsel actions are recorded and included in your evidence pack',
+    note: 'Time-stamped, identity-linked, immutable',
+  },
+]
+
+const governanceCards = [
+  {
+    title: 'Gate-Based Engagement',
+    icon: Lock,
+    description: 'Counsel is only engaged at predefined gates—no ad hoc requests outside workflows',
+  },
+  {
+    title: 'Identity-Linked Actions',
+    icon: Fingerprint,
+    description: 'Every counsel action is linked to a verified attorney identity with timestamp',
+  },
+  {
+    title: 'Evidence Pack Integration',
+    icon: Archive,
+    description: 'All counsel reviews, comments, and approvals are preserved in the final evidence pack',
+  },
+]
+
+const governanceStripCards = [
+  {
+    title: 'Time-Stamped',
+    icon: Timer,
+    description: 'Every action by counsel is recorded with precision timestamps',
+  },
+  {
+    title: 'Identity-Linked',
+    icon: Fingerprint,
+    description: 'All counsel activity is linked to verified attorney identities',
+  },
+  {
+    title: 'Preserved Forever',
+    icon: Archive,
+    description: 'Included in your append-only evidence pack for compliance',
+  },
+]
 
 export default function Counsel() {
   setPageMetadata('Counsel', 'Monthly attorney support that operates inside your legal workflows—not via email.')
 
   return (
     <div className="counsel-page">
-      {/* Hero Section */}
-      <section className="counsel-hero">
-        <div className="counsel-hero__content">
-          <Link to="/pricing" className="counsel-breadcrumb">
-            Features Overview
-          </Link>
+      <motion.section
+        className="counsel-hero"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={revealUp}
+      >
+        <div className="counsel-hero__glow counsel-hero__glow--left" aria-hidden="true" />
+        <div className="counsel-hero__glow counsel-hero__glow--right" aria-hidden="true" />
+        <div className="counsel-hero__content counsel-shell">
+          <span className="counsel-pill">
+            <Scale size={14} strokeWidth={2.1} />
+            Attorney Support
+          </span>
           <h1>Counsel</h1>
           <p className="counsel-hero__subtitle">
-            Monthly attorney support that operates inside your legal workflows—not via email.
+            Monthly attorney support that operates inside your legal workflows — not via email.
           </p>
           <p className="counsel-hero__description">
-            Counsel provides strategic guidance within context, helping you navigate complex negotiations and non-standard situations—all with audit trails.
+            Counsel provides oversight at defined review gates, helping you navigate complex negotiations, edge cases, and high-risk transactions.
           </p>
           <div className="counsel-hero__buttons">
-            <button className="counsel-button counsel-button--primary">
-              See Included Engagement
-            </button>
-            <button className="counsel-button counsel-button--secondary">
-              Billing Details
-            </button>
-            <button className="counsel-button counsel-button--tertiary">
-              Legal Setup
-            </button>
+            <a className="counsel-button counsel-button--dark" href="#defined-gates">
+              <CircleDot size={16} strokeWidth={2.1} />
+              Gate-Based Engagement
+            </a>
+            <a className="counsel-button counsel-button--dark" href="#billing-policy">
+              <Clock3 size={16} strokeWidth={2.1} />
+              Monthly Hours
+            </a>
+            <a className="counsel-button counsel-button--dark" href="#governance">
+              <Shield size={16} strokeWidth={2.1} />
+              Audit-Ready
+            </a>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* How Counsel Works */}
-      <section className="counsel-section">
-        <div className="counsel-container">
-          <h2 className="counsel-section__title">How Counsel Works</h2>
-          <p className="counsel-section__subtitle">
-            Attorney support is embedded in your workflows, not bolted on through
-            email or external consultations.
-          </p>
+      <motion.section
+        className="counsel-section counsel-section--soft"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={staggerContainer}
+      >
+        <div className="counsel-shell">
+          <motion.h2 className="counsel-section__title" variants={revealUp}>How Counsel Works</motion.h2>
+          <motion.p className="counsel-section__subtitle" variants={revealUp}>
+            Attorney support is embedded in your workflows, not bolted on through email or external consultations.
+          </motion.p>
 
-          <div className="counsel-grid counsel-grid--2">
-            <div className="counsel-card">
-              <div className="counsel-card__icon counsel-card__icon--gold">
-                <Users size={24} />
-              </div>
-              <h3>Traditional Legal Support</h3>
-              <ul className="counsel-list">
-                <li>
-                  <Check size={16} />
-                  <span>Email discussions for counsel review</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>Scheduled calls or in-person consultations</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>Separate billing for every interaction</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>Manual tracking of attorney time and billing</span>
-                </li>
-              </ul>
-            </div>
+          <motion.div className="counsel-grid counsel-grid--comparison" variants={staggerContainer}>
+            {comparisonCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <motion.article
+                  key={card.title}
+                  className={card.featured ? 'counsel-card counsel-card--featured' : 'counsel-card'}
+                  variants={revealUp}
+                >
+                  <div className="counsel-card__header">
+                    <span className="counsel-card__icon">
+                      <Icon size={18} strokeWidth={2.2} />
+                    </span>
+                    <h3>{card.title}</h3>
+                  </div>
+                  <ul className="counsel-list">
+                    {card.items.map((item) => {
+                      const ItemIcon = card.itemIcon
+                      return (
+                        <li key={item}>
+                          <ItemIcon size={14} strokeWidth={2.4} />
+                          <span>{item}</span>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                  {card.badge ? <span className="counsel-card__badge">{card.badge}</span> : null}
+                </motion.article>
+              )
+            })}
+          </motion.div>
 
-            <div className="counsel-card">
-              <div className="counsel-card__icon counsel-card__icon--gold">
-                <Shield size={24} />
-              </div>
-              <h3>Counsel on TSL</h3>
-              <ul className="counsel-list">
-                <li>
-                  <Check size={16} />
-                  <span>Counsel operates inside workflows, not via email</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>Context-aware reviews with negotiation history</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>Flat monthly negotiation budget, gates, no help</span>
-                </li>
-                <li>
-                  <Check size={16} />
-                  <span>All actions are time-tracked and audit-ready</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="counsel-banner counsel-banner--warning">
+          <motion.div className="counsel-banner counsel-banner--warning" variants={revealUp}>
             <div className="counsel-banner__icon">
-              <AlertCircle size={20} />
+              <Bell size={18} strokeWidth={2.2} />
             </div>
             <div className="counsel-banner__content">
-              <strong>Gen-Based Engagement Only</strong>
+              <strong>Gate-Based Engagement Only</strong>
               <p>
-                Counsel is engaged at defined review or approval gates within workflows. Ad-hoc legal questions outside workflows are not supported through this feature.
+                Counsel is engaged at defined review or approval gates within workflows. Ad-hoc legal questions
+                outside workflows are not supported through this feature.
               </p>
             </div>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Defined Review and Approval Gates */}
-      <section className="counsel-section counsel-section--light">
-        <div className="counsel-container">
-          <Link to="/features" className="counsel-link">
-            Where Counsel is Located
-          </Link>
-          <h2 className="counsel-section__title">Defined Review and Approval Gates</h2>
-          <p className="counsel-section__subtitle">
-            Counsel is triggered at specific points in your workflows where legal
-            expertise is required for the next stage.
-          </p>
+      <motion.section
+        className="counsel-section"
+        id="defined-gates"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={staggerContainer}
+      >
+        <div className="counsel-shell">
+          <motion.div className="counsel-section__eyebrowWrap" variants={revealUp}>
+            <span className="counsel-pill counsel-pill--light">
+              <Target size={14} strokeWidth={2.1} />
+              When Counsel Is Involved
+            </span>
+          </motion.div>
+          <motion.h2 className="counsel-section__title" variants={revealUp}>Defined Review and Approval Gates</motion.h2>
+          <motion.p className="counsel-section__subtitle" variants={revealUp}>
+            Counsel is triggered at specific points in your workflows where legal expertise adds the most value.
+          </motion.p>
 
-          <div className="counsel-grid counsel-grid--2">
-            <div className="counsel-feature">
-              <div className="counsel-feature__icon">
-                <FileText size={24} />
-              </div>
-              <h3>Document Review Gates</h3>
-              <p>
-                Counsel reviews draft documents at key gates before finalization or signature.
-              </p>
-              <p className="counsel-feature__example">
-                <strong>Examples:</strong> Shareholder agreements, investment terms, IP assignments
-              </p>
-            </div>
-
-            <div className="counsel-feature">
-              <div className="counsel-feature__icon">
-                <Users size={24} />
-              </div>
-              <h3>Negotiation Escalations</h3>
-              <p>
-                When counterparty requests fall outside standard parameters or require legal judgment.
-              </p>
-              <p className="counsel-feature__example">
-                <strong>Examples:</strong> Material edits, liability terms, non-standard terms
-              </p>
-            </div>
-
-            <div className="counsel-feature">
-              <div className="counsel-feature__icon">
-                <Scale size={24} />
-              </div>
-              <h3>Edge Case Resolution</h3>
-              <p>
-                When workflow logic encounters scenarios not covered by standard templates.
-              </p>
-              <p className="counsel-feature__example">
-                <strong>Examples:</strong> Multi-party agreements, complex equity structures, cross-border clauses
-              </p>
-            </div>
-
-            <div className="counsel-feature">
-              <div className="counsel-feature__icon">
-                <Check size={24} />
-              </div>
-              <h3>Approval Requirements</h3>
-              <p>
-                Workflows configured to require attorney approval before proceeding to signature.
-              </p>
-              <p className="counsel-feature__example">
-                <strong>Examples:</strong> Board resolutions, financing agreements, regulatory changes
-              </p>
-            </div>
-          </div>
+          <motion.div className="counsel-grid counsel-grid--twoByTwo" variants={staggerContainer}>
+            {gateCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <motion.article key={card.title} className="counsel-detail-card" variants={revealUp}>
+                  <div className="counsel-detail-card__header">
+                    <span className="counsel-detail-card__icon">
+                      <Icon size={22} strokeWidth={2.0} />
+                    </span>
+                    <h3>{card.title}</h3>
+                  </div>
+                  <p>{card.description}</p>
+                  <div className="counsel-detail-card__example">
+                    <strong>Examples:</strong>{card.example.replace('Examples:', '')}
+                  </div>
+                </motion.article>
+              )
+            })}
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* Monthly Attorney Support Package */}
-      <section className="counsel-section">
-        <div className="counsel-container">
-          <Link to="/pricing" className="counsel-link">
-            What's Included
-          </Link>
-          <h2 className="counsel-section__title">Monthly Attorney Support Package</h2>
-          <p className="counsel-section__subtitle">
-            Your monthly attorney hours include reviews, guidance, risk assessments, and
-            even basic documentation.
-          </p>
+      <motion.section
+        className="counsel-section counsel-section--soft"
+        id="included-engagement"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={staggerContainer}
+      >
+        <div className="counsel-shell">
+          <motion.div className="counsel-section__eyebrowWrap" variants={revealUp}>
+            <span className="counsel-pill counsel-pill--light">
+              <CircleCheck size={14} strokeWidth={2.1} />
+              What's Included
+            </span>
+          </motion.div>
+          <motion.h2 className="counsel-section__title" variants={revealUp}>Monthly Attorney Support Package</motion.h2>
+          <motion.p className="counsel-section__subtitle" variants={revealUp}>
+            Your monthly attorney hours include reviews, guidance, risk assessments, and audit-ready documentation.
+          </motion.p>
 
-          <div className="counsel-grid counsel-grid--3">
-            <div className="counsel-package">
-              <div className="counsel-package__number">01</div>
-              <h3>Monthly Attorney Hours</h3>
-              <p>
-                Allocated hours based on your plan tier. Unused hours expire at month end.
-              </p>
-            </div>
+          <motion.div className="counsel-grid counsel-grid--threeCols" variants={staggerContainer}>
+            {supportPackageCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <motion.article key={card.title} className="counsel-package-card" variants={revealUp}>
+                  <span className="counsel-package-card__icon">
+                    <Icon size={22} strokeWidth={2.0} />
+                  </span>
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
+                  {card.note && (
+                    <p className="counsel-package-card__note">
+                      <span className="counsel-package-card__dot" aria-hidden="true" />
+                      {card.note}
+                    </p>
+                  )}
+                </motion.article>
+              )
+            })}
+          </motion.div>
 
-            <div className="counsel-package">
-              <div className="counsel-package__number">02</div>
-              <h3>In-Workflow Reviews</h3>
-              <p>
-                Counsel reviews happen inside workflows, not via email. All actions documented in context.
-              </p>
-            </div>
-
-            <div className="counsel-package">
-              <div className="counsel-package__number">03</div>
-              <h3>Hand Guidance</h3>
-              <p>
-                Strategic advice on negotiation tactics, risk mitigation, and compliance requirements.
-              </p>
-            </div>
-
-            <div className="counsel-package">
-              <div className="counsel-package__number">04</div>
-              <h3>Risk Assessments</h3>
-              <p>
-                Formal flag review ranging from low-risk administrative tasks to high-risk regulatory matters.
-              </p>
-            </div>
-
-            <div className="counsel-package">
-              <div className="counsel-package__number">05</div>
-              <h3>Alternative Positions</h3>
-              <p>
-                Suggested alternative clauses or negotiation positions when standard terms don't fit.
-              </p>
-            </div>
-
-            <div className="counsel-package">
-              <div className="counsel-package__number">06</div>
-              <h3>Audit Trail Inclusion</h3>
-              <p>
-                All counsel advice are recorded and time-stamped within your workflow audit trail.
-              </p>
-            </div>
-          </div>
-
-          <div className="counsel-banner counsel-banner--info">
-            <div className="counsel-banner__icon">
-              <Clock size={20} />
+          <motion.div className="counsel-banner counsel-banner--muted" id="billing-policy" variants={revealUp}>
+            <div className="counsel-banner__icon counsel-banner__icon--dark">
+              <Calendar size={20} strokeWidth={2.0} />
             </div>
             <div className="counsel-banner__content">
               <strong>Monthly Hours Do Not Roll Over</strong>
               <p>
-                Attorney hours are allocated monthly based on your plan tier. Counsel hours expire at the end of each month, unused, and do not carry forward to the next billing cycle.
+                Attorney hours are allocated monthly based on your plan tier. Unused hours expire at the end of
+                each month and do not carry forward to the next billing cycle.
               </p>
             </div>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="counsel-section"
+        id="governance"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={staggerContainer}
+      >
+        <div className="counsel-shell">
+          <motion.div className="counsel-section__eyebrowWrap" variants={revealUp}>
+            <span className="counsel-pill counsel-pill--light">
+              <Shield size={14} strokeWidth={2.1} />
+              Governance & Audit
+            </span>
+          </motion.div>
+          <motion.h2 className="counsel-section__title" variants={revealUp}>How Counsel Is Governed</motion.h2>
+          <motion.p className="counsel-section__subtitle" variants={revealUp}>
+            All counsel activity is recorded, identity-linked, and preserved in audit-friendly records and forms.
+          </motion.p>
+
+          <motion.div className="counsel-grid counsel-grid--threeCols" variants={staggerContainer}>
+            {governanceCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <motion.article key={card.title} className="counsel-governance-card" variants={revealUp}>
+                  <span className="counsel-governance-card__icon">
+                    <Icon size={22} strokeWidth={2.0} />
+                  </span>
+                  <h3>{card.title}</h3>
+                  <p>{card.description}</p>
+                </motion.article>
+              )
+            })}
+          </motion.div>
+
+          <motion.div className="counsel-governance-strip" variants={revealUp}>
+            {governanceStripCards.map((card, i) => {
+              const Icon = card.icon
+              return (
+                <Fragment key={card.title}>
+                  {i > 0 && <span className="counsel-governance-strip__divider" aria-hidden="true" />}
+                  <div className="counsel-governance-strip__item">
+                    <div className="counsel-governance-strip__header">
+                      <Icon size={18} strokeWidth={2.1} className="counsel-governance-strip__icon" />
+                      <h3>{card.title}</h3>
+                    </div>
+                    <p>{card.description}</p>
+                  </div>
+                </Fragment>
+              )
+            })}
+          </motion.div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="counsel-cta-section"
+        initial="hidden"
+        whileInView="visible"
+        viewport={defaultViewport}
+        variants={revealUp}
+      >
+        <div className="counsel-shell">
+          <div className="counsel-cta">
+            <h2>Counsel Support Is Coming Soon</h2>
+            <p>
+              We&apos;re building attorney support into The StartUp Legal platform. Join our
+              early access list to be notified when Counsel becomes available.
+            </p>
+            <Link to="/contact" className="counsel-cta__button">
+              Join Early Access List
+              <ArrowRight size={18} strokeWidth={2.2} />
+            </Link>
+            <p className="counsel-cta__note">No obligation • Be the first to know when Counsel launches</p>
           </div>
         </div>
-      </section>
+      </motion.section>
 
-      {/* How Counsel is Governed */}
-      <section className="counsel-section counsel-section--light">
-        <div className="counsel-container">
-          <Link to="/legal" className="counsel-link">
-            Governance & Rules
-          </Link>
-          <h2 className="counsel-section__title">How Counsel is Governed</h2>
-          <p className="counsel-section__subtitle">
-            All counsel activity is audited, time-tracked, and governed by an audit-ready
-            engagement framework.
-          </p>
-
-          <div className="counsel-grid counsel-grid--3">
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <Shield size={24} />
-              </div>
-              <h3>Gate-Based Engagement</h3>
-              <p>
-                Counsel is only engaged at defined review or approval gates within workflows.
-              </p>
-            </div>
-
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <FileText size={24} />
-              </div>
-              <h3>Identity-Linked Actions</h3>
-              <p>
-                Every counsel action is linked to a verified attorney identity and logged.
-              </p>
-            </div>
-
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <Check size={24} />
-              </div>
-              <h3>Evidence Pack Integration</h3>
-              <p>
-                Counsel reviews, comments, and approvals are included in your evidence pack.
-              </p>
-            </div>
-
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <Clock size={24} />
-              </div>
-              <h3>Time-Stamped</h3>
-              <p>
-                All counsel interactions are time-stamped and included in workflow timelines.
-              </p>
-            </div>
-
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <Users size={24} />
-              </div>
-              <h3>Identity-Linked</h3>
-              <p>
-                Counsel actions are linked to verified attorney identities for accountability.
-              </p>
-            </div>
-
-            <div className="counsel-governance">
-              <div className="counsel-governance__icon">
-                <Scale size={24} />
-              </div>
-              <h3>Preserved Forever</h3>
-              <p>
-                Counsel advice and approvals are preserved indefinitely in your audit trail.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="counsel-cta">
-        <div className="counsel-cta__content">
-          <h2>Counsel Support is Coming Soon</h2>
-          <p>
-            We're in the process of onboarding attorneys. This feature is not yet live but
-            early access will be available to Boardroom tier subscribers.
-          </p>
-          <button className="counsel-cta__button">
-            Request Early Access <ArrowRight size={20} />
-          </button>
-          <p className="counsel-cta__note">
-            We appreciate your patience as we build this feature. Contact support for updates.
-          </p>
-        </div>
-      </section>
+      <ContactSection />
+      <DetailFooter />
     </div>
   )
 }
-
-// Made with Bob

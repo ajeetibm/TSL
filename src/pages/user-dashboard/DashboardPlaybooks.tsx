@@ -16,8 +16,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
-import { playbookApi } from '../../services/tslApi'
-import samplePdf from '../../assets/Sample_Life_Acceptance_Letter.pdf'
+import { API_BASE_URL, documentsApi, playbookApi } from '../../services/tslApi'
 import './Dashboard.css'
 import './DashboardPlaybooks.css'
 
@@ -273,33 +272,41 @@ function PlaybookPDFModal({ playbook, onClose }: PlaybookPDFModalProps) {
           <div className="pdf-modal__page-count">{numPages} pages</div>
         )}
         <div className="pdf-modal__body" ref={bodyRef}>
-          <Document
-            file={pdfUrl}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-            loading={<div className="pdf-modal__loading">Loading document…</div>}
-            error={
-              <div className="pdf-modal__error">
-                <FileText size={40} />
-                <p>Unable to load the PDF.</p>
-                <span>The document will be available shortly.</span>
-              </div>
-            }
-          >
-            {numPages && (
-              <div ref={pagesWrapRef}>
-                {Array.from({ length: numPages }, (_, i) => (
-                  <Page
-                    key={`page_${i + 1}`}
-                    pageNumber={i + 1}
-                    width={bodyWidth ? bodyWidth * renderScale : undefined}
-                    className="pdf-modal__page"
-                    renderTextLayer
-                    renderAnnotationLayer
-                  />
-                ))}
-              </div>
-            )}
-          </Document>
+          {!pdfUrl ? (
+            <div className="pdf-modal__error">
+              <FileText size={40} />
+              <p>No document available.</p>
+              <span>This playbook does not have an attached PDF yet.</span>
+            </div>
+          ) : (
+            <Document
+              file={pdfUrl}
+              onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+              loading={<div className="pdf-modal__loading">Loading document…</div>}
+              error={
+                <div className="pdf-modal__error">
+                  <FileText size={40} />
+                  <p>Unable to load the PDF.</p>
+                  <span>The document will be available shortly.</span>
+                </div>
+              }
+            >
+              {numPages && (
+                <div ref={pagesWrapRef}>
+                  {Array.from({ length: numPages }, (_, i) => (
+                    <Page
+                      key={`page_${i + 1}`}
+                      pageNumber={i + 1}
+                      width={bodyWidth ? bodyWidth * renderScale : undefined}
+                      className="pdf-modal__page"
+                      renderTextLayer
+                      renderAnnotationLayer
+                    />
+                  ))}
+                </div>
+              )}
+            </Document>
+          )}
         </div>
 
         {/* ── Footer ── */}
@@ -332,7 +339,27 @@ function resolveIcon(name: string): LucideIcon {
   return ICON_MAP[name] ?? WandSparkles
 }
 
-function mapApiSections(raw: import('../../services/dashboardTypes').PlaybookSection[]): PlaybookSection[] {
+/**
+ * Builds a title→url map from the documents API array.
+ * doc.name matches the playbook card title exactly (e.g. "Hiring Your First Employee").
+ * Relative URLs (starting with /) are prefixed with the API base URL so react-pdf
+ * can fetch them from the backend, not the Vite dev server.
+ */
+function buildPdfMap(documents: import('../../services/dashboardTypes').DocumentItem[]): Map<string, string> {
+  const map = new Map<string, string>()
+  for (const doc of documents) {
+    const url = doc.url.startsWith('/')
+      ? `${API_BASE_URL}${doc.url}`
+      : doc.url
+    map.set(doc.name, url)
+  }
+  return map
+}
+
+function mapApiSections(
+  raw: import('../../services/dashboardTypes').PlaybookSection[],
+  pdfMap: Map<string, string>,
+): PlaybookSection[] {
   return raw.map(({ title, icon, cards }) => ({
     title,
     icon: resolveIcon(icon),
@@ -343,7 +370,7 @@ function mapApiSections(raw: import('../../services/dashboardTypes').PlaybookSec
       description: c.description,
       icon: resolveIcon(icon),
       wizards: c.wizards ?? [],
-      pdfUrl: samplePdf,
+      pdfUrl: pdfMap.get(c.title) ?? c.pdfUrl ?? '',
     })),
   }))
 }
@@ -356,9 +383,17 @@ export default function DashboardPlaybooks() {
   setPageMetadata('Playbooks', 'Browse guided legal playbooks for common business workflows.')
 
   useEffect(() => {
-    void playbookApi.playBookList().then((res) => {
-      if (res.success && res.data?.playbookSections?.length) {
-        setSections(mapApiSections(res.data.playbookSections))
+    void Promise.all([
+      playbookApi.playBookList(),
+      documentsApi.list(),
+    ]).then(([playbooksRes, docsRes]) => {
+      // data is a flat DocumentItem[] array — build title→url map directly
+      const pdfMap = docsRes.success && Array.isArray(docsRes.data)
+        ? buildPdfMap(docsRes.data)
+        : new Map<string, string>()
+
+      if (playbooksRes.success && playbooksRes.data?.playbookSections?.length) {
+        setSections(mapApiSections(playbooksRes.data.playbookSections, pdfMap))
       }
       setLoading(false)
     })
