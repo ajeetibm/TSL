@@ -9,15 +9,12 @@ import './NdaWizardModal.css'
 
 export type { ServiceAgreementWizardData }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
+type Step = 1 | 2 | 3 | 4
 
 const STEPS = [
-  { label: 'Parties' },
-  { label: 'Services' },
-  { label: 'Fees' },
-  { label: 'SLA' },
-  { label: 'Duties' },
-  { label: 'Term' },
+  { label: 'Parties & Service' },
+  { label: 'Fees & Service Levels' },
+  { label: 'Duties & Term' },
   { label: 'Legal' },
 ]
 
@@ -166,9 +163,9 @@ export default function ServiceAgreementWizardModal({
   initialData,
   onStepChange,
 }: ServiceAgreementWizardModalProps) {
-  const resolved = Math.min(Math.max(initialStep, 1), 8)
-  const [step, setStep] = useState<Step>(resolved > 7 ? 7 : (resolved as Step))
-  const [isPreview, setIsPreview] = useState(resolved === 8)
+  const resolved = Math.min(Math.max(initialStep, 1), 5)
+  const [step, setStep] = useState<Step>(resolved > 4 ? 4 : (resolved as Step))
+  const [isPreview, setIsPreview] = useState(resolved === 5)
   const [data, setData] = useState<ServiceAgreementWizardData>(initialData ?? emptyData)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -191,7 +188,7 @@ export default function ServiceAgreementWizardModal({
 
   /* ── Navigation ── */
   const next = () => {
-    if (step < 7) {
+    if (step < 4) {
       onStepChange?.(step, data)
       setStep((s) => (s + 1) as Step)
     } else {
@@ -307,7 +304,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 2: Services ── */}
-            {!isPreview && step === 2 && (
+            {!isPreview && step === 1 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Services</h3>
@@ -345,7 +342,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 3: Fees ── */}
-            {!isPreview && step === 3 && (
+            {!isPreview && step === 2 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Fees &amp; Pricing</h3>
@@ -381,7 +378,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 4: Service Levels ── */}
-            {!isPreview && step === 4 && (
+            {!isPreview && step === 2 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Service Level Agreement</h3>
@@ -427,7 +424,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 5: Responsibilities ── */}
-            {!isPreview && step === 5 && (
+            {!isPreview && step === 3 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Provider Responsibilities</h3>
@@ -458,7 +455,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 6: Term & Termination ── */}
-            {!isPreview && step === 6 && (
+            {!isPreview && step === 3 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Agreement Term</h3>
@@ -504,7 +501,7 @@ export default function ServiceAgreementWizardModal({
             )}
 
             {/* ── Step 7: Legal ── */}
-            {!isPreview && step === 7 && (
+            {!isPreview && step === 4 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Legal Provisions</h3>
@@ -569,21 +566,21 @@ export default function ServiceAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 2 */}
-                <PreviewSection num={2} title="Services" onEdit={() => goTo(2)}>
+                <PreviewSection num={2} title="Services" onEdit={() => goTo(1)}>
                   <PF label="Services Description" value={data.servicesDescription} />
                   <PF label="Scope of Work" value={data.scopeOfWork} />
                   <PF label="Deliverables" value={data.deliverables} />
                 </PreviewSection>
 
                 {/* Section 3 */}
-                <PreviewSection num={3} title="Fees & Pricing" onEdit={() => goTo(3)}>
+                <PreviewSection num={3} title="Fees & Pricing" onEdit={() => goTo(2)}>
                   <PF label="Pricing" value={data.pricing} />
                   <PF label="Payment Terms" value={data.paymentTerms} />
                   <PF label="Billing Frequency" value={data.billingFrequency} />
                 </PreviewSection>
 
                 {/* Section 4 */}
-                <PreviewSection num={4} title="Service Levels" onEdit={() => goTo(4)}>
+                <PreviewSection num={4} title="Service Levels" onEdit={() => goTo(2)}>
                   <PF label="Availability" value={data.availability} />
                   <div className="nda-modal__preview-row">
                     <PF label="Response Time" value={data.responseTime} />
@@ -593,13 +590,13 @@ export default function ServiceAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 5 */}
-                <PreviewSection num={5} title="Responsibilities" onEdit={() => goTo(5)}>
+                <PreviewSection num={5} title="Responsibilities" onEdit={() => goTo(3)}>
                   <PF label="Provider Responsibilities" value={data.providerResponsibilities} />
                   <PF label="Client Responsibilities" value={data.clientResponsibilities} />
                 </PreviewSection>
 
                 {/* Section 6 */}
-                <PreviewSection num={6} title="Term & Termination" onEdit={() => goTo(6)}>
+                <PreviewSection num={6} title="Term & Termination" onEdit={() => goTo(3)}>
                   <div className="nda-modal__preview-row">
                     <PF label="Start Date" value={data.startDate} />
                     <PF label="End Date" value={data.endDate} />
@@ -609,7 +606,7 @@ export default function ServiceAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 7 */}
-                <PreviewSection num={7} title="Legal" onEdit={() => goTo(7)}>
+                <PreviewSection num={7} title="Legal" onEdit={() => goTo(4)}>
                   <PF label="Confidentiality" value={data.confidentiality} />
                   <PF label="Liability" value={data.liability} />
                   <div className="nda-modal__preview-row">
@@ -648,7 +645,7 @@ export default function ServiceAgreementWizardModal({
                   </span>
                 )
               ) : (
-                `Step ${step} of 7`
+                `Step ${step} of 4`
               )}
             </span>
 

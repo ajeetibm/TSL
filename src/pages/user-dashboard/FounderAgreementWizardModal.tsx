@@ -16,15 +16,13 @@ import './NdaWizardModal.css'
 
 export type { FounderAgreementWizardData }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6
+type Step = 1 | 2 | 3 | 4
 
 const STEPS = [
-  { label: 'Company' },
-  { label: 'Founders' },
-  { label: 'Governance' },
-  { label: 'Vesting' },
+  { label: 'Company & Founders' },
+  { label: 'Vesting & Governance' },
   { label: 'IP' },
-  { label: 'Legal' },
+  { label: 'Legal & Signing' },
 ]
 
 const emptyData: FounderAgreementWizardData = {
@@ -288,9 +286,9 @@ export default function FounderAgreementWizardModal({
   initialData,
   onStepChange,
 }: FounderAgreementWizardModalProps) {
-  const resolved = Math.min(Math.max(initialStep, 1), 7)
-  const [step, setStep] = useState<Step>(resolved > 6 ? 6 : (resolved as Step))
-  const [isPreview, setIsPreview] = useState(resolved === 7)
+  const resolved = Math.min(Math.max(initialStep, 1), 5)
+  const [step, setStep] = useState<Step>(resolved > 4 ? 4 : (resolved as Step))
+  const [isPreview, setIsPreview] = useState(resolved === 5)
   const [data, setData] = useState<FounderAgreementWizardData>(initialData ?? emptyData)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -360,7 +358,7 @@ export default function FounderAgreementWizardModal({
 
   /* ── Navigation ── */
   const next = () => {
-    if (step < 6) {
+    if (step < 4) {
       onStepChange?.(step, data)
       setStep((s) => (s + 1) as Step)
     } else {
@@ -460,7 +458,7 @@ export default function FounderAgreementWizardModal({
             )}
 
             {/* ────────────── Step 2 – Founders ────────────── */}
-            {!isPreview && step === 2 && (
+            {!isPreview && step === 1 && (
               <div className="nda-modal__step-content">
                 {data.founders.map((f, i) => (
                   <FounderRow
@@ -478,7 +476,7 @@ export default function FounderAgreementWizardModal({
             )}
 
             {/* ────────────── Step 3 – Governance & Decision Making ────────────── */}
-            {!isPreview && step === 3 && (
+            {!isPreview && step === 2 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Governance &amp; Decision Making</h3>
@@ -539,7 +537,7 @@ export default function FounderAgreementWizardModal({
             )}
 
             {/* ────────────── Step 4 – Vesting & Share Rules ────────────── */}
-            {!isPreview && step === 4 && (
+            {!isPreview && step === 2 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Founder Vesting</h3>
@@ -600,7 +598,7 @@ export default function FounderAgreementWizardModal({
             )}
 
             {/* ────────────── Step 5 – Intellectual Property ────────────── */}
-            {!isPreview && step === 5 && (
+            {!isPreview && step === 3 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">IP Assignment</h3>
@@ -648,7 +646,7 @@ export default function FounderAgreementWizardModal({
             )}
 
             {/* ────────────── Step 6 – Legal & Signing ────────────── */}
-            {!isPreview && step === 6 && (
+            {!isPreview && step === 4 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Legal Provisions</h3>
@@ -718,7 +716,7 @@ export default function FounderAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 2 */}
-                <PreviewSection num={2} title="Founders" onEdit={() => goTo(2)}>
+                <PreviewSection num={2} title="Founders" onEdit={() => goTo(1)}>
                   <div className="nda-modal__preview-row">
                     {data.founders.map((f, i) => (
                       <div key={f.id} className="nda-modal__preview-party">
@@ -736,7 +734,7 @@ export default function FounderAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 3 */}
-                <PreviewSection num={3} title="Governance & Decision Making" onEdit={() => goTo(3)}>
+                <PreviewSection num={3} title="Governance & Decision Making" onEdit={() => goTo(2)}>
                   <PF label="Decision Making Model" value={data.decisionMakingModel} />
                   <PF label="Reserved Matters" value={data.reservedMatters.filter(r => r.trim()).join(' · ') || '—'} />
                   <PF label="Board Approval Requirements" value={data.boardApprovalRequirements} />
@@ -744,7 +742,7 @@ export default function FounderAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 4 */}
-                <PreviewSection num={4} title="Vesting & Share Rules" onEdit={() => goTo(4)}>
+                <PreviewSection num={4} title="Vesting & Share Rules" onEdit={() => goTo(2)}>
                   <PF label="Founder Vesting" value={data.vestingEnabled} />
                   {data.vestingEnabled === 'Yes' && (
                     <div className="nda-modal__preview-row">
@@ -758,7 +756,7 @@ export default function FounderAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 5 */}
-                <PreviewSection num={5} title="Intellectual Property" onEdit={() => goTo(5)}>
+                <PreviewSection num={5} title="Intellectual Property" onEdit={() => goTo(3)}>
                   <PF label="Assign IP to Company?" value={data.assignIpToCompany} />
                   <PF label="Existing IP Contributed?" value={data.hasExistingIp} />
                   {data.hasExistingIp === 'Yes' && (
@@ -770,7 +768,7 @@ export default function FounderAgreementWizardModal({
                 </PreviewSection>
 
                 {/* Section 6 */}
-                <PreviewSection num={6} title="Legal & Signing" onEdit={() => goTo(6)}>
+                <PreviewSection num={6} title="Legal & Signing" onEdit={() => goTo(4)}>
                   <PF label="Confidentiality" value={data.confidentiality} />
                   <div className="nda-modal__preview-row">
                     <PF label="Dispute Resolution" value={data.disputeResolution} />
@@ -831,7 +829,7 @@ export default function FounderAgreementWizardModal({
                   </span>
                 )
               ) : (
-                `Step ${step} of 6`
+                `Step ${step} of 4`
               )}
             </span>
 

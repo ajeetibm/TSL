@@ -288,6 +288,22 @@ export const profileApi = {
   update: (payload: JsonRecord) => request('/api/v1/sme/profile', 'PUT', payload),
 }
 
+export interface ActiveSession {
+  sessionId: string
+  device: string
+  location: string
+  ip: string
+  lastActive: string
+  isCurrent: boolean
+}
+
+export const securityApi = {
+  getTwoFactor: () => request<{ enabled: boolean }>('/api/v1/sme/security/2fa'),
+  setTwoFactor: (enabled: boolean) => request<{ enabled: boolean }>('/api/v1/sme/security/2fa', 'PUT', { enabled }),
+  getSessions: () => request<ActiveSession[]>('/api/v1/sme/security/sessions'),
+  revokeSession: (sessionId: string) => request<ActiveSession[]>(`/api/v1/sme/security/sessions/${encodeURIComponent(sessionId)}`, 'DELETE'),
+}
+
 export const adminApi = {
   dashboard: () => request('/api/v1/admin/dashboard'),
   profile: () => request('/api/v1/admin/profile'),

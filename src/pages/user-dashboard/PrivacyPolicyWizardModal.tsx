@@ -9,15 +9,13 @@ import './NdaWizardModal.css'
 
 export type { PrivacyPolicyWizardData }
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6
+type Step = 1 | 2 | 3 | 4
 
 const STEPS = [
   { label: 'Business' },
-  { label: 'Collected' },
-  { label: 'Purpose' },
-  { label: 'Sharing' },
-  { label: 'User Rights' },
-  { label: 'Security' },
+  { label: 'Data & Purpose' },
+  { label: 'Sharing & Cookies' },
+  { label: 'Rights & Security' },
 ]
 
 const empty: PrivacyPolicyWizardData = {
@@ -181,7 +179,7 @@ function CheckedTag({ label }: { label: string }) {
 interface PrivacyPolicyWizardModalProps {
   onClose: () => void
   onComplete?: (data: PrivacyPolicyWizardData) => void
-  /** Resume from a saved step (1-6; 7 = preview) */
+  /** Resume from a saved step (1-4; 5 = review) */
   initialStep?: number
   initialData?: PrivacyPolicyWizardData
   /** Called whenever the user moves to the next step so the host can persist progress */
@@ -195,9 +193,9 @@ export default function PrivacyPolicyWizardModal({
   initialData,
   onStepChange,
 }: PrivacyPolicyWizardModalProps) {
-  const resolved = Math.min(Math.max(initialStep, 1), 7)
-  const [step, setStep] = useState<Step>(resolved > 6 ? 6 : (resolved as Step))
-  const [isPreview, setIsPreview] = useState(resolved === 7)
+  const resolved = Math.min(Math.max(initialStep, 1), 5)
+  const [step, setStep] = useState<Step>(resolved > 4 ? 4 : (resolved as Step))
+  const [isPreview, setIsPreview] = useState(resolved === 5)
   const [data, setData] = useState<PrivacyPolicyWizardData>(initialData ?? empty)
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -211,7 +209,7 @@ export default function PrivacyPolicyWizardModal({
   }
 
   const next = () => {
-    if (step < 6) {
+    if (step < 4) {
       onStepChange?.(step, data)
       setStep((s) => (s + 1) as Step)
     } else {
@@ -317,7 +315,7 @@ export default function PrivacyPolicyWizardModal({
             )}
 
             {/* Step 3 – Purpose of Collection */}
-            {!isPreview && step === 3 && (
+            {!isPreview && step === 2 && (
               <div className="nda-modal__step-content">
                 <p className="nda-modal__question">Why do you collect this information?</p>
                 <div className="nda-modal__checkbox-group">
@@ -331,7 +329,7 @@ export default function PrivacyPolicyWizardModal({
             )}
 
             {/* Step 4 – Data Sharing */}
-            {!isPreview && step === 4 && (
+            {!isPreview && step === 3 && (
               <div className="nda-modal__step-content">
                 <p className="nda-modal__question">Do you share personal data with any of the following?</p>
                 <div className="nda-modal__checkbox-group">
@@ -344,7 +342,7 @@ export default function PrivacyPolicyWizardModal({
             )}
 
             {/* Step 5 – User Rights */}
-            {!isPreview && step === 5 && (
+            {!isPreview && step === 4 && (
               <div className="nda-modal__step-content">
                 <p className="nda-modal__question">Which user rights does your policy recognise? (POPIA)</p>
                 <div className="nda-modal__checkbox-group">
@@ -358,7 +356,7 @@ export default function PrivacyPolicyWizardModal({
             )}
 
             {/* Step 6 – Security & Retention */}
-            {!isPreview && step === 6 && (
+            {!isPreview && step === 4 && (
               <div className="nda-modal__step-content">
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title">Security & Retention</h3>
@@ -411,7 +409,7 @@ export default function PrivacyPolicyWizardModal({
                   )}
                 </PreviewSection>
 
-                <PreviewSection num={3} title="Purpose of Collection" onEdit={() => goTo(3)}>
+                <PreviewSection num={3} title="Purpose of Collection" onEdit={() => goTo(2)}>
                   {data.purposeServiceDelivery && <CheckedTag label="Service Delivery" />}
                   {data.purposeMarketing && <CheckedTag label="Marketing" />}
                   {data.purposeAnalytics && <CheckedTag label="Analytics" />}
@@ -422,7 +420,7 @@ export default function PrivacyPolicyWizardModal({
                   )}
                 </PreviewSection>
 
-                <PreviewSection num={4} title="Data Sharing" onEdit={() => goTo(4)}>
+                <PreviewSection num={4} title="Data Sharing" onEdit={() => goTo(3)}>
                   {data.sharesThirdPartyProviders && <CheckedTag label="Third-party Providers" />}
                   {data.sharesPaymentGateways && <CheckedTag label="Payment Gateways" />}
                   {data.sharesMarketingPlatforms && <CheckedTag label="Marketing Platforms" />}
@@ -432,7 +430,7 @@ export default function PrivacyPolicyWizardModal({
                   )}
                 </PreviewSection>
 
-                <PreviewSection num={5} title="User Rights" onEdit={() => goTo(5)}>
+                <PreviewSection num={5} title="User Rights" onEdit={() => goTo(4)}>
                   {data.rightAccess && <CheckedTag label="Right to Access" />}
                   {data.rightCorrection && <CheckedTag label="Right to Correction" />}
                   {data.rightDeletion && <CheckedTag label="Right to Deletion" />}
@@ -440,7 +438,7 @@ export default function PrivacyPolicyWizardModal({
                   {data.rightDataPortability && <CheckedTag label="Right to Data Portability" />}
                 </PreviewSection>
 
-                <PreviewSection num={6} title="Security & Retention" onEdit={() => goTo(6)}>
+                <PreviewSection num={6} title="Security & Retention" onEdit={() => goTo(4)}>
                   <PF label="Data Storage" value={data.dataStorage} />
                   <PF label="Retention Period" value={data.retentionPeriod} />
                   <PF label="Security Measures" value={data.securityMeasures} />
@@ -475,7 +473,7 @@ export default function PrivacyPolicyWizardModal({
                   </span>
                 )
               ) : (
-                `Step ${step} of 6`
+                `Step ${step} of 4`
               )}
             </span>
 

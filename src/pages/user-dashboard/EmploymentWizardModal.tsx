@@ -14,9 +14,9 @@ type Step = 1 | 2 | 3 | 4 | 5
 const STEPS = [
   { label: 'Employer' },
   { label: 'Employee' },
-  { label: 'Employment' },
-  { label: 'Salary' },
-  { label: 'Terms' },
+  { label: 'Role & Work' },
+  { label: 'Pay & Benefits' },
+  { label: 'Terms & Legal' },
 ]
 
 const empty: EmploymentWizardData = {
