@@ -298,8 +298,6 @@ export interface ActiveSession {
 }
 
 export const securityApi = {
-  getTwoFactor: () => request<{ enabled: boolean }>('/api/v1/sme/security/2fa'),
-  setTwoFactor: (enabled: boolean) => request<{ enabled: boolean }>('/api/v1/sme/security/2fa', 'PUT', { enabled }),
   getSessions: () => request<ActiveSession[]>('/api/v1/sme/security/sessions'),
   revokeSession: (sessionId: string) => request<ActiveSession[]>(`/api/v1/sme/security/sessions/${encodeURIComponent(sessionId)}`, 'DELETE'),
 }

@@ -33,12 +33,6 @@ export default function DashboardProfile() {
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
 
   // ── Two-Factor Authentication ──────────────────────────────────────────────
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-  const [twoFactorLoading, setTwoFactorLoading] = useState(true)
-  const [twoFactorSaving, setTwoFactorSaving] = useState(false)
-  const [twoFactorMessage, setTwoFactorMessage] = useState<string | null>(null)
-  const twoFactorMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   // ── Active Sessions ────────────────────────────────────────────────────────
   const [sessions, setSessions] = useState<ActiveSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
@@ -88,16 +82,6 @@ export default function DashboardProfile() {
 
   useEffect(() => {
     let cancelled = false
-    securityApi.getTwoFactor().then((res) => {
-      if (cancelled) return
-      setTwoFactorLoading(false)
-      if (res.success && res.data) setTwoFactorEnabled(res.data.enabled)
-    })
-    return () => { cancelled = true }
-  }, [])
-
-  useEffect(() => {
-    let cancelled = false
     securityApi.getSessions().then((res) => {
       if (cancelled) return
       setSessionsLoading(false)
@@ -124,22 +108,6 @@ export default function DashboardProfile() {
     })
     return () => { cancelled = true }
   }, [])
-
-  const handleTwoFactorToggle = async (next: boolean) => {
-    if (twoFactorSaving) return
-    setTwoFactorSaving(true)
-    setTwoFactorMessage(null)
-    const res = await securityApi.setTwoFactor(next)
-    setTwoFactorSaving(false)
-    if (!res.success) {
-      setTwoFactorMessage('⚠ ' + (res.message ?? 'Failed to update two-factor authentication.'))
-    } else {
-      setTwoFactorEnabled(next)
-      setTwoFactorMessage(res.message ?? (next ? 'Two-factor authentication enabled.' : 'Two-factor authentication disabled.'))
-    }
-    if (twoFactorMsgTimer.current) clearTimeout(twoFactorMsgTimer.current)
-    twoFactorMsgTimer.current = setTimeout(() => setTwoFactorMessage(null), 4000)
-  }
 
   const handleRevokeSession = async (sessionId: string) => {
     if (revokingId) return
@@ -525,23 +493,10 @@ export default function DashboardProfile() {
                     </div>
                   </div>
                   <label className="dashboard-profile__toggle">
-                    <input
-                      type="checkbox"
-                      checked={twoFactorEnabled}
-                      disabled={twoFactorLoading || twoFactorSaving}
-                      onChange={(e) => handleTwoFactorToggle(e.target.checked)}
-                    />
+                    <input type="checkbox" />
                     <span className="dashboard-profile__toggle-slider"></span>
                   </label>
                 </div>
-                {twoFactorMessage && (
-                  <p
-                    className={`dashboard-profile__security-message ${twoFactorMessage.startsWith('⚠') ? 'dashboard-profile__security-message--error' : 'dashboard-profile__security-message--success'}`}
-                    role={twoFactorMessage.startsWith('⚠') ? 'alert' : 'status'}
-                  >
-                    {twoFactorMessage}
-                  </p>
-                )}
               </section>
 
               <section className="dashboard-profile__card">
