@@ -21,9 +21,6 @@ interface DashboardShellProps {
   children: ReactNode
 }
 
-// ── Demo: items disabled temporarily for client demo ─────────────────────────
-const DEMO_DISABLED: DashboardSection[] = ['Counsel', 'Notifications', 'Settings']
-
 const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { label: 'Wizards', icon: WandSparkles, path: '/dashboard/wizards' },
@@ -70,26 +67,22 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
         </div>
 
         <nav className="user-dashboard__nav" aria-label="Dashboard navigation">
-          {sidebarItems.map(({ label, icon: Icon, path }) => {
-            const isDisabled = DEMO_DISABLED.includes(label)
-            return (
-              <button
-                key={label}
-                type="button"
-                className={
-                  label === activeSection
-                    ? 'user-dashboard__nav-item user-dashboard__nav-item--active'
-                    : 'user-dashboard__nav-item'
-                }
-                onClick={isDisabled ? undefined : () => path && navigate(path)}
-                style={isDisabled ? { opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' } : undefined}
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-                {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
-              </button>
-            )
-          })}
+          {sidebarItems.map(({ label, icon: Icon, path }) => (
+            <button
+              key={label}
+              type="button"
+              className={
+                label === activeSection
+                  ? 'user-dashboard__nav-item user-dashboard__nav-item--active'
+                  : 'user-dashboard__nav-item'
+              }
+              onClick={() => path && navigate(path)}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+              {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
+            </button>
+          ))}
         </nav>
 
         <div className="user-dashboard__sidebar-footer">
