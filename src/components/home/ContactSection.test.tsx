@@ -233,7 +233,6 @@ describe('ContactSection', () => {
 
   describe('Submit-time validation', () => {
     it('shows all errors when submitting empty form', async () => {
-      const user = userEvent.setup()
       render(<ContactSection />)
       // Force-enable button by manually dispatching submit on the form
       const form = document.querySelector('form')!

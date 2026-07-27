@@ -23,7 +23,7 @@ export interface ContactResponse {
  * To wire up the real backend, replace this function body with:
  *   return request<ContactResponse>('/api/v1/contact', 'POST', payload, false)
  */
-export async function submitContactForm(payload: ContactPayload): Promise<ContactResponse> {
+export async function submitContactForm(_payload: ContactPayload): Promise<ContactResponse> {
   await new Promise<void>((resolve) => setTimeout(resolve, 1500))
 
   // Simulate a successful response.

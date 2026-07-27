@@ -32,7 +32,7 @@ import { Link } from 'react-router-dom'
 import { defaultViewport, revealUp, staggerContainer } from '../hooks/useScrollReveal'
 import { setPageMetadata } from '../services/metadata'
 import { DetailFooter } from '../components/wizard-detail/DetailFooter'
-import { documentsApi } from '../services/tslApi'
+import { documentsApi, API_BASE_URL } from '../services/tslApi'
 import type { DocumentItem } from '../services/dashboardTypes'
 import './PlaybooksInsights.css'
 
@@ -181,7 +181,7 @@ export default function PlaybooksInsights() {
   useEffect(() => {
     documentsApi.list().then((res) => {
       if (res.success && res.data && res.data.length > 0) {
-        setSampleDoc(res.data[0])
+        setSampleDoc(res.data[1])
       }
     }).finally(() => {
       setDocLoading(false)
@@ -190,8 +190,11 @@ export default function PlaybooksInsights() {
 
   function handleDownloadSample() {
     if (!sampleDoc) return
+    const url = sampleDoc.url.startsWith('/')
+      ? `${API_BASE_URL}${sampleDoc.url}`
+      : sampleDoc.url
     const a = document.createElement('a')
-    a.href = sampleDoc.url
+    a.href = url
     a.download = `${sampleDoc.name}.pdf`
     a.target = '_blank'
     a.rel = 'noopener noreferrer'
