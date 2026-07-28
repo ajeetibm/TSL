@@ -94,6 +94,14 @@ export async function request<T = unknown>(
   if (!response.ok) {
     const failure = payload as ApiFailure
 
+    // If the server revoked this session (e.g. revoked from another device),
+    // clear local auth and redirect to login immediately.
+    if (response.status === 401 && failure.error === 'TOKEN_REVOKED') {
+      clearAuthSession()
+      window.location.href = '/'
+      return { success: false, message: failure.message ?? 'Session revoked.', error: 'TOKEN_REVOKED' }
+    }
+
     return {
       success: false,
       message: failure.message ?? `Request failed with status ${response.status}`,
@@ -289,7 +297,7 @@ export const profileApi = {
 }
 
 export interface ActiveSession {
-  sessionId: string
+  id: string
   device: string
   location: string
   ip: string

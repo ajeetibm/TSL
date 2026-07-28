@@ -74,10 +74,10 @@ export function AboutSection() {
               <span className="grid h-[60px] w-[60px] place-items-center rounded-full bg-[#D4A437] text-white shadow-[0_12px_18px_rgba(0,0,0,0.18)]">
                 <Icon size={31} strokeWidth={2.2} />
               </span>
-              <h3 className="mt-[40px] text-[22px] font-bold leading-tight tracking-[0] text-[#2B2B2B]">
+              <h3 className="mt-[40px] font-display text-[18px] font-bold leading-[25px] tracking-[0] text-center text-[#333333]">
                 {title}
               </h3>
-              <p className="mt-[34px] max-w-[270px] text-center text-[17px] font-normal leading-[1.45] tracking-[0] text-[#5F6368]">
+              <p className="mt-[34px] max-w-[254px] font-sans text-[14px] font-normal leading-[23px] text-center text-[rgba(51,51,51,0.8)]">
                 {description}
               </p>
             </motion.article>

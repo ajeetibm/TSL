@@ -44,7 +44,7 @@ export function ApproachSection() {
           <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-[#E6D9BD] bg-gradient-to-b from-[#FEFCF7] to-[#F5EDD8] px-[38px] text-[14px] font-semibold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
             Our Approach
           </span>
-          <h2 className="mt-[36px] text-center text-[34px] font-bold leading-[1.18] tracking-[0] text-[#2B2B2B]">
+          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[28px] font-semibold leading-[34px] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             How We Make Legal Simple
           </h2>
         </motion.div>
@@ -74,18 +74,18 @@ export function ApproachSection() {
                 {subtitle}
               </p>
 
-              <p className="mt-[48px] min-h-[86px] text-center text-[17px] font-normal leading-[1.5] tracking-[0] text-[#5F6368]">
+              <p className="mt-[48px] font-sans text-[18px] font-normal leading-[26px] text-center tracking-[0] text-[rgba(51,51,51,0.9)]">
                 {paragraph}
               </p>
 
-              <ul className="mt-[26px] grid gap-[22px] text-left">
+              <ul className="mt-[26px] grid gap-[22px] text-center">
                 {bullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex items-center gap-[20px] text-[15px] font-normal leading-none text-[#5F6368]"
+                    className="flex items-center gap-[20px]"
                   >
                     <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-[#D4A437]" />
-                    <span>{bullet}</span>
+                    <span className="font-sans text-[14px] font-normal leading-[23px] text-[rgba(51,51,51,0.8)]">{bullet}</span>
                   </li>
                 ))}
               </ul>

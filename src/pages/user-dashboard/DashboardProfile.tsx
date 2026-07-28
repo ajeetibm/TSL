@@ -533,7 +533,7 @@ export default function DashboardProfile() {
                   <div className="dashboard-profile__sessions-list">
                     {sessions.map((session) => (
                       <div
-                        key={session.sessionId}
+                        key={session.id}
                         className={`dashboard-profile__session-item${session.isCurrent ? ' dashboard-profile__session-item--current' : ''}`}
                       >
                         <span className="dashboard-profile__session-icon">
@@ -557,11 +557,11 @@ export default function DashboardProfile() {
                           <button
                             type="button"
                             className="dashboard-profile__session-revoke"
-                            onClick={() => handleRevokeSession(session.sessionId)}
-                            disabled={revokingId === session.sessionId}
+                            onClick={() => handleRevokeSession(session.id)}
+                            disabled={revokingId === session.id}
                             aria-label={`Revoke session on ${session.device}`}
                           >
-                            {revokingId === session.sessionId
+                            {revokingId === session.id
                               ? <Loader2 size={15} className="dashboard-profile__pref-spinner" />
                               : <Trash2 size={15} />}
                           </button>

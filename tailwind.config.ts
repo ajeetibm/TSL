@@ -24,6 +24,7 @@ export default {
       fontFamily: {
         sans: ['Open Sans', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         display: ['Montserrat', 'Open Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        serif: ['Merriweather', 'Georgia', 'ui-serif', 'serif'],
       },
     },
   },

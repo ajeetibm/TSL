@@ -26,6 +26,7 @@ import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { smeApi, subscriptionApi } from '../../services/tslApi'
+import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
@@ -1922,7 +1923,7 @@ export default function Dashboard() {
                     <button type="button" onClick={() => triggerDownload(buildNdaPdf(ndaState.data, ndaState.completedAt), 'NDA-Document.pdf')}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => triggerDownload(buildNdaRtf(ndaState.data, ndaState.completedAt), 'NDA-Document.rtf')}>
+                    <button type="button" onClick={() => buildNdaDocx(ndaState.data, ndaState.completedAt).then(blob => triggerDownload(blob, 'NDA-Document.docx'))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaState.data, ndaState.completedAt), 'NDA-Evidence-Pack.txt')}>
@@ -1943,7 +1944,7 @@ export default function Dashboard() {
                     <button type="button" onClick={() => triggerDownload(buildEmploymentPdf(empState.data, empState.completedAt), 'Employment-Offer-Letter.pdf')}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => triggerDownload(buildEmploymentRtf(empState.data, empState.completedAt), 'Employment-Offer-Letter.rtf')}>
+                    <button type="button" onClick={() => buildEmploymentDocx(empState.data, empState.completedAt).then(blob => triggerDownload(blob, 'Employment-Offer-Letter.docx'))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empState.data, empState.completedAt), 'Employment-Evidence-Pack.txt')}>
@@ -1964,7 +1965,7 @@ export default function Dashboard() {
                     <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyPdf(ppState.data, ppState.completedAt), 'Privacy-Policy.pdf')}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyRtf(ppState.data, ppState.completedAt), 'Privacy-Policy.rtf')}>
+                    <button type="button" onClick={() => buildPrivacyPolicyDocx(ppState.data, ppState.completedAt).then(blob => triggerDownload(blob, 'Privacy-Policy.docx'))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppState.data, ppState.completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
@@ -1985,7 +1986,7 @@ export default function Dashboard() {
                     <button type="button" onClick={() => triggerDownload(buildFounderAgreementPdf(faState.data, faState.completedAt), 'Founders-Agreement.pdf')}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => triggerDownload(buildFounderAgreementRtf(faState.data, faState.completedAt), 'Founders-Agreement.rtf')}>
+                    <button type="button" onClick={() => buildFounderAgreementDocx(faState.data, faState.completedAt).then(blob => triggerDownload(blob, 'Founders-Agreement.docx'))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildFounderAgreementEvidencePack(faState.data, faState.completedAt), 'Founders-Agreement-Evidence-Pack.txt')}>
@@ -2006,7 +2007,7 @@ export default function Dashboard() {
                     <button type="button" onClick={() => triggerDownload(buildServiceAgreementPdf(saState.data, saState.completedAt), 'Service-Agreement.pdf')}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => triggerDownload(buildServiceAgreementRtf(saState.data, saState.completedAt), 'Service-Agreement.rtf')}>
+                    <button type="button" onClick={() => buildServiceAgreementDocx(saState.data, saState.completedAt).then(blob => triggerDownload(blob, 'Service-Agreement.docx'))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saState.data, saState.completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
