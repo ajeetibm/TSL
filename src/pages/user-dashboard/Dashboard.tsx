@@ -1315,28 +1315,35 @@ export default function Dashboard() {
                         {wizard.wizards} {wizard.landingItems}
                       </strong>
                     </div>
-                    {(() => {
-                      const isNda = wizard.title === 'Non-Disclosure Agreement (NDA)'
-                      const isEmp = wizard.title === 'Employment Offer letter'
-                      const isEnabled = isNda || isEmp
-                      const handleClick = isNda
-                        ? () => { startWizard(); setIsNdaModalOpen(true) }
-                        : isEmp
-                          ? () => { startEmp(); setIsEmpModalOpen(true) }
-                          : undefined
-                      return (
-                        <button
-                          type="button"
-                          className="user-dashboard__new-wizard-button"
-                          onClick={isEnabled ? handleClick : undefined}
-                          style={isEnabled ? undefined : { opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' }}
-                        >
-                          <Play size={16} />
-                          {isNda && ndaState.status === 'inProgress' ? 'Continue' :
-                           isEmp && empState.status === 'inProgress' ? 'Continue' : 'Start'}
-                        </button>
-                      )
-                    })()}
+                    <button
+                      type="button"
+                      className="user-dashboard__new-wizard-button"
+                      onClick={() => {
+                        if (wizard.title === 'Employment Offer letter') {
+                          startEmp()
+                          setIsEmpModalOpen(true)
+                        } else if (wizard.title === 'Privacy Policy') {
+                          startPP()
+                          setIsPPModalOpen(true)
+                        } else if (wizard.title === 'Founder Agreement') {
+                          startFA()
+                          setIsFAModalOpen(true)
+                        } else if (wizard.title === 'Service Agreement') {
+                          startSA()
+                          setIsSAModalOpen(true)
+                        } else {
+                          startWizard()
+                          setIsNdaModalOpen(true)
+                        }
+                      }}
+                    >
+                      <Play size={16} />
+                      {wizard.title === 'Non-Disclosure Agreement (NDA)' && ndaState.status === 'inProgress' ? 'Continue' :
+                       wizard.title === 'Employment Offer letter' && empState.status === 'inProgress' ? 'Continue' :
+                       wizard.title === 'Privacy Policy' && ppState.status === 'inProgress' ? 'Continue' :
+                       wizard.title === 'Founder Agreement' && faState.status === 'inProgress' ? 'Continue' :
+                       wizard.title === 'Service Agreement' && saState.status === 'inProgress' ? 'Continue' : 'Start'}
+                    </button>
                   </article>
                 ))}
               </div>
@@ -1354,11 +1361,11 @@ export default function Dashboard() {
                   <Box size={18} />
                   Browse All Wizards
                 </button>
-                <button type="button" className="user-dashboard__action" style={{ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                <button type="button" className="user-dashboard__action" onClick={() => navigate('/dashboard/counsel')}>
                   <Scale size={18} />
                   Book Legal Counsel
                 </button>
-                <button type="button" className="user-dashboard__action" style={{ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' }}>
+                <button type="button" className="user-dashboard__action" onClick={() => navigate('/dashboard/playbooks')}>
                   <BookOpen size={18} />
                   View Playbooks
                 </button>
@@ -1389,18 +1396,33 @@ export default function Dashboard() {
                         </button>
                       )
                     }
-                    // Demo: disable all legal notice links temporarily
+                    if (isDisabled) {
+                      return (
+                        <button
+                          type="button"
+                          key={label}
+                          disabled
+                          title="Document coming soon"
+                          className="user-dashboard__notice-link user-dashboard__notice-link--disabled"
+                        >
+                          <span><Icon size={18} /></span>
+                          {label}
+                          <ChevronRight size={16} />
+                        </button>
+                      )
+                    }
                     return (
-                      <button
+                      <a
                         key={label}
-                        type="button"
+                        href={href!}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="user-dashboard__notice-link"
-                        style={{ opacity: 0.4, cursor: 'not-allowed', pointerEvents: 'none' }}
                       >
                         <span><Icon size={18} /></span>
                         {label}
                         <ChevronRight size={16} />
-                      </button>
+                      </a>
                     )
                   })}
                 </div>
