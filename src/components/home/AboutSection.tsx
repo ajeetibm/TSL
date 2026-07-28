@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Award, CircleDot, Shield, Target } from 'lucide-react'
+import { Award, Shield, Target } from 'lucide-react'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
 
@@ -35,8 +35,8 @@ export function AboutSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <span className="inline-flex min-h-[38px] items-center gap-[12px] rounded-full border border-[rgba(13,27,42,0.1)] bg-[rgba(13,27,42,0.05)] px-[16px] text-[14px] font-semibold leading-5 text-[#333] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-            <CircleDot size={16} className="text-[#D4A437]" strokeWidth={2.2} />
+          <span className="inline-flex min-h-[38px] items-center gap-[12px] rounded-full border border-[rgba(13,27,42,0.1)] bg-[rgba(13,27,42,0.05)] px-[16px] font-sans text-[14px] font-semibold leading-[20px] tracking-[0px] text-center text-[#333333] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <Target size={16} className="text-[#D4A437]" strokeWidth={2.2} />
             About The Startup Legal
           </span>
 

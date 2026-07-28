@@ -231,3 +231,13 @@
     width: calc(100vw - 16px);
   }
 }
+
+/* ── Floating button label typography ── */
+.tsl-ai-fab-label {
+  font-family: 'Open Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.15px;
+  color: #ffffff;
+}

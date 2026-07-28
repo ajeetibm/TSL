@@ -66,7 +66,7 @@ export function ApproachSection() {
                 <Icon size={35} strokeWidth={2.2} />
               </span>
 
-              <h3 className="mt-[28px] text-[24px] font-bold leading-tight tracking-[0] text-[#102033]">
+              <h3 className="mt-[28px] text-[18px] font-bold leading-tight tracking-[0] text-[#102033]">
                 {title}
               </h3>
 
@@ -98,7 +98,7 @@ export function ApproachSection() {
         <div className="mt-[100px] flex justify-center">
           <a
             href="#contact"
-            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-center gap-[22px] rounded-full bg-[#D4A437] px-8 text-[16px] font-bold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:bg-[#D4A437]"
+            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-center gap-[22px] rounded-full bg-[#D4A437] px-8 text-[16px] font-bold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#E0B24E] hover:text-white"
           >
             Book Your Free Consultation
             <span aria-hidden="true">→</span>
