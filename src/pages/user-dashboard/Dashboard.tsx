@@ -58,34 +58,31 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
-      `${runs} essential wizards`,
-      `${runs} runs per month`,
-      `${members} team member`,
-      'Basic email support',
-      '6 months document storage',
+      'Access to 4 legal wizards',
+      '5 wizard runs per month',
+      'Standard support (48-72h response)',
+      '1GB document storage',
+      'PDF export',
     ]
   }
 
   if (id === 'operator') {
     return [
-      'All 12 legal wizards',
-      `${runs} runs per month`,
-      `${members} team members`,
-      'Priority support (24–48 hr)',
+      'Access to all 12 legal wizards',
+      'Unlimited wizard runs',
+      'Priority support (24-48h response)',
       'Unlimited document storage',
+      'API access for integrations',
     ]
   }
 
   if (id === 'boardroom') {
     return [
       'All 30 legal wizards',
-      `${runs} runs per month`,
-      `${members} team members`,
+      'Unlimited wizard runs',
       'Dedicated support (SLA)',
       'Unlimited document storage',
-      'API access',
-      'White-label options',
-      'Custom workflows',
+      'API access + white-label options',
     ]
   }
 

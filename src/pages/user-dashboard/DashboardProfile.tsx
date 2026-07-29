@@ -1,9 +1,10 @@
 import { BackButton } from '../../components/dashboard/BackButton'
-import { BriefcaseBusiness, Camera, Loader2, Mail, MapPin, Monitor, Phone, Smartphone, Trash2, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, Camera, CheckCircle2, Loader2, Mail, MapPin, Monitor, Phone, Smartphone, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { authApi, profileApi, securityApi, smeApi } from '../../services/tslApi'
+import { authApi, clearAuthSession, profileApi, securityApi, smeApi } from '../../services/tslApi'
 import type { ActiveSession } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
 import { useUserProfile } from '../../context/UserProfileContext'
@@ -14,6 +15,7 @@ import './DashboardProfile.css'
 type ProfileTab = 'information' | 'security' | 'preferences'
 
 export default function DashboardProfile() {
+  const navigate = useNavigate()
   const { profile, updateProfile } = useUserProfile()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
   const [formData, setFormData] = useState<UserProfile>(profile)
@@ -31,12 +33,14 @@ export default function DashboardProfile() {
   const [isPasswordSaving, setIsPasswordSaving] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+  const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false)
 
   // ── Two-Factor Authentication ──────────────────────────────────────────────
   // ── Active Sessions ────────────────────────────────────────────────────────
   const [sessions, setSessions] = useState<ActiveSession[]>([])
   const [sessionsLoading, setSessionsLoading] = useState(true)
   const [revokingId, setRevokingId] = useState<string | null>(null)
+  const [confirmRevokeId, setConfirmRevokeId] = useState<string | null>(null)
   const [sessionMessage, setSessionMessage] = useState<string | null>(null)
   const sessionMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -195,7 +199,7 @@ export default function DashboardProfile() {
       newPassword: '',
       confirmPassword: '',
     })
-    setPasswordMessage(result.message ?? 'Password changed successfully.')
+    setShowPasswordSuccessModal(true)
   }
 
   const handleSave = async () => {
@@ -557,7 +561,7 @@ export default function DashboardProfile() {
                           <button
                             type="button"
                             className="dashboard-profile__session-revoke"
-                            onClick={() => handleRevokeSession(session.id)}
+                            onClick={() => setConfirmRevokeId(session.id)}
                             disabled={revokingId === session.id}
                             aria-label={`Revoke session on ${session.device}`}
                           >
@@ -571,6 +575,74 @@ export default function DashboardProfile() {
                   </div>
                 )}
               </section>
+            </div>
+          )}
+
+          {/* ── Sign Out Device Confirmation Dialog ──────────────────────── */}
+          {confirmRevokeId && (
+            <div className="dashboard-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="revoke-dialog-title">
+              <div className="dashboard-profile__dialog">
+                <h3 id="revoke-dialog-title" className="dashboard-profile__dialog-title">
+                  Sign Out from This Device?
+                </h3>
+                <p className="dashboard-profile__dialog-desc">
+                  This will sign out the selected device immediately.
+                </p>
+                <div className="dashboard-profile__dialog-actions">
+                  <button
+                    type="button"
+                    className="dashboard-profile__dialog-cancel"
+                    onClick={() => setConfirmRevokeId(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="dashboard-profile__dialog-confirm"
+                    disabled={revokingId === confirmRevokeId}
+                    onClick={async () => {
+                      const id = confirmRevokeId
+                      setConfirmRevokeId(null)
+                      await handleRevokeSession(id)
+                    }}
+                  >
+                    {revokingId === confirmRevokeId
+                      ? <Loader2 size={15} className="dashboard-profile__pref-spinner" />
+                      : 'Sign Out Device'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Password Updated Successfully Modal ─────────────────────── */}
+          {showPasswordSuccessModal && (
+            <div className="dashboard-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="pw-success-dialog-title">
+              <div className="dashboard-profile__dialog dashboard-profile__dialog--success">
+                <div className="dashboard-profile__dialog-success-icon">
+                  <CheckCircle2 size={40} strokeWidth={1.8} />
+                </div>
+                <h3 id="pw-success-dialog-title" className="dashboard-profile__dialog-title">
+                  Password Updated Successfully
+                </h3>
+                <p className="dashboard-profile__dialog-desc">
+                  Your password has been changed successfully. Please sign in again to continue using your account.
+                </p>
+                <div className="dashboard-profile__dialog-actions dashboard-profile__dialog-actions--center">
+                  <button
+                    type="button"
+                    className="dashboard-profile__dialog-primary"
+                    onClick={() => {
+                      setShowPasswordSuccessModal(false)
+                      clearAuthSession()
+                      navigate('/')
+                      window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin' } }))
+                    }}
+                  >
+                    Sign In Again
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
