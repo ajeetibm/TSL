@@ -35,13 +35,13 @@ export function HeroSection() {
           }}
         >
           <div className="flex items-center">
-            <span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-[rgba(54,65,83,0.6)]">
+            <span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
               <Scale size={20} />
             </span>
-            <span className="relative -ml-4 z-20 grid h-10 w-10 place-items-center rounded-full bg-[#1E2939] text-white ring-2 ring-[rgba(54,65,83,0.6)]">
+            <span className="relative -ml-4 z-20 grid h-10 w-10 place-items-center rounded-full bg-[#1E2939] text-white ring-2 ring-white">
               <Shield size={20} />
             </span>
-            <span className="relative -ml-4 z-30 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-[rgba(54,65,83,0.6)]">
+            <span className="relative -ml-4 z-30 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
               <CircleCheck size={20} />
             </span>
           </div>
