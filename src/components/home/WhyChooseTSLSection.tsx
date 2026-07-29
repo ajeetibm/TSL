@@ -51,7 +51,7 @@ const reasons = [
 
 export function WhyChooseTSLSection() {
   return (
-    <section className="bg-white py-20 lg:py-28">
+    <section className="bg-white pb-[64px] pt-[48px] lg:pt-[56px]">
       <Container>
         <SectionHeader
           eyebrow={

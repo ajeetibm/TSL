@@ -26,7 +26,7 @@ const cards = [
 
 export function AboutSection() {
   return (
-    <section className="bg-[#F5F5F5] pb-[64px] pt-[80px] font-sans lg:pt-[96px]" id="about">
+    <section className="bg-[#F5F5F5] pb-[64px] pt-[48px] font-sans lg:pt-[56px]" id="about">
       <Container className="max-w-[1440px]">
         <motion.div
           className="text-center"
@@ -40,7 +40,7 @@ export function AboutSection() {
             About The Startup Legal
           </span>
 
-          <h2 className="mx-auto mt-[53px] max-w-[980px] text-center font-display text-[32px] font-bold leading-[1.12] tracking-[0] text-[#333] md:text-[36px]">
+          <h2 className="mx-auto mt-[53px] max-w-[980px] text-center font-display text-[36px] font-bold leading-[1.12] tracking-[0] text-[#333]">
             Your Legal Partner, Not Just Your Lawyer
           </h2>
 

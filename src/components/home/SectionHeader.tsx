@@ -31,7 +31,7 @@ export function SectionHeader({ eyebrow, title, description, inverse }: SectionH
       </span>
       <h2
         className={cn(
-          'mt-8 font-display text-[32px] font-bold leading-[1.12] tracking-[0] md:mt-[30px] md:text-[48px] md:leading-[48px]',
+          'mt-8 font-display text-[36px] font-bold leading-[1.12] tracking-[0] md:mt-[30px]',
           inverse ? 'text-white' : 'text-navy-primary',
         )}
       >

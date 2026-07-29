@@ -33,7 +33,7 @@ const proofCards = [
 
 export function ServicesSection() {
   return (
-    <section className="bg-white pb-[112px] pt-[118px]">
+    <section className="bg-white pb-[64px] pt-[48px] lg:pt-[56px]">
       <Container className="max-w-[1320px]">
         <motion.div
           className="text-center"
@@ -47,7 +47,7 @@ export function ServicesSection() {
             What You Actually Get
           </span>
 
-          <h2 className="mx-auto mt-[46px] max-w-[980px] text-[42px] font-bold leading-[1.18] tracking-[0] text-[#2B2B2B] md:text-[46px]">
+          <h2 className="mx-auto mt-[46px] max-w-[980px] text-[36px] font-bold leading-[1.18] tracking-[0] text-[#2B2B2B]">
             Every Run Delivers Proof, Not Just Papers
           </h2>
         </motion.div>

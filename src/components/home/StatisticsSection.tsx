@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Target, TrendingUp, ArrowUpRight } from 'lucide-react'
+import { CheckCircle2, Clock, Target, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -41,7 +41,7 @@ export function StatisticsSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <h2 className="text-[34px] font-bold leading-[1.14] tracking-[0] text-white md:text-[42px]">
+          <h2 className="text-[34px] font-bold leading-[1.14] tracking-[0] text-white md:text-[36px]">
             Proven Performance Metrics
           </h2>
           <p className="mt-[18px] text-[17px] font-normal leading-[1.35] text-white/75 md:text-[18px]">
@@ -74,8 +74,8 @@ export function StatisticsSection() {
                 {label}
               </p>
 
-              <span className="mt-6 inline-flex w-fit items-center gap-[6px] rounded-full bg-[#2D3D50] px-[14px] py-[7px] text-[13px] font-normal leading-none text-white/80">
-                <ArrowUpRight size={13} strokeWidth={2} className="shrink-0" />
+              <span className="mt-6 inline-flex w-fit items-center gap-[6px] rounded-full bg-[#45463e] px-[14px] py-[7px] text-[13px] font-normal leading-none text-white">
+                <TrendingUp size={13} strokeWidth={2} className="shrink-0" />
                 {tag}
               </span>
             </motion.article>

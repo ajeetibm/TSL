@@ -15,7 +15,7 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative isolate min-h-screen overflow-hidden bg-navy-primary pb-20 pt-28 text-white sm:pb-24 sm:pt-32 lg:pb-28 lg:pt-36" id="home">
+    <section className="relative isolate min-h-screen overflow-hidden bg-navy-primary pb-8 pt-20 text-white sm:pb-8 sm:pt-24 lg:pb-8 lg:pt-16" id="home">
       <div className="absolute -left-20 top-72 h-[26rem] w-[26rem] rounded-full bg-gold/15 blur-[64px]" />
       <div className="absolute right-[-6rem] top-[28rem] h-[27rem] w-[27rem] rounded-full bg-gold/10 blur-[64px]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.045),transparent_34%)]" />

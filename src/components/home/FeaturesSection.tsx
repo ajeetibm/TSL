@@ -63,7 +63,7 @@ const features = [
 
 export function FeaturesSection() {
   return (
-    <section className="bg-[#F5F5F5] py-20 lg:py-28" id="features">
+    <section className="bg-[#F5F5F5] pb-20 pt-[48px] lg:pb-28 lg:pt-[56px]" id="features">
       <Container>
         <SectionHeader
           eyebrow={
@@ -133,37 +133,39 @@ export function FeaturesSection() {
                 ) : (
                 <span
                   className={`grid flex-shrink-0 place-items-center rounded-full ${feature.iconBg} text-white shadow-lg`}
-                  style={{ width: '46px', height: '46px' }}
+                  style={{ width: '37px', height: '37px' }}
                 >
-                  <Icon size={26} strokeWidth={2.2} />
+                  <Icon size={16} strokeWidth={2.2} />
                 </span>
                 )}
                 <div>
-                  <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'normal', fontWeight: 700, fontSize: '18px', lineHeight: '28px', color: '#0D1B2A' }}>
+                  <h3 className="whitespace-nowrap" style={{ fontFamily: 'Montserrat, sans-serif', fontStyle: 'normal', fontWeight: 700, fontSize: '18px', lineHeight: '28px', color: '#0D1B2A' }}>
                     {feature.title}
                   </h3>
-                  <p className="mt-1 text-[13px] font-normal text-[#5F6368]">{feature.subtitle}</p>
+                  <p className="mt-1 text-[13px] font-normal text-[#333333]">{feature.subtitle}</p>
                 </div>
               </div>
 
-              <p className="mt-5 text-[14px] leading-[1.6] text-[#4F4F4F]">{feature.description}</p>
+              <p className="mt-5 text-[14px] leading-[1.6] text-[#333333]">{feature.description}</p>
 
               <ul className="mt-5 grid gap-3">
                 {feature.items.map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <span
-                      className={`grid h-7 w-7 flex-shrink-0 place-items-center rounded-full ${feature.checkBg} text-white`}
+                      className={`grid flex-shrink-0 place-items-center rounded-full ${feature.checkBg} text-white`}
+                      style={{ width: '28px', height: '28px' }}
                     >
-                      <Check size={14} strokeWidth={2.5} />
+                      <Check size={11} strokeWidth={2.8} />
                     </span>
-                    <span className="text-[13px] leading-[1.4] text-[#4F4F4F]">{item}</span>
+                    <span className="text-[13px] leading-[1.4] text-[#333333]">{item}</span>
                   </li>
                 ))}
               </ul>
 
               <a
                 href={feature.buttonHref}
-                className={`mt-auto inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 text-base font-bold transition-all ${feature.buttonStyle} shadow-lg hover:scale-[1.02]`}
+                className={`mt-auto inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full px-6 transition-all ${feature.buttonStyle} shadow-lg hover:scale-[1.02]`}
+                style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 600, fontSize: '14px', lineHeight: '16px', letterSpacing: '0px', textAlign: 'center', color: '#F4F4F4' }}
               >
                 {feature.buttonText}
                 <span aria-hidden="true">→</span>

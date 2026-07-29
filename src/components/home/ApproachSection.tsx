@@ -32,7 +32,7 @@ const approachColumns = [
 
 export function ApproachSection() {
   return (
-    <section className="border-t border-[#E5E7EB] bg-white pb-[88px] pt-[80px] lg:pb-[96px] lg:pt-[96px]">
+    <section className="border-t border-[#E5E7EB] bg-white pb-[88px] pt-[48px] lg:pb-[96px] lg:pt-[56px]">
       <Container className="max-w-[1360px]">
         <motion.div
           className="text-center"
@@ -44,7 +44,7 @@ export function ApproachSection() {
           <span className="inline-flex h-[40px] items-center justify-center rounded-[20px] bg-[#FCF8EE] px-[48px] text-[13px] font-semibold leading-none text-[#3D3D3D]" style={{ border: '1px solid #E8DFC8' }}>
             Our Approach
           </span>
-          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[28px] font-semibold leading-[34px] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[36px] font-semibold leading-[34px] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             How We Make Legal Simple
           </h2>
         </motion.div>
