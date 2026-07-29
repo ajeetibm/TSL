@@ -1,4 +1,4 @@
-import { Target, Shield, FileText, FileCheck, TrendingUp, Clock, Zap, ArrowRight, CircleCheck } from 'lucide-react'
+import { Target, Shield, FileCheck, TrendingUp, Clock, Zap, ArrowRight, CircleCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
