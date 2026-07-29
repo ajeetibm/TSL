@@ -1,4 +1,4 @@
-import { Check, Info } from 'lucide-react'
+import { Check, Info, FileText, Briefcase, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { pricingPlans, pricingComparison } from '../../data/pricing'
 import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
@@ -39,9 +39,13 @@ function FeatureValue({ value, exclusive }: { value: boolean | string; exclusive
   )
 }
 
+const openSignUp = () => {
+  window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup' } }))
+}
+
 export function PricingSection() {
   return (
-    <section className="bg-white pt-14 lg:pt-16 pb-20 lg:pb-28" id="pricing">
+    <section className="bg-white pt-14 lg:pt-16 pb-8 lg:pb-10" id="pricing">
       {/* Section header — scrolls normally off screen */}
       <Container>
         <div className="flex flex-col items-center gap-16 mb-14">
@@ -91,7 +95,7 @@ export function PricingSection() {
                   key={plan.name}
                   variants={revealUp}
                   className={cn(
-                    'relative flex flex-col items-center gap-4 px-6 pt-0 pb-6',
+                    'relative flex flex-col items-center gap-3 px-6 pt-0 pb-4',
                     index < 2 && 'border-r border-[#E5E7EB]',
                     plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
                   )}
@@ -115,10 +119,12 @@ export function PricingSection() {
 
                   {/* Icon */}
                   <div className={cn(
-                    'flex items-center justify-center w-10 h-10 rounded-full mt-1 shrink-0',
+                    'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
                     plan.highlight ? 'bg-gold' : 'bg-[#E5E7EB]'
                   )}>
-                    <Info size={20} className={plan.highlight ? 'text-white' : 'text-[#4A5565]'} />
+                    {plan.name === 'Launchpad' && <FileText size={20} className="text-[#4A5565]" strokeWidth={1.8} />}
+                    {plan.name === 'Operator'  && <Briefcase size={20} className="text-white" strokeWidth={1.8} />}
+                    {plan.name === 'Boardroom' && <Building2 size={20} className="text-[#4A5565]" strokeWidth={1.8} />}
                   </div>
                 </motion.div>
               ))}
@@ -140,7 +146,7 @@ export function PricingSection() {
                   key={plan.name}
                   variants={revealUp}
                   className={cn(
-                    'relative flex flex-col items-center gap-5 px-6 pt-6 pb-10',
+                    'relative flex flex-col items-center gap-3 px-6 pt-4 pb-6',
                     index < 2 && 'border-r border-[#E5E7EB]',
                     plan.highlight && 'bg-[rgba(199,154,59,0.1)]',
                   )}
@@ -175,7 +181,7 @@ export function PricingSection() {
 
                   {/* Playbooks Badge */}
                   <div className={cn(
-                    "flex flex-col items-center gap-1 w-full px-3 py-3 rounded-2xl border-2",
+                    "mt-auto flex flex-col items-center gap-1 w-full px-3 py-3 rounded-2xl border-2",
                     plan.highlight
                       ? "bg-[rgba(199,154,59,0.1)] border-gold"
                       : "bg-[#F9FAFB] border-[#E5E7EB]"
@@ -240,21 +246,234 @@ export function PricingSection() {
               </div>
             ))}
 
+            {/* ── Playbooks & Resources ── */}
+            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+              <div className="px-6 md:px-8 py-5 flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">PLAYBOOKS & RESOURCES</h3>
+                <Info size={14} className="text-gold shrink-0" />
+              </div>
+              <div className="hidden md:block border-l border-[#E5E7EB]" />
+              <div className="hidden md:block border-l border-[#E5E7EB] bg-[rgba(199,154,59,0.05)]" />
+              <div className="hidden md:block border-l border-[#E5E7EB]" />
+            </div>
+
+            <div className="divide-y divide-[#ECECEC]">
+              {/* Playbooks Lite */}
+              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+                <div className="flex items-center px-6 md:px-8 py-6 font-medium text-[#4F5F78] md:border-r border-[#ECECEC]">
+                  Playbooks Lite
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 md:border-r border-[#ECECEC]">
+                  <span className="inline-flex items-center justify-center rounded-[24px] bg-[#F3E0A8] px-4 py-2.5 text-sm font-normal leading-snug text-[#4F5F78]">
+                    Foundations for hiring, commercial basics, compliance.
+                  </span>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 bg-[#FBF7ED] md:border-r border-[#ECECEC]">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Playbooks Core */}
+              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+                <div className="flex items-center px-6 md:px-8 py-6 font-medium text-[#4F5F78] md:border-r border-[#ECECEC]">
+                  Playbooks Core
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 md:border-r border-[#ECECEC]">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 bg-[#FBF7ED] md:border-r border-[#ECECEC]">
+                  <span className="inline-flex items-center justify-center rounded-[24px] bg-[#F3E0A8] px-4 py-2.5 text-sm font-normal leading-snug text-[#4F5F78]">
+                    Full library including Raising Funds Internationally. Saved checklists and team notes.
+                  </span>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Playbooks Pro */}
+              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+                <div className="flex items-center px-6 md:px-8 py-6 font-medium text-[#4F5F78] md:border-r border-[#ECECEC]">
+                  Playbooks Pro
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 md:border-r border-[#ECECEC]">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 bg-[#FBF7ED] md:border-r border-[#ECECEC]">
+                  <div className="flex items-center justify-center w-5 h-5 bg-[#E3E7ED] rounded-full">
+                    <Check size={12} strokeWidth={2} className="text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6">
+                  <span className="inline-flex items-center justify-center rounded-[24px] bg-[#F3E0A8] px-4 py-2.5 text-sm font-normal leading-snug text-[#4F5F78]">
+                    Everything in Core plus investor-grade packs, diligence checklists, board action cheat-sheets.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* ── Premium Benefits ── */}
+            {/* Section header */}
+            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+              <div className="px-6 md:px-8 py-5 flex items-center gap-2">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">PREMIUM BENEFITS</h3>
+                <Info size={14} className="text-gold shrink-0" />
+              </div>
+              <div className="hidden md:block border-l border-[#E5E7EB]" />
+              <div className="hidden md:block border-l border-[#E5E7EB] bg-[rgba(199,154,59,0.05)]" />
+              <div className="hidden md:block border-l border-[#E5E7EB]" />
+            </div>
+
+            {/* Feature rows */}
+            <div className="divide-y divide-[#F3F4F6]">
+              {[
+                {
+                  name: 'Priority Email Support',
+                  badge: null,
+                  launchpad: true,
+                  operator: true,
+                  boardroom: true,
+                },
+                {
+                  name: 'Audit Trail & Evidence Packs',
+                  badge: null,
+                  launchpad: true,
+                  operator: true,
+                  boardroom: true,
+                },
+                {
+                  name: 'Startup Legal Resources Library',
+                  badge: 'EXCLUSIVE',
+                  launchpad: false,
+                  operator: true,
+                  boardroom: true,
+                },
+                {
+                  name: 'Dedicated Account Manager',
+                  badge: 'ENTERPRISE',
+                  launchpad: false,
+                  operator: false,
+                  boardroom: true,
+                },
+              ].map((feature) => (
+                <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-center text-sm bg-white">
+                  <div className="px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
+                    {feature.name}
+                    {feature.badge === 'EXCLUSIVE' && (
+                      <span className="ml-2 inline-flex items-center px-4 py-0.5 bg-[#DCFCE7] rounded-2xl text-xs font-semibold uppercase text-[#008236]">
+                        Exclusive
+                      </span>
+                    )}
+                    {feature.badge === 'ENTERPRISE' && (
+                      <span className="ml-2 inline-flex items-center px-4 py-0.5 bg-[#DCFCE7] rounded-2xl text-xs font-semibold uppercase text-[#008236]">
+                        Enterprise
+                      </span>
+                    )}
+                  </div>
+                  <div className="md:border-r border-[#F3F4F6]">
+                    <FeatureValue value={feature.launchpad} />
+                  </div>
+                  <div className={cn("md:border-r border-[#F3F4F6]", "bg-[rgba(199,154,59,0.05)]")}>
+                    <FeatureValue value={feature.operator} />
+                  </div>
+                  <div>
+                    <FeatureValue value={feature.boardroom} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Counsel Credits & SLA ── */}
+            {/* Dark header row */}
+            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#0D1B2A] border-t-2 border-[#0D1B2A]">
+              <div className="px-6 md:px-8 py-5 flex items-center gap-2">
+                <span className="text-sm font-bold uppercase tracking-wide text-white">COUNSEL CREDITS & SLA</span>
+                <Info size={14} className="text-gold shrink-0" />
+              </div>
+              <div className="hidden md:col-span-3 md:flex items-center justify-end px-8 py-5">
+                <span className="text-sm font-normal text-white">
+                  Counsel is included in all tiers, with tier-based credits, SLAs, and clear top-up rates for additional scope.
+                </span>
+              </div>
+            </div>
+
+            {/* Data rows */}
+            {[
+              {
+                label: 'Counsel Credits per Month',
+                launchpad: '0 credits',
+                operator: '2 credits',
+                boardroom: '6 credits',
+              },
+              {
+                label: 'Response Time (SLA)',
+                launchpad: '2 business days',
+                operator: '1 business day',
+                boardroom: '8 business hours',
+              },
+              {
+                label: 'Top-up Rate per Credit',
+                launchpad: 'R550',
+                operator: 'R500',
+                boardroom: 'R450',
+              },
+            ].map((row, i, arr) => (
+              <div
+                key={row.label}
+                className={cn(
+                  'grid grid-cols-1 md:grid-cols-4 items-stretch bg-[#EDE8D8]',
+                  i < arr.length - 1 && 'border-b border-[#D9D0BE]',
+                )}
+              >
+                <div className="flex items-center px-6 md:px-8 py-6 text-sm font-normal text-[#364153] md:border-r border-[#D9D0BE]">
+                  {row.label}
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 md:border-r border-[#D9D0BE]">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                    {row.launchpad}
+                  </span>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6 bg-[rgba(199,154,59,0.06)] md:border-r border-[#D9D0BE]">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                    {row.operator}
+                  </span>
+                </div>
+                <div className="flex items-center justify-center px-4 py-6">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                    {row.boardroom}
+                  </span>
+                </div>
+              </div>
+            ))}
+
             {/* CTA Footer — also 4-col to match */}
             <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
               <div className="hidden md:block" />
               <div className="flex items-center justify-center py-12 md:border-r border-[#E5E7EB]">
-                <button className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
+                <button onClick={openSignUp} className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
                   Get Started
                 </button>
               </div>
               <div className="flex items-center justify-center py-12 bg-[rgba(199,154,59,0.1)] md:border-r border-[#E5E7EB]">
-                <button className="px-8 py-4 bg-gold text-white text-base font-semibold rounded-3xl shadow-md hover:bg-gold-light transition">
+                <button onClick={openSignUp} className="px-8 py-4 bg-gold text-white text-base font-semibold rounded-3xl shadow-md hover:bg-gold-light transition">
                   Get Started
                 </button>
               </div>
               <div className="flex items-center justify-center py-12">
-                <button className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
+                <button onClick={openSignUp} className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
                   Get Started
                 </button>
               </div>
@@ -262,6 +481,13 @@ export function PricingSection() {
 
           </div>
         </div>
+      </Container>
+
+      {/* "All packages include" text */}
+      <Container>
+        <p className="mt-8 mb-0 text-center font-sans text-[14px] font-normal leading-[1.6] text-[#4B5563] whitespace-nowrap">
+          All packages include: Execution-ready PDF • QR-verified evidence pack • Full audit trail • Automatic Company Snapshot updates
+        </p>
       </Container>
     </section>
   )

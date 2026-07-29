@@ -1,4 +1,4 @@
-import { CheckCircle2, Database, FileCheck2, QrCode, Scale, ShieldCheck } from 'lucide-react'
+import { CircleCheckBig, Database, FileCheck, QrCode, Scale, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -7,7 +7,7 @@ const proofCards = [
   {
     title: 'Wizards',
     description: 'Legally compliant documents that third parties accept.',
-    icon: FileCheck2,
+    icon: FileCheck,
   },
   {
     title: 'Counsel',
@@ -17,7 +17,7 @@ const proofCards = [
   {
     title: 'Evidence Pack',
     description: 'Complete audit trail with hashes and timestamps.',
-    icon: ShieldCheck,
+    icon: Shield,
   },
   {
     title: 'QR Verification',
@@ -42,8 +42,8 @@ export function ServicesSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <span className="inline-flex min-h-[40px] items-center gap-[14px] rounded-full border border-[#DADDE1] bg-[#F4F5F6] px-[34px] text-[16px] font-bold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-            <CheckCircle2 size={19} className="text-[#D4A437]" strokeWidth={2.2} />
+          <span className="inline-flex min-h-[40px] items-center gap-[14px] rounded-full border border-[#DADDE1] bg-[#F4F5F6] px-[34px] text-[14px] font-semibold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <CircleCheckBig size={18} className="text-[#D4A437]" strokeWidth={2} />
             What You Actually Get
           </span>
 
@@ -53,7 +53,7 @@ export function ServicesSection() {
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-[112px] grid max-w-[1130px] grid-cols-5 gap-[28px]"
+          className="mx-auto mt-[72px] grid max-w-[1130px] grid-cols-5 gap-[28px]"
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
@@ -69,7 +69,7 @@ export function ServicesSection() {
                 <Icon size={23} strokeWidth={2.1} />
               </span>
 
-              <h3 className="mt-[22px] text-[18px] font-bold leading-tight tracking-[0] text-[#07192B]">
+              <h3 className="mt-[22px] text-[15px] font-bold leading-tight tracking-[0] text-[#07192B]">
                 {title}
               </h3>
               <p className="mt-[20px] text-[14px] font-normal leading-[1.28] tracking-[0] text-[#4F4F4F]">

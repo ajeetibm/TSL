@@ -25,16 +25,23 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mx-auto inline-flex items-center gap-4 rounded-full bg-navy-secondary px-7 py-4 shadow-2xl shadow-black/20 ring-1 ring-white/5 backdrop-blur"
+          className="mx-auto inline-flex items-center gap-4 rounded-full px-7"
+          style={{
+            width: '425.56px',
+            height: '88px',
+            background: 'rgba(54, 65, 83, 0.6)',
+            boxShadow: '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
+            borderRadius: '9999px',
+          }}
         >
           <div className="flex items-center">
-            <span className="relative z-10 grid h-10 w-10 place-items-center rounded-full border-[3px] border-[#e2e8f0] bg-gold text-white">
+            <span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-[rgba(54,65,83,0.6)]">
               <Scale size={20} />
             </span>
-            <span className="relative -ml-4 z-20 grid h-10 w-10 place-items-center rounded-full border-[3px] border-[#e2e8f0] bg-[#1E2939] text-white">
+            <span className="relative -ml-4 z-20 grid h-10 w-10 place-items-center rounded-full bg-[#1E2939] text-white ring-2 ring-[rgba(54,65,83,0.6)]">
               <Shield size={20} />
             </span>
-            <span className="relative -ml-4 z-30 grid h-10 w-10 place-items-center rounded-full border-[3px] border-[#e2e8f0] bg-gold text-white">
+            <span className="relative -ml-4 z-30 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-[rgba(54,65,83,0.6)]">
               <CircleCheck size={20} />
             </span>
           </div>
@@ -48,7 +55,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.65 }}
-          className="mx-auto mt-14 max-w-[750px] font-sans text-[60px] font-bold leading-[75px] tracking-[0px] text-center text-white"
+          className="mx-auto mt-14 max-w-[750px] font-display text-[60px] font-bold leading-[75px] tracking-normal text-white text-center"
         >
           Simplifying the Law for <span className="text-gold">South African SMEs</span>
         </motion.h1>
@@ -63,10 +70,7 @@ export function HeroSection() {
           simplified, and affordable for entrepreneurs.
         </motion.p>
 
-        <p
-          className="mx-auto mt-8 max-w-[750px] text-center text-[16px] font-normal italic leading-[28px] tracking-[0px] text-[#C79A3BE6]"
-          style={{ fontFamily: "Merriweather, Georgia, 'Times New Roman', serif" }}
-        >
+        <p className="mt-8 max-w-[750px] mx-auto font-serif italic font-normal text-[16px] leading-[28px] text-center text-[rgba(199,154,59,0.9)]">
           Legal confidence starts here. Your business, your terms, your future.
         </p>
 
@@ -83,7 +87,7 @@ export function HeroSection() {
           <button
             type="button"
             onClick={openSignUp}
-            className="inline-flex min-h-13 min-w-[200px] items-center justify-center gap-3 rounded-full bg-gold px-8 font-sans font-semibold text-[14px] leading-[20px] tracking-[0px] text-center text-white shadow-premium transition hover:-translate-y-1 hover:bg-gold-light hover:text-white"
+            className="inline-flex min-h-13 min-w-[200px] items-center justify-center gap-3 rounded-full bg-gold px-8 font-sans font-semibold text-[14px] leading-[20px] text-white shadow-premium transition hover:-translate-y-1 hover:bg-gold-light hover:text-white"
           >
             Get Started Today
             <ArrowRight size={18} />

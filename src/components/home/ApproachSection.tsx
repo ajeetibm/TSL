@@ -32,7 +32,7 @@ const approachColumns = [
 
 export function ApproachSection() {
   return (
-    <section className="bg-white pb-[88px] pt-[92px] lg:pb-[96px] lg:pt-[104px]">
+    <section className="border-t border-[#E5E7EB] bg-white pb-[88px] pt-[80px] lg:pb-[96px] lg:pt-[96px]">
       <Container className="max-w-[1360px]">
         <motion.div
           className="text-center"
@@ -41,7 +41,7 @@ export function ApproachSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-[#E6D9BD] bg-gradient-to-b from-[#FEFCF7] to-[#F5EDD8] px-[38px] text-[14px] font-semibold leading-none text-[#3F3F3F] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <span className="inline-flex h-[40px] items-center justify-center rounded-[20px] bg-[#FCF8EE] px-[48px] text-[13px] font-semibold leading-none text-[#3D3D3D]" style={{ border: '1px solid #E8DFC8' }}>
             Our Approach
           </span>
           <h2 className="mx-auto mt-[36px] max-w-[578px] text-[28px] font-semibold leading-[34px] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>

@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Target, TrendingUp } from 'lucide-react'
+import { CheckCircle2, Clock, Target, TrendingUp, ArrowUpRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -8,31 +8,31 @@ const metrics = [
     icon: Clock,
     value: '2.4hrs',
     label: 'Median Time to Signature',
-    tag: '↗ For NDAs & Offers',
+    tag: 'For NDAs & Offers',
   },
   {
     icon: CheckCircle2,
     value: '94%',
     label: 'First-Time Acceptance',
-    tag: '↗ By receivers',
+    tag: 'By receivers',
   },
   {
     icon: Target,
     value: '67%',
     label: 'Rework Reduction',
-    tag: '↗ After switching',
+    tag: 'After switching',
   },
   {
     icon: TrendingUp,
     value: '89%',
     label: 'Complete Without Escalation',
-    tag: '↗ Automated workflows',
+    tag: 'Automated workflows',
   },
 ]
 
 export function StatisticsSection() {
   return (
-    <section className="bg-[linear-gradient(180deg,#041B36_0%,#03152B_100%)] py-[96px] text-white lg:py-[104px]">
+    <section className="bg-[#0D1B2A] py-[96px] text-white lg:py-[104px]">
       <Container className="max-w-[1280px]">
         <motion.div
           className="text-center"
@@ -74,7 +74,8 @@ export function StatisticsSection() {
                 {label}
               </p>
 
-              <span className="mt-6 inline-flex w-fit items-center rounded-full bg-[#3A4A5A] px-[14px] py-[7px] text-[13px] font-normal leading-none text-white/80">
+              <span className="mt-6 inline-flex w-fit items-center gap-[6px] rounded-full bg-[#2D3D50] px-[14px] py-[7px] text-[13px] font-normal leading-none text-white/80">
+                <ArrowUpRight size={13} strokeWidth={2} className="shrink-0" />
                 {tag}
               </span>
             </motion.article>
