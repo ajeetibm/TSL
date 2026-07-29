@@ -313,7 +313,7 @@ export function ContactSection() {
               Get In Touch
             </span>
 
-            <h2 className="mx-auto mt-8 max-w-[780px] font-display text-[34px] font-bold leading-tight tracking-[0] text-white md:text-[40px]">
+            <h2 className="mx-auto mt-8 max-w-[780px] font-display text-[34px] font-bold leading-tight tracking-[0] text-white md:text-[36px]">
               Let's Start Your Legal Journey
             </h2>
 

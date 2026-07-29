@@ -1,4 +1,4 @@
-import { Target, Shield, FileText, TrendingUp, Clock, Zap, ArrowRight, CircleCheck } from 'lucide-react'
+import { Target, Shield, FileText, FileCheck, TrendingUp, Clock, Zap, ArrowRight, CircleCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -20,7 +20,7 @@ const reasons = [
       'Deterministic PDFs + hashes + QR verification ensure trust by third parties.',
   },
   {
-    icon: FileText,
+    icon: FileCheck,
     iconBg: 'bg-gold',
     title: 'Jurisdiction Accuracy',
     description:
