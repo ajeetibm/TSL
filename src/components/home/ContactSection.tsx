@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { CheckCircle2, Clock, Mail, MapPin, Phone, Send, X } from 'lucide-react'
+import { CheckCircle2, Clock, Mail, MapPin, Phone, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Container } from '../layout/Container'
 import { submitContactForm } from '../../services/mockContactClient'
@@ -277,7 +277,7 @@ export function ContactSection() {
   const sendDisabled   = !allFieldsValid || submitting
 
   const inputBase =
-    'min-h-[58px] rounded-[22px] border bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 transition-colors focus:border-gold'
+    'min-h-[64px] rounded-[28px] border bg-white/10 px-7 font-sans text-[15px] text-white outline-none placeholder:text-white/55 transition-colors focus:border-gold'
 
   function inputClass(field: keyof FormErrors) {
     if (touched[field] && errors[field]) return `${inputBase} border-red-400`
@@ -334,10 +334,10 @@ export function ContactSection() {
               transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="rounded-[24px] border border-white/15 bg-[#253342] p-6 shadow-[0_20px_40px_rgba(0,0,0,0.24)] md:p-12"
             >
-              <div className="grid gap-x-12 gap-y-7 md:grid-cols-2">
+              <div className="grid gap-x-12 gap-y-8 md:grid-cols-2">
                 {/* Full Name */}
-                <div className="grid gap-2">
-                  <label htmlFor="contact-fullName" className="text-sm font-semibold text-white/85">
+                <div className="grid gap-4">
+                  <label htmlFor="contact-fullName" className="font-sans text-[14px] font-normal text-white">
                     Full Name *
                   </label>
                   <input
@@ -357,8 +357,8 @@ export function ContactSection() {
                 </div>
 
                 {/* Email */}
-                <div className="grid gap-2">
-                  <label htmlFor="contact-email" className="text-sm font-semibold text-white/85">
+                <div className="grid gap-4">
+                  <label htmlFor="contact-email" className="font-sans text-[14px] font-normal text-white">
                     Email Address *
                   </label>
                   <input
@@ -379,9 +379,9 @@ export function ContactSection() {
                 </div>
 
                 {/* Phone */}
-                <div className="grid gap-2">
-                  <label htmlFor="contact-phone" className="text-sm font-semibold text-white/85">
-                    Phone Number *
+                <div className="grid gap-4">
+                  <label htmlFor="contact-phone" className="font-sans text-[14px] font-normal text-white">
+                    Phone Number
                   </label>
                   <input
                     ref={phoneRef}
@@ -401,8 +401,8 @@ export function ContactSection() {
                 </div>
 
                 {/* Company Name (optional) */}
-                <div className="grid gap-2">
-                  <label htmlFor="contact-companyName" className="text-sm font-semibold text-white/85">
+                <div className="grid gap-4">
+                  <label htmlFor="contact-companyName" className="font-sans text-[14px] font-normal text-white">
                     Company Name
                   </label>
                   <input
@@ -418,14 +418,14 @@ export function ContactSection() {
               </div>
 
               {/* Message */}
-              <div className="mt-7 grid gap-2">
-                <label htmlFor="contact-message" className="text-sm font-semibold text-white/85">
+              <div className="mt-8 grid gap-4">
+                <label htmlFor="contact-message" className="font-sans text-[14px] font-normal text-white">
                   Message *
                 </label>
                 <textarea
                   ref={messageRef}
                   id="contact-message"
-                  className={`${inputClass('message')} min-h-[132px] resize-none py-5`}
+                  className={`${inputClass('message')} min-h-[120px] resize-none py-5`}
                   placeholder="Tell us about your legal needs..."
                   value={values.message}
                   onChange={(e) => handleChange('message', e.target.value)}
@@ -442,7 +442,7 @@ export function ContactSection() {
                 type="submit"
                 disabled={sendDisabled}
                 aria-disabled={sendDisabled}
-                className={`mt-10 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-full px-6 text-sm font-bold shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition ${
+                className={`mt-10 inline-flex min-h-[60px] w-full items-center justify-center rounded-full px-6 font-sans text-[15px] font-semibold shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition ${
                   sendDisabled
                     ? 'cursor-not-allowed bg-gold/50 text-white/60'
                     : 'bg-gold text-white hover:-translate-y-1 hover:bg-gold-light hover:text-navy-primary'
@@ -457,10 +457,7 @@ export function ContactSection() {
                     Sending...
                   </>
                 ) : (
-                  <>
-                    Send Message
-                    <Send size={16} />
-                  </>
+                  'Send Message'
                 )}
               </button>
 

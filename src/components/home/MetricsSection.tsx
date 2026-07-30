@@ -28,7 +28,7 @@ const metrics = [
 
 export function MetricsSection() {
   return (
-    <section className="bg-[#F5F5F5] pb-[80px]">
+    <section className="bg-[#F5F5F5] pt-[40px] pb-[80px]">
       <Container className="max-w-[1320px]">
         <motion.div
           className="grid gap-6 md:grid-cols-2 lg:grid-cols-4"

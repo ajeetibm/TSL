@@ -1,39 +1,75 @@
 import { useState } from 'react'
-import { CircleHelp, ChevronDown } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
-import { SectionHeader } from './SectionHeader'
 
-type FAQItem = { question: string; answer: string }
+type FAQItem = { question: string; answer: string; category: string }
 
 const faqs: FAQItem[] = [
   {
+    category: 'General',
     question: 'What Is The Startup Legal?',
     answer:
       'The Startup Legal is a South African legal services platform that specializes in helping new business owners with company registration, CIPC compliance, due diligence, director updates, and other essential legal services. We combine technology with legal expertise to make business compliance simple and affordable.',
   },
   {
+    category: 'General',
     question: 'Who should use The Startup Legal?',
     answer:
       'The Startup Legal is designed for founders, entrepreneurs, and SMEs in South Africa who need reliable legal support without the overhead of a traditional law firm. Whether you are registering a new company, updating your compliance documents, or managing contracts, our platform is built for you.',
   },
   {
+    category: 'General',
     question: 'Is my business data secure?',
     answer:
       'Yes. All data is stored with deterministic PDFs, cryptographic hashes, and QR verification so any third party can verify document authenticity at any time. We follow strict data-security practices and comply fully with POPIA.',
   },
   {
+    category: 'General',
     question: 'What makes TSL different from traditional law firms?',
     answer:
       'TSL combines technology with vetted legal expertise to deliver faster, more affordable outcomes. Instead of hourly billing and email chains, you get guided wizards, automated document generation, transparent pricing, and a full audit trail — all in one platform.',
   },
   {
+    category: 'General',
     question: 'Do you provide support in multiple languages?',
     answer:
       'Our platform is currently available in English. We are actively working to support additional South African languages. If you need assistance in another language, please contact our support team and we will do our best to help.',
   },
+  {
+    category: 'Features',
+    question: 'What features does TSL offer?',
+    answer:
+      'TSL offers company registration, CIPC compliance management, due diligence reports, director updates, contract generation, guided legal wizards, and a secure document vault — all accessible from a single dashboard.',
+  },
+  {
+    category: 'Counsel',
+    question: 'Can I speak to a real lawyer?',
+    answer:
+      'Yes. Our Counsel feature connects you with vetted South African attorneys for on-demand legal advice, document review, and representation — all within the platform.',
+  },
+  {
+    category: 'Playbooks',
+    question: 'What are Playbooks?',
+    answer:
+      'Playbooks are step-by-step legal guides built for common startup scenarios such as raising funding, hiring employees, or entering contracts. They walk you through each legal requirement so nothing gets missed.',
+  },
+  {
+    category: 'Pricing',
+    question: 'How is TSL priced?',
+    answer:
+      'TSL offers transparent, fixed-fee pricing with no hidden costs. You only pay for the services you use. We have monthly plans for ongoing compliance as well as one-off fees for individual documents and registrations.',
+  },
+  {
+    category: 'Technical Support',
+    question: 'What if I run into a technical issue?',
+    answer:
+      'Our support team is available via live chat and email during business hours. For urgent technical matters you can also call us directly. We typically respond within 2–4 hours.',
+  },
 ]
+
+const categories = ['General', 'Features', 'Counsel', 'Playbooks', 'Pricing', 'Technical Support']
 
 function AccordionItem({ item, index }: { item: FAQItem; index: number }) {
   const [open, setOpen] = useState(index === 0)
@@ -41,24 +77,24 @@ function AccordionItem({ item, index }: { item: FAQItem; index: number }) {
   return (
     <motion.div
       variants={revealUp}
-      className="rounded-[28px] border border-[rgba(13,27,42,0.1)] bg-white px-7 py-6 shadow-[0_1px_4px_rgba(13,27,42,0.06)]"
+      className="rounded-[28px] border-2 border-[#E5E7EB] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
     >
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-6 text-left"
+        className="flex w-full items-center justify-between gap-4 px-7 py-6 text-left"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={`faq-answer-${index}`}
       >
-        <span className="text-[16px] font-semibold leading-snug text-[#0D1B2A]">
+        <span className="font-sans text-[15px] font-semibold leading-snug text-[#0D1B2A]">
           {item.question}
         </span>
         <motion.span
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.25 }}
-          className="flex flex-shrink-0 text-[#0D1B2A]"
+          className="flex shrink-0 text-[#9CA3AF]"
         >
-          <ChevronDown size={20} strokeWidth={2} />
+          <ChevronDown size={18} strokeWidth={1.75} />
         </motion.span>
       </button>
 
@@ -73,7 +109,10 @@ function AccordionItem({ item, index }: { item: FAQItem; index: number }) {
             transition={{ duration: 0.28, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <p className="mt-4 text-[15px] leading-[1.7] text-[#5F6368]">{item.answer}</p>
+            <hr className="border-[#E5E7EB]" />
+            <p className="px-7 pb-4 pt-3 font-sans text-[13px] leading-[1.7] text-[#6B7280]">
+              {item.answer}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -82,28 +121,66 @@ function AccordionItem({ item, index }: { item: FAQItem; index: number }) {
 }
 
 export function FAQSection() {
+  const [activeCategory, setActiveCategory] = useState('General')
+
+  const filtered = faqs.filter((f) => f.category === activeCategory)
+
   return (
     <section className="bg-white py-20 lg:py-28">
       <Container>
-        <SectionHeader
-          eyebrow={
-            <>
-              <CircleHelp size={16} className="text-[#D4A437]" strokeWidth={2.2} />
-              Got Questions?
-            </>
-          }
-          title="Frequently Asked Questions"
-          description="Everything you need to know about The StartUp Legal and our services"
-        />
-
+        {/* Heading */}
         <motion.div
-          className="mx-auto mt-12 flex max-w-3xl flex-col gap-4"
+          className="mx-auto max-w-[760px] text-center"
+          initial="hidden"
+          whileInView="visible"
+          viewport={defaultViewport}
+          variants={revealUp}
+        >
+          <h2 className="font-display text-[40px] font-bold leading-[1.15] tracking-[-0.02em] text-[#0D1B2A] md:text-[52px]">
+            Frequently Asked Questions
+          </h2>
+          <p className="mx-auto mt-4 max-w-[560px] text-[16px] leading-[1.6] text-[#6B7280]">
+            Everything you need to know about The StartUp Legal and our services
+          </p>
+        </motion.div>
+
+        {/* Category tabs */}
+        <motion.div
+          className="mt-10 flex flex-wrap items-center justify-center gap-2"
+          initial="hidden"
+          whileInView="visible"
+          viewport={defaultViewport}
+          variants={revealUp}
+        >
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setActiveCategory(cat)}
+              className={
+                cat === activeCategory
+                  ? 'rounded-full bg-[#C9982A] px-5 py-2 text-[14px] font-semibold text-white shadow-[0_2px_8px_rgba(201,152,42,0.40)] transition-all'
+                  : 'rounded-full px-5 py-2 text-[14px] font-medium text-[#374151] transition-all hover:bg-[#F3F4F6]'
+              }
+            >
+              {cat}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Divider below tabs */}
+        <hr className="mx-auto mt-6 max-w-[900px] border-[#E5E7EB]" />
+
+        {/* Accordion list */}
+        <motion.div
+          className="mx-auto mt-8 flex max-w-[900px] flex-col gap-4"
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
           variants={staggerContainer}
+          key={activeCategory}
         >
-          {faqs.map((item, i) => (
+          {filtered.map((item, i) => (
             <AccordionItem key={item.question} item={item} index={i} />
           ))}
         </motion.div>
@@ -116,8 +193,8 @@ export function FAQSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <h3 className="text-[22px] font-bold text-[#0D1B2A]">Still have questions?</h3>
-          <p className="mt-3 text-[15px] leading-relaxed text-[#5F6368]">
+          <h3 className="text-[18px] font-bold text-[#0D1B2A]">Still have questions?</h3>
+          <p className="mt-6 text-[13px] leading-relaxed text-[#5F6368]">
             Our team is here to help you get started with confidence
           </p>
           <a
