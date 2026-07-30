@@ -1,4 +1,5 @@
-import { type MouseEvent } from 'react'
+import { useState, type MouseEvent } from 'react'
+import { SignInModal } from '../auth/SignInModal'
 import './DetailFooter.css'
 
 const footerGroups = {
@@ -31,7 +32,16 @@ function handleSectionClick(sectionId: string) {
 }
 
 export function DetailFooter() {
+  const [modalOpen, setModalOpen]   = useState(false)
+  const [modalMode, setModalMode]   = useState<'signup' | 'signin'>('signup')
+
+  function openModal(mode: 'signup' | 'signin') {
+    setModalMode(mode)
+    setModalOpen(true)
+  }
+
   return (
+    <>
     <footer className="detail-footer">
       <div className="detail-footer__inner">
         <div className="detail-footer__main">
@@ -81,11 +91,18 @@ export function DetailFooter() {
             {' '}• Proudly South African • IBM Techscale Partner
           </p>
           <div className="detail-footer__bottom-links">
-            <a href="/wizard-catalogue">Sign Up</a>
-            <a href="/">Login</a>
+            <button type="button" onClick={() => openModal('signup')}>Sign Up</button>
+            <button type="button" onClick={() => openModal('signin')}>Login</button>
           </div>
         </div>
       </div>
     </footer>
+
+    <SignInModal
+      isOpen={modalOpen}
+      onClose={() => setModalOpen(false)}
+      initialMode={modalMode}
+    />
+    </>
   )
 }
