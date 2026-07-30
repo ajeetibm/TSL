@@ -110,7 +110,7 @@ function AccordionItem({ item, index }: { item: FAQItem; index: number }) {
             className="overflow-hidden"
           >
             <hr className="border-[#E5E7EB]" />
-            <p className="px-7 pb-4 pt-3 font-sans text-[13px] leading-[1.7] text-[#6B7280]">
+            <p className="px-7 pb-4 pt-3 font-sans text-[12px] leading-[1.7] text-[#333333]">
               {item.answer}
             </p>
           </motion.div>
@@ -136,7 +136,7 @@ export function FAQSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <h2 className="font-display text-[40px] font-bold leading-[1.15] tracking-[-0.02em] text-[#0D1B2A] md:text-[52px]">
+          <h2 className="font-display text-[40px] font-bold leading-[1.15] tracking-[-0.02em] text-[#0D1B2A] md:text-[36px]">
             Frequently Asked Questions
           </h2>
           <p className="mx-auto mt-4 max-w-[560px] text-[16px] leading-[1.6] text-[#6B7280]">
@@ -193,13 +193,13 @@ export function FAQSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <h3 className="text-[18px] font-bold text-[#0D1B2A]">Still have questions?</h3>
-          <p className="mt-6 text-[13px] leading-relaxed text-[#5F6368]">
+          <h3 className="font-display text-[20px] font-bold tracking-[-0.01em] text-[#0D1B2A]">Still have questions?</h3>
+          <p className="mt-3 text-[14px] leading-relaxed text-[#5F6368]">
             Our team is here to help you get started with confidence
           </p>
           <a
             href="/contact"
-            className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#C9982A] px-10 text-[15px] font-semibold text-white shadow-[0_4px_16px_rgba(201,152,42,0.35)] transition hover:bg-[#b8881f] hover:scale-[1.02]"
+            className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#C9982A] px-10 font-sans text-[14px] font-semibold tracking-wide text-white shadow-[0_6px_22px_rgba(201,152,42,0.45)] transition-all duration-200 hover:bg-[#b8881f] hover:-translate-y-[2px] hover:shadow-[0_10px_28px_rgba(201,152,42,0.55)] active:translate-y-0 active:shadow-[0_4px_14px_rgba(201,152,42,0.40)]"
           >
             Contact Support
           </a>

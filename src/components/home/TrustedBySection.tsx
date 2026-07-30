@@ -42,7 +42,7 @@ function StarRating({ count }: { count: number }) {
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="#FACC15"
-          className="h-6 w-6"
+          className="h-4 w-4"
           aria-hidden="true"
         >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.37 2.448a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.37-2.448a1 1 0 00-1.175 0l-3.37 2.448c-.784.57-1.838-.197-1.539-1.118l1.287-3.957a1 1 0 00-.364-1.118L2.063 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69L9.049 2.927z" />
@@ -73,21 +73,22 @@ export function TrustedBySection() {
             <motion.article
               key={review.name}
               variants={revealUp}
-              className="flex flex-col rounded-[36px] border border-[rgba(148,163,184,0.35)] bg-[#253342] p-8 shadow-[0_8px_32px_rgba(0,0,0,0.22)]"
+              className="flex flex-col rounded-2xl border border-[rgba(148,163,184,0.20)] bg-[#1e2c3a] p-6 shadow-[0_8px_32px_rgba(0,0,0,0.32)]"
             >
               {/* Quote icon */}
               <span
-                className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full bg-[#D4A02A] shadow-[0_4px_12px_rgba(0,0,0,0.30)]"
+                className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-full bg-[#D4A02A] shadow-[0_4px_12px_rgba(0,0,0,0.30)]"
               >
+                {/* Lucide "quote" icon — two 9-shaped closing quote marks */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="#fff"
-                  strokeWidth="2.2"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-[22px] w-[22px]"
+                  className="h-[18px] w-[18px]"
                   aria-hidden="true"
                 >
                   <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" />
@@ -96,27 +97,30 @@ export function TrustedBySection() {
               </span>
 
               {/* Stars */}
-              <div className="mt-6">
+              <div className="mt-5">
                 <StarRating count={review.stars} />
               </div>
 
               {/* Quote text */}
-              <p className="mt-6 flex-1 text-[15px] font-light leading-[1.5] tracking-[0] text-[#E5E7EB]" style={{ fontStyle: 'italic' }}>
-                "{review.quote}"
+              <p className="mt-4 text-[14px] font-light leading-[1.65] tracking-[0] text-[#E5E7EB]" style={{ fontStyle: 'italic' }}>
+                &#8220;{review.quote}&#8221;
               </p>
 
               {/* Divider */}
-              <hr className="my-8 border-[rgba(148,163,184,0.25)]" />
+              <hr className="my-6 border-[rgba(148,163,184,0.20)]" />
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <span className="text-4xl leading-none" aria-hidden="true">
+                <span
+                  className="grid h-10 w-10 shrink-0 place-items-center text-[1.55rem] leading-none"
+                  aria-hidden="true"
+                >
                   {review.avatar}
                 </span>
                 <div>
                   <p className="text-[16px] font-bold text-white">{review.name}</p>
-                  <p className="text-[14px] text-white/55">{review.role}</p>
-                  <p className="text-[14px] text-[#A78BFA]">{review.company}</p>
+                  <p className="text-[12px] text-white/55">{review.role}</p>
+                  <p className="text-[12px] text-[#A78BFA]">{review.company}</p>
                 </div>
               </div>
             </motion.article>
