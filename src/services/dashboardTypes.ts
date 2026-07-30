@@ -306,6 +306,7 @@ export interface PlaybookItem {
   steps: string
   time: string
   description: string
+  icon?: string
   wizards?: string[]
   pdfUrl?: string
 }

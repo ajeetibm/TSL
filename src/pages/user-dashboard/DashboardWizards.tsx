@@ -1,15 +1,17 @@
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
+  Briefcase,
+  Building,
   CheckCircle2,
   ChevronRight,
+  CircleDollarSign,
   Clock3,
   FileText,
   HandCoins,
+  Lock,
   Minus,
   Plus,
-  Scale,
   Shield,
-  ShieldCheck,
   UsersRound,
   WandSparkles,
   Zap,
@@ -29,7 +31,7 @@ const wizardCards = [
     runs: '1 runs',
     audience: 'Lenders and borrowers',
     included: ['Installment options', 'Security details', 'Default terms'],
-    icon: HandCoins,
+    icon: CircleDollarSign,
   },
   {
     title: 'Non-Disclosure Agreement (NDA)',
@@ -48,7 +50,7 @@ const wizardCards = [
     runs: '1 run',
     audience: 'Companies hiring new employees',
     included: ['BCEA compliance checks', 'Clause options & risk indicators', 'Built-in negotiation'],
-    icon: FileText,
+    icon: UsersRound,
     popular: true,
   },
   {
@@ -58,7 +60,7 @@ const wizardCards = [
     runs: '1 run',
     audience: 'Multi-founder startups (2-5 founders)',
     included: ['Equity vesting schedules', 'Roles & responsibilities', 'Exit scenarios'],
-    icon: UsersRound,
+    icon: Briefcase,
   },
   {
     title: 'Privacy Policy (POPIA Compliant)',
@@ -67,7 +69,7 @@ const wizardCards = [
     runs: '1 run',
     audience: 'Businesses collecting personal data',
     included: ['100% POPIA compliant', 'Plain language', 'Website ready'],
-    icon: ShieldCheck,
+    icon: Lock,
     popular: true,
   },
   {
@@ -87,7 +89,7 @@ const wizardCards = [
     runs: '1 run',
     audience: 'Registered companies (Pty Ltd)',
     included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
-    icon: Scale,
+    icon: Building,
   },
 ]
 

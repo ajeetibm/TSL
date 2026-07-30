@@ -553,7 +553,7 @@ export default function DashboardCounsel() {
                 </label>
 
                 <button type="submit" className="dashboard-counsel__submit" disabled={isSubmitting || credits.creditsRemaining <= 0}>
-                  <Send size={18} />
+                  <MessageSquare size={18} />
                   {isSubmitting ? 'Submitting...' : 'Submit Request'}
                 </button>
               </form>

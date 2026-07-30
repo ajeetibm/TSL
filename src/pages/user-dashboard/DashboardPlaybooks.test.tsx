@@ -43,7 +43,7 @@ vi.mock('../../services/tslApi', () => ({
             cards: [
               { title: 'POPIA Compliance Basics', steps: '7 steps', time: '12 min', description: 'Set up practical privacy controls, consent language, and data handling processes for South African businesses.', wizards: ['Privacy Policy (POPIA Compliant)'], icon: 'Shield' },
               { title: 'Document Retention Checklist', steps: '6 steps', time: '9 min', description: 'Know which company, employment, tax, and customer records to keep, and how long to retain them.', wizards: ['Records Retention Policy'], icon: 'FileText' },
-              { title: 'Website Legal Readiness', steps: '9 steps', time: '14 min', description: 'Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.', wizards: ['Terms of Service', 'Privacy Policy'], icon: 'WandSparkles' },
+              { title: 'Website Legal Readiness', steps: '9 steps', time: '14 min', description: 'Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.', wizards: ['Terms of Service', 'Privacy Policy'], icon: 'Shield' },
             ],
           },
           {
@@ -52,7 +52,7 @@ vi.mock('../../services/tslApi', () => ({
             cards: [
               { title: 'Investor Meeting Prep', steps: '6 steps', time: '11 min', description: 'Prepare the core legal documents and confidentiality steps needed before sharing sensitive startup materials.', wizards: ['Non-Disclosure Agreement (NDA)', 'Founder Agreement'], icon: 'TrendingUp' },
               { title: 'Founder Equity Readiness', steps: '8 steps', time: '16 min', description: 'Review founder roles, equity splits, vesting expectations, and decision-making before funding conversations.', wizards: ['Founder Agreement'], icon: 'UsersRound' },
-              { title: 'Due Diligence Pack', steps: '10 steps', time: '18 min', description: 'Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.', wizards: ['Board Resolution', 'Service Agreement'], icon: 'BookOpen' },
+              { title: 'Due Diligence Pack', steps: '10 steps', time: '18 min', description: 'Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.', wizards: ['Board Resolution', 'Service Agreement'], icon: 'TrendingUp' },
             ],
           },
         ],

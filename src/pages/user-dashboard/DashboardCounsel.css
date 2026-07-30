@@ -39,7 +39,7 @@
 .dashboard-counsel__header p {
   margin: 8px 0 0;
   color: #0b1c2f;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .dashboard-counsel__content {
@@ -116,11 +116,12 @@
 .dashboard-counsel__stat h2 {
   margin: 18px 0 12px;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .dashboard-counsel__stat p {
   margin: 0;
+  font-size: 14px;
 }
 
 .dashboard-counsel__topup {
@@ -128,7 +129,7 @@
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr) auto;
   gap: 18px;
-  align-items: center;
+  align-items: start;
   border: 2px solid #acd3ff;
   border-radius: 28px;
   padding: 26px;
@@ -140,6 +141,7 @@
   height: 40px;
   display: grid;
   place-items: center;
+  margin-top: 2px;
   border-radius: 999px;
   background: #07192b;
   color: #ffffff;
@@ -148,7 +150,7 @@
 .dashboard-counsel__topup h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .dashboard-counsel__topup p {
@@ -175,6 +177,7 @@
 }
 
 .dashboard-counsel__topup button {
+  align-self: flex-end;
   padding: 0 16px;
 }
 
@@ -189,19 +192,21 @@
   border-bottom: 1px solid #d5d5d5;
 }
 
-.dashboard-counsel__tab {
+.dashboard-counsel__tab.dashboard-counsel__tab {
   position: relative;
   min-height: 40px;
   border: 0;
   background: transparent;
   color: #b5bac0;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 24px;
+  font-weight: normal;
   cursor: pointer;
 }
 
-.dashboard-counsel__tab--active {
+.dashboard-counsel__tab.dashboard-counsel__tab--active {
   color: #0b1c2f;
+  font-weight: 600;
 }
 
 .dashboard-counsel__tab--active::after {
@@ -228,13 +233,13 @@
 .dashboard-counsel__form-heading h2 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .dashboard-counsel__form-heading p {
   margin: 14px 0 6px;
   color: #6d6d6d;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .dashboard-counsel__field {
@@ -260,6 +265,7 @@
   background: #ffffff;
   color: #0b1c2f;
   font: inherit;
+  font-size: 14px;
   font-weight: 400;
   outline: none;
 }
@@ -359,10 +365,11 @@
   background: #ffc9c9;
 }
 
-.dashboard-counsel__submit {
+.dashboard-counsel__submit.dashboard-counsel__submit {
   width: 196px;
   min-height: 48px;
   margin-top: 4px;
+  font-size: 16px;
 }
 
 .dashboard-counsel__submit:disabled,

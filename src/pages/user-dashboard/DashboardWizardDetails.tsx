@@ -2,23 +2,24 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowLeft,
   ArrowRight,
+  Briefcase,
+  Building,
   Building2,
   Calendar,
   Check,
   CheckCircle2,
   ChevronRight,
+  CircleDollarSign,
   CreditCard,
   Crown,
   FileCheck2,
   FileText,
-  HandCoins,
+  Lock,
   Minus,
   Play,
   Plus,
   Rocket,
-  Scale,
   Shield,
-  ShieldCheck,
   ShoppingCart,
   Sparkles,
   UsersRound,
@@ -69,7 +70,7 @@ const paymentMethods: Array<{ title: PaymentMethod; icon: LucideIcon | null; cla
 const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   'Loan Agreement': {
     note: 'Documenting loans between business parties',
-    icon: HandCoins,
+    icon: CircleDollarSign,
   },
   'Non-Disclosure Agreement (NDA)': {
     note: 'Need NDAs for investor meetings and contractor agreements',
@@ -77,19 +78,19 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   },
   'Employment Offer Letter': {
     note: 'Hiring our first developer next month',
-    icon: FileText,
+    icon: UsersRound,
   },
   'Founder Agreement': {
     note: 'Setting up co-founder equity split',
-    icon: UsersRound,
+    icon: Briefcase,
   },
   'Privacy Policy (POPIA Compliant)': {
     note: 'Required for our web app launch',
-    icon: ShieldCheck,
+    icon: Lock,
   },
   'Shareholder Resolutions': {
     note: 'Approving company governance decisions',
-    icon: Scale,
+    icon: Building2,
   },
   'Service Agreement': {
     note: 'Multiple client contracts needed',

@@ -35,7 +35,7 @@
   font-family: Montserrat, 'Open Sans', sans-serif;
   font-size: 26px;
   font-weight: 700;
-  margin-bottom: 24px;
+  margin-bottom: 30px;
 }
 
 .nda-modal__close {
@@ -108,7 +108,7 @@
 
 .nda-modal__step-label {
   color: rgba(255, 255, 255, 0.35);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -137,7 +137,7 @@
 /* ── Question ─────────────────────────────────────────── */
 .nda-modal__question {
   color: #0d1b2a;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 12px;
 }
@@ -164,13 +164,13 @@
 
 .nda-modal__choice strong {
   color: #0d1b2a;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
 .nda-modal__choice span {
   color: #666666;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .nda-modal__choice--selected {
@@ -464,7 +464,7 @@
 
 .nda-modal__step-counter {
   color: #666666;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -474,7 +474,7 @@
   gap: 8px;
   border-radius: 9999px;
   padding: 11px 22px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.15s;

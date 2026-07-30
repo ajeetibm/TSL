@@ -69,7 +69,7 @@
 .user-dashboard__brand p {
   margin: 8px 0 0;
   color: #9ba7b6;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .user-dashboard__nav {
@@ -90,6 +90,7 @@
   padding: 0 14px;
   background: transparent;
   color: #c5cfda;
+  font-size: 14px;
   text-align: left;
   cursor: pointer;
   transition: background 160ms ease, color 160ms ease;
@@ -150,20 +151,20 @@
   padding: 56px 32px 34px;
   border-bottom: 4px solid #d3a038;
   background:
-    radial-gradient(circle at 42% 32%, rgba(255, 255, 255, 0.08), transparent 35%),
-    linear-gradient(135deg, #07192b 0%, #0a1c2d 58%, #061320 100%);
+    radial-gradient(ellipse at 30% 50%, rgba(255, 255, 255, 0.06) 0%, transparent 55%),
+    linear-gradient(105deg, #0d1b2a 0%, #132440 45%, #0d1b2a 100%);
   color: #ffffff;
 }
 
 .user-dashboard__hero--landing h2 {
   max-width: 700px;
-  font-size: clamp(40px, 4vw, 58px);
+  font-size: 48px;
 }
 
 .user-dashboard__hero--landing p {
   max-width: 760px;
   color: rgba(255, 255, 255, 0.78);
-  font-size: 21px;
+  font-size: 20px;
 }
 
 .user-dashboard__hero--paid {
@@ -217,8 +218,8 @@
 }
 
 .user-dashboard__plan-card--paid {
-  border: 1px solid #dddddd;
-  background: #f7f7f7;
+  border: 1px solid #E5E5E5;
+  background: #F4F4F4;
 }
 
 .user-dashboard__plan-card h3 {
@@ -333,7 +334,7 @@
 .user-dashboard__quick-start-card h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 22px;
+  font-size: 20px;
   line-height: 1.2;
 }
 
@@ -341,6 +342,7 @@
   margin: 0;
   color: #6d6d6d;
   line-height: 1.5;
+  font-size: 14px;
 }
 
 .user-dashboard__quick-start-card button,
@@ -356,7 +358,7 @@
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  font-size: inherit;
+  font-size: 14px;
   font-family: inherit;
 }
 
@@ -393,7 +395,7 @@
 .user-dashboard__review-copy h2 {
   margin: 0 0 12px;
   font-family: var(--font-display);
-  font-size: 26px;
+  font-size: 24px;
   line-height: 1.2;
 }
 
@@ -440,7 +442,7 @@
 .user-dashboard__wizard-summary p {
   margin: 0;
   color: rgba(255, 255, 255, 0.92);
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .user-dashboard__wizard-summary b {
@@ -566,7 +568,7 @@
 .user-dashboard__notice-header h3 {
   margin: 0;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
 }
 
 .user-dashboard__action {
@@ -581,6 +583,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.22);
   color: #ffffff;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -602,6 +605,7 @@
 .user-dashboard__notices-card > p {
   margin: 18px 0 14px;
   color: #777777;
+  font-size: 14px;
 }
 
 .user-dashboard__notice-link {
@@ -617,7 +621,7 @@
   text-align: left;
   cursor: pointer;
   text-decoration: none;
-  font-size: inherit;
+  font-size: 14px;
   font-family: inherit;
 }
 
@@ -656,7 +660,7 @@
 .user-dashboard__stat-card {
   min-height: 172px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 26px;
   border: 1px solid #dedede;
   border-radius: 28px;
@@ -671,12 +675,13 @@
 }
 
 .user-dashboard__stat-icon {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   flex: 0 0 auto;
   border-radius: 999px;
+  margin-top: 4px;
 }
 
 .user-dashboard__stat-icon--gold {
@@ -692,7 +697,7 @@
 .user-dashboard__stat-number,
 .user-dashboard__stat-date {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 30px;
   line-height: 1;
 }
 
@@ -739,7 +744,7 @@
   margin-bottom: 34px;
 }
 
-.user-dashboard__tab {
+.user-dashboard .user-dashboard__tab {
   position: relative;
   min-height: 48px;
   border: 0;
@@ -747,14 +752,15 @@
   color: #b7bcc2;
   font-family: var(--font-display);
   font-size: 24px;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.user-dashboard__tab--active {
-  color: #0b1c2f;
+.user-dashboard .user-dashboard__tab--active {
+  color: #0D1B2A;
 }
 
-.user-dashboard__tab--active::after {
+.user-dashboard .user-dashboard__tab--active::after {
   content: '';
   position: absolute;
   right: 0;
@@ -815,6 +821,8 @@
 
 .user-dashboard__progress-row strong {
   color: #777777;
+  font-size: 14px;
+  font-weight: normal;
 }
 
 .user-dashboard__progress-track {
@@ -846,6 +854,7 @@
   min-height: 36px;
   padding: 0 18px;
   font-size: 14px;
+  font-weight: normal;
 }
 
 .user-dashboard__completed-card {
@@ -901,6 +910,17 @@
   color: #0b1c2f;
   font-weight: 600;
   cursor: pointer;
+}
+
+.user-dashboard__folder-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #dedede;
+  border-radius: 8px;
+  background: #f5f5f5;
 }
 
 /* ── Empty state ──────────────────────────────────────────── */

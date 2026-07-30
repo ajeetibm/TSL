@@ -2,6 +2,7 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
   BookOpen,
+  CircleAlert,
   FileText,
   Shield,
   TrendingUp,
@@ -339,6 +340,12 @@ function resolveIcon(name: string): LucideIcon {
   return ICON_MAP[name] ?? WandSparkles
 }
 
+/** Client-side icon overrides keyed by exact card title, used until the API returns the correct value. */
+const CARD_ICON_OVERRIDES: Record<string, LucideIcon> = {
+  'Website Legal Readiness': Shield,
+  'Due Diligence Pack': TrendingUp,
+}
+
 /**
  * Builds a title→url map from the documents API array.
  * doc.name matches the playbook card title exactly (e.g. "Hiring Your First Employee").
@@ -368,7 +375,7 @@ function mapApiSections(
       steps: c.steps,
       time: c.time,
       description: c.description,
-      icon: resolveIcon(icon),
+      icon: CARD_ICON_OVERRIDES[c.title] ?? resolveIcon(c.icon ?? icon),
       wizards: c.wizards ?? [],
       pdfUrl: pdfMap.get(c.title) ?? c.pdfUrl ?? '',
     })),
@@ -414,6 +421,18 @@ export default function DashboardPlaybooks() {
         </header>
 
         <div className="dashboard-playbooks__content">
+          <div className="dashboard-playbooks__info-banner">
+            <span className="dashboard-playbooks__info-banner-icon" aria-hidden="true">
+              <CircleAlert size={18} />
+            </span>
+            <div>
+              <p className="dashboard-playbooks__info-banner-title">Guidance, Not Execution</p>
+              <p className="dashboard-playbooks__info-banner-body">
+                Playbooks provide educational guidance and do not consume wizard runs. To create actual legal documents, use the related wizards listed in each playbook.
+              </p>
+            </div>
+          </div>
+
           {loading && (
             <p className="dashboard-playbooks__loading">Loading playbooks…</p>
           )}

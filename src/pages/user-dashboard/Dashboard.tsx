@@ -9,8 +9,7 @@ import {
   CircleCheckBig,
   Download,
   FileText,
-  Folder,
-  Gauge,
+  FolderOpen,
   Info,
   Loader2,
   Play,
@@ -150,7 +149,7 @@ const quickStartCards = [
     title: 'Video Tutorials',
     description: 'Watch step-by-step wizard walkthroughs',
     action: 'Watch Now',
-    icon: Gauge,
+    icon: Target,
     urlKey: 'videoTutorialUrl' as keyof QuickAccessLinks,
   },
   {
@@ -214,7 +213,7 @@ const newWizards = [
 const notices = [
   { label: 'Terms of Service',         icon: FileText, urlKey: 'termsOfServiceUrl'  as keyof LegalLinks },
   { label: 'Privacy & POPIA Compliance', icon: Shield, urlKey: 'privacyPolicyUrl'   as keyof LegalLinks },
-  { label: 'Legal Advice Disclaimer',  icon: Gauge,    urlKey: 'legalDisclaimerUrl' as keyof LegalLinks },
+  { label: 'Legal Advice Disclaimer',  icon: Info,     urlKey: 'legalDisclaimerUrl' as keyof LegalLinks },
 ]
 
 function relativeUpdated(value?: string) {
@@ -1521,7 +1520,7 @@ export default function Dashboard() {
         <section className="user-dashboard__stats-grid" aria-label="Dashboard stats">
           <article className="user-dashboard__stat-card">
             <span className="user-dashboard__stat-icon user-dashboard__stat-icon--gold">
-              <Zap size={24} />
+              <Zap size={18} />
             </span>
             <div>
               <div className="user-dashboard__stat-number">
@@ -1534,7 +1533,7 @@ export default function Dashboard() {
 
           <article className="user-dashboard__stat-card">
             <span className="user-dashboard__stat-icon user-dashboard__stat-icon--dark">
-              <Target size={24} />
+              <Target size={18} />
             </span>
             <div>
               <div className="user-dashboard__stat-number">{paidRunsUsed}</div>
@@ -1545,7 +1544,7 @@ export default function Dashboard() {
 
           <article className="user-dashboard__stat-card user-dashboard__stat-card--dark">
             <span className="user-dashboard__stat-icon user-dashboard__stat-icon--gold">
-              <Calendar size={24} />
+              <Calendar size={18} />
             </span>
             <div>
               <div className="user-dashboard__stat-date">Jan 1</div>
@@ -1713,7 +1712,7 @@ export default function Dashboard() {
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaState.data, ndaState.completedAt), 'NDA-Evidence-Pack.txt')}>
-                      <Folder size={16} /> Evidence Pack
+                      <FolderOpen size={16} /> Evidence Pack
                     </button>
                   </div>
                 </article>
@@ -1734,7 +1733,7 @@ export default function Dashboard() {
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empState.data, empState.completedAt), 'Employment-Evidence-Pack.txt')}>
-                      <Folder size={16} /> Evidence Pack
+                      <FolderOpen size={16} /> Evidence Pack
                     </button>
                   </div>
                 </article>
@@ -1755,7 +1754,7 @@ export default function Dashboard() {
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppState.data, ppState.completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
-                      <Folder size={16} /> Evidence Pack
+                      <FolderOpen size={16} /> Evidence Pack
                     </button>
                   </div>
                 </article>
@@ -1776,7 +1775,7 @@ export default function Dashboard() {
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildFounderAgreementEvidencePack(faState.data, faState.completedAt), 'Founders-Agreement-Evidence-Pack.txt')}>
-                      <Folder size={16} /> Evidence Pack
+                      <FolderOpen size={16} /> Evidence Pack
                     </button>
                   </div>
                 </article>
@@ -1797,7 +1796,7 @@ export default function Dashboard() {
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saState.data, saState.completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
-                      <Folder size={16} /> Evidence Pack
+                      <FolderOpen size={16} /> Evidence Pack
                     </button>
                   </div>
                 </article>
