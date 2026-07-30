@@ -100,6 +100,20 @@
   gap: 32px;
 }
 
+.detail-footer__bottom-links button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.detail-footer__bottom-links button:hover {
+  color: #ffffff;
+}
+
 @media (max-width: 900px) {
   .detail-footer {
     padding-inline: 20px;

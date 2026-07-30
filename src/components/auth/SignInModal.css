@@ -75,7 +75,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.75rem 2.5rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
 }
 
 .signin-modal__grid .signin-modal__field {

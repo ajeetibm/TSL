@@ -1,31 +1,16 @@
 import { ArrowLeft, Mail } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { authApi } from '../../services/tslApi'
 import './Auth.css'
 
-type Role = 'user' | 'admin' | 'counsel'
-
-const ROLES: { value: Role; label: string; hint: string }[] = [
-  { value: 'user',    label: 'User',    hint: 'e.g. thabo@company.co.za' },
-  { value: 'admin',   label: 'Admin',   hint: 'e.g. given@thestartuplegal.co.za' },
-  { value: 'counsel', label: 'Counsel', hint: 'e.g. s.nkosi@tsl.co.za' },
-]
-
 export default function ForgotPassword() {
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
 
-  // Pre-select role if coming from a portal login page (?role=admin etc.)
-  const initialRole = (searchParams.get('role') as Role) ?? 'user'
-
-  const [role, setRole]         = useState<Role>(initialRole)
-  const [email, setEmail]       = useState('')
+  const [email, setEmail]           = useState('')
   const [emailError, setEmailError] = useState('')
-  const [apiError, setApiError] = useState('')
+  const [apiError, setApiError]     = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const placeholder = ROLES.find((r) => r.value === role)?.hint ?? ''
 
   function validateEmail(value: string) {
     if (!value.trim()) return 'Email address is required.'
@@ -41,7 +26,7 @@ export default function ForgotPassword() {
     setEmailError('')
     setIsSubmitting(true)
     try {
-      const response = await authApi.forgotPassword({ email: email.trim(), portal: role } as Parameters<typeof authApi.forgotPassword>[0])
+      const response = await authApi.forgotPassword({ email: email.trim(), portal: 'user' } as Parameters<typeof authApi.forgotPassword>[0])
       if (!response.success) {
         setApiError(response.message ?? 'Something went wrong. Please try again.')
         return
@@ -58,12 +43,6 @@ export default function ForgotPassword() {
     }
   }
 
-  function backPath() {
-    if (role === 'admin')   return '/admin/login'
-    if (role === 'counsel') return '/counsel/login'
-    return '/'
-  }
-
   return (
     <main className="auth-page">
       <section className="auth-page__panel">
@@ -78,24 +57,7 @@ export default function ForgotPassword() {
         <form className="auth-page__card" onSubmit={handleSubmit} noValidate>
           <div>
             <h2>Forgot Password?</h2>
-            <p>Select your account type and enter your email to receive a reset link.</p>
-          </div>
-
-          {/* Role selector */}
-          <div>
-            <span className="auth-page__field-label">Account Type</span>
-            <div className="auth-page__role-tabs">
-              {ROLES.map((r) => (
-                <button
-                  key={r.value}
-                  type="button"
-                  className={`auth-page__role-tab${role === r.value ? ' auth-page__role-tab--active' : ''}`}
-                  onClick={() => { setRole(r.value); setEmail(''); setEmailError('') }}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
+            <p>Enter your email address to receive a password reset link.</p>
           </div>
 
           {/* Email */}
@@ -107,7 +69,7 @@ export default function ForgotPassword() {
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError('') }}
-                placeholder={placeholder}
+                placeholder="e.g. thabo@company.co.za"
                 autoComplete="email"
                 autoFocus
               />
@@ -121,7 +83,7 @@ export default function ForgotPassword() {
             {isSubmitting ? 'Generating link…' : 'Send Reset Link'}
           </button>
 
-          <button type="button" className="auth-page__btn--ghost" onClick={() => navigate(backPath())}>
+          <button type="button" className="auth-page__btn--ghost" onClick={() => navigate('/')}>
             <ArrowLeft size={16} />
             Back to Login
           </button>
