@@ -266,12 +266,15 @@ describe('DashboardShell', () => {
 
       expect(localStorage.getItem('tsl-authenticated')).toBe('true')
 
-      const signOutButton = screen.getByText('Sign Out').closest('button')
-      if (signOutButton) {
-        await user.click(signOutButton)
-      }
+      // Step 1: open the confirmation modal via the sidebar button
+      const sidebarSignOut = screen.getByRole('button', { name: /sign out/i })
+      await user.click(sidebarSignOut)
 
-      // clearAuthSession is mocked — verify it was called then clear manually
+      // Step 2: confirm via the modal's dedicated confirm button
+      const modalSignOut = screen.getByTestId('logout-confirm-btn')
+      await user.click(modalSignOut)
+
+      // clearAuthSession is mocked — verify it was called
       const { clearAuthSession } = await import('../../services/tslApi')
       expect(clearAuthSession).toHaveBeenCalled()
     })
@@ -284,11 +287,15 @@ describe('DashboardShell', () => {
         </DashboardShell>
       )
 
-      const signOutButton = screen.getByText('Sign Out').closest('button')
-      if (signOutButton) {
-        await user.click(signOutButton)
-        expect(mockNavigate).toHaveBeenCalledWith('/')
-      }
+      // Step 1: open the confirmation modal via the sidebar button
+      const sidebarSignOut = screen.getByRole('button', { name: /sign out/i })
+      await user.click(sidebarSignOut)
+
+      // Step 2: confirm via the modal's dedicated confirm button
+      const modalSignOut = screen.getByTestId('logout-confirm-btn')
+      await user.click(modalSignOut)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/')
     })
 
     it('should handle sign out when localStorage is empty', async () => {
@@ -301,11 +308,15 @@ describe('DashboardShell', () => {
 
       expect(localStorage.getItem('tsl-authenticated')).toBeNull()
 
-      const signOutButton = screen.getByText('Sign Out').closest('button')
-      if (signOutButton) {
-        await user.click(signOutButton)
-        expect(mockNavigate).toHaveBeenCalledWith('/')
-      }
+      // Step 1: open the confirmation modal via the sidebar button
+      const sidebarSignOut = screen.getByRole('button', { name: /sign out/i })
+      await user.click(sidebarSignOut)
+
+      // Step 2: confirm via the modal's dedicated confirm button
+      const modalSignOut = screen.getByTestId('logout-confirm-btn')
+      await user.click(modalSignOut)
+
+      expect(mockNavigate).toHaveBeenCalledWith('/')
     })
   })
 

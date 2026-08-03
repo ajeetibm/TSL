@@ -350,16 +350,17 @@ export default function DashboardProfile() {
                 </label>
 
                 <label className="dashboard-profile__field">
-                  <span>Email Address</span>
-                  <div className="dashboard-profile__input-wrap">
-                    <Mail size={18} />
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                    />
-                  </div>
-                </label>
+                   <span>Email Address</span>
+                   <div className="dashboard-profile__input-wrap">
+                     <Mail size={18} />
+                     <input
+                       type="email"
+                       value={formData.email}
+                       onChange={(e) => handleInputChange('email', e.target.value)}
+                       disabled
+                     />
+                   </div>
+                 </label>
 
                 <label className="dashboard-profile__field">
                   <span>Phone Number</span>
@@ -386,16 +387,17 @@ export default function DashboardProfile() {
                 </label>
 
                 <label className="dashboard-profile__field dashboard-profile__field--wide">
-                  <span>Contact Person</span>
-                  <div className="dashboard-profile__input-wrap">
-                    <UserRound size={18} />
-                    <input
-                      type="text"
-                      value={formData.contactPerson}
-                      onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                    />
-                  </div>
-                </label>
+                   <span>Contact Person</span>
+                   <div className="dashboard-profile__input-wrap">
+                     <UserRound size={18} />
+                     <input
+                       type="text"
+                       value={formData.contactPerson}
+                       onChange={(e) => handleInputChange('contactPerson', e.target.value)}
+                       disabled
+                     />
+                   </div>
+                 </label>
               </div>
 
               {saveError && (

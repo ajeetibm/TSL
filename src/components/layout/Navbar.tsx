@@ -89,10 +89,16 @@ export function Navbar() {
       openModal(detail?.mode ?? 'signup', detail?.redirectTo)
     }
 
+    const handleSessionChanged = () => {
+      setIsAuthenticated(localStorage.getItem('tsl-authenticated') === 'true')
+    }
+
     window.addEventListener('tsl-open-auth-modal', handleOpenAuthModal)
+    window.addEventListener('tsl-auth-session-changed', handleSessionChanged)
 
     return () => {
       window.removeEventListener('tsl-open-auth-modal', handleOpenAuthModal)
+      window.removeEventListener('tsl-auth-session-changed', handleSessionChanged)
     }
   }, [])
 

@@ -79,6 +79,7 @@ function ModalContent({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             className="logout-modal__btn-signout"
+            data-testid="logout-confirm-btn"
             onClick={handleSignOut}
             disabled={busy}
           >

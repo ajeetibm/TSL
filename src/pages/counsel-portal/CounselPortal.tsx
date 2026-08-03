@@ -1,7 +1,10 @@
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
+  AlertTriangle,
+  ArrowLeft,
   BadgeDollarSign,
   CalendarDays,
+  CheckCircle2,
   CircleCheck,
   CircleCheckBig,
   CircleX,
@@ -458,6 +461,8 @@ function RequestDetailsModal({
   onReject: (id: string, reason: string) => void
   onStartReview: (id: string) => void
 }) {
+  // 'overview' | 'accept' | 'reject'
+  const [view, setView] = useState<'overview' | 'accept' | 'reject'>('overview')
   const [response, setResponse] = useState(request.counselResponse || '')
   const [reason, setReason] = useState('')
   const [confirmRejection, setConfirmRejection] = useState(false)
@@ -490,31 +495,118 @@ function RequestDetailsModal({
     onClose()
   }
 
+  const goBack = () => { setView('overview'); setError('') }
+
+  const isActionable = request.status !== 'completed' && request.status !== 'rejected'
+
   return <div className="counsel-request-modal__backdrop" role="presentation" onMouseDown={onClose}>
     <section className="counsel-request-modal" role="dialog" aria-modal="true" aria-labelledby="counsel-request-modal-title" onMouseDown={(event) => event.stopPropagation()}>
+
+      {/* ── Shared header ──────────────────────────────────────────── */}
       <header>
         <div><p>Request details</p><h2 id="counsel-request-modal-title">{request.subject}</h2></div>
         <button type="button" className="counsel-request-modal__close" aria-label="Close" onClick={onClose}><X size={18} /></button>
       </header>
-      <div className="counsel-request-modal__body">
-        <section className="counsel-request-modal__details">
-          <h3>Request information</h3>
-          <dl><div><dt>From</dt><dd>{request.fromUser}</dd></div><div><dt>Email</dt><dd>{request.userEmail}</dd></div><div><dt>Assigned by</dt><dd>{request.assignedBy}</dd></div><div><dt>Assigned date</dt><dd>{formatDate(request.assignedAt || request.date)}</dd></div>{request.relatedWizard ? <div><dt>Related wizard</dt><dd>{request.relatedWizard}</dd></div> : null}</dl>
-          <h4>Request description</h4><p>{request.description || 'No additional description was provided.'}</p>
-          {request.attachments?.length ? <div className="counsel-request-modal__files"><h4>Uploaded documents</h4>{request.attachments.map((file) => <p key={file.name}><FileText size={16} />{file.name}</p>)}</div> : null}
-        </section>
-        {request.status !== 'completed' && request.status !== 'rejected' ? <section className="counsel-request-modal__response"><h3>Counsel response</h3>
-          {request.status === 'pending' ? <button type="button" className="counsel-request-modal__start" onClick={() => onStartReview(request.requestId)}>Accept &amp; start review</button> : <><label>Comments / recommendations<textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write the final advice and recommendations for the user..." /></label><div className="counsel-request-modal__upload"><span>Supporting documents (optional)</span><label className="counsel-request-modal__upload-btn" title="Click to upload supporting documents"><Upload size={15} />Upload documents<input type="file" multiple onChange={handleFiles} /></label>{documents.length > 0 && <ul className="counsel-request-modal__upload-list">{documents.map((file) => <li key={file.name}><FileText size={13} />{file.name}</li>)}</ul>}</div><button type="button" className="counsel-request-modal__done" onClick={finish}>Mark as Done</button></>}
-          <section className="counsel-request-modal__reject">
-            <label htmlFor="rejection-reason">Reject request (admin only)</label>
-            <textarea id="rejection-reason" value={reason} onChange={(event) => { setReason(event.target.value); setError('') }} placeholder="Mandatory reason for reassignment" aria-describedby="rejection-reason-help" />
-            <span id="rejection-reason-help" className="counsel-request-modal__reject-help">{reason.trim().length}/{minimumRejectionReasonLength} characters minimum</span>
-            <label className="counsel-request-modal__reject-confirm"><input type="checkbox" checked={confirmRejection} onChange={(event) => { setConfirmRejection(event.target.checked); setError('') }} /> I confirm this request should be returned to the admin for reassignment.</label>
-            <button type="button" className="counsel-request-modal__start" onClick={reject} disabled={!canReject}>Reject &amp; Return to Admin</button>
+
+      {/* ══ PAGE: overview ════════════════════════════════════════════ */}
+      {view === 'overview' && (
+        <div className="counsel-request-modal__page">
+          {/* Full-width info section */}
+          <section className="counsel-request-modal__details counsel-request-modal__details--full">
+            <h3>Request information</h3>
+            <dl>
+              <div><dt>From</dt><dd>{request.fromUser}</dd></div>
+              <div><dt>Email</dt><dd>{request.userEmail}</dd></div>
+              <div><dt>Assigned by</dt><dd>{request.assignedBy}</dd></div>
+              <div><dt>Assigned date</dt><dd>{formatDate(request.assignedAt || request.date)}</dd></div>
+              {request.relatedWizard ? <div><dt>Related wizard</dt><dd>{request.relatedWizard}</dd></div> : null}
+            </dl>
+            <h4>Request description</h4>
+            <p>{request.description || 'No additional description was provided.'}</p>
+            {request.attachments?.length
+              ? <div className="counsel-request-modal__files">
+                  <h4>Uploaded documents</h4>
+                  {request.attachments.map((file) => <p key={file.name}><FileText size={16} />{file.name}</p>)}
+                </div>
+              : null}
           </section>
-          {error ? <p className="counsel-request-modal__error">{error}</p> : null}
-        </section> : <section className="counsel-request-modal__response"><h3>{request.status === 'completed' ? 'Completed response' : 'Returned to admin'}</h3><p>{request.counselResponse || 'This request is no longer actionable.'}</p></section>}
-      </div>
+
+          {/* Action buttons row — only shown when request is still actionable */}
+          {isActionable && (
+            <div className="counsel-request-modal__action-row">
+              <button
+                type="button"
+                className="counsel-request-modal__action-btn counsel-request-modal__action-btn--accept"
+                onClick={() => setView('accept')}
+              >
+                <CheckCircle2 size={18} />
+                Accept &amp; start review
+              </button>
+              <button
+                type="button"
+                className="counsel-request-modal__action-btn counsel-request-modal__action-btn--reject"
+                onClick={() => setView('reject')}
+              >
+                <AlertTriangle size={18} />
+                Reject &amp; return to admin
+              </button>
+            </div>
+          )}
+
+          {/* Read-only state for completed / rejected */}
+          {!isActionable && (
+            <section className="counsel-request-modal__response counsel-request-modal__response--readonly">
+              <h3>{request.status === 'completed' ? 'Completed response' : 'Returned to admin'}</h3>
+              <p>{request.counselResponse || 'This request is no longer actionable.'}</p>
+            </section>
+          )}
+        </div>
+      )}
+
+      {/* ══ PAGE: accept ══════════════════════════════════════════════ */}
+      {view === 'accept' && (
+        <div className="counsel-request-modal__page counsel-request-modal__page--accept">
+          <div className="counsel-request-modal__subpage-header">
+            <button type="button" className="counsel-request-modal__back" onClick={goBack}>
+              <ArrowLeft size={16} /> Back to request
+            </button>
+            <span className="counsel-request-modal__subpage-title"><CheckCircle2 size={15} /> Accept &amp; start review</span>
+          </div>
+          <section className="counsel-request-modal__response">
+            <h3>Counsel response</h3>
+            {request.status === 'pending'
+              ? <button type="button" className="counsel-request-modal__start" onClick={() => onStartReview(request.requestId)}>Accept &amp; start review</button>
+              : <><label>Comments / recommendations<textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write the final advice and recommendations for the user..." /></label><div className="counsel-request-modal__upload"><span>Supporting documents (optional)</span><label className="counsel-request-modal__upload-btn" title="Click to upload supporting documents"><Upload size={15} />Upload documents<input type="file" multiple onChange={handleFiles} /></label>{documents.length > 0 && <ul className="counsel-request-modal__upload-list">{documents.map((file) => <li key={file.name}><FileText size={13} />{file.name}</li>)}</ul>}</div><button type="button" className="counsel-request-modal__done" onClick={finish}>Mark as Done</button></>
+            }
+            {error ? <p className="counsel-request-modal__error">{error}</p> : null}
+          </section>
+        </div>
+      )}
+
+      {/* ══ PAGE: reject ══════════════════════════════════════════════ */}
+      {view === 'reject' && (
+        <div className="counsel-request-modal__page counsel-request-modal__page--reject">
+          <div className="counsel-request-modal__subpage-header">
+            <button type="button" className="counsel-request-modal__back" onClick={goBack}>
+              <ArrowLeft size={16} /> Back to request
+            </button>
+            <span className="counsel-request-modal__subpage-title counsel-request-modal__subpage-title--danger">
+              <AlertTriangle size={15} /> Reject &amp; return to admin
+            </span>
+          </div>
+          <section className="counsel-request-modal__response">
+            <section className="counsel-request-modal__reject">
+              <label htmlFor="rejection-reason">Reject request (admin only)</label>
+              <textarea id="rejection-reason" value={reason} onChange={(event) => { setReason(event.target.value); setError('') }} placeholder="Mandatory reason for reassignment" aria-describedby="rejection-reason-help" />
+              <span id="rejection-reason-help" className="counsel-request-modal__reject-help">{reason.trim().length}/{minimumRejectionReasonLength} characters minimum</span>
+              <label className="counsel-request-modal__reject-confirm"><input type="checkbox" checked={confirmRejection} onChange={(event) => { setConfirmRejection(event.target.checked); setError('') }} /> I confirm this request should be returned to the admin for reassignment.</label>
+              <button type="button" className="counsel-request-modal__start" onClick={reject} disabled={!canReject}>Reject &amp; Return to Admin</button>
+            </section>
+            {error ? <p className="counsel-request-modal__error">{error}</p> : null}
+          </section>
+        </div>
+      )}
+
     </section>
   </div>
 }

@@ -643,6 +643,13 @@ export default function AdminDashboard() {
   return (
     <>
     <div className="admin-dashboard">
+      {activeNav !== 'dashboard' && (
+        <BackButton
+          onClick={() => setActiveNav('dashboard')}
+          label="Back to Dashboard"
+          className=" admin-dashboard__back-btn"
+        />
+      )}
       <aside className="admin-dashboard__sidebar">
         <div className="admin-dashboard__brand">
           <h1>The Startup Legal</h1>
@@ -692,14 +699,10 @@ export default function AdminDashboard() {
 
       <main className="admin-dashboard__main">
         <header className="admin-dashboard__header">
-          {activeNav !== 'dashboard' && (
-            <BackButton
-              onClick={() => setActiveNav('dashboard')}
-              label="Back to Dashboard"
-            />
-          )}
-          <h1>{headerTitle}</h1>
-          <p>{headerDescription}</p>
+          <div className="admin-dashboard__header-text">
+            <h1>{headerTitle}</h1>
+            <p>{headerDescription}</p>
+          </div>
         </header>
 
         {error && <p className="admin-dashboard__error">{error}</p>}

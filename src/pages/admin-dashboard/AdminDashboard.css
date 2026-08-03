@@ -24,6 +24,8 @@
   background: #07192b;
   color: #c5cfda;
   overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
 .admin-dashboard__brand {
@@ -112,20 +114,19 @@
   background: #ffffff;
 }
 
-/* ── Back-navigation button — matches the gold circle in the user dashboard ── */
-.admin-dashboard__header .dashboard-back-btn {
-  position: absolute;
-  left: -18px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
+/* ── Back-navigation button — fixed at the sidebar/content divider ── */
+.admin-dashboard__back-btn.dashboard-back-btn {
+  position: fixed;
+  left: 255px;
+  top: 60px;
+  transform: translateX(-50%);
+  z-index: 100;
   width: 36px;
   height: 36px;
   min-width: 36px;
   min-height: 36px;
   display: grid;
   place-items: center;
-  flex-shrink: 0;
   border: none;
   border-radius: 50%;
   padding: 0;
@@ -135,20 +136,24 @@
   transition: background 160ms ease;
 }
 
-.admin-dashboard__header .dashboard-back-btn:hover {
+.admin-dashboard__back-btn.dashboard-back-btn:hover {
   background: #b8892e;
 }
 
-.admin-dashboard__header .dashboard-back-btn:focus-visible {
+.admin-dashboard__back-btn.dashboard-back-btn:focus-visible {
   outline: 2px solid #d3a038;
   outline-offset: 2px;
+}
+
+.admin-dashboard__header-text {
+  display: contents;
 }
 
 .admin-dashboard__header h1 {
   margin: 0;
   color: #0d1b2a;
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 700;
   line-height: 40px;
 }
@@ -176,7 +181,7 @@
 .admin-dashboard__kpi {
   min-height: 143px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   border: 1px solid #dfdfdf;
   border-radius: 28px;
@@ -190,31 +195,38 @@
   height: 50px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   border-radius: 999px;
   background: #cf9b2f;
   color: #ffffff;
 }
 
+.admin-dashboard__kpi > div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 .admin-dashboard__kpi strong {
   display: block;
   color: #0d1b2a;
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 26px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .admin-dashboard__kpi h2 {
-  margin: 4px 0;
+  margin: 3px 0 0;
   color: #0d1b2a;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 24px;
+  line-height: 20px;
 }
 
 .admin-dashboard__kpi p {
   margin: 0;
   color: #6d6d6d;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .admin-dashboard__kpi--dark {
@@ -546,7 +558,7 @@
 .admin-dashboard__top-wizards h2 {
   margin: 0;
   color: #0d1b2a;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 30px;
 }
@@ -554,7 +566,7 @@
 .admin-dashboard__section-heading p {
   margin: 4px 0 0;
   color: #6d6d6d;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .admin-dashboard__section-heading button {
@@ -718,12 +730,13 @@
 .admin-dashboard__wizard-metric h3 {
   margin: 0;
   color: #0d1b2a;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 400;
 }
 
 .admin-dashboard__wizard-metric strong {
   font-weight: 500;
+  font-size: 16px;
 }
 
 .admin-dashboard__wizard-metric p {
@@ -898,7 +911,7 @@
   display: block;
   margin-top: 8px;
   color: #0d1b2a;
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 400;
 }
 
@@ -921,7 +934,7 @@
 .admin-users__stat {
   min-height: 128px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   border: 2px solid #e5e5e5;
   border-radius: 32px;
@@ -945,7 +958,7 @@
   color: #0d1b2a;
   font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 32px;
 }
 
@@ -981,7 +994,7 @@
   color: rgba(13, 27, 42, 0.25);
   font-family: var(--font-display);
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: -0.75px;
   line-height: 39px;
   text-align: left;
@@ -1001,26 +1014,33 @@
 }
 
 .admin-users__filters {
-  display: grid;
-  grid-template-columns: minmax(240px, 1fr) repeat(3, 155px);
-  gap: 24px;
-  border-bottom: 2px solid #e5e5e5;
-  padding: 24px;
-}
-
-.admin-users__filters--admin {
-  grid-template-columns: minmax(280px, 1fr) 155px 185px;
-}
-
-.admin-users__search {
-  min-height: 52px;
   display: flex;
   align-items: center;
   gap: 12px;
-  border: 2px solid #e5e5e5;
-  border-radius: 24px;
-  padding: 0 16px;
-  color: rgba(13, 27, 42, 0.5);
+  border-bottom: 2px solid #e5e5e5;
+  padding: 20px 24px;
+}
+
+.admin-users__filters .admin-users__search {
+  flex: 5;
+  min-width: 0;
+}
+
+.admin-users__filters > div {
+  flex: 0 0 auto;
+  min-width: 130px;
+}
+
+.admin-users__search {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
+  padding: 0 18px;
+  background: #ffffff;
+  color: rgba(13, 27, 42, 0.4);
 }
 
 .admin-users__search input {
@@ -1030,36 +1050,39 @@
   outline: 0;
   color: #0d1b2a;
   font: inherit;
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .admin-users__search input::placeholder {
-  color: rgba(13, 27, 42, 0.5);
+  color: rgba(13, 27, 42, 0.4);
 }
 
 .admin-users__filter-button {
+  width: 100%;
   min-width: 0;
-  min-height: 52px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  border: 2px solid #e5e5e5;
-  border-radius: 24px;
+  gap: 10px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 999px;
   padding: 0 16px;
   background: #ffffff;
   color: #0d1b2a;
   font-size: 16px;
+  font-weight: 400;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .admin-users__select-arrow {
   width: 0;
   height: 0;
   flex: 0 0 auto;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 7px solid #0d1b2a;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #6b7280;
 }
 
 .admin-users__invite {
@@ -1653,7 +1676,7 @@
 .admin-counsel__stat {
   min-height: 134px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   border: 1px solid #e5e5e5;
   border-radius: 24px;
@@ -1943,7 +1966,7 @@
 .admin-counsel__completed strong {
   color: #00a63e;
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 700;
   line-height: 32px;
 }
@@ -1962,7 +1985,7 @@
   background: linear-gradient(180deg, #c79a3b, #d4a84f);
   color: #ffffff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -1982,7 +2005,7 @@
 .admin-issues__stat {
   min-height: 134px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 16px;
   border: 1px solid #e5e5e5;
   border-radius: 24px;
@@ -2206,7 +2229,7 @@
   border-radius: 999px;
   padding: 0 12px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 16px;
 }
 
@@ -2252,7 +2275,7 @@
   margin: 0 0 24px;
   color: #0d1b2a;
   font-family: var(--font-display);
-  font-size: 21px;
+  font-size: 20px;
   font-weight: 500;
   line-height: 28px;
 }
@@ -2276,7 +2299,7 @@
 .admin-issues__category strong {
   color: #0d1b2a;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .admin-issues__category-count {
@@ -2333,7 +2356,7 @@
   color: #667085;
   font-family: var(--font-display);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 24px;
   cursor: pointer;
 }
@@ -2380,7 +2403,7 @@
 }
 
 .admin-settings__heading h2 {
-  font-size: 21px;
+  font-size: 20px;
   line-height: 28px;
 }
 
@@ -2569,8 +2592,8 @@
   margin: 0;
   color: #991b1b;
   font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 18px;
+  font-weight: 700;
   line-height: 28px;
 }
 
@@ -2589,7 +2612,7 @@
   background: #ed0000;
   color: #ffffff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -2626,7 +2649,7 @@
   display: block;
   color: #0d1b2a;
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   line-height: 34px;
 }
@@ -2635,7 +2658,7 @@
 .admin-settings__billing-stat small {
   margin: 0;
   color: #666666;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 22px;
 }
 
@@ -2672,8 +2695,8 @@
   margin: 0;
   color: #0d1b2a;
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 20px;
+  font-weight: 700;
   line-height: 30px;
 }
 
@@ -2689,7 +2712,7 @@
   background: linear-gradient(180deg, #c79a3b, #d4a84f);
   color: #ffffff;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -2780,13 +2803,15 @@
   padding: 0 24px;
   text-align: left;
   border-bottom: 1px solid #eeeeee;
+  font-size: 14px;
 }
 
 .admin-settings__invoice-table th {
   background: #f8f8f8;
   color: #48556a;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .admin-settings__invoice-table td:first-child {
