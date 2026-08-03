@@ -533,10 +533,10 @@ function DashboardView({
   return (
     <div className="counsel-dashboard">
       <section className="counsel-dashboard__kpis" aria-label="Counsel summary">
-        <KpiCard icon={<FileText size={27} />} value={kpis.totalRequests ?? 39} label="Total Requests" caption="All time requests" />
-        <KpiCard icon={<CircleCheckBig size={29} />} value={kpis.completed ?? 32} label="Completed" caption={`${kpis.completedRate ?? '68%'} completion rate`} />
-        <KpiCard icon={<CircleX size={29} />} value={kpis.rejected ?? 7} label="Rejected" caption={`${kpis.rejectedRate ?? '15%'} rejection rate`} />
-        <KpiCard dark icon={<BadgeDollarSign size={29} />} value={formatMoney(kpis.totalEarnings ?? 28450)} label="Total Earnings" caption="Revenue generated" />
+        <KpiCard icon={<FileText size={20} />} value={kpis.totalRequests ?? 39} label="Total Requests" caption="All time requests" />
+        <KpiCard icon={<CircleCheckBig size={20} />} value={kpis.completed ?? 32} label="Completed" caption={`${kpis.completedRate ?? '68%'} completion rate`} />
+        <KpiCard icon={<CircleX size={20} />} value={kpis.rejected ?? 7} label="Rejected" caption={`${kpis.rejectedRate ?? '15%'} rejection rate`} />
+        <KpiCard dark icon={<BadgeDollarSign size={20} />} value={formatMoney(kpis.totalEarnings ?? 28450)} label="Total Earnings" caption="Revenue generated" />
       </section>
 
       <div className="counsel-dashboard__grid">
@@ -685,7 +685,7 @@ function EarningsChart({
                 style={{ left: `${point.x}%`, top: `${point.y}%` }}
                 viewBox="0 0 16 16"
               >
-                <path d="M8 1.2 9.7 6.3 14.8 8 9.7 9.7 8 14.8 6.3 9.7 1.2 8 6.3 6.3Z" />
+                <circle cx="8" cy="8" r="5" />
               </svg>
             )
           })}
