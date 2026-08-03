@@ -1,0 +1,1568 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "The StartUp Legal – User & Marketing Mock API",
+    "description": "Complete mock API covering:\n1. Public marketing (guest) flow\n2. User registration & login\n3. Authenticated SME dashboard — wizards, playbooks, profile, security, billing, subscription, payments, notifications, legal notices\n\nExcludes: password reset, counsel portal, admin portal.",
+    "version": "1.1.0",
+    "contact": { "name": "TSL Engineering", "email": "dev@thestartuplegal.co.za" }
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Local mock server" }
+  ],
+  "tags": [
+    { "name": "Auth",          "description": "Register, login, Google OAuth, change password" },
+    { "name": "SME Dashboard", "description": "Dashboard home data, pre-selected wizards, quick-start cards" },
+    { "name": "Wizards",       "description": "Wizard catalogue — browse, select, run, step, generate, download" },
+    { "name": "Playbooks",     "description": "Step-by-step legal guides library" },
+    { "name": "Documents",     "description": "Downloadable PDF playbook documents" },
+    { "name": "Subscription",  "description": "Plan details, upgrade, downgrade, invoices" },
+    { "name": "Billing",       "description": "Billing summary and payment methods" },
+    { "name": "Payments",      "description": "Paystack initialise & verify" },
+    { "name": "Profile",       "description": "SME user profile and email preferences" },
+    { "name": "Security",      "description": "Change password, active sessions management" },
+    { "name": "Notifications", "description": "In-app notifications" },
+    { "name": "Quick Access",  "description": "Quick-access links and legal notice links" }
+  ],
+  "paths": {
+
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Register a new SME user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/RegisterPayload" },
+              "example": {
+                "fullName": "Thabo Nkosi",
+                "email": "thabo@acmestartup.co.za",
+                "password": "SecurePass123!",
+                "confirmPassword": "SecurePass123!",
+                "acceptedTerms": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Registration successful",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "isNewUser": true,
+                  "message": "Registration successful.",
+                  "data": {
+                    "userId": "usr_001",
+                    "fullName": "Thabo Nkosi",
+                    "email": "thabo@acmestartup.co.za",
+                    "role": "sme",
+                    "plan": null,
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock",
+                    "tokenExpiry": "2025-12-31T23:59:59Z",
+                    "createdAt": "2025-06-01T09:00:00Z",
+                    "portal": "sme",
+                    "mustResetPassword": false
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login with email and password",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginPayload" },
+              "example": {
+                "email": "thabo@acmestartup.co.za",
+                "password": "SecurePass123!",
+                "portal": "sme"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "isNewUser": false,
+                  "data": {
+                    "userId": "usr_001",
+                    "fullName": "Thabo Nkosi",
+                    "email": "thabo@acmestartup.co.za",
+                    "role": "sme",
+                    "plan": "operator",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock",
+                    "tokenExpiry": "2025-12-31T23:59:59Z",
+                    "createdAt": "2025-06-01T09:00:00Z",
+                    "portal": "sme",
+                    "mustResetPassword": false
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorised" }
+        }
+      }
+    },
+
+    "/api/v1/auth/google": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Sign in / register via Google OAuth",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": { "access_token": "ya29.google_oauth_access_token" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Google auth successful",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "isNewUser": false,
+                  "data": {
+                    "userId": "usr_002",
+                    "fullName": "Lerato Dlamini",
+                    "email": "lerato@gmail.com",
+                    "role": "sme",
+                    "plan": "launchpad",
+                    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock_google",
+                    "tokenExpiry": "2025-12-31T23:59:59Z",
+                    "portal": "sme",
+                    "mustResetPassword": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/auth/change-password": {
+      "put": {
+        "tags": ["Auth"],
+        "summary": "Change password for authenticated user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "thabo@acmestartup.co.za",
+                "currentPassword": "SecurePass123!",
+                "newPassword": "NewSecurePass456!",
+                "confirmPassword": "NewSecurePass456!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password changed — frontend will show success modal, clear session and redirect to login",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Password changed successfully." }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/ValidationError" },
+          "401": { "$ref": "#/components/responses/Unauthorised" }
+        }
+      }
+    },
+
+    "/api/v1/sme/dashboard": {
+      "get": {
+        "tags": ["SME Dashboard"],
+        "summary": "Dashboard home — user stats, pre-selected wizards, in-progress and completed workflows",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Full dashboard payload",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "user": {
+                      "userId": "usr_001",
+                      "companyName": "Acme Startup (Pty) Ltd",
+                      "plan": "operator",
+                      "runsUsed": 9,
+                      "runsTotal": 12,
+                      "runsRemaining": 3,
+                      "nextBillingDate": "2025-07-01T00:00:00Z",
+                      "counselCreditsUsed": 0,
+                      "counselCreditsTotal": 2
+                    },
+                    "preSelectedWizards": [
+                      {
+                        "wizardId": "wiz_nda",
+                        "title": "Non-Disclosure Agreement (NDA)",
+                        "note": "Need NDAs for investor meetings and contractor agreements",
+                        "landingItems": "Items",
+                        "wizards": 3
+                      },
+                      {
+                        "wizardId": "wiz_emp",
+                        "title": "Employment Offer letter",
+                        "note": "Hiring our first developer next month",
+                        "landingItems": "Items",
+                        "wizards": 3
+                      },
+                      {
+                        "wizardId": "wiz_pp",
+                        "title": "Privacy Policy",
+                        "note": "Required for our web app launch",
+                        "landingItems": "Runs",
+                        "wizards": 2
+                      }
+                    ],
+                    "inProgress": [
+                      {
+                        "workflowId": "wf_001",
+                        "wizardName": "Non-Disclosure Agreement (NDA)",
+                        "status": "in_progress",
+                        "progress": 60,
+                        "lastUpdated": "2025-06-10T14:30:00Z"
+                      }
+                    ],
+                    "completed": [
+                      {
+                        "workflowId": "wf_002",
+                        "wizardName": "Employment Offer Letter",
+                        "status": "completed",
+                        "progress": 100,
+                        "completedAt": "2025-06-05T10:00:00Z",
+                        "downloads": ["pdf", "docx"]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorised" }
+        }
+      }
+    },
+
+    "/api/v1/sme/quick-access-links": {
+      "get": {
+        "tags": ["Quick Access"],
+        "summary": "Quick-access link URLs shown on dashboard (Getting Started Guide, Video Tutorials, Schedule Consultation)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Quick access links",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "gettingStartedGuideUrl": "https://docs.thestartuplegal.co.za/getting-started",
+                    "videoTutorialUrl": "https://www.youtube.com/watch?v=tsl_demo",
+                    "consultationBookingUrl": "https://calendly.com/tsl/consultation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/legal-links": {
+      "get": {
+        "tags": ["Quick Access"],
+        "summary": "Legal notice URLs shown on dashboard right panel (Terms of Service, Privacy & POPIA, Legal Advice Disclaimer)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Legal links",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "termsOfServiceUrl": "https://www.thestartuplegal.co.za/terms",
+                    "privacyPolicyUrl": "https://www.thestartuplegal.co.za/privacy",
+                    "legalDisclaimerUrl": "https://www.thestartuplegal.co.za/disclaimer"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/wizards": {
+      "get": {
+        "tags": ["Wizards"],
+        "summary": "Full wizard catalogue — all cards shown on Browse All Wizards page",
+        "responses": {
+          "200": {
+            "description": "All wizards",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "wizardId": "wiz_loan",
+                      "name": "Loan Agreement",
+                      "description": "Document loans between business parties, interest terms, payment schedules, and security details.",
+                      "completionTime": 16,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Lenders and borrowers",
+                      "isPopular": false,
+                      "includedIn": ["operator", "boardroom"],
+                      "whatsIncluded": ["Installment options", "Security details", "Default terms"]
+                    },
+                    {
+                      "wizardId": "wiz_nda",
+                      "name": "Non-Disclosure Agreement (NDA)",
+                      "description": "Protect confidential information when sharing with potential partners, investors, or contractors.",
+                      "completionTime": 7,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Startups sharing sensitive information",
+                      "isPopular": true,
+                      "includedIn": ["launchpad", "operator", "boardroom"],
+                      "whatsIncluded": ["SA-specific legal drafting", "E-signature ready", "Plain-language preview"]
+                    },
+                    {
+                      "wizardId": "wiz_emp",
+                      "name": "Employment Offer Letter",
+                      "description": "Create legally compliant employment offers that meet South African labour requirements.",
+                      "completionTime": 11,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Companies hiring new employees",
+                      "isPopular": true,
+                      "includedIn": ["launchpad", "operator", "boardroom"],
+                      "whatsIncluded": ["BCEA compliance checks", "Clause options & risk indicators", "Built-in negotiation"]
+                    },
+                    {
+                      "wizardId": "wiz_fa",
+                      "name": "Founder Agreement",
+                      "description": "Establish clear roles, equity splits, and responsibilities for multi-founder startup teams.",
+                      "completionTime": 17,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Multi-founder startups (2-5 founders)",
+                      "isPopular": false,
+                      "includedIn": ["operator", "boardroom"],
+                      "whatsIncluded": ["Equity vesting schedules", "Roles & responsibilities", "Exit scenarios"]
+                    },
+                    {
+                      "wizardId": "wiz_pp",
+                      "name": "Privacy Policy (POPIA Compliant)",
+                      "description": "Generate a POPIA-compliant privacy policy for your website, app, or data collection process.",
+                      "completionTime": 9,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Businesses collecting personal data",
+                      "isPopular": true,
+                      "includedIn": ["operator", "boardroom"],
+                      "whatsIncluded": ["100% POPIA compliant", "Plain language", "Website ready"]
+                    },
+                    {
+                      "wizardId": "wiz_sa",
+                      "name": "Service Agreement",
+                      "description": "Create a comprehensive service agreement for client engagements, covering scope, fees, SLAs, and legal terms.",
+                      "completionTime": 17,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Service providers and their clients",
+                      "isPopular": true,
+                      "includedIn": ["operator", "boardroom"],
+                      "whatsIncluded": ["SLA clauses", "Fee & billing terms", "Termination & renewal"]
+                    },
+                    {
+                      "wizardId": "wiz_sr",
+                      "name": "Shareholder Resolutions",
+                      "description": "Draft approval documents for shareholders to authorize company actions and governance decisions.",
+                      "completionTime": 13,
+                      "runsPerWizard": 1,
+                      "targetAudience": "Registered companies (Pty Ltd)",
+                      "isPopular": false,
+                      "includedIn": ["operator", "boardroom"],
+                      "whatsIncluded": ["CIPC ready templates", "Company secretary", "Audit exemption"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/wizards/{wizardId}/start": {
+      "post": {
+        "tags": ["Wizards"],
+        "summary": "Start a wizard run — creates a new workflow",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "wizardId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "wiz_nda" }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "notes": "Need NDAs for investor meetings and contractor agreements" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "workflowId": "wf_003",
+                    "wizardId": "wiz_nda",
+                    "wizardName": "Non-Disclosure Agreement (NDA)",
+                    "status": "in_progress",
+                    "currentStep": 1,
+                    "totalSteps": 7,
+                    "createdAt": "2025-06-12T08:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "No wizard runs remaining",
+            "content": {
+              "application/json": {
+                "example": { "success": false, "message": "You have used all your wizard runs for this month." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/steps/{stepNumber}": {
+      "put": {
+        "tags": ["Wizards"],
+        "summary": "Save a wizard step",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workflowId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "wf_003" },
+          { "name": "stepNumber", "in": "path", "required": true, "schema": { "type": "integer" }, "example": 1 }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "stepNumber": 1,
+                "data": {
+                  "disclosingParty": "Acme Startup (Pty) Ltd",
+                  "receivingParty": "VC Partners Ltd",
+                  "purpose": "Evaluation of a potential investment"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Step saved",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Step saved.", "data": { "nextStep": 2 } }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/generate": {
+      "post": {
+        "tags": ["Wizards"],
+        "summary": "Generate the final document for a completed workflow",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workflowId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "wf_003" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document generated",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "workflowId": "wf_003",
+                    "status": "completed",
+                    "downloads": ["pdf", "docx"],
+                    "completedAt": "2025-06-12T08:45:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/status": {
+      "get": {
+        "tags": ["Wizards"],
+        "summary": "Poll workflow generation status",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workflowId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "wf_003" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "data": { "workflowId": "wf_003", "status": "completed", "progress": 100 } }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/workflows/{workflowId}/download": {
+      "get": {
+        "tags": ["Wizards"],
+        "summary": "Download a completed workflow document (PDF or DOCX)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "workflowId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "wf_002" },
+          { "name": "type", "in": "query", "schema": { "type": "string", "enum": ["pdf", "docx"] }, "example": "pdf" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Download URL",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": { "downloadUrl": "https://cdn.tsl.co.za/docs/wf_002_employment.pdf", "expiresAt": "2025-06-12T10:00:00Z" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/playbooks": {
+      "get": {
+        "tags": ["Playbooks"],
+        "summary": "Full playbook library — all sections and cards shown on /dashboard/playbooks",
+        "responses": {
+          "200": {
+            "description": "Playbook sections",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "playbookSections": [
+                      {
+                        "title": "Hiring",
+                        "icon": "users",
+                        "cards": [
+                          {
+                            "title": "Hiring Your First Employee",
+                            "steps": "8 steps",
+                            "time": "15 min",
+                            "description": "A comprehensive guide to compliant employee onboarding in South Africa, including BCEA requirements, contracts, and payroll setup.",
+                            "wizards": ["Employment Contract (BCEA)", "Employee Handbook"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/hiring-first-employee.pdf"
+                          },
+                          {
+                            "title": "Contractor vs Employee Classification",
+                            "steps": "5 steps",
+                            "time": "10 min",
+                            "description": "Understand the legal differences between contractors and employees, and ensure proper classification under South African labour law.",
+                            "wizards": ["Independent Contractor Agreement"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/contractor-vs-employee.pdf"
+                          },
+                          {
+                            "title": "Building an Employee Handbook",
+                            "steps": "12 steps",
+                            "time": "20 min",
+                            "description": "Create a comprehensive employee handbook that covers policies, procedures, and workplace expectations while ensuring legal compliance.",
+                            "wizards": ["Employee Handbook Generator"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/employee-handbook.pdf"
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Compliance",
+                        "icon": "shield",
+                        "cards": [
+                          {
+                            "title": "POPIA Compliance Basics",
+                            "steps": "7 steps",
+                            "time": "12 min",
+                            "description": "Set up practical privacy controls, consent language, and data handling processes for South African businesses.",
+                            "wizards": ["Privacy Policy (POPIA Compliant)", "Data Processing Agreement"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/popia-compliance.pdf"
+                          },
+                          {
+                            "title": "Document Retention Checklist",
+                            "steps": "6 steps",
+                            "time": "9 min",
+                            "description": "Know which company, employment, tax, and customer records to keep, and how long to retain them.",
+                            "wizards": ["Records Retention Policy"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/document-retention.pdf"
+                          },
+                          {
+                            "title": "Website Legal Readiness",
+                            "steps": "9 steps",
+                            "time": "14 min",
+                            "description": "Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.",
+                            "wizards": ["Terms of Service", "Privacy Policy"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/website-legal.pdf"
+                          }
+                        ]
+                      },
+                      {
+                        "title": "Fundraising",
+                        "icon": "trending-up",
+                        "cards": [
+                          {
+                            "title": "Investor Meeting Prep",
+                            "steps": "6 steps",
+                            "time": "11 min",
+                            "description": "Prepare the core legal documents and confidentiality steps needed before sharing sensitive startup materials.",
+                            "wizards": ["Non-Disclosure Agreement (NDA)", "Founder Agreement"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/investor-meeting-prep.pdf"
+                          },
+                          {
+                            "title": "Founder Equity Readiness",
+                            "steps": "8 steps",
+                            "time": "16 min",
+                            "description": "Review founder roles, equity splits, vesting expectations, and decision-making before funding conversations.",
+                            "wizards": ["Founder Agreement", "Shareholder Resolutions"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/founder-equity.pdf"
+                          },
+                          {
+                            "title": "Due Diligence Pack",
+                            "steps": "10 steps",
+                            "time": "18 min",
+                            "description": "Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.",
+                            "wizards": ["Shareholder Resolutions", "Service Agreement"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/due-diligence-pack.pdf"
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/documents": {
+      "get": {
+        "tags": ["Documents"],
+        "summary": "List downloadable PDF playbook documents",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Document list",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "documentId": "doc_001",
+                      "name": "Hiring Your First Employee",
+                      "description": "Step-by-step guide to compliant hiring in South Africa.",
+                      "category": "Hiring",
+                      "url": "https://cdn.tsl.co.za/playbooks/hiring-first-employee.pdf",
+                      "mimeType": "application/pdf",
+                      "sizeKb": 420,
+                      "updatedAt": "2025-05-01T00:00:00Z"
+                    },
+                    {
+                      "documentId": "doc_002",
+                      "name": "POPIA Compliance Basics",
+                      "description": "Everything you need to be POPIA compliant.",
+                      "category": "Compliance",
+                      "url": "https://cdn.tsl.co.za/playbooks/popia-compliance.pdf",
+                      "mimeType": "application/pdf",
+                      "sizeKb": 310,
+                      "updatedAt": "2025-04-15T00:00:00Z"
+                    },
+                    {
+                      "documentId": "doc_003",
+                      "name": "Investor Meeting Prep",
+                      "description": "Legal steps before sharing sensitive startup materials.",
+                      "category": "Fundraising",
+                      "url": "https://cdn.tsl.co.za/playbooks/investor-meeting-prep.pdf",
+                      "mimeType": "application/pdf",
+                      "sizeKb": 280,
+                      "updatedAt": "2025-05-20T00:00:00Z"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/profile": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get SME user profile — all fields shown on Profile Information tab",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "email", "in": "query", "schema": { "type": "string" }, "example": "thabo@acmestartup.co.za" }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "userId": "usr_001",
+                    "fullName": "Thabo Nkosi",
+                    "email": "thabo@acmestartup.co.za",
+                    "phone": "+27 82 123 4567",
+                    "companyName": "Acme Startup (Pty) Ltd",
+                    "registrationNumber": "2024/123456/07",
+                    "contactPerson": "Thabo Nkosi",
+                    "location": "Johannesburg, South Africa",
+                    "plan": "operator",
+                    "planLabel": "Operator Plan1",
+                    "accountStatus": "active",
+                    "memberSince": "2025-12-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Update SME user profile",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "companyName": "Acme Startup (Pty) Ltd",
+                "registrationNumber": "2024/123456/07",
+                "phone": "+27 82 123 4567",
+                "location": "Johannesburg, South Africa",
+                "contactPerson": "Thabo Nkosi"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Profile updated",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Profile updated successfully." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/profile/preferences": {
+      "get": {
+        "tags": ["Profile"],
+        "summary": "Get email preferences — shown on Preferences tab (Workflow Updates, Weekly Summary, Product Updates)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Email preferences",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": { "workflowUpdates": true, "weeklySummary": true, "productUpdates": true }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Profile"],
+        "summary": "Save email preferences",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "workflowUpdates": true, "weeklySummary": false, "productUpdates": true }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Preferences saved successfully." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/security/sessions": {
+      "get": {
+        "tags": ["Security"],
+        "summary": "List active sessions — shown on Security tab under Active Sessions",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Active sessions",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "id": "sess_001",
+                      "device": "Chrome on macOS",
+                      "location": "Local Network",
+                      "ip": "127.0.0.1",
+                      "lastActive": "2025-06-12T08:55:00Z",
+                      "isCurrent": true
+                    },
+                    {
+                      "id": "sess_002",
+                      "device": "iPhone 15",
+                      "location": "Cape Town, ZA",
+                      "ip": "105.237.11.22",
+                      "lastActive": "2025-06-11T20:10:00Z",
+                      "isCurrent": false
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/security/sessions/{sessionId}": {
+      "delete": {
+        "tags": ["Security"],
+        "summary": "Revoke (sign out) a specific device — triggered via Sign Out Device confirmation dialog",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "sess_002" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session revoked — returns updated session list",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "message": "Session revoked successfully.",
+                  "data": [
+                    {
+                      "id": "sess_001",
+                      "device": "Chrome on macOS",
+                      "location": "Local Network",
+                      "ip": "127.0.0.1",
+                      "lastActive": "2025-06-12T08:55:00Z",
+                      "isCurrent": true
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "List in-app notifications — unread count shown on sidebar badge (5 in screenshot)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Notifications",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "unreadCount": 5,
+                    "notifications": [
+                      {
+                        "notificationId": "notif_001",
+                        "type": "document_completed",
+                        "title": "NDA Ready",
+                        "message": "Your Non-Disclosure Agreement has been generated and is ready for download.",
+                        "isRead": false,
+                        "createdAt": "2025-06-12T08:45:00Z"
+                      },
+                      {
+                        "notificationId": "notif_002",
+                        "type": "wizard_started",
+                        "title": "Wizard Started",
+                        "message": "You started the Employment Offer Letter wizard.",
+                        "isRead": false,
+                        "createdAt": "2025-06-10T14:00:00Z"
+                      },
+                      {
+                        "notificationId": "notif_003",
+                        "type": "document_completed",
+                        "title": "Employment Offer Letter Ready",
+                        "message": "Your Employment Offer Letter has been completed.",
+                        "isRead": false,
+                        "createdAt": "2025-06-09T11:20:00Z"
+                      },
+                      {
+                        "notificationId": "notif_004",
+                        "type": "signature",
+                        "title": "Document Signed",
+                        "message": "Your NDA has been signed by all parties.",
+                        "isRead": false,
+                        "createdAt": "2025-06-08T09:00:00Z"
+                      },
+                      {
+                        "notificationId": "notif_005",
+                        "type": "wizard_started",
+                        "title": "Privacy Policy Wizard Started",
+                        "message": "You started the Privacy Policy wizard.",
+                        "isRead": false,
+                        "createdAt": "2025-06-07T15:30:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/notifications/{notificationId}/read": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark a notification as read",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "notificationId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "notif_001" }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "example": { "isRead": true } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Marked read",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Notification marked as read." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/notifications/read-all": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Mark all notifications as read",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "All marked read",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "All notifications marked as read." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/subscription": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "Current subscription plan and usage",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Subscription",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "planId": "operator",
+                    "planName": "Operator",
+                    "price": 999,
+                    "currency": "ZAR",
+                    "tagline": "BEST FOR MOST STARTUPS",
+                    "wizardRuns": 12,
+                    "teamMembers": 10,
+                    "usage": { "runsUsed": 9, "runsTotal": 12, "runsRemaining": 3, "teamMembers": 10 },
+                    "nextBillingDate": "2025-07-01T00:00:00Z",
+                    "paymentMethod": { "brand": "Visa", "last4": "4242" },
+                    "pendingDowngrade": null
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/plans": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "All available plans",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Plans list",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "planId": "launchpad",
+                      "name": "Launchpad",
+                      "price": 499,
+                      "currency": "ZAR",
+                      "tagline": "NOT SURE HOW MUCH YOU'LL NEED?",
+                      "wizardRuns": 4,
+                      "teamMembers": 1,
+                      "storage": "1GB",
+                      "features": ["Access to 4 legal wizards", "5 wizard runs per month", "Standard support (48-72h response)", "1GB document storage", "PDF export"]
+                    },
+                    {
+                      "planId": "operator",
+                      "name": "Operator",
+                      "price": 999,
+                      "currency": "ZAR",
+                      "tagline": "BEST FOR MOST STARTUPS",
+                      "wizardRuns": 12,
+                      "teamMembers": 10,
+                      "storage": "Unlimited",
+                      "features": ["Access to all 12 legal wizards", "Unlimited wizard runs", "Priority support (24-48h response)", "Unlimited document storage", "API access for integrations"]
+                    },
+                    {
+                      "planId": "boardroom",
+                      "name": "Boardroom",
+                      "price": 2499,
+                      "currency": "ZAR",
+                      "tagline": "TAILORED SOLUTIONS",
+                      "wizardRuns": 30,
+                      "teamMembers": -1,
+                      "storage": "Unlimited",
+                      "features": ["All 30 legal wizards", "Unlimited wizard runs", "Dedicated support (SLA)", "Unlimited document storage", "API access + white-label options"]
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/subscription/upgrade/preview": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "Preview prorated charge for a plan upgrade",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "toPlanId", "in": "query", "required": true, "schema": { "type": "string" }, "example": "boardroom" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Upgrade preview",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "currentPlanName": "Operator",
+                    "newPlanName": "Boardroom",
+                    "currentPrice": 999,
+                    "newPrice": 2499,
+                    "daysRemaining": 15,
+                    "daysInCycle": 30,
+                    "creditUnusedTime": -499.50,
+                    "proratedNewCharge": 1249.50,
+                    "totalDueToday": 750.00,
+                    "nextBillingDate": "2025-07-01T00:00:00Z",
+                    "paymentMethod": { "brand": "Visa", "last4": "4242" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/subscription/upgrade": {
+      "post": {
+        "tags": ["Subscription"],
+        "summary": "Confirm plan upgrade — called after Paystack payment verified",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": {
+                "currentPlanId": "operator",
+                "toPlanId": "boardroom",
+                "paymentReference": "pstk_ref_abc123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upgrade successful",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "planId": "boardroom",
+                    "planName": "Boardroom",
+                    "price": 2499,
+                    "tagline": "TAILORED SOLUTIONS",
+                    "wizardRuns": 30,
+                    "teamMembers": -1,
+                    "usage": { "runsUsed": 9, "runsTotal": 30, "runsRemaining": 21, "teamMembers": -1 },
+                    "nextBillingDate": "2025-07-01T00:00:00Z",
+                    "transactionId": "txn_up_001",
+                    "invoiceId": "inv_up_001",
+                    "invoiceNumber": "TSL-2025-0042",
+                    "amountCharged": 750.00,
+                    "paidAt": "2025-06-12T09:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/subscription/downgrade": {
+      "post": {
+        "tags": ["Subscription"],
+        "summary": "Schedule a plan downgrade for next billing cycle",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "currentPlanId": "operator", "toPlanId": "launchpad" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Downgrade scheduled",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "scheduledPlanId": "launchpad",
+                    "scheduledPlanName": "Launchpad",
+                    "effectiveDate": "2025-07-01T00:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Subscription"],
+        "summary": "Cancel a scheduled downgrade",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Downgrade cancelled",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Scheduled downgrade cancelled." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/subscription/invoices": {
+      "get": {
+        "tags": ["Subscription"],
+        "summary": "Full billing history invoices",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Invoice list",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    {
+                      "invoiceId": "inv_001",
+                      "invoiceNumber": "TSL-2025-0001",
+                      "invoiceDate": "2025-06-01",
+                      "transactionId": "txn_001",
+                      "type": "subscription",
+                      "previousPlan": "Operator",
+                      "newPlan": "Operator",
+                      "billingPeriod": "2025-06-01 – 2025-06-30",
+                      "plan": "Operator",
+                      "amount": 999,
+                      "tax": 149.85,
+                      "total": 1148.85,
+                      "status": "paid",
+                      "paymentMethod": { "brand": "Visa", "last4": "4242" },
+                      "date": "2025-06-01"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/paystack/initialize": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Initialise Paystack checkout — called before upgrade to collect payment",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "planId": "boardroom", "email": "thabo@acmestartup.co.za" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Paystack session created",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "provider": "paystack",
+                    "mode": "test",
+                    "reference": "pstk_ref_abc123",
+                    "accessCode": "access_code_xyz",
+                    "authorizationUrl": "https://checkout.paystack.com/access_code_xyz",
+                    "publicKey": "pk_test_xxxxxxxxxxxxxxxxxxxx",
+                    "amount": 75000,
+                    "amountInKobo": 7500000,
+                    "currency": "ZAR",
+                    "email": "thabo@acmestartup.co.za",
+                    "plan": "boardroom"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/payments/paystack/verify": {
+      "post": {
+        "tags": ["Payments"],
+        "summary": "Verify a completed Paystack payment — called after user completes checkout",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "reference": "pstk_ref_abc123" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment verified",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "provider": "paystack",
+                    "reference": "pstk_ref_abc123",
+                    "status": "success",
+                    "gatewayResponse": "Approved",
+                    "paidAt": "2025-06-12T09:00:00Z",
+                    "authorization": {
+                      "authorization_code": "AUTH_xxx",
+                      "card_type": "visa",
+                      "last4": "4242",
+                      "exp_month": "12",
+                      "exp_year": "2027",
+                      "bank": "Test Bank",
+                      "reusable": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/billing": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "Billing summary — plan, next invoice, invoice history",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Billing summary",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "plan": {
+                      "name": "Operator",
+                      "price": 999,
+                      "currency": "ZAR",
+                      "nextBillingDate": "2025-07-01T00:00:00Z",
+                      "runsUsed": 9,
+                      "runsTotal": 12,
+                      "teamMembers": 10
+                    },
+                    "nextInvoice": { "subscription": 999, "tax": 149.85, "total": 1148.85 },
+                    "invoices": [
+                      {
+                        "invoiceId": "inv_001",
+                        "date": "2025-06-01",
+                        "subscription": 999,
+                        "tax": 149.85,
+                        "total": 1148.85,
+                        "downloadUrl": "https://cdn.tsl.co.za/invoices/inv_001.pdf"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/billing/payment-methods": {
+      "get": {
+        "tags": ["Billing"],
+        "summary": "List saved payment methods",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Payment methods",
+            "content": {
+              "application/json": {
+                "example": {
+                  "success": true,
+                  "data": [
+                    { "methodId": "pm_001", "type": "card", "brand": "Visa", "last4": "4242", "expiry": "12/2027", "isDefault": true }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Billing"],
+        "summary": "Add a new payment method",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "example": { "type": "card", "paystackAuthorizationCode": "AUTH_new_xxx" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Added",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Payment method added." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/billing/payment-methods/{methodId}/default": {
+      "patch": {
+        "tags": ["Billing"],
+        "summary": "Set a payment method as default",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "methodId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "pm_001" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default updated",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Default payment method updated." }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "/api/v1/sme/billing/payment-methods/{methodId}": {
+      "delete": {
+        "tags": ["Billing"],
+        "summary": "Remove a payment method",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "methodId", "in": "path", "required": true, "schema": { "type": "string" }, "example": "pm_001" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Removed",
+            "content": {
+              "application/json": {
+                "example": { "success": true, "message": "Payment method removed." }
+              }
+            }
+          }
+        }
+      }
+    }
+
+  },
+
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Pass the token returned by /auth/login or /auth/register as: Authorization: Bearer <token>"
+      }
+    },
+    "schemas": {
+      "RegisterPayload": {
+        "type": "object",
+        "required": ["fullName", "email", "password", "confirmPassword", "acceptedTerms"],
+        "properties": {
+          "fullName":        { "type": "string", "example": "Thabo Nkosi" },
+          "email":           { "type": "string", "format": "email", "example": "thabo@acmestartup.co.za" },
+          "password":        { "type": "string", "minLength": 6, "example": "SecurePass123!" },
+          "confirmPassword": { "type": "string", "example": "SecurePass123!" },
+          "acceptedTerms":   { "type": "boolean", "example": true }
+        }
+      },
+      "LoginPayload": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email":    { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "portal":   { "type": "string", "enum": ["sme"], "example": "sme" }
+        }
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "userId":            { "type": "string", "example": "usr_001" },
+          "fullName":          { "type": "string", "example": "Thabo Nkosi" },
+          "email":             { "type": "string", "example": "thabo@acmestartup.co.za" },
+          "role":              { "type": "string", "example": "sme" },
+          "plan":              { "type": "string", "nullable": true, "example": "operator" },
+          "token":             { "type": "string" },
+          "tokenExpiry":       { "type": "string", "format": "date-time" },
+          "createdAt":         { "type": "string", "format": "date-time" },
+          "portal":            { "type": "string", "enum": ["sme"], "example": "sme" },
+          "mustResetPassword": { "type": "boolean", "example": false }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorised": {
+        "description": "Missing or invalid Bearer token",
+        "content": {
+          "application/json": {
+            "example": { "success": false, "message": "Unauthorised.", "error": "UNAUTHORISED" }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request body validation failed",
+        "content": {
+          "application/json": {
+            "example": {
+              "success": false,
+              "message": "Validation failed.",
+              "messages": ["Password too short.", "Passwords do not match."]
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -2,8 +2,8 @@ import { ChevronUp, LayoutDashboard, LogOut, Menu, UserRound, X } from 'lucide-r
 import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { navigation } from '../../data/navigation'
-import { clearAuthSession } from '../../services/tslApi'
 import { cn } from '../../utils/cn'
+import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
 import { SignInModal } from '../auth/SignInModal'
 import { Container } from './Container'
 import './Navbar.css'
@@ -49,6 +49,7 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
   const [isSignInModalOpen, setIsSignInModalOpen] = useState(false)
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [modalMode, setModalMode] = useState<'signin' | 'signup'>('signup')
   const [authRedirectTo, setAuthRedirectTo] = useState<string | undefined>()
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('tsl-authenticated') === 'true')
@@ -77,10 +78,9 @@ export function Navbar() {
   }
 
   const handleSignOut = () => {
-    clearAuthSession()
-    setIsAuthenticated(false)
     setIsAccountMenuOpen(false)
-    navigate('/')
+    setIsOpen(false)
+    setLogoutModalOpen(true)
   }
 
   useEffect(() => {
@@ -257,6 +257,11 @@ export function Navbar() {
         initialMode={modalMode}
         redirectTo={authRedirectTo}
         onAuthenticated={handleAuthenticated}
+      />
+
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
       />
     </header>
   )

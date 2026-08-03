@@ -2,7 +2,7 @@ import { ArrowLeft, CheckCircle2, CreditCard, Minus, Plus, Scale } from 'lucide-
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
-import { counselApi, paymentApi } from '../../services/tslApi'
+import { paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { setPageMetadata } from '../../services/metadata'
 import type { CounselCredits } from '../../services/dashboardTypes'
@@ -13,6 +13,11 @@ import './CounselTopUpPayment.css'
 const VAT_RATE = 0.15
 const MIN_CREDITS = 1
 const MAX_CREDITS = 20
+const COUNSEL_PLANS: Record<string, TopUpPlan> = {
+  launchpad: { name: 'Launchpad', credits: 0, sla: '2 Business Days', ratePerCredit: 550 },
+  operator: { name: 'Operator', credits: 2, sla: '1 Business Day', ratePerCredit: 500 },
+  boardroom: { name: 'Boardroom', credits: 6, sla: '8 Business Hours', ratePerCredit: 450 },
+}
 
 function getStoredUserEmail() {
   try {
@@ -31,8 +36,9 @@ export default function CounselTopUpPayment() {
   const location = useLocation()
   const navigate  = useNavigate()
 
-  const plan    = location.state?.plan    as TopUpPlan      | undefined
+  const requestedPlan = location.state?.plan as TopUpPlan | undefined
   const credits = location.state?.credits as CounselCredits | undefined
+  const plan = credits ? COUNSEL_PLANS[credits.plan.trim().toLowerCase()] : undefined
 
   setPageMetadata('Top Up Credits', 'Purchase additional counsel credits.')
 
@@ -41,7 +47,7 @@ export default function CounselTopUpPayment() {
   const [error,    setError]    = useState('')
 
   // Guard: if no plan was passed, redirect back
-  if (!plan) {
+  if (!plan || !credits || requestedPlan?.name.toLowerCase() !== plan.name.toLowerCase()) {
     navigate('/dashboard/counsel', { replace: true })
     return null
   }
@@ -98,18 +104,10 @@ export default function CounselTopUpPayment() {
       type:       'counsel-topup',
     })
 
-    // Credit the account. If verification succeeded, the backend already added
-    // credits inside verifyPayment (counsel-topup branch). We also call
-    // topUpCredits explicitly so the credits GET reflects the new total
-    // immediately — the handler is idempotent on duplicate references.
-    if (verification.success) {
-      await counselApi.topUpCredits({
-        plan:       plan!.name,
-        credits:    qty,
-        amountPaid: total,
-        currency:   'ZAR',
-        reference:  result.reference,
-      })
+    if (!verification.success || verification.data?.status !== 'success') {
+      setError(verification.message || 'We could not verify the payment. No credits were added.')
+      setIsPaying(false)
+      return
     }
 
     setIsPaying(false)

@@ -57,6 +57,7 @@ type CounselRequestResponse = CounselRequest[] | { requests?: CounselRequest[] }
 
 const fallbackCredits: CounselCredits = {
   plan: 'Boardroom',
+  includedCredits: 6,
   creditsTotal: 6,
   creditsUsed: 1,
   creditsRemaining: 2,
@@ -226,6 +227,10 @@ export default function DashboardCounsel() {
     const errors: string[] = []
 
     for (const file of incoming) {
+      if (attachments.length + valid.length >= 1) {
+        errors.push('A counsel request can contain only one document.')
+        continue
+      }
       const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
       if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXT.includes(ext)) {
         errors.push(`"${file.name}" is not a PDF or DOCX file.`)
@@ -274,8 +279,17 @@ export default function DashboardCounsel() {
       return
     }
 
-    if (credits.creditsRemaining <= 0) {
+    const creditsRequired = 1
+    if (credits.creditsRemaining < creditsRequired) {
       setErrorMessage('You do not have any counsel credits remaining. Please top up before submitting.')
+      return
+    }
+    if (!formData.relatedWizard) {
+      setErrorMessage('Choose the wizard document to be reviewed before submitting a counsel request.')
+      return
+    }
+    if (attachments.length !== 1) {
+      setErrorMessage('A counsel request must include exactly one document.')
       return
     }
 
@@ -322,9 +336,9 @@ export default function DashboardCounsel() {
         creditsRemaining:
           typeof created?.creditsRemaining === 'number'
             ? created.creditsRemaining
-            : Math.max(current.creditsRemaining - 1, 0),
-        creditsUsed: current.creditsUsed + 1,
-        usageThisMonth: current.usageThisMonth + 1,
+            : Math.max(current.creditsRemaining - creditsRequired, 0),
+        creditsUsed: current.creditsUsed + creditsRequired,
+        usageThisMonth: current.usageThisMonth + creditsRequired,
       }))
 
       const refreshedCredits = await counselApi.credits()
@@ -397,7 +411,7 @@ export default function DashboardCounsel() {
               </div>
               <h2>Usage This Month</h2>
               <p>
-                {credits.usageThisMonth} of {credits.creditsTotal} included credits
+                {credits.usageThisMonth} of {credits.includedCredits} included credits
               </p>
             </article>
           </section>
@@ -409,8 +423,8 @@ export default function DashboardCounsel() {
             <div>
               <h2>Credit Usage &amp; Top-Ups</h2>
               <p>
-                Your plan includes {credits.creditsTotal} counsel credits per month for basic reviews. If scope exceeds
-                basic credit allocation, top-up pricing applies at {topUpRate} per additional credit hour.
+                Your plan includes {credits.includedCredits} counsel credits per month for standard reviews. If scope exceeds
+                one standard credit, top-up pricing applies at {topUpRate} per additional credit.
               </p>
             </div>
             <button type="button" onClick={() => setIsCreditsModalOpen(true)}>
@@ -449,7 +463,7 @@ export default function DashboardCounsel() {
               <form className="dashboard-counsel__form" onSubmit={handleSubmit}>
                 <div className="dashboard-counsel__form-heading">
                   <h2>Request Expert Review</h2>
-                  <p>Submit a request for legal review or escalation. Our attorneys will respond within 24 hours.</p>
+                  <p>Submit a document for legal review.</p>
                 </div>
 
                 {errorMessage ? (
@@ -482,10 +496,10 @@ export default function DashboardCounsel() {
 
                 <div className="dashboard-counsel__field">
                   <span className="dashboard-counsel__label-row">
-                    Attachments (Optional)
+                    Document for review
                     <small>
                       <Upload size={14} />
-                      PDF, DOCX • Max 4MB
+                      One PDF or DOCX • Max 4MB
                     </small>
                   </span>
 
@@ -494,7 +508,6 @@ export default function DashboardCounsel() {
                     ref={fileInputRef}
                     type="file"
                     accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    multiple
                     style={{ display: 'none' }}
                     onChange={handleFileChange}
                   />
@@ -537,7 +550,7 @@ export default function DashboardCounsel() {
                 </div>
 
                 <label className="dashboard-counsel__field">
-                  <span>Related Wizard (Optional)</span>
+                  <span>Related Wizard</span>
                   <select
                     aria-label="Related Wizard"
                     value={formData.relatedWizard}
@@ -608,6 +621,7 @@ export default function DashboardCounsel() {
             // Pass current credits so the payment page can show used/remaining
             navigate('/dashboard/counsel/topup', { state: { plan, credits } })
           }}
+          onManagePlans={() => navigate('/dashboard/settings')}
         />
         {activeRequest ? (() => {
           const statusKey = activeRequest.status.toLowerCase()

@@ -19,9 +19,10 @@ interface CounselCreditsModalProps {
   onClose: () => void
   currentPlan: string
   onTopUp: (plan: TopUpPlan) => void
+  onManagePlans: () => void
 }
 
-export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp }: CounselCreditsModalProps) {
+export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp, onManagePlans }: CounselCreditsModalProps) {
   if (!isOpen) return null
 
   const normalizedCurrentPlan = currentPlan.trim().toLowerCase()
@@ -118,9 +119,13 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
                   <button
                     type="button"
                     className={`counsel-credits-modal__button${isCurrentPlan(plan.name) ? ' counsel-credits-modal__button--primary' : ''}`}
-                    onClick={() => { onClose(); onTopUp(plan) }}
+                    onClick={() => {
+                      onClose()
+                      if (isCurrentPlan(plan.name)) onTopUp(plan)
+                      else onManagePlans()
+                    }}
                   >
-                    Top Up
+                    {isCurrentPlan(plan.name) ? 'Top Up' : 'Manage in Settings'}
                   </button>
                 </div>
               ))}
@@ -133,10 +138,11 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               How Credits Work
             </h3>
             <ul>
-              <li>Each credit allows one counsel request/review</li>
+              <li>Each credit allows one counsel request/review of a single document state</li>
+              <li>Standard scope: 30 minutes, up to 10 pages or 1,500 words, five clause changes, and one counterparty round</li>
               <li>Credits reset monthly on your billing date</li>
               <li>Unused credits do not roll over to the next month</li>
-              <li>Top-up credits can be purchased anytime at your tier rate</li>
+              <li>Top-up credits can be purchased anytime at your current tier rate</li>
               <li>Response times are business hours (Mon-Fri, 9am-5pm SAST)</li>
             </ul>
           </div>

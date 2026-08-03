@@ -71,7 +71,7 @@ describe('DashboardCounsel Page', () => {
     renderDashboardCounsel()
     
     expect(screen.getByText(/credit usage & top-ups/i)).toBeInTheDocument()
-    expect(screen.getByText(/r450 per additional credit hour/i)).toBeInTheDocument()
+    expect(screen.getByText(/r450 per additional credit/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /top up credits/i })).toBeInTheDocument()
   })
 

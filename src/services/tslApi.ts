@@ -325,6 +325,7 @@ export const adminApi = {
   addCounsel: (payload: JsonRecord) => request('/api/v1/admin/counsel', 'POST', payload),
   assignCounselRequest: (requestId: string, payload: JsonRecord) =>
     request(`/api/v1/admin/counsel-requests/${requestId}/assign`, 'POST', payload),
+  markNotificationRead: (notificationId: string) => request(`/api/v1/admin/notifications/${notificationId}/read`, 'PATCH'),
   issues: () => request('/api/v1/admin/issues'),
   // Fetch failed payment transactions.
   // PRODUCTION: backend populates this from payment gateway webhooks / subscription failures.

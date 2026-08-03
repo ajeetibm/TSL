@@ -1,0 +1,120 @@
+.logout-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1rem;
+}
+
+.logout-modal__panel {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 2rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Icon circle */
+.logout-modal__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 9999px;
+  background: #fdf6e7;
+  color: #C9982A;
+  margin-bottom: 1.25rem;
+}
+
+.logout-modal__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.logout-modal__title {
+  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0d1b2a;
+  line-height: 1.3;
+  margin-bottom: 0.625rem;
+}
+
+.logout-modal__body {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin-bottom: 1.75rem;
+}
+
+.logout-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.logout-modal__btn-cancel,
+.logout-modal__btn-signout {
+  flex: 1;
+  height: 44px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.logout-modal__btn-cancel {
+  border: 1.5px solid #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.logout-modal__btn-cancel:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.logout-modal__btn-signout {
+  border: none;
+  background: #C9982A;
+  color: #ffffff;
+}
+
+.logout-modal__btn-signout:hover:not(:disabled) {
+  background: #b8881f;
+}
+
+.logout-modal__btn-cancel:disabled,
+.logout-modal__btn-signout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Spinner */
+.logout-modal__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  animation: logout-spin 0.65s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes logout-spin {
+  to { transform: rotate(360deg); }
+}
