@@ -20,11 +20,16 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
 
   const handleViewDetails = () => {
     if (localStorage.getItem('tsl-authenticated') === 'true') {
-      navigate('/wizard-details')
+      navigate('/dashboard/wizard-details', {
+        state: {
+          selectedWizards,
+        },
+      })
       return
     }
 
-    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/wizard-details' } }))
+    localStorage.setItem('tsl-selected-dashboard-wizards', JSON.stringify(selectedWizards))
+    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/dashboard/wizard-details' } }))
   }
 
   return (

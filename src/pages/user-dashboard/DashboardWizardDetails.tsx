@@ -32,6 +32,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
+import { subscriptionApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import './Dashboard.css'
@@ -279,8 +280,10 @@ export default function DashboardWizardDetails() {
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
+  const [accountPlan, setAccountPlan] = useState<PlanKey | null>(null)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('')
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
+  const [wizardAccessWarning, setWizardAccessWarning] = useState<string | null>(null)
   const [isInitializingPayment, setIsInitializingPayment] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
@@ -305,6 +308,7 @@ export default function DashboardWizardDetails() {
   )
 
   const updateQuantity = (title: string, nextQuantity: number) => {
+    setWizardAccessWarning(null)
     setQuantities((current) => {
       const next = {
         ...current,
@@ -334,13 +338,30 @@ export default function DashboardWizardDetails() {
     }))
 
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
+  const selectedWizardCount = selectedWizards.length
+  const planWizardLimit: Record<PlanKey, number> = { Launchpad: 5, Operator: 12, Boardroom: 30 }
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
 
   useEffect(() => {
-    if (totalWizards > 0) {
-      setActivePlan(getPlanFromCount(totalWizards))
-    }
-  }, [totalWizards])
+    subscriptionApi.get().then((response) => {
+      const planId = response.success ? response.data?.planId?.toLowerCase() : ''
+      const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
+      if (plan) { setAccountPlan(plan); setActivePlan(plan) }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!accountPlan && selectedWizardCount > 0) setActivePlan(getPlanFromCount(selectedWizardCount))
+  }, [accountPlan, selectedWizardCount])
+
+  // This also handles a guest returning from sign-in with showPayment in the
+  // navigation state: the authenticated plan always wins over guest intent.
+  useEffect(() => {
+    if (!accountPlan || selectedWizardCount <= planWizardLimit[accountPlan]) return
+    setIsPaymentView(false)
+    setWizardAccessWarning(`Your ${accountPlan} plan includes any ${planWizardLimit[accountPlan]} wizards. Choose ${planWizardLimit[accountPlan]} of your ${selectedWizardCount} shortlisted wizards, or upgrade.`)
+  }, [accountPlan, selectedWizardCount])
+
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
@@ -349,6 +370,10 @@ export default function DashboardWizardDetails() {
   }
 
   const handlePayNow = async () => {
+    if (selectedWizardCount > planWizardLimit[activePlan]) {
+      setPaymentMessage({ tone: 'info', text: `${activePlan} includes any ${planWizardLimit[activePlan]} wizards. Choose which ${planWizardLimit[activePlan]} to activate, or upgrade to keep all ${selectedWizardCount}.` })
+      return
+    }
     if (!selectedPaymentMethod) {
       setPaymentMessage({
         tone: 'info',
@@ -685,12 +710,20 @@ export default function DashboardWizardDetails() {
             type="button"
             className="dashboard-wizard-details__payment-button"
             disabled={selectedWizards.length === 0}
-            onClick={() => setIsPaymentView(true)}
+            onClick={() => {
+              if (accountPlan && selectedWizardCount > planWizardLimit[accountPlan]) {
+                setWizardAccessWarning(`Your ${accountPlan} plan includes any ${planWizardLimit[accountPlan]} wizards. Choose ${planWizardLimit[accountPlan]} of your ${selectedWizardCount} shortlisted wizards, or upgrade.`)
+                return
+              }
+              setIsPaymentView(true)
+            }}
           >
             Proceed to Payment
             <ChevronRight size={16} />
           </button>
         </section>
+
+        {wizardAccessWarning ? <div className="dashboard-wizard-details__access-warning" role="alert"><strong>Plan limit reached.</strong><span>{wizardAccessWarning}</span></div> : null}
 
         <div className="dashboard-wizard-details__stack">
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__selected">

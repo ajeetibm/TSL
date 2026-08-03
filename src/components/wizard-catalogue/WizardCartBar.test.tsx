@@ -115,14 +115,15 @@ describe('WizardCartBar', () => {
 
       expect(openAuthModal).toHaveBeenCalledTimes(1)
       expect(openAuthModal.mock.calls[0][0]).toMatchObject({
-        detail: { mode: 'signup', redirectTo: '/wizard-details' },
+        detail: { mode: 'signup', redirectTo: '/dashboard/wizard-details' },
       })
+      expect(localStorage.getItem('tsl-selected-dashboard-wizards')).toBe(JSON.stringify(mockSelectedWizards))
       expect(mockNavigate).not.toHaveBeenCalled()
 
       window.removeEventListener('tsl-open-auth-modal', openAuthModal)
     })
 
-    it('should navigate to wizard-details when authenticated user clicks View Details', async () => {
+    it('should navigate to dashboard wizard details when authenticated user clicks View Details', async () => {
       const user = userEvent.setup()
       localStorage.setItem('tsl-authenticated', 'true')
 
@@ -131,7 +132,11 @@ describe('WizardCartBar', () => {
       const viewDetailsButton = screen.getByRole('button', { name: /View Details/i })
       await user.click(viewDetailsButton)
 
-      expect(mockNavigate).toHaveBeenCalledWith('/wizard-details')
+      expect(mockNavigate).toHaveBeenCalledWith('/dashboard/wizard-details', {
+        state: {
+          selectedWizards: mockSelectedWizards,
+        },
+      })
     })
   })
 

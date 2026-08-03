@@ -166,6 +166,13 @@ export function WizardDetailOverview() {
   }
 
   const proceedToPayment = () => {
+    // A guest shortlist is preserved locally, but it is not an entitlement.
+    // Resolve access only after authentication using the account's plan.
+    if (!localStorage.getItem('tsl-auth-token')) {
+      saveWizardQuantities(quantities)
+      window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin', redirectTo: '/dashboard/wizard-details' } }))
+      return
+    }
     navigate('/dashboard/wizard-details', {
       state: {
         showPayment: true,
