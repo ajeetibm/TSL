@@ -897,7 +897,22 @@
 .counsel-request-modal__response { display: grid; align-content: start; gap: 12px; }
 .counsel-request-modal__response label { display: grid; gap: 7px; color: #344054; font-size: 14px; font-weight: 700; }
 .counsel-request-modal textarea { min-height: 126px; resize: vertical; border: 1px solid #d0d5dd; border-radius: 12px; padding: 12px; font: inherit; font-weight: 400; }
-.counsel-request-modal__done, .counsel-request-modal__start { min-height: 44px; border: 0; border-radius: 999px; background: #d1a13b; color: #fff; font-weight: 800; cursor: pointer; }
+.counsel-request-modal__done,
+.counsel-request-modal__start {
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-secondary, #d6a233);
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.counsel-request-modal__done:disabled,
+.counsel-request-modal__start:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 /* upload area */
 .counsel-request-modal__upload { display: grid; gap: 8px; }
@@ -924,9 +939,12 @@
 .counsel-request-modal__upload-btn input { display: none; }
 .counsel-request-modal__upload-list { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
 .counsel-request-modal__upload-list li { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #344054; }
-.counsel-request-modal__reject { margin-top: 10px; padding-top: 16px; border-top: 1px solid #d0d5dd; color: #b42318 !important; }
+.counsel-request-modal__reject { display: grid; gap: 9px; margin-top: 10px; padding-top: 16px; border-top: 1px solid #d0d5dd; color: #101828 !important; }
+.counsel-request-modal__reject > label:first-child { color: #101828; font-size: 14px; font-weight: 800; }
 .counsel-request-modal__reject textarea { min-height: 70px; }
-.counsel-request-modal__reject button { min-height: 38px; border: 0; border-radius: 9px; background: #fff0f0; color: #b42318; font-weight: 800; cursor: pointer; }
+.counsel-request-modal__reject-help { color: #667085; font-size: 12px; text-align: right; }
+.counsel-request-modal__reject-confirm { display: flex !important; align-items: flex-start; gap: 8px; color: #101828 !important; font-size: 13px !important; font-weight: 500 !important; }
+.counsel-request-modal__reject-confirm input { margin: 3px 0 0; accent-color: #d1a13b; }
 .counsel-request-modal__error { margin: 0; color: #b42318; font-size: 13px; }
 
 .counsel-requests__row-details p {

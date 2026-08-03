@@ -460,7 +460,10 @@ function RequestDetailsModal({
 }) {
   const [response, setResponse] = useState(request.counselResponse || '')
   const [reason, setReason] = useState('')
+  const [confirmRejection, setConfirmRejection] = useState(false)
   const [error, setError] = useState('')
+  const minimumRejectionReasonLength = 20
+  const canReject = confirmRejection && reason.trim().length >= minimumRejectionReasonLength
   const [documents, setDocuments] = useState<DocMeta[]>([])
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -481,7 +484,8 @@ function RequestDetailsModal({
     setError(await onComplete(request.requestId, response.trim(), documents))
   }
   const reject = () => {
-    if (!reason.trim()) return setError('A rejection reason is required for the admin.')
+    if (reason.trim().length < minimumRejectionReasonLength) return setError(`Please provide at least ${minimumRejectionReasonLength} characters for the reassignment reason.`)
+    if (!confirmRejection) return setError('Please confirm that the request should be returned to the admin.')
     onReject(request.requestId, reason.trim())
     onClose()
   }
@@ -501,7 +505,13 @@ function RequestDetailsModal({
         </section>
         {request.status !== 'completed' && request.status !== 'rejected' ? <section className="counsel-request-modal__response"><h3>Counsel response</h3>
           {request.status === 'pending' ? <button type="button" className="counsel-request-modal__start" onClick={() => onStartReview(request.requestId)}>Accept &amp; start review</button> : <><label>Comments / recommendations<textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write the final advice and recommendations for the user..." /></label><div className="counsel-request-modal__upload"><span>Supporting documents (optional)</span><label className="counsel-request-modal__upload-btn" title="Click to upload supporting documents"><Upload size={15} />Upload documents<input type="file" multiple onChange={handleFiles} /></label>{documents.length > 0 && <ul className="counsel-request-modal__upload-list">{documents.map((file) => <li key={file.name}><FileText size={13} />{file.name}</li>)}</ul>}</div><button type="button" className="counsel-request-modal__done" onClick={finish}>Mark as Done</button></>}
-          <label className="counsel-request-modal__reject">Reject request (admin only)<textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Mandatory reason for reassignment" /><button type="button" onClick={reject}>Reject &amp; return to admin</button></label>
+          <section className="counsel-request-modal__reject">
+            <label htmlFor="rejection-reason">Reject request (admin only)</label>
+            <textarea id="rejection-reason" value={reason} onChange={(event) => { setReason(event.target.value); setError('') }} placeholder="Mandatory reason for reassignment" aria-describedby="rejection-reason-help" />
+            <span id="rejection-reason-help" className="counsel-request-modal__reject-help">{reason.trim().length}/{minimumRejectionReasonLength} characters minimum</span>
+            <label className="counsel-request-modal__reject-confirm"><input type="checkbox" checked={confirmRejection} onChange={(event) => { setConfirmRejection(event.target.checked); setError('') }} /> I confirm this request should be returned to the admin for reassignment.</label>
+            <button type="button" className="counsel-request-modal__start" onClick={reject} disabled={!canReject}>Reject &amp; Return to Admin</button>
+          </section>
           {error ? <p className="counsel-request-modal__error">{error}</p> : null}
         </section> : <section className="counsel-request-modal__response"><h3>{request.status === 'completed' ? 'Completed response' : 'Returned to admin'}</h3><p>{request.counselResponse || 'This request is no longer actionable.'}</p></section>}
       </div>

@@ -9,10 +9,11 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useNotificationCount } from '../../context/NotificationContext'
-import { clearAuthSession, notificationApi } from '../../services/tslApi'
+import { notificationApi } from '../../services/tslApi'
+import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
 
 type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
@@ -53,10 +54,7 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
     }
   }, [])
 
-  const signOut = () => {
-    clearAuthSession()
-    navigate('/')
-  }
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
 
   return (
     <div className="user-dashboard">
@@ -98,7 +96,7 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
             <UserRound size={18} />
             <span>Profile</span>
           </button>
-          <button type="button" className="user-dashboard__nav-item" onClick={signOut}>
+          <button type="button" className="user-dashboard__nav-item" onClick={() => setLogoutModalOpen(true)}>
             <LogOut size={18} />
             <span>Sign Out</span>
           </button>
@@ -106,6 +104,11 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
       </aside>
 
       <section className="user-dashboard__main">{children}</section>
+
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+      />
     </div>
   )
 }

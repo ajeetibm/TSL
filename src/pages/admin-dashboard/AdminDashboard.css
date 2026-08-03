@@ -1,4 +1,10 @@
 .admin-dashboard {
+
+/* Counsel decline alerts and re-assignment context */
+.ar-rejection-notification { display: flex; align-items: center; gap: 10px; margin: 16px 28px 0; padding: 12px 14px; border: 1px solid #f2c94c; border-radius: 10px; background: #fff9e8; color: #714f00; }
+.ar-rejection-notification span { flex: 1; }
+.ar-rejection-notification button { border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; }
+.ar-card__rejection-reason { grid-column: 1 / -1; margin-top: 10px; color: #8a3b12; font-size: 13px; }
   height: 100vh;
   overflow: hidden;
   display: grid;

@@ -40,6 +40,7 @@ export interface WizardItem {
 
 export interface CounselCredits {
   plan: string
+  includedCredits: number
   creditsTotal: number
   creditsUsed: number
   creditsRemaining: number

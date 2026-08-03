@@ -71,7 +71,11 @@ type AdminDashboardData = {
     fromUser: string
     receivedAt: string
     status: string
+    assignedCounselName?: string
+    rejectionReason?: string
+    rejectedAt?: string
   }>
+  notifications?: Array<{ notificationId: string; type: string; requestId: string; subject: string; message: string; read: boolean; createdAt: string }>
   revenueChart?: {
     year?: number
     months?: Array<{ month: string; actual: number; target: number }>
@@ -434,6 +438,12 @@ export default function AdminDashboard() {
       return true
     })
   }, [dashboardData])
+  const unreadRejectionNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'counsel_request_rejected' && !notification.read), [dashboardData])
+  const dismissNotification = async (notificationId: string) => {
+    const response = await adminApi.markNotificationRead(notificationId)
+    if (!response.success) return setError(response.message ?? 'Unable to update notification.')
+    setDashboardData((current) => current ? { ...current, notifications: (current.notifications ?? []).map((notification) => notification.notificationId === notificationId ? { ...notification, read: true } : notification) } : current)
+  }
 
   const topWizards = (dashboardData?.topWizards ?? []).map((wizard, index) => ({
     ...wizard,
@@ -1074,12 +1084,19 @@ export default function AdminDashboard() {
                   <option>All Status</option>
                   <option>Pending</option>
                   <option>In Progress</option>
+                  <option>Rejected — Reassignment Needed</option>
                   <option>Completed</option>
                 </select>
               </div>
 
               {/* Divider */}
               <hr className="ar-container__divider" />
+              {unreadRejectionNotifications.map((notification) => (
+                <div className="ar-rejection-notification" key={notification.notificationId} role="alert">
+                  <AlertTriangle size={18} /><span><strong>Action needed:</strong> {notification.message}</span>
+                  <button type="button" onClick={() => void dismissNotification(notification.notificationId)}>Mark as read</button>
+                </div>
+              ))}
 
               {/* Heading + cards */}
               {(() => {
@@ -1121,19 +1138,20 @@ export default function AdminDashboard() {
                               {/* Col 3 rows 1-2: status badge + accept button stacked */}
                               <div className="ar-card__right">
                                 <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
-                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : request.status}
+                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : normStatus === 'rejected reassignment needed' ? 'Rejected — reassignment needed' : request.status}
                                 </span>
-                                {normStatus === 'pending' && (
+                                {(normStatus === 'pending' || normStatus === 'rejected reassignment needed') && (
                                   <button
                                     type="button"
                                     className="ar-card__btn ar-card__btn--accept"
                                     onClick={() => openPreviewModal(request)}
                                   >
                                     <Check size={14} />
-                                    Accept
+                                    {normStatus === 'rejected reassignment needed' ? 'Reassign' : 'Assign'}
                                   </button>
                                 )}
                               </div>
+                              {normStatus === 'rejected reassignment needed' && request.rejectionReason && <div className="ar-card__rejection-reason">Decline reason: {request.rejectionReason}</div>}
                               {/* Col 1 row 2: user */}
                               <div className="ar-card__bottom">
                                 <div className="ar-card__user">
