@@ -486,6 +486,8 @@ function RequestDetailsModal({
 
   const finish = async () => {
     if (!response.trim()) return setError('Please add your review comments before marking this request as done.')
+    // If still pending, promote to in_progress first, then complete
+    if (request.status === 'pending') onStartReview(request.requestId)
     setError(await onComplete(request.requestId, response.trim(), documents))
   }
   const reject = () => {
@@ -574,10 +576,36 @@ function RequestDetailsModal({
           </div>
           <section className="counsel-request-modal__response">
             <h3>Counsel response</h3>
-            {request.status === 'pending'
-              ? <button type="button" className="counsel-request-modal__start" onClick={() => onStartReview(request.requestId)}>Accept &amp; start review</button>
-              : <><label>Comments / recommendations<textarea value={response} onChange={(event) => setResponse(event.target.value)} placeholder="Write the final advice and recommendations for the user..." /></label><div className="counsel-request-modal__upload"><span>Supporting documents (optional)</span><label className="counsel-request-modal__upload-btn" title="Click to upload supporting documents"><Upload size={15} />Upload documents<input type="file" multiple onChange={handleFiles} /></label>{documents.length > 0 && <ul className="counsel-request-modal__upload-list">{documents.map((file) => <li key={file.name}><FileText size={13} />{file.name}</li>)}</ul>}</div><button type="button" className="counsel-request-modal__done" onClick={finish}>Mark as Done</button></>
-            }
+
+            <label className="counsel-request-modal__field-label">
+              Comments / recommendations
+              <textarea
+                value={response}
+                onChange={(event) => setResponse(event.target.value)}
+                placeholder="Write the final advice and recommendations for the user..."
+              />
+            </label>
+
+            <div className="counsel-request-modal__upload">
+              <span>Supporting documents (optional)</span>
+              <label className="counsel-request-modal__upload-zone" title="Click to upload supporting documents">
+                <Upload size={20} />
+                <span>Upload documents</span>
+                <input type="file" multiple onChange={handleFiles} />
+              </label>
+              {documents.length > 0 && (
+                <ul className="counsel-request-modal__upload-list">
+                  {documents.map((file) => (
+                    <li key={file.name}><FileText size={13} />{file.name}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <button type="button" className="counsel-request-modal__done" onClick={finish}>
+              Mark as Done
+            </button>
+
             {error ? <p className="counsel-request-modal__error">{error}</p> : null}
           </section>
         </div>

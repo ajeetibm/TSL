@@ -994,21 +994,147 @@
 
 /* ── Accept / response sub-page ─────────────────────────────────────────── */
 .counsel-request-modal__page--accept { background: #fff; }
-.counsel-request-modal__response { display: grid; align-content: start; gap: 12px; margin-top: 20px; }
+
+/* Response section — vertical stack with consistent spacing */
+.counsel-request-modal__response {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+/* "Counsel response" heading — normal weight to match image */
+.counsel-request-modal__response > h3 {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a2636;
+  margin: 0;
+}
+
+/* Generic label reset inside response */
 .counsel-request-modal__response label { display: grid; gap: 7px; color: #344054; font-size: 14px; font-weight: 700; }
-.counsel-request-modal textarea { min-height: 126px; resize: vertical; border: 1px solid #d0d5dd; border-radius: 12px; padding: 12px; font: inherit; font-weight: 400; }
+
+/* Labelled field (textarea + label) */
+.counsel-request-modal__field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #101828;
+}
+.counsel-request-modal__field-label textarea {
+  min-height: 140px;
+  resize: vertical;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  color: #101828;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  width: 100%;
+}
+.counsel-request-modal__field-label textarea:focus { border-color: #d6a233; }
+
+/* ── Upload area ─────────────────────────────────────────────────────────── */
+.counsel-request-modal__upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.counsel-request-modal__upload > span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #101828;
+}
+
+/* Full-width dashed upload zone — matches design image exactly */
+.counsel-request-modal__upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1.5px dashed #c8cdd5;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  box-sizing: border-box;
+}
+.counsel-request-modal__upload-zone svg {
+  color: #667085;
+  flex-shrink: 0;
+}
+.counsel-request-modal__upload-zone > span {
+  font-size: 14px;
+  font-weight: 700;
+  color: #101828;
+}
+.counsel-request-modal__upload-zone:hover { border-color: #d6a233; background: #fffbf0; }
+.counsel-request-modal__upload-zone:hover svg { color: #c08a20; }
+.counsel-request-modal__upload-zone:hover > span { color: #a07020; }
+.counsel-request-modal__upload-zone input { display: none; }
+
+.counsel-request-modal__upload-list {
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.counsel-request-modal__upload-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #344054;
+}
+
+/* Mark as Done / Accept & start review button */
 .counsel-request-modal__done,
 .counsel-request-modal__start {
-  min-height: 44px; border: 0; border-radius: 999px;
-  background: var(--color-secondary, #d6a233); color: #fff;
-  font-weight: 800; cursor: pointer;
+  min-height: 52px;
+  border: 0;
+  border-radius: 999px;
+  background: #d6a233;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  margin-top: 2px;
+}
+
+/* Mark as Done — fixed width, centred */
+.counsel-request-modal__done {
+  width: 220px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Accept & start review — full width */
+.counsel-request-modal__start {
+  width: 100%;
+}
+
+.counsel-request-modal__done:hover,
+.counsel-request-modal__start:hover {
+  background: #c0911e;
+  box-shadow: 0 4px 16px rgba(214,162,51,.38);
 }
 .counsel-request-modal__done:disabled,
 .counsel-request-modal__start:disabled { opacity: 0.55; cursor: not-allowed; }
 
-/* ── Upload area ─────────────────────────────────────────────────────────── */
-.counsel-request-modal__upload { display: grid; gap: 8px; }
-.counsel-request-modal__upload > span { color: #344054; font-size: 14px; font-weight: 700; }
+/* Legacy inline upload button (kept for backward compat) */
 .counsel-request-modal__upload-btn {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 9px 18px; border: 2px dashed #c8cdd5;
@@ -1018,14 +1144,26 @@
 }
 .counsel-request-modal__upload-btn:hover { border-color: #d1a13b; background: #fffbf0; color: #a07020; }
 .counsel-request-modal__upload-btn input { display: none; }
-.counsel-request-modal__upload-list { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
-.counsel-request-modal__upload-list li { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #344054; }
 
 /* ── Reject sub-page ─────────────────────────────────────────────────────── */
 .counsel-request-modal__page--reject { background: #fff; }
 .counsel-request-modal__reject { display: grid; gap: 9px; margin-top: 10px; color: #101828 !important; }
 .counsel-request-modal__reject > label:first-child { color: #101828; font-size: 14px; font-weight: 800; }
-.counsel-request-modal__reject textarea { min-height: 70px; }
+.counsel-request-modal__reject textarea {
+  min-height: 70px;
+  resize: vertical;
+  border: 1px solid #d0d5dd;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.counsel-request-modal__reject textarea:focus { border-color: #d6a233; }
 .counsel-request-modal__reject-help { color: #667085; font-size: 12px; text-align: right; }
 .counsel-request-modal__reject-confirm { display: flex !important; align-items: flex-start; gap: 8px; color: #101828 !important; font-size: 13px !important; font-weight: 500 !important; }
 .counsel-request-modal__reject-confirm input { margin: 3px 0 0; accent-color: #d1a13b; }
