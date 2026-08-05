@@ -15,6 +15,7 @@ import {
   FileText,
   Lock,
   Minus,
+  Package,
   Play,
   Plus,
   Rocket,
@@ -32,7 +33,8 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
-import { subscriptionApi } from '../../services/tslApi'
+import { paymentApi } from '../../services/tslApi'
+import type { WizardAccess } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import './Dashboard.css'
@@ -58,6 +60,7 @@ type PaymentMessage = {
 type PaymentMethod = 'Bank Transfers' | 'Credit/Debit Cards' | 'E-wallets' | 'PayPal' | 'Scan to Pay'
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
+const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 const paymentMethods: Array<{ title: PaymentMethod; icon: LucideIcon | null; className: string }> = [
   { title: 'Bank Transfers', icon: Building2, className: 'dashboard-wizard-details__payment-method-icon--bank' },
@@ -95,6 +98,26 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   'Service Agreement': {
     note: 'Multiple client contracts needed',
     icon: FileCheck2,
+  },
+  'Company Registration Package': {
+    note: 'Registering a new company with CIPC-ready documents',
+    icon: Building2,
+  },
+  'Data Processing Agreement': {
+    note: 'Managing third-party processor obligations under POPIA',
+    icon: FileText,
+  },
+  'Shareholders Agreement': {
+    note: 'Setting rights and obligations for multiple shareholders',
+    icon: UsersRound,
+  },
+  'Commercial Lease Agreement': {
+    note: 'Preparing commercial lease terms for business premises',
+    icon: FileCheck2,
+  },
+  'Sale of Goods Agreement': {
+    note: 'Formalizing product sales with warranties and delivery terms',
+    icon: Package,
   },
 }
 
@@ -153,8 +176,8 @@ const plans: Record<PlanKey, {
 }
 
 function getPlanFromCount(count: number): PlanKey {
-  if (count >= 1 && count <= 4) return 'Launchpad'
-  if (count >= 5 && count <= 13) return 'Operator'
+  if (count >= 1 && count <= 5) return 'Launchpad'
+  if (count >= 6 && count <= 12) return 'Operator'
   return 'Boardroom'
 }
 
@@ -281,6 +304,9 @@ export default function DashboardWizardDetails() {
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
   const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
   const [accountPlan, setAccountPlan] = useState<PlanKey | null>(null)
+  const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
+    try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
+  })
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('')
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
   const [wizardAccessWarning, setWizardAccessWarning] = useState<string | null>(null)
@@ -343,9 +369,13 @@ export default function DashboardWizardDetails() {
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
 
   useEffect(() => {
-    subscriptionApi.get().then((response) => {
-      const planId = response.success ? response.data?.planId?.toLowerCase() : ''
+    paymentApi.wizardAccess().then((response) => {
+      const planId = response.success && response.data?.hasSubscription ? response.data.plan?.toLowerCase() : ''
       const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
+      if (response.success && response.data) {
+        setWizardAccess(response.data)
+        localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
+      }
       if (plan) { setAccountPlan(plan); setActivePlan(plan) }
     })
   }, [])
@@ -356,11 +386,23 @@ export default function DashboardWizardDetails() {
 
   // This also handles a guest returning from sign-in with showPayment in the
   // navigation state: the authenticated plan always wins over guest intent.
-  useEffect(() => {
-    if (!accountPlan || selectedWizardCount <= planWizardLimit[accountPlan]) return
-    setIsPaymentView(false)
-    setWizardAccessWarning(`Your ${accountPlan} plan includes any ${planWizardLimit[accountPlan]} wizards. Choose ${planWizardLimit[accountPlan]} of your ${selectedWizardCount} shortlisted wizards, or upgrade.`)
-  }, [accountPlan, selectedWizardCount])
+  const existingWizardTitles = new Set(wizardAccess?.selectedWizards.map((wizard) => wizard.title) ?? [])
+  const newSelections = selectedWizards.filter((wizard) => !existingWizardTitles.has(wizard.title))
+  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0 && newSelections.length <= (wizardAccess?.remainingWizards ?? 0)
+  const exceedsRemainingSlots = Boolean(wizardAccess?.hasSubscription) && newSelections.length > (wizardAccess?.remainingWizards ?? 0)
+
+  const addToDashboard = async () => {
+    const response = await paymentApi.addWizardsToDashboard(newSelections.map(({ title, quantity }) => ({ title, quantity })))
+    if (!response.success || !response.data) {
+      setWizardAccessWarning(response.message || 'Unable to add these wizards to your dashboard.')
+      return
+    }
+    setWizardAccess(response.data)
+    localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
+    localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+    // Pass the count so the dashboard can show a success toast
+    navigate('/dashboard', { state: { addedCount: newSelections.length } })
+  }
 
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
 
@@ -395,17 +437,57 @@ export default function DashboardWizardDetails() {
       totalWizards,
     }
 
-    const result = selectedPaymentMethod === 'Credit/Debit Cards' && import.meta.env.VITE_PAYSTACK_PUBLIC_KEY
+    const usesPaystackInline = selectedPaymentMethod === 'Credit/Debit Cards' && Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY)
+    let result = usesPaystackInline
       ? await openPaystackCheckout(paymentPayload)
       : await openMockPaymentCheckout({
         ...paymentPayload,
         paymentMethod: selectedPaymentMethod === 'Scan to Pay' ? 'E-wallets' : selectedPaymentMethod,
       })
 
+    // Inline Paystack confirms payment in the browser, but the server must
+    // still verify it and activate the selected wizard entitlement.
+    if (result.status === 'success' && usesPaystackInline) {
+      const verification = await paymentApi.verifyPaystack({
+        ...paymentPayload,
+        reference: result.reference,
+        type: 'subscription',
+      })
+      if (!verification.success || verification.data?.status !== 'success') {
+        result = {
+          status: 'failed',
+          reference: result.reference,
+          message: verification.message || 'Payment was approved but could not be verified. Please try again.',
+        }
+      }
+    }
+
     setIsInitializingPayment(false)
 
     if (result.status === 'success') {
+      const wizardLimit = planWizardLimit[activePlan]
+      // Fix: all selected wizards must be saved — not just a slice.
+      // De-duplicate by title so existing wizards from a prior subscription
+      // are not double-counted.
+      const existingTitles = new Set((wizardAccess?.selectedWizards ?? []).map((w) => w.title))
+      const allWizards = [
+        ...(wizardAccess?.selectedWizards ?? []),
+        ...selectedWizards
+          .filter(({ title }) => !existingTitles.has(title))
+          .map(({ title }) => ({ title, quantity: 1 })),
+      ]
+      const access: WizardAccess = {
+        hasSubscription: true,
+        plan: activePlan.toLowerCase(),
+        wizardLimit,
+        selectedWizards: allWizards,
+        remainingWizards: Math.max(0, wizardLimit - allWizards.length),
+      }
+      // The server remains the source of truth, but caching immediately keeps
+      // the paid dashboard correct while a browser navigation is in progress.
+      localStorage.setItem(wizardAccessCacheKey, JSON.stringify(access))
       localStorage.setItem('tsl-dashboard-payment-complete', 'true')
+      localStorage.setItem('tsl-dashboard-view-mode', 'initial')
       setPaymentMessage({
         tone: 'success',
         text: 'Payment successful. Redirecting to your dashboard...',
@@ -711,14 +793,12 @@ export default function DashboardWizardDetails() {
             className="dashboard-wizard-details__payment-button"
             disabled={selectedWizards.length === 0}
             onClick={() => {
-              if (accountPlan && selectedWizardCount > planWizardLimit[accountPlan]) {
-                setWizardAccessWarning(`Your ${accountPlan} plan includes any ${planWizardLimit[accountPlan]} wizards. Choose ${planWizardLimit[accountPlan]} of your ${selectedWizardCount} shortlisted wizards, or upgrade.`)
-                return
-              }
+              if (canAddToDashboard) { void addToDashboard(); return }
+              if (exceedsRemainingSlots) setWizardAccessWarning(`You have ${wizardAccess?.remainingWizards} wizard slot${wizardAccess?.remainingWizards === 1 ? '' : 's'} remaining. Select fewer wizards to add them now, or continue to payment to upgrade your plan.`)
               setIsPaymentView(true)
             }}
           >
-            Proceed to Payment
+            {canAddToDashboard ? 'Add to Dashboard' : 'Proceed to Payment'}
             <ChevronRight size={16} />
           </button>
         </section>

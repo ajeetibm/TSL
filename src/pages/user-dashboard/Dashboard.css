@@ -1088,6 +1088,17 @@
   color: #1c6b43;
 }
 
+/* "Add to Dashboard" success toast — same green palette, distinct icon colour */
+.user-dashboard__nda-toast--add {
+  border-color: #b8d4c8;
+  background: #ecf7f1;
+  color: #1c6b43;
+}
+
+.user-dashboard__nda-toast--add svg {
+  color: #1c6b43;
+}
+
 @media (max-width: 1180px) {
   .user-dashboard {
     grid-template-columns: 1fr;

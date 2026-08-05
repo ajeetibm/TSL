@@ -5,9 +5,12 @@ import { useNotificationCount } from '../../context/NotificationContext'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import { notificationApi } from '../../services/tslApi'
+import type { WizardAccess } from '../../services/tslApi'
 import { getNotificationIcon, type NotificationItem } from '../../services/dashboardTypes'
 import './Dashboard.css'
 import './DashboardNotifications.css'
+
+const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 // Custom CheckCircle icon matching Figma design
 const CheckCircleIcon = () => (
@@ -166,6 +169,13 @@ function NotificationIcon({ type }: { type: string }) {
 export default function DashboardNotifications() {
   setPageMetadata('Notifications', 'Stay updated with your legal workflow activities.')
 
+  const hasSubscription = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })()
+
   const [unread, setUnread] = useState<NotificationItem[]>([])
   const [earlier, setEarlier] = useState<NotificationItem[]>([])
   const [earlierVisible, setEarlierVisible] = useState(5)
@@ -261,14 +271,16 @@ export default function DashboardNotifications() {
               <>
                 <div className="dashboard-notifications__section-title">
                   <h2>Unread</h2>
-                  <span>{unread.length}</span>
+                  <span>{hasSubscription ? unread.length : 0}</span>
                 </div>
 
                 <div className="dashboard-notifications__list">
-                  {unread.length === 0 && (
-                    <p className="dashboard-notifications__empty">You're all caught up!</p>
+                  {(!hasSubscription || unread.length === 0) && (
+                    <p className="dashboard-notifications__empty">
+                      {hasSubscription ? "You're all caught up!" : 'No notifications yet.'}
+                    </p>
                   )}
-                  {unread.map((item) => (
+                  {hasSubscription && unread.map((item) => (
                     <article
                       className="dashboard-notifications__card dashboard-notifications__card--unread"
                       key={item.notificationId}
@@ -294,10 +306,12 @@ export default function DashboardNotifications() {
 
                 <h2 className="dashboard-notifications__earlier-title">Earlier</h2>
                 <div className="dashboard-notifications__list">
-                  {earlier.length === 0 && (
-                    <p className="dashboard-notifications__empty">No earlier notifications.</p>
+                  {(!hasSubscription || earlier.length === 0) && (
+                    <p className="dashboard-notifications__empty">
+                      {hasSubscription ? 'No earlier notifications.' : 'No notifications yet.'}
+                    </p>
                   )}
-                  {earlier.slice(0, earlierVisible).map((item) => (
+                  {hasSubscription && earlier.slice(0, earlierVisible).map((item) => (
                     <article className="dashboard-notifications__card" key={item.notificationId}>
                       <span className="dashboard-notifications__item-icon">
                         <NotificationIcon type={item.type} />
@@ -314,7 +328,7 @@ export default function DashboardNotifications() {
                     </article>
                   ))}
                 </div>
-                {earlierVisible < earlier.length && (
+                {hasSubscription && earlierVisible < earlier.length && (
                   <button
                     type="button"
                     className="dashboard-notifications__load-more"
@@ -346,10 +360,12 @@ export default function DashboardNotifications() {
                     <button
                       type="button"
                       role="switch"
-                      aria-checked={prefs[option]}
+                      aria-checked={hasSubscription ? prefs[option] : false}
                       aria-label={option}
-                      className={`dashboard-notifications__toggle${prefs[option] ? ' dashboard-notifications__toggle--on' : ''}`}
-                      onClick={() => togglePref(option)}
+                      aria-disabled={!hasSubscription}
+                      disabled={!hasSubscription}
+                      className={`dashboard-notifications__toggle${hasSubscription && prefs[option] ? ' dashboard-notifications__toggle--on' : ''}${!hasSubscription ? ' dashboard-notifications__toggle--disabled' : ''}`}
+                      onClick={() => hasSubscription && togglePref(option)}
                     >
                       <span className="dashboard-notifications__toggle-thumb" />
                     </button>
@@ -360,7 +376,7 @@ export default function DashboardNotifications() {
               <button
                 type="button"
                 className="dashboard-notifications__save"
-                disabled={!isDirty}
+                disabled={!hasSubscription || !isDirty}
                 onClick={savePrefs}
               >
                 Save Preferences

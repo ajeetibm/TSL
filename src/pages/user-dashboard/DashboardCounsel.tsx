@@ -8,8 +8,12 @@ import type { CounselCredits, CounselRequest } from '../../services/dashboardTyp
 import { setPageMetadata } from '../../services/metadata'
 import { useCounselRequests } from '../../context/CounselRequestContext'
 import CounselCreditsModal, { type TopUpPlan } from './CounselCreditsModal'
+import UpgradePlanModal from './UpgradePlanModal'
+import type { WizardAccess } from '../../services/tslApi'
 import './Dashboard.css'
 import './DashboardCounsel.css'
+
+const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 type CounselFormData = {
   subject: string
@@ -153,7 +157,18 @@ export default function DashboardCounsel() {
   const { saveAttachments } = useCounselRequests()
   const navigate = useNavigate()
   const location = useLocation()
-  const [activeTab, setActiveTab] = useState<'book' | 'history'>('book')
+  // Gate non-subscribers upfront — read from cache, no extra API call
+  const hasSubscription = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })()
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  // Non-subscribers land on history tab (form stays hidden until they upgrade)
+  const [activeTab, setActiveTab] = useState<'book' | 'history'>(() =>
+    hasSubscription ? 'book' : 'history',
+  )
   const [credits, setCredits] = useState<CounselCredits>(fallbackCredits)
   const [history, setHistory] = useState<CounselHistoryRequest[]>(fallbackHistory)
   const [formData, setFormData] = useState<CounselFormData>({
@@ -442,7 +457,10 @@ export default function DashboardCounsel() {
                     ? 'dashboard-counsel__tab dashboard-counsel__tab--active'
                     : 'dashboard-counsel__tab'
                 }
-                onClick={() => setActiveTab('book')}
+                onClick={() => {
+                  if (!hasSubscription) { setShowUpgradeModal(true); return }
+                  setActiveTab('book')
+                }}
               >
                 Book Counsel
               </button>
@@ -623,6 +641,13 @@ export default function DashboardCounsel() {
           }}
           onManagePlans={() => navigate('/dashboard/settings')}
         />
+
+        {showUpgradeModal && (
+          <UpgradePlanModal
+            onClose={() => setShowUpgradeModal(false)}
+            onUpgrade={() => { setShowUpgradeModal(false); navigate('/dashboard/wizards') }}
+          />
+        )}
         {activeRequest ? (() => {
           const statusKey = activeRequest.status.toLowerCase()
           const isPending   = statusKey === 'pending'

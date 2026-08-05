@@ -70,6 +70,43 @@
   border-color: #d8d8d8;
 }
 
+/* Owned wizard card — subtle green tint */
+.dashboard-wizards__card--owned {
+  border-color: #b8d4c8;
+  background: #f7fcfa;
+}
+
+/* "Added" badge — top-right corner of owned cards */
+.dashboard-wizards__owned-badge {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: #1c6b43;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: 0 6px 14px rgba(28, 107, 67, 0.24);
+}
+
+/* Disabled "In Dashboard" button on owned cards */
+.dashboard-wizards__select--owned {
+  background: #ecf7f1;
+  color: #1c6b43;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.9;
+}
+
+.dashboard-wizards__select--owned:disabled {
+  opacity: 0.9;
+}
+
 .dashboard-wizards__popular {
   position: absolute;
   top: -12px;
@@ -294,6 +331,20 @@
   align-items: center;
 }
 
+/* Slot info line in the header (shown for existing subscribers) */
+.dashboard-wizards__slot-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  border: 1px solid rgba(207, 155, 47, 0.30);
+  border-radius: 999px;
+  padding: 6px 14px;
+  background: rgba(207, 155, 47, 0.08);
+  color: #8a6200;
+  font-size: 13px;
+}
+
 .dashboard-wizards__cart-title {
   display: flex;
   align-items: center;
@@ -381,6 +432,27 @@
   border: 0;
   background: #cf9b2f;
   color: #ffffff;
+}
+
+/* Green "Add to Dashboard" variant when subscriber has remaining slots */
+.dashboard-wizards__cart-details--add {
+  background: #1c6b43;
+  box-shadow: 0 10px 18px rgba(28, 107, 67, 0.22);
+}
+
+/* "N new · M already owned" note inside the cart title */
+.dashboard-wizards__cart-note {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.68);
+  white-space: nowrap;
+}
+
+/* Owned chip inside the cart — green tint + no remove button */
+.dashboard-wizards__cart-chip--owned {
+  border-color: rgba(28, 107, 67, 0.35);
+  background: rgba(28, 107, 67, 0.18);
+  color: #a8f0c8;
 }
 
 @media (max-width: 1180px) {

@@ -1,0 +1,84 @@
+/* Constrain the modal shell itself to a compact size */
+.upgrade-modal.nda-modal {
+  max-width: 420px;
+}
+
+/* Tighten the inherited nda-modal header padding & title size */
+.upgrade-modal .nda-modal__header {
+  padding: 18px 20px 0;
+}
+
+.upgrade-modal .nda-modal__header h2 {
+  font-size: 18px;
+  margin-bottom: 18px;
+}
+
+.upgrade-modal__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 20px;
+}
+
+.upgrade-modal__header-icon {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: rgba(207, 155, 47, 0.20);
+  color: #cf9b2f;
+}
+
+.upgrade-modal__body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 32px 32px;
+  background: #ffffff;
+  text-align: center;
+}
+
+/* Circular lock icon */
+.upgrade-modal__lock-icon {
+  width: 60px;
+  height: 60px;
+  display: grid;
+  place-items: center;
+  border: 2px solid #cf9b2f;
+  border-radius: 50%;
+  color: #cf9b2f;
+}
+
+.upgrade-modal__lead {
+  margin: 0;
+  color: #0b1c2f;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+/* Single CTA */
+.upgrade-modal__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 12px;
+  background: #cf9b2f;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(207, 155, 47, 0.28);
+  width: 100%;
+  max-width: 300px;
+}
+
+.upgrade-modal__cta:hover {
+  background: #b8871e;
+}

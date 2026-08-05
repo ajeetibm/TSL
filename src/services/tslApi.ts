@@ -288,6 +288,17 @@ export const paymentApi = {
     request<PaystackInitialization>('/api/v1/sme/payments/paystack/initialize', 'POST', payload),
   verifyPaystack: (payload: JsonRecord) =>
     request<PaystackVerification>('/api/v1/sme/payments/paystack/verify', 'POST', payload),
+  wizardAccess: () => request<WizardAccess>('/api/v1/sme/payments/wizard-access'),
+  addWizardsToDashboard: (selectedWizards: Array<{ title: string; quantity: number }>) =>
+    request<WizardAccess>('/api/v1/sme/payments/wizard-access', 'POST', { selectedWizards }),
+}
+
+export interface WizardAccess {
+  hasSubscription: boolean
+  plan: string | null
+  wizardLimit: number
+  selectedWizards: Array<{ title: string; quantity: number }>
+  remainingWizards: number
 }
 
 export const profileApi = {

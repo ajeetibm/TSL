@@ -1141,10 +1141,20 @@
 }
 
 .bs-invoices-empty {
-  padding: 28px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
   color: #6d6d6d;
   text-align: center;
   font-size: 14px;
+}
+
+.bs-invoices-empty p {
+  margin: 0;
+  max-width: 360px;
+  line-height: 1.55;
 }
 
 /* ── Compare Plans Modal ───────────────────────────────────────────────────── */

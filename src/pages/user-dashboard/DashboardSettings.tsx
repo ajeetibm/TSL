@@ -18,6 +18,7 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { billingApi, paymentApi } from '../../services/tslApi'
+import type { WizardAccess } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { BillingHistoryInvoice, PaymentMethod } from '../../services/dashboardTypes'
 import { formatDate } from '../../services/dashboardTypes'
@@ -363,21 +364,32 @@ export default function DashboardSettings() {
 
   setPageMetadata('Settings', 'Manage your account, billing, and notification preferences.')
 
+  // Read subscription status from cache — no extra API call needed
+  const hasSubscription = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('tsl-wizard-access-cache') ?? 'null') as WizardAccess | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })()
+
   // ── Derived display values ────────────────────────────────────────────────
-  const planName      = subscription?.planName  ?? '—'
-  const planTagline   = subscription?.tagline   ?? ''
-  const planPrice     = subscription?.price     ?? 0
-  const wizardRuns    = subscription?.wizardRuns ?? 0
-  const teamMembers   = subscription?.teamMembers ?? 0
-  const runsUsed      = subscription?.usage.runsUsed      ?? 0
-  const runsTotal     = subscription?.usage.runsTotal     ?? 0
-  const runsRemaining = subscription?.usage.runsRemaining ?? 0
-  const nextBillingDate = subscription?.nextBillingDate ?? ''
+  const planName        = subscription?.planName  ?? '—'
+  const planTagline     = subscription?.tagline   ?? ''
+  const planPrice       = hasSubscription ? (subscription?.price     ?? 0) : 0
+  const wizardRuns      = hasSubscription ? (subscription?.wizardRuns ?? 0) : 0
+  const teamMembers     = hasSubscription ? (subscription?.teamMembers ?? 0) : 0
+  const runsUsed        = hasSubscription ? (subscription?.usage.runsUsed      ?? 0) : 0
+  const runsTotal       = hasSubscription ? (subscription?.usage.runsTotal     ?? 0) : 0
+  const runsRemaining   = hasSubscription ? (subscription?.usage.runsRemaining ?? 0) : 0
+  const nextBillingDate = hasSubscription ? (subscription?.nextBillingDate ?? '') : ''
   const pendingDowngrade = subscription?.pendingDowngrade ?? null
 
   const tax      = parseFloat((planPrice * 0.15).toFixed(2))
   const totalInv = planPrice + tax
   const progressPct = runsTotal > 0 ? Math.min(100, Math.round((runsUsed / runsTotal) * 100)) : 0
+
+  // Non-subscribers see no invoices regardless of what the server returns
+  const visibleInvoices = hasSubscription ? invoices : []
 
   return (
     <DashboardShell activeSection="Settings">
@@ -652,16 +664,16 @@ export default function DashboardSettings() {
                   <p className="dashboard-settings__pm-error" role="alert">{invoicesError}</p>
                 )}
 
-                {!invoicesLoading && !invoicesError && invoices.length === 0 && (
+                {!invoicesLoading && !invoicesError && visibleInvoices.length === 0 && (
                   <div className="bs-invoices-empty">
                     <Receipt size={32} style={{ opacity: 0.35, marginBottom: 8 }} />
                     <p>No invoices yet. Your billing history will appear here after your first payment.</p>
                   </div>
                 )}
 
-                {!invoicesLoading && invoices.length > 0 && (
+                {!invoicesLoading && visibleInvoices.length > 0 && (
                   <article className="dashboard-settings__invoice-card">
-                    {invoices.map((invoice) => (
+                    {visibleInvoices.map((invoice) => (
                       /* Clicking anywhere on the row (except the download btn) opens the detail modal */
                       <div
                         className="dashboard-settings__invoice"

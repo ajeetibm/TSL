@@ -19,12 +19,13 @@ import {
   Zap,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
-import { smeApi, subscriptionApi } from '../../services/tslApi'
+import { paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import type { WizardAccess } from '../../services/tslApi'
 import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
@@ -41,6 +42,8 @@ import FounderAgreementWizardModal from './FounderAgreementWizardModal'
 import type { FounderAgreementWizardData } from './FounderAgreementWizardModal'
 import ServiceAgreementWizardModal from './ServiceAgreementWizardModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
+import ComingSoonWizardModal from './ComingSoonWizardModal'
+import UpgradePlanModal from './UpgradePlanModal'
 import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
@@ -93,6 +96,7 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 }
 
 const PREVIEW_COUNT = 4
+const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 interface PlanCardProps {
   planName: string
@@ -1036,6 +1040,7 @@ function buildServiceAgreementEvidencePack(d: ServiceAgreementWizardData, comple
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -1044,10 +1049,18 @@ export default function Dashboard() {
   const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP } = usePrivacyPolicyWizard()
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA } = useFounderAgreementWizard()
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA } = useServiceAgreementWizard()
+  const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
+    try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
+  })
 
-  // Any active wizard shows the paid dashboard
-  const isPaidDashboard =
-    ndaState.status !== 'idle' || empState.status !== 'idle' || ppState.status !== 'idle' || faState.status !== 'idle' || saState.status !== 'idle'
+  // A wizard may only be started after it has been selected as part of an
+  // active subscription. Draft state alone must never grant access.
+  const isInitialSubscriptionDashboard = Boolean(
+    wizardAccess?.hasSubscription &&
+    wizardAccess.selectedWizards.length &&
+    localStorage.getItem('tsl-dashboard-view-mode') === 'initial',
+  )
+  const isPaidDashboard = Boolean(wizardAccess?.hasSubscription && wizardAccess.selectedWizards.length && !isInitialSubscriptionDashboard)
   const defaultTab: DashboardTab =
     ndaState.status === 'completed' || empState.status === 'completed' || ppState.status === 'completed' || faState.status === 'completed' || saState.status === 'completed' ? 'completed' :
     ndaState.status === 'inProgress' || empState.status === 'inProgress' || ppState.status === 'inProgress' || faState.status === 'inProgress' || saState.status === 'inProgress' ? 'inProgress' : 'new'
@@ -1057,8 +1070,24 @@ export default function Dashboard() {
   const [isPPModalOpen, setIsPPModalOpen] = useState(false)
   const [isFAModalOpen, setIsFAModalOpen] = useState(false)
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
+  const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [ndaToast, setNdaToast] = useState('')
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Toast shown after a wizard is added to dashboard without payment
+  const addedCount = (location.state as { addedCount?: number } | null)?.addedCount ?? 0
+  const [addToast, setAddToast] = useState(() => addedCount > 0
+    ? `${addedCount} wizard${addedCount !== 1 ? 's' : ''} added to your dashboard.`
+    : ''
+  )
+  const addToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (!addToast) return
+    if (addToastTimerRef.current) clearTimeout(addToastTimerRef.current)
+    addToastTimerRef.current = setTimeout(() => setAddToast(''), 5000)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [addToast])
 
   // ── Quick Access Links ───────────────────────────────────────────────────
   const [quickLinks, setQuickLinks] = useState<QuickAccessLinks | null>(null)
@@ -1097,6 +1126,20 @@ export default function Dashboard() {
       cancelled = true
     }
   }, [])
+
+  // Re-fetch wizard access on mount AND whenever we return from add-to-dashboard
+  const locationKey = location.key
+  useEffect(() => {
+    let cancelled = false
+    paymentApi.wizardAccess().then((response) => {
+      if (!cancelled && response.success && response.data) {
+        setWizardAccess(response.data)
+        localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
+      }
+    })
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationKey])
 
   useEffect(() => {
     let cancelled = false
@@ -1203,11 +1246,31 @@ export default function Dashboard() {
     navigate('/dashboard/wizards')
   }
 
+  const openReturningDashboard = () => {
+    // Keep the established tabbed dashboard flow as the place where a wizard
+    // is started, resumed, and completed.
+    localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+    navigate('/dashboard')
+  }
+
   const user = dashboardData?.user
-  const landingRunsRemaining = user?.runsRemaining ?? 5
+  // Build availableWizards directly from the server-authoritative selectedWizards list
+  // so that every saved wizard (including Loan Agreement, Shareholder Resolutions, etc.)
+  // always appears — not just the subset present in the static newWizards array.
+  const staticWizardMeta = new Map(newWizards.map((w, i) => [w.title, { id: w.id, note: w.note, idx: i }]))
+  const availableWizards = (wizardAccess?.selectedWizards ?? []).map((wizard, idx) => {
+    const meta = staticWizardMeta.get(wizard.title)
+    return {
+      id: meta?.id ?? 100 + idx,
+      title: wizard.title,
+      note: meta?.note ?? `Access your ${wizard.title} wizard`,
+      selectedQuantity: wizard.quantity ?? 1,
+    }
+  })
   const paidRunsRemaining = user?.runsRemaining ?? 9
   const paidRunsTotal = user?.runsTotal ?? 12
   const paidRunsUsed = user?.runsUsed ?? 3
+  const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   if (!isPaidDashboard) {
     return (
       <DashboardShell activeSection="Dashboard">
@@ -1216,8 +1279,10 @@ export default function Dashboard() {
             <h2>Welcome to The Startup Legal! 🎉</h2>
             <p>
               You're all set up with your{' '}
-              <strong>{capitalizePlan(user?.plan)} Plan</strong>. Let's get your first legal
-              document created.
+              <strong>{isInitialSubscriptionDashboard ? `${wizardAccess?.plan ?? ''} Plan` : 'no active subscription'}</strong>.{' '}
+              {isInitialSubscriptionDashboard
+                ? "Let's get your first legal document created."
+                : 'Choose a plan and select your wizards to start creating documents.'}
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
               Browse Wizards
@@ -1298,13 +1363,15 @@ export default function Dashboard() {
                   <Zap size={28} />
                 </span>
                 <div>
-                  <strong>5 Wizards Available (8 Items)</strong>
-                  <p>You have {landingRunsRemaining} wizard runs remaining this month. <b>One Wizard per start</b></p>
+                  <strong>{isInitialSubscriptionDashboard ? `${availableWizards.length} Wizards Available` : 'Upgrade required'}</strong>
+                  <p>{isInitialSubscriptionDashboard
+                    ? 'Your selected wizards are ready to start.'
+                    : 'Your dashboard will show selected wizards with a Start button after successful payment.'}</p>
                 </div>
               </div>
 
               <div className="user-dashboard__landing-wizard-list">
-                {newWizards.map((wizard) => (
+                {(isInitialSubscriptionDashboard ? availableWizards : newWizards).map((wizard) => (
                   <article className="user-dashboard__landing-wizard-card" key={wizard.id}>
                     <div className="user-dashboard__landing-wizard-copy">
                       <h3>
@@ -1316,39 +1383,27 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <div className="user-dashboard__landing-wizard-meta">
-                      <span>{wizard.landingLabel}</span>
+                      <span>Wizards</span>
                       <strong>
-                        {wizard.wizards} {wizard.landingItems}
+                        {isInitialSubscriptionDashboard
+                          ? `${(wizard as typeof availableWizards[0]).selectedQuantity ?? 1} Item`
+                          : `${(wizard as typeof newWizards[0]).wizards} ${(wizard as typeof newWizards[0]).landingItems}`}
                       </strong>
                     </div>
                     <button
                       type="button"
                       className="user-dashboard__new-wizard-button"
-                      onClick={() => {
-                        if (wizard.title === 'Employment Offer letter') {
-                          startEmp()
-                          setIsEmpModalOpen(true)
-                        } else if (wizard.title === 'Privacy Policy') {
-                          startPP()
-                          setIsPPModalOpen(true)
-                        } else if (wizard.title === 'Founder Agreement') {
-                          startFA()
-                          setIsFAModalOpen(true)
-                        } else if (wizard.title === 'Service Agreement') {
-                          startSA()
-                          setIsSAModalOpen(true)
-                        } else {
-                          startWizard()
-                          setIsNdaModalOpen(true)
-                        }
-                      }}
+                      onClick={isInitialSubscriptionDashboard ? () => {
+                        if (wizard.title === 'Non-Disclosure Agreement (NDA)') { startWizard(); setIsNdaModalOpen(true) }
+                        else if (wizard.title === 'Employment Offer letter') { startEmp(); setIsEmpModalOpen(true) }
+                        else if (wizard.title === 'Privacy Policy') { startPP(); setIsPPModalOpen(true) }
+                        else if (wizard.title === 'Founder Agreement') { startFA(); setIsFAModalOpen(true) }
+                        else if (wizard.title === 'Service Agreement') { startSA(); setIsSAModalOpen(true) }
+                        else { setComingSoonTitle(wizard.title) }
+                      } : () => setShowUpgradeModal(true)}
                     >
                       <Play size={16} />
-                      {wizard.title === 'Non-Disclosure Agreement (NDA)' && ndaState.status === 'inProgress' ? 'Continue' :
-                       wizard.title === 'Employment Offer letter' && empState.status === 'inProgress' ? 'Continue' :
-                       wizard.title === 'Privacy Policy' && ppState.status === 'inProgress' ? 'Continue' :
-                       wizard.title === 'Founder Agreement' && faState.status === 'inProgress' ? 'Continue' :
-                       wizard.title === 'Service Agreement' && saState.status === 'inProgress' ? 'Continue' : 'Start'}
+                      Start
                     </button>
                   </article>
                 ))}
@@ -1437,56 +1492,69 @@ export default function Dashboard() {
           </div>
         </main>
 
+        {comingSoonTitle && (
+          <ComingSoonWizardModal
+            title={comingSoonTitle}
+            onClose={() => setComingSoonTitle(null)}
+          />
+        )}
+
+        {/* Initial-view modals: onClose transitions to the tabbed (returning) dashboard
+            so the user lands on In Progress if they left mid-way */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={() => setIsNdaModalOpen(false)}
+            onClose={() => { setIsNdaModalOpen(false); openReturningDashboard() }}
             initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
             initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
             onStepChange={(step, data) => saveProgress(step, data)}
-            onComplete={(data) => {
-              handleNdaComplete(data)
-              setIsNdaModalOpen(false)
-            }}
+            onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false); openReturningDashboard() }}
           />
         )}
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={() => setIsEmpModalOpen(false)}
+            onClose={() => { setIsEmpModalOpen(false); openReturningDashboard() }}
             initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
             initialData={empState.status === 'completed' ? undefined : empState.data}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
-            onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false) }}
+            onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false); openReturningDashboard() }}
           />
         )}
 
         {isPPModalOpen && (
           <PrivacyPolicyWizardModal
-            onClose={() => setIsPPModalOpen(false)}
+            onClose={() => { setIsPPModalOpen(false); openReturningDashboard() }}
             initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
             initialData={ppState.status === 'completed' ? undefined : ppState.data}
             onStepChange={(step, data) => savePPProgress(step, data)}
-            onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false) }}
+            onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false); openReturningDashboard() }}
           />
         )}
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={() => setIsFAModalOpen(false)}
+            onClose={() => { setIsFAModalOpen(false); openReturningDashboard() }}
             initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
-            onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false) }}
+            onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); openReturningDashboard() }}
           />
         )}
 
         {isSAModalOpen && (
           <ServiceAgreementWizardModal
-            onClose={() => setIsSAModalOpen(false)}
+            onClose={() => { setIsSAModalOpen(false); openReturningDashboard() }}
             initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
             initialData={saState.status === 'completed' ? undefined : saState.data}
             onStepChange={(step, data) => saveSAProgress(step, data)}
-            onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false) }}
+            onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false); openReturningDashboard() }}
+          />
+        )}
+
+        {showUpgradeModal && (
+          <UpgradePlanModal
+            onClose={() => setShowUpgradeModal(false)}
+            onUpgrade={() => { setShowUpgradeModal(false); browseWizards() }}
           />
         )}
       </DashboardShell>
@@ -1517,6 +1585,12 @@ export default function Dashboard() {
           <div className="user-dashboard__nda-toast" role="status" aria-live="polite">
             <CheckCircle2 size={18} />
             {ndaToast}
+          </div>
+        )}
+        {addToast && (
+          <div className="user-dashboard__nda-toast user-dashboard__nda-toast--add" role="status" aria-live="polite">
+            <CheckCircle2 size={18} />
+            {addToast}
           </div>
         )}
 
@@ -1604,13 +1678,14 @@ export default function Dashboard() {
 
           {derivedTab === 'new' && (
             <div className="user-dashboard__new-list" role="tabpanel">
-              {newWizards.map((wizard) => {
+              {availableWizards.map((wizard) => {
                 const wizardStatus =
                   wizard.title === 'Non-Disclosure Agreement (NDA)' ? ndaState.status :
                   wizard.title === 'Employment Offer letter' ? empState.status :
                   wizard.title === 'Privacy Policy' ? ppState.status :
                   wizard.title === 'Founder Agreement' ? faState.status :
-                  saState.status
+                  wizard.title === 'Service Agreement' ? saState.status :
+                  'idle' // Loan Agreement, Shareholder Resolutions, etc. have no in-progress state
                 if (wizardStatus !== 'idle') return null
                 return (
                   <article className="user-dashboard__new-row" key={wizard.id}>
@@ -1628,14 +1703,26 @@ export default function Dashboard() {
                     </div>
                     <div className="user-dashboard__new-row-right">
                       <div className="user-dashboard__new-row-meta">
-                        <span className="user-dashboard__new-row-meta-label">Wizards</span>
-                        <strong className="user-dashboard__new-row-meta-count">{wizard.wizards} {wizard.paidItems}</strong>
+                        <span className="user-dashboard__new-row-meta-label">
+                          {hasExhaustedWizardRuns ? 'Runs exhausted' : 'Wizards'}
+                        </span>
+                        <strong className="user-dashboard__new-row-meta-count">
+                          {hasExhaustedWizardRuns
+                            ? 'Monthly limit reached'
+                            : `${wizard.selectedQuantity} ${wizard.selectedQuantity === 1 ? 'Item' : 'Items'}`}
+                        </strong>
                       </div>
                       <button
                         type="button"
                         className="user-dashboard__new-row-btn"
                         onClick={() => {
-                          if (wizard.title === 'Employment Offer letter') {
+                          if (hasExhaustedWizardRuns) {
+                            navigate('/dashboard/settings')
+                            return
+                          }
+                          if (wizard.title === 'Non-Disclosure Agreement (NDA)') {
+                            startWizard(); setIsNdaModalOpen(true)
+                          } else if (wizard.title === 'Employment Offer letter') {
                             startEmp(); setIsEmpModalOpen(true)
                           } else if (wizard.title === 'Privacy Policy') {
                             startPP(); setIsPPModalOpen(true)
@@ -1644,19 +1731,31 @@ export default function Dashboard() {
                           } else if (wizard.title === 'Service Agreement') {
                             startSA(); setIsSAModalOpen(true)
                           } else {
-                            startWizard(); setIsNdaModalOpen(true)
+                            setComingSoonTitle(wizard.title)
                           }
                         }}
                       >
-                        <Play size={14} />
-                        Start
+                        {hasExhaustedWizardRuns ? (
+                          'Upgrade Plan'
+                        ) : (
+                          <><Play size={14} /> Start</>
+                        )}
                       </button>
                     </div>
                   </article>
                 )
               })}
 
-              {ndaState.status !== 'idle' && empState.status !== 'idle' && ppState.status !== 'idle' && faState.status !== 'idle' && saState.status !== 'idle' && (
+              {availableWizards.length > 0 && availableWizards.every((wizard) => {
+                const s =
+                  wizard.title === 'Non-Disclosure Agreement (NDA)' ? ndaState.status :
+                  wizard.title === 'Employment Offer letter' ? empState.status :
+                  wizard.title === 'Privacy Policy' ? ppState.status :
+                  wizard.title === 'Founder Agreement' ? faState.status :
+                  wizard.title === 'Service Agreement' ? saState.status :
+                  'idle'
+                return s !== 'idle'
+              }) && (
                 <div className="user-dashboard__empty-state">
                   <FileText size={32} />
                   <p>All wizards have been started.</p>
@@ -1950,6 +2049,13 @@ export default function Dashboard() {
           initialData={saState.status === 'completed' ? undefined : saState.data}
           onStepChange={(step, data) => saveSAProgress(step, data)}
           onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false) }}
+        />
+      )}
+
+      {comingSoonTitle && (
+        <ComingSoonWizardModal
+          title={comingSoonTitle}
+          onClose={() => setComingSoonTitle(null)}
         />
       )}
     </DashboardShell>
