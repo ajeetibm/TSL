@@ -1148,10 +1148,20 @@ export default function Dashboard() {
   }, [])
 
   // Derive active tab from wizard states — computed on every render, no effect needed
-  const derivedTab: DashboardTab =
-    ndaState.status === 'completed' || empState.status === 'completed' || ppState.status === 'completed' || faState.status === 'completed' || saState.status === 'completed' ? 'completed' :
-    ndaState.status === 'inProgress' || empState.status === 'inProgress' || ppState.status === 'inProgress' || faState.status === 'inProgress' || saState.status === 'inProgress' ? 'inProgress' :
-    activeTab
+  // Auto-advance to inProgress/completed only if the user hasn't manually selected a tab yet;
+  // otherwise honour their explicit choice so clicking "New" tab always works.
+  const derivedTab: DashboardTab = (() => {
+    const hasCompleted = ndaState.status === 'completed' || empState.status === 'completed' || ppState.status === 'completed' || faState.status === 'completed' || saState.status === 'completed'
+    const hasInProgress = ndaState.status === 'inProgress' || empState.status === 'inProgress' || ppState.status === 'inProgress' || faState.status === 'inProgress' || saState.status === 'inProgress'
+    // If user has explicitly chosen a tab, honour it (unless the content for it no longer exists)
+    if (activeTab === 'completed' && hasCompleted) return 'completed'
+    if (activeTab === 'inProgress' && hasInProgress) return 'inProgress'
+    if (activeTab === 'new') return 'new'
+    // Auto-select: prefer inProgress > completed > new
+    if (hasInProgress) return 'inProgress'
+    if (hasCompleted) return 'completed'
+    return 'new'
+  })()
 
   const showNdaToast = (msg: string) => {
     if (ndaToastTimerRef.current) clearTimeout(ndaToastTimerRef.current)
@@ -1560,6 +1570,17 @@ export default function Dashboard() {
             <button
               type="button"
               role="tab"
+              aria-selected={derivedTab === 'new'}
+              className={
+                derivedTab === 'new' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
+              }
+              onClick={() => setActiveTab('new')}
+            >
+              New
+            </button>
+            <button
+              type="button"
+              role="tab"
               aria-selected={derivedTab === 'inProgress'}
               className={
                 derivedTab === 'inProgress' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
@@ -1580,6 +1601,72 @@ export default function Dashboard() {
               Completed
             </button>
           </div>
+
+          {derivedTab === 'new' && (
+            <div className="user-dashboard__new-list" role="tabpanel">
+              {newWizards.map((wizard) => {
+                const wizardStatus =
+                  wizard.title === 'Non-Disclosure Agreement (NDA)' ? ndaState.status :
+                  wizard.title === 'Employment Offer letter' ? empState.status :
+                  wizard.title === 'Privacy Policy' ? ppState.status :
+                  wizard.title === 'Founder Agreement' ? faState.status :
+                  saState.status
+                if (wizardStatus !== 'idle') return null
+                return (
+                  <article className="user-dashboard__new-row" key={wizard.id}>
+                    <div className="user-dashboard__new-row-left">
+                      <span className="user-dashboard__new-row-dot" aria-hidden="true">
+                        <Info size={16} />
+                      </span>
+                      <div>
+                        <h3 className="user-dashboard__new-row-title">{wizard.title}</h3>
+                        <p className="user-dashboard__new-row-note">
+                          <span className="user-dashboard__new-row-note-label">Note:</span>
+                          {' '}{wizard.note}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="user-dashboard__new-row-right">
+                      <div className="user-dashboard__new-row-meta">
+                        <span className="user-dashboard__new-row-meta-label">Wizards</span>
+                        <strong className="user-dashboard__new-row-meta-count">{wizard.wizards} {wizard.paidItems}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        className="user-dashboard__new-row-btn"
+                        onClick={() => {
+                          if (wizard.title === 'Employment Offer letter') {
+                            startEmp(); setIsEmpModalOpen(true)
+                          } else if (wizard.title === 'Privacy Policy') {
+                            startPP(); setIsPPModalOpen(true)
+                          } else if (wizard.title === 'Founder Agreement') {
+                            startFA(); setIsFAModalOpen(true)
+                          } else if (wizard.title === 'Service Agreement') {
+                            startSA(); setIsSAModalOpen(true)
+                          } else {
+                            startWizard(); setIsNdaModalOpen(true)
+                          }
+                        }}
+                      >
+                        <Play size={14} />
+                        Start
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+
+              {ndaState.status !== 'idle' && empState.status !== 'idle' && ppState.status !== 'idle' && faState.status !== 'idle' && saState.status !== 'idle' && (
+                <div className="user-dashboard__empty-state">
+                  <FileText size={32} />
+                  <p>All wizards have been started.</p>
+                  <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
+                    Browse More Wizards <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {derivedTab === 'inProgress' && (
             <div className="user-dashboard__progress-grid" role="tabpanel">

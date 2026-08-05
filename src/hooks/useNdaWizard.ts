@@ -84,8 +84,11 @@ const defaultState: NdaWizardState = {
 
 function draftToState(draft: WizardDraft<NdaWizardData>): NdaWizardState {
   const data = { ...NDA_EMPTY_DATA, ...draft.data }
+  // completedAt is the source of truth — if it exists the wizard is completed,
+  // regardless of any stale 'inProgress' value that may have been persisted.
+  const status: NdaWizardStatus = draft.completedAt ? 'completed' : draft.status as NdaWizardStatus
   return {
-    status: draft.status as NdaWizardStatus,
+    status,
     step: draft.step,
     progress: calcNdaProgress(data), // always recompute
     data,
@@ -136,6 +139,7 @@ export function useNdaWizard() {
 
   const startWizard = useCallback(() => {
     setState((prev) => {
+      if (prev.status === 'completed') return prev
       const next: NdaWizardState = {
         ...prev,
         status: 'inProgress',

@@ -160,8 +160,9 @@ const defaultState: ServiceAgreementWizardState = {
 
 function draftToState(draft: WizardDraft<ServiceAgreementWizardData>): ServiceAgreementWizardState {
   const data: ServiceAgreementWizardData = { ...SA_EMPTY_DATA, ...draft.data }
+  const status: ServiceAgreementWizardStatus = draft.completedAt ? 'completed' : draft.status as ServiceAgreementWizardStatus
   return {
-    status: draft.status as ServiceAgreementWizardStatus,
+    status,
     step: draft.step,
     progress: calcServiceAgreementProgress(data),
     data,
@@ -209,6 +210,7 @@ export function useServiceAgreementWizard() {
 
   const startWizard = useCallback(() => {
     setState((prev) => {
+      if (prev.status === 'completed') return prev
       const next: ServiceAgreementWizardState = {
         ...prev,
         status: 'inProgress',

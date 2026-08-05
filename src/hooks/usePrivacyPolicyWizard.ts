@@ -102,8 +102,9 @@ const LOCAL_KEY = 'tsl-privacy-policy-wizard-state'
 
 function draftToState(draft: WizardDraft<PrivacyPolicyWizardData>): PrivacyPolicyWizardState {
   const data = { ...PP_EMPTY_DATA, ...draft.data }
+  const status: PrivacyPolicyWizardStatus = draft.completedAt ? 'completed' : draft.status as PrivacyPolicyWizardStatus
   return {
-    status: draft.status as PrivacyPolicyWizardStatus,
+    status,
     step: draft.step,
     progress: calcPrivacyPolicyProgress(data),
     data,
@@ -152,6 +153,7 @@ export function usePrivacyPolicyWizard() {
 
   const startWizard = useCallback(() => {
     setState((prev) => {
+      if (prev.status === 'completed') return prev
       const next: PrivacyPolicyWizardState = {
         ...prev,
         status: 'inProgress',

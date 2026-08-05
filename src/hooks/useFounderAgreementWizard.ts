@@ -189,8 +189,9 @@ function draftToState(draft: WizardDraft<FounderAgreementWizardData>): FounderAg
       ? raw.signatories
       : FA_EMPTY_DATA.signatories,
   }
+  const status: FounderAgreementWizardStatus = draft.completedAt ? 'completed' : draft.status as FounderAgreementWizardStatus
   return {
-    status: draft.status as FounderAgreementWizardStatus,
+    status,
     step: draft.step,
     progress: calcFounderAgreementProgress(data),
     data,
@@ -238,6 +239,7 @@ export function useFounderAgreementWizard() {
 
   const startWizard = useCallback(() => {
     setState((prev) => {
+      if (prev.status === 'completed') return prev
       const next: FounderAgreementWizardState = {
         ...prev,
         status: 'inProgress',

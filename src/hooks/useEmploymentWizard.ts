@@ -104,8 +104,9 @@ const defaultState: EmploymentWizardState = {
 
 function draftToState(draft: WizardDraft<EmploymentWizardData>): EmploymentWizardState {
   const data = { ...EMPLOYMENT_EMPTY_DATA, ...draft.data }
+  const status: EmploymentWizardStatus = draft.completedAt ? 'completed' : draft.status as EmploymentWizardStatus
   return {
-    status: draft.status as EmploymentWizardStatus,
+    status,
     step: draft.step,
     progress: calcEmploymentProgress(data),
     data,
@@ -150,6 +151,7 @@ export function useEmploymentWizard() {
 
   const startWizard = useCallback(() => {
     setState((prev) => {
+      if (prev.status === 'completed') return prev
       const next: EmploymentWizardState = {
         ...prev,
         status: 'inProgress',
