@@ -15,6 +15,7 @@ export interface ApiFailure {
   error?: string
   message?: string
   messages?: string[]
+  data?: unknown
 }
 
 export type ApiResponse<T = unknown> = ApiSuccess<T> | ApiFailure
@@ -97,6 +98,7 @@ export async function request<T = unknown>(
     // If the server revoked this session (e.g. revoked from another device),
     // clear local auth and redirect to login immediately.
     if (response.status === 401 && failure.error === 'TOKEN_REVOKED') {
+      data: failure.data,
       clearAuthSession()
       window.location.href = '/'
       return { success: false, message: failure.message ?? 'Session revoked.', error: 'TOKEN_REVOKED' }
@@ -169,8 +171,27 @@ import type {
   SubscriptionData,
   SubscriptionPlan,
   UpgradeResult,
+  SubscriptionUsage,
   WizardItem,
 } from './dashboardTypes'
+
+export interface BlueprintRunConsumption {
+  unitsCharged: number
+  usage: SubscriptionUsage
+  blueprint: DocumentCatalogueBlueprint
+}
+
+export interface BlueprintRunTopUp {
+  unitsAdded: number
+  usage: SubscriptionUsage
+}
+
+export interface DocumentCatalogueBlueprint {
+  blueprintId: string
+  name: string
+  blueprintUnitWeight: number
+  consumptionPoint: 'final-download' | 'vault-acceptance' | 'cipc-submission'
+}
 
 export const smeApi = {
   dashboard: () => request<DashboardData>('/api/v1/sme/dashboard'),
@@ -226,6 +247,15 @@ export const subscriptionApi = {
 
   /** GET  /api/v1/plans — all available plans with features */
   plans: () => request<SubscriptionPlan[]>('/api/v1/plans'),
+  /** GET /api/v1/blueprints — authoritative document catalogue and unit weights */
+  blueprints: () => request<DocumentCatalogueBlueprint[]>('/api/v1/blueprints'),
+
+  /** Charge only at final document consumption. */
+  consumeBlueprintRun: (blueprintId: string, alreadyCharged = false) =>
+    request<BlueprintRunConsumption>('/api/v1/subscription/blueprint-runs/consume', 'POST', { blueprintId, alreadyCharged }),
+
+  /** R250 per Blueprint Unit. */
+  topUpBlueprintRuns: (units: number) => request<BlueprintRunTopUp>('/api/v1/subscription/blueprint-runs/top-up', 'POST', { units }),
 
   /** GET  /api/v1/subscription/upgrade/preview?toPlanId=X — prorated charge preview */
   upgradePreview: (toPlanId: string) =>

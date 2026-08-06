@@ -152,7 +152,7 @@ export default function DashboardWizards() {
     Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])),
   )
   // Wizard access fetched from the server — null while loading
-  const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
+  const [, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
 
@@ -172,7 +172,6 @@ export default function DashboardWizards() {
 
   // Titles the user already has on their dashboard — normalised to lowercase
   // so 'Employment Offer Letter' and 'Employment Offer letter' both match.
-  const ownedTitles = new Set((wizardAccess?.selectedWizards ?? []).map((w) => w.title.toLowerCase()))
 
   const updateQuantity = (title: string, nextQuantity: number) => {
     setQuantities((current) => ({
@@ -187,7 +186,6 @@ export default function DashboardWizards() {
     .filter((wizard) => wizard.quantity > 0)
   const totalItems = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
 
-  const remainingSlots = wizardAccess?.remainingWizards ?? 0
 
   const clearCart = () => {
     setQuantities(Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])))
@@ -199,8 +197,6 @@ export default function DashboardWizards() {
     navigate('/dashboard/wizard-details', { state: { selectedWizards } })
   }
 
-  const hasSub = Boolean(wizardAccess?.hasSubscription)
-  // newSelectionCount is used in DashboardWizardDetails for smart button logic — not needed here
 
   return (
     <DashboardShell activeSection="Wizards">
@@ -211,51 +207,30 @@ export default function DashboardWizards() {
             <WandSparkles size={18} />
           </span>
           <div>
-            <h1>Browse All Wizards</h1>
-            <p>Select a legal wizard to generate your document</p>
+            <h1>Browse All Blueprints</h1>
+            <p>Choose a Blueprint to prepare your legal document</p>
           </div>
 
-          {/* Slot indicator for existing subscribers */}
-          {hasSub && (
-            <div className="dashboard-wizards__slot-info">
-              <Zap size={14} />
-              <span>
-                <strong>{ownedTitles.size}</strong> / <strong>{wizardAccess?.wizardLimit ?? 0}</strong> active wizards
-                &nbsp;·&nbsp;
-                <strong>{remainingSlots}</strong> slot{remainingSlots !== 1 ? 's' : ''} remaining
-              </span>
-            </div>
-          )}
         </header>
 
         <section className="dashboard-wizards__grid" aria-label="Available legal wizards">
           {wizardCards.map(({ title, description, time, runs, audience, included, icon: Icon, popular }) => {
             const quantity = quantities[title] ?? 0
             const isSelected = quantity > 0
-            const isOwned = ownedTitles.has(title.toLowerCase())
 
             return (
               <article
                 className={[
                   'dashboard-wizards__card',
                   isSelected ? 'dashboard-wizards__card--selected' : '',
-                  isOwned ? 'dashboard-wizards__card--owned' : '',
                 ].filter(Boolean).join(' ')}
                 key={title}
               >
                 {popular && (
                   <div className="dashboard-wizards__popular">
-                    {isSelected && !isOwned && <span>{quantity}</span>}
+                    {isSelected && <span>{quantity}</span>}
                     <Zap size={12} />
                     Popular
-                  </div>
-                )}
-
-                {/* "Added" badge for already-owned wizards */}
-                {isOwned && (
-                  <div className="dashboard-wizards__owned-badge">
-                    <CheckCircle2 size={12} />
-                    Added
                   </div>
                 )}
 
@@ -281,7 +256,7 @@ export default function DashboardWizards() {
                   <div>
                     <dt>
                       <Zap size={14} />
-                      Runs:
+                      Blueprint Units:
                     </dt>
                     <dd>{runs}</dd>
                   </div>
@@ -303,18 +278,7 @@ export default function DashboardWizards() {
                   </div>
                 </div>
 
-                {/* Already-owned: show disabled "In Dashboard" button */}
-                {isOwned ? (
-                  <button
-                    type="button"
-                    className="dashboard-wizards__select dashboard-wizards__select--owned"
-                    disabled
-                    aria-label={`${title} is already in your dashboard`}
-                  >
-                    <CheckCircle2 size={18} />
-                    In Dashboard
-                  </button>
-                ) : isSelected ? (
+                {isSelected ? (
                   <div className="dashboard-wizards__stepper" aria-label={`${title} selected quantity`}>
                     <button
                       type="button"

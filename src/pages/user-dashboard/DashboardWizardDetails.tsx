@@ -33,8 +33,8 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
-import { paymentApi } from '../../services/tslApi'
-import type { WizardAccess } from '../../services/tslApi'
+import { paymentApi, subscriptionApi } from '../../services/tslApi'
+import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import './Dashboard.css'
@@ -121,7 +121,31 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
   },
 }
 
+// The UI labels pre-date the Document Catalogue. This only maps each label to
+// its catalogue id; Blueprint Unit weights always come from the API catalogue.
+const blueprintIdByWizardTitle: Record<string, string> = {
+  'Loan Agreement': 'moa',
+  'Non-Disclosure Agreement (NDA)': 'nda',
+  'Employment Offer Letter': 'employment-offer-letter',
+  'Employment Offer letter': 'employment-offer-letter',
+  'Founder Agreement': 'shareholders-agreement',
+  'Privacy Policy': 'privacy-policy',
+  'Privacy Policy (POPIA Compliant)': 'privacy-policy',
+  'Shareholder Resolutions': 'board-resolution',
+  'Service Agreement': 'contractor-agreement',
+  'Company Registration Package': 'company-registration',
+  'Data Processing Agreement': 'contractor-agreement',
+  'Shareholders Agreement': 'shareholders-agreement',
+  'Commercial Lease Agreement': 'contractor-agreement',
+  'Sale of Goods Agreement': 'contractor-agreement',
+}
 type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
+
+function recommendedPlanForBlueprintUnits(units: number): PlanKey {
+  if (units <= 4) return 'Launchpad'
+  if (units <= 12) return 'Operator'
+  return 'Boardroom'
+}
 
 const plans: Record<PlanKey, {
   title: string
@@ -133,13 +157,13 @@ const plans: Record<PlanKey, {
 }> = {
   Launchpad: {
     title: 'Launchpad Plan',
-    price: 'R299',
+    price: 'R499',
     description: 'Perfect for startups and individuals with essential legal needs',
     icon: Rocket,
     includesLabel: "What's Included in Launchpad:",
     includes: [
-      'Access to 4 legal wizards',
-      '5 wizard runs per month',
+      '4 Blueprint Units per month',
+      '0 Counsel Credits per month',
       'Standard support (48-72h response)',
       '1GB document storage',
       'PDF export',
@@ -147,13 +171,13 @@ const plans: Record<PlanKey, {
   },
   Operator: {
     title: 'Operator Plan',
-    price: 'R999',
+    price: 'R1,499',
     description: 'For growing businesses with ongoing legal needs',
     icon: Building2,
     includesLabel: "What's Included in Operator:",
     includes: [
-      'Access to all 12 legal wizards',
-      'Unlimited wizard runs',
+      '12 Blueprint Units per month',
+      '2 Counsel Credits per month',
       'Priority support (24-48h response)',
       'Unlimited document storage',
       'API access for integrations',
@@ -161,13 +185,13 @@ const plans: Record<PlanKey, {
   },
   Boardroom: {
     title: 'Boardroom Plan',
-    price: 'R2,499',
+    price: 'R3,999',
     description: 'Enterprise-grade legal coverage for large organisations',
     icon: Crown,
     includesLabel: "What's Included in Boardroom:",
     includes: [
-      'All 30 legal wizards',
-      'Unlimited wizard runs',
+      '30 Blueprint Units per month',
+      '6 Counsel Credits per month',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access + white-label options',
@@ -175,11 +199,6 @@ const plans: Record<PlanKey, {
   },
 }
 
-function getPlanFromCount(count: number): PlanKey {
-  if (count >= 1 && count <= 5) return 'Launchpad'
-  if (count >= 6 && count <= 12) return 'Operator'
-  return 'Boardroom'
-}
 
 function getPlanAmount(plan: PlanKey) {
   return Number(plans[plan].price.replace(/[^0-9.]/g, ''))
@@ -302,8 +321,10 @@ export default function DashboardWizardDetails() {
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
-  const [activePlan, setActivePlan] = useState<PlanKey>('Operator')
+  const [activePlan, setActivePlan] = useState<PlanKey>('Launchpad')
   const [accountPlan, setAccountPlan] = useState<PlanKey | null>(null)
+  const [isPlanManuallySelected, setIsPlanManuallySelected] = useState(false)
+  const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
@@ -364,9 +385,13 @@ export default function DashboardWizardDetails() {
     }))
 
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
-  const selectedWizardCount = selectedWizards.length
-  const planWizardLimit: Record<PlanKey, number> = { Launchpad: 5, Operator: 12, Boardroom: 30 }
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
+  const totalBlueprintUnits = selectedWizards.reduce((total, wizard) => {
+    const blueprintId = blueprintIdByWizardTitle[wizard.title]
+    const blueprint = catalogue.find((item) => item.blueprintId === blueprintId)
+    return total + (blueprint?.blueprintUnitWeight ?? 0) * wizard.quantity
+  }, 0)
+  const recommendedPlan = recommendedPlanForBlueprintUnits(totalBlueprintUnits)
 
   useEffect(() => {
     paymentApi.wizardAccess().then((response) => {
@@ -378,27 +403,29 @@ export default function DashboardWizardDetails() {
       }
       if (plan) { setAccountPlan(plan); setActivePlan(plan) }
     })
+    subscriptionApi.blueprints().then((response) => {
+      if (response.success && response.data) setCatalogue(response.data)
+    })
   }, [])
 
-  useEffect(() => {
-    if (!accountPlan && selectedWizardCount > 0) setActivePlan(getPlanFromCount(selectedWizardCount))
-  }, [accountPlan, selectedWizardCount])
 
+
+  // A new customer is offered the smallest plan that covers the combined
+  // Document Catalogue unit cost. Paid subscriptions and manual tab choices
+  // are intentionally never overridden.
+  useEffect(() => {
+    if (!accountPlan && !isPlanManuallySelected && totalBlueprintUnits > 0) {
+      setActivePlan(recommendedPlan)
+    }
+  }, [accountPlan, isPlanManuallySelected, recommendedPlan, totalBlueprintUnits])
   // This also handles a guest returning from sign-in with showPayment in the
   // navigation state: the authenticated plan always wins over guest intent.
   const existingWizardTitles = new Set(wizardAccess?.selectedWizards.map((wizard) => wizard.title) ?? [])
   const newSelections = selectedWizards.filter((wizard) => !existingWizardTitles.has(wizard.title))
-  const existingWizardCount = existingWizardTitles.size
   const activeWizardSelection = [...(wizardAccess?.selectedWizards ?? []), ...newSelections]
-  const totalActiveWizardCount = existingWizardCount + newSelections.length
-  const requiredPlan = totalActiveWizardCount > 0 ? getPlanFromCount(totalActiveWizardCount) : activePlan
-  const planTier: Record<PlanKey, number> = { Launchpad: 0, Operator: 1, Boardroom: 2 }
-  const needsUpgrade = Boolean(accountPlan && planTier[requiredPlan] > planTier[accountPlan])
-  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0 && !needsUpgrade
+  const totalActiveWizardCount = existingWizardTitles.size + newSelections.length
+  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0
 
-  useEffect(() => {
-    if (needsUpgrade) setActivePlan(requiredPlan)
-  }, [needsUpgrade, requiredPlan])
 
   const addToDashboard = async () => {
     const response = await paymentApi.addWizardsToDashboard(newSelections.map(({ title, quantity }) => ({ title, quantity })))
@@ -421,10 +448,6 @@ export default function DashboardWizardDetails() {
   }
 
   const handlePayNow = async () => {
-    if (totalActiveWizardCount > planWizardLimit[activePlan]) {
-      setPaymentMessage({ tone: 'info', text: `${activePlan} includes any ${planWizardLimit[activePlan]} wizards. Upgrade to keep all ${totalActiveWizardCount} active wizards.` })
-      return
-    }
     if (!selectedPaymentMethod) {
       setPaymentMessage({
         tone: 'info',
@@ -474,7 +497,7 @@ export default function DashboardWizardDetails() {
     setIsInitializingPayment(false)
 
     if (result.status === 'success') {
-      const wizardLimit = planWizardLimit[activePlan]
+      const wizardLimit = 0
       // Fix: all selected wizards must be saved — not just a slice.
       // De-duplicate by title so existing wizards from a prior subscription
       // are not double-counted.
@@ -803,11 +826,6 @@ export default function DashboardWizardDetails() {
             disabled={selectedWizards.length === 0}
             onClick={() => {
               if (canAddToDashboard) { void addToDashboard(); return }
-              if (needsUpgrade) {
-                setWizardAccessWarning(
-                  `${existingWizardCount} active plus ${newSelections.length} new wizards requires the ${requiredPlan} plan.`,
-                )
-              }
               setIsPaymentView(true)
             }}
           >
@@ -888,7 +906,10 @@ export default function DashboardWizardDetails() {
                       key={plan}
                       type="button"
                       className={activePlan === plan ? 'dashboard-wizard-details__tab-active' : undefined}
-                      onClick={() => setActivePlan(plan)}
+                      onClick={() => {
+                        setIsPlanManuallySelected(true)
+                        setActivePlan(plan)
+                      }}
                     >
                       <PlanIcon size={13} />
                       {plan}

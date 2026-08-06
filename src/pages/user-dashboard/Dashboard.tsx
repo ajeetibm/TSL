@@ -41,6 +41,7 @@ import type { PrivacyPolicyWizardData } from './PrivacyPolicyWizardModal'
 import FounderAgreementWizardModal from './FounderAgreementWizardModal'
 import type { FounderAgreementWizardData } from './FounderAgreementWizardModal'
 import ServiceAgreementWizardModal from './ServiceAgreementWizardModal'
+import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import ComingSoonWizardModal from './ComingSoonWizardModal'
 import UpgradePlanModal from './UpgradePlanModal'
@@ -60,8 +61,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
-      'Access to 4 legal wizards',
-      '5 wizard runs per month',
+      '4 Blueprint Units per month',
+      '0 Counsel credits per month',
+      'Blueprint top-ups at R250 per Unit',
       'Standard support (48-72h response)',
       '1GB document storage',
       'PDF export',
@@ -70,8 +72,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'operator') {
     return [
-      'Access to all 12 legal wizards',
-      'Unlimited wizard runs',
+      '12 Blueprint Units per month',
+      '2 Counsel credits per month',
+      'Blueprint top-ups at R250 per Unit',
       'Priority support (24-48h response)',
       'Unlimited document storage',
       'API access for integrations',
@@ -80,8 +83,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'boardroom') {
     return [
-      'All 30 legal wizards',
-      'Unlimited wizard runs',
+      '30 Blueprint Units per month',
+      '6 Counsel credits per month',
+      'Blueprint top-ups at R250 per Unit',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access + white-label options',
@@ -90,7 +94,7 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   // Fallback: generic list built from API fields
   return [
-    `${runs} wizard runs per month`,
+    `${runs} Blueprint Units per month`,
     `${members} team member${sub.teamMembers === 1 ? '' : 's'}`,
   ]
 }
@@ -1073,6 +1077,7 @@ export default function Dashboard() {
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [ndaToast, setNdaToast] = useState('')
+  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Toast shown after a wizard is added to dashboard without payment
@@ -1206,6 +1211,22 @@ export default function Dashboard() {
     return 'new'
   })()
 
+  const downloadFinalBlueprint = async (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
+    const chargeKey = `tsl-blueprint-unit-charged:${downloadKey}`
+    const blob = await build()
+    const alreadyCharged = localStorage.getItem(chargeKey) === 'true'
+    const response = await subscriptionApi.consumeBlueprintRun(blueprintId, alreadyCharged)
+    if (!response.success || !response.data) {
+      const shortage = response.data as { remainingBlueprintUnits?: number; requiredBlueprintUnits?: number } | undefined
+      if (shortage?.remainingBlueprintUnits !== undefined && shortage.requiredBlueprintUnits !== undefined) {
+        setInsufficientUnits({ remaining: shortage.remainingBlueprintUnits, required: shortage.requiredBlueprintUnits })
+      } else showNdaToast(response.message || 'Unable to generate the final document.')
+      return
+    }
+    if (!alreadyCharged && response.data.unitsCharged > 0) localStorage.setItem(chargeKey, 'true')
+    setSubscription((current) => current ? { ...current, usage: response.data!.usage } : current)
+    triggerDownload(blob, filename)
+  }
   const showNdaToast = (msg: string) => {
     if (ndaToastTimerRef.current) clearTimeout(ndaToastTimerRef.current)
     setNdaToast(msg)
@@ -1246,6 +1267,15 @@ export default function Dashboard() {
     navigate('/dashboard/wizards')
   }
 
+  const buyBlueprintRunUnits = async (units: number) => {
+    const response = await subscriptionApi.topUpBlueprintRuns(units)
+    if (!response.success || !response.data) {
+      showNdaToast(response.message || 'Unable to add Blueprint Credits. Please try again.')
+      return
+    }
+    setSubscription((current) => current ? { ...current, usage: response.data!.usage } : current)
+    showNdaToast(`${units} Blueprint Credit${units === 1 ? '' : 's'} added for R${(units * 250).toLocaleString()}.`)
+  }
   const openReturningDashboard = () => {
     // Keep the established tabbed dashboard flow as the place where a wizard
     // is started, resumed, and completed.
@@ -1262,14 +1292,15 @@ export default function Dashboard() {
     const meta = staticWizardMeta.get(wizard.title)
     return {
       id: meta?.id ?? 100 + idx,
+
       title: wizard.title,
       note: meta?.note ?? `Access your ${wizard.title} wizard`,
       selectedQuantity: wizard.quantity ?? 1,
     }
   })
-  const paidRunsRemaining = user?.runsRemaining ?? 9
-  const paidRunsTotal = user?.runsTotal ?? 12
-  const paidRunsUsed = user?.runsUsed ?? 3
+  const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
+  const paidRunsTotal = subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
+  const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   if (!isPaidDashboard) {
     return (
@@ -1610,7 +1641,7 @@ export default function Dashboard() {
               <div className="user-dashboard__stat-number">
                 {paidRunsRemaining} <span>of {paidRunsTotal}</span>
               </div>
-              <div className="user-dashboard__stat-label">Wizards Remaining</div>
+              <div className="user-dashboard__stat-label">Credits Remaining</div>
               <div className="user-dashboard__stat-sublabel">This billing period</div>
             </div>
           </article>
@@ -1621,7 +1652,7 @@ export default function Dashboard() {
             </span>
             <div>
               <div className="user-dashboard__stat-number">{paidRunsUsed}</div>
-              <div className="user-dashboard__stat-label">Wizards Used</div>
+              <div className="user-dashboard__stat-label">Credits Used</div>
               <div className="user-dashboard__stat-sublabel">Since Dec 1, 2025</div>
             </div>
           </article>
@@ -1704,22 +1735,18 @@ export default function Dashboard() {
                     <div className="user-dashboard__new-row-right">
                       <div className="user-dashboard__new-row-meta">
                         <span className="user-dashboard__new-row-meta-label">
-                          {hasExhaustedWizardRuns ? 'Runs exhausted' : 'Wizards'}
+                          {hasExhaustedWizardRuns ? 'Credits exhausted' : 'Blueprint'}
                         </span>
                         <strong className="user-dashboard__new-row-meta-count">
                           {hasExhaustedWizardRuns
                             ? 'Monthly limit reached'
-                            : `${wizard.selectedQuantity} ${wizard.selectedQuantity === 1 ? 'Item' : 'Items'}`}
+                            : `${wizard.selectedQuantity} selected`}
                         </strong>
                       </div>
                       <button
                         type="button"
                         className="user-dashboard__new-row-btn"
                         onClick={() => {
-                          if (hasExhaustedWizardRuns) {
-                            navigate('/dashboard/settings')
-                            return
-                          }
                           if (wizard.title === 'Non-Disclosure Agreement (NDA)') {
                             startWizard(); setIsNdaModalOpen(true)
                           } else if (wizard.title === 'Employment Offer letter') {
@@ -1735,11 +1762,7 @@ export default function Dashboard() {
                           }
                         }}
                       >
-                        {hasExhaustedWizardRuns ? (
-                          'Upgrade Plan'
-                        ) : (
-                          <><Play size={14} /> Start</>
-                        )}
+                        <><Play size={14} /> Start</>
                       </button>
                     </div>
                   </article>
@@ -1891,10 +1914,10 @@ export default function Dashboard() {
                     <p>Completed {ndaState.completedAt ? formatDate(ndaState.completedAt) : 'Just now'}</p>
                   </div>
                   <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => triggerDownload(buildNdaPdf(ndaState.data, ndaState.completedAt), 'NDA-Document.pdf')}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('nda', `nda:${ndaState.completedAt}`, 'NDA-Document.pdf', () => buildNdaPdf(ndaState.data, ndaState.completedAt))}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => buildNdaDocx(ndaState.data, ndaState.completedAt).then(blob => triggerDownload(blob, 'NDA-Document.docx'))}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('nda', `nda:${ndaState.completedAt}`, 'NDA-Document.docx', () => buildNdaDocx(ndaState.data, ndaState.completedAt))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaState.data, ndaState.completedAt), 'NDA-Evidence-Pack.txt')}>
@@ -1912,10 +1935,10 @@ export default function Dashboard() {
                     <p>Completed {empState.completedAt ? formatDate(empState.completedAt) : 'Just now'}</p>
                   </div>
                   <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => triggerDownload(buildEmploymentPdf(empState.data, empState.completedAt), 'Employment-Offer-Letter.pdf')}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', `employment:${empState.completedAt}`, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empState.data, empState.completedAt))}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => buildEmploymentDocx(empState.data, empState.completedAt).then(blob => triggerDownload(blob, 'Employment-Offer-Letter.docx'))}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', `employment:${empState.completedAt}`, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empState.data, empState.completedAt))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empState.data, empState.completedAt), 'Employment-Evidence-Pack.txt')}>
@@ -1933,10 +1956,10 @@ export default function Dashboard() {
                     <p>Completed {ppState.completedAt ? formatDate(ppState.completedAt) : 'Just now'}</p>
                   </div>
                   <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyPdf(ppState.data, ppState.completedAt), 'Privacy-Policy.pdf')}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', `privacy-policy:${ppState.completedAt}`, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppState.data, ppState.completedAt))}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => buildPrivacyPolicyDocx(ppState.data, ppState.completedAt).then(blob => triggerDownload(blob, 'Privacy-Policy.docx'))}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', `privacy-policy:${ppState.completedAt}`, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppState.data, ppState.completedAt))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppState.data, ppState.completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
@@ -1954,10 +1977,10 @@ export default function Dashboard() {
                     <p>Completed {faState.completedAt ? formatDate(faState.completedAt) : 'Just now'}</p>
                   </div>
                   <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => triggerDownload(buildFounderAgreementPdf(faState.data, faState.completedAt), 'Founders-Agreement.pdf')}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', `founder-agreement:${faState.completedAt}`, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faState.data, faState.completedAt))}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => buildFounderAgreementDocx(faState.data, faState.completedAt).then(blob => triggerDownload(blob, 'Founders-Agreement.docx'))}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', `founder-agreement:${faState.completedAt}`, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faState.data, faState.completedAt))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildFounderAgreementEvidencePack(faState.data, faState.completedAt), 'Founders-Agreement-Evidence-Pack.txt')}>
@@ -1975,10 +1998,10 @@ export default function Dashboard() {
                     <p>Completed {saState.completedAt ? formatDate(saState.completedAt) : 'Just now'}</p>
                   </div>
                   <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => triggerDownload(buildServiceAgreementPdf(saState.data, saState.completedAt), 'Service-Agreement.pdf')}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', `service-agreement:${saState.completedAt}`, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saState.data, saState.completedAt))}>
                       <Download size={16} /> Download PDF
                     </button>
-                    <button type="button" onClick={() => buildServiceAgreementDocx(saState.data, saState.completedAt).then(blob => triggerDownload(blob, 'Service-Agreement.docx'))}>
+                    <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', `service-agreement:${saState.completedAt}`, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saState.data, saState.completedAt))}>
                       <Download size={16} /> Download DOCX
                     </button>
                     <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saState.data, saState.completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
@@ -2001,6 +2024,16 @@ export default function Dashboard() {
           )}
         </section>
       </main>
+
+      {insufficientUnits && (
+        <InsufficientBlueprintUnitsModal
+          remaining={insufficientUnits.remaining}
+          required={insufficientUnits.required}
+          onClose={() => setInsufficientUnits(null)}
+          onTopUp={(units) => { setInsufficientUnits(null); void buyBlueprintRunUnits(units) }}
+          onUpgrade={() => { setInsufficientUnits(null); setShowUpgradeModal(true) }}
+        />
+      )}
 
       {isNdaModalOpen && (
         <NdaWizardModal
