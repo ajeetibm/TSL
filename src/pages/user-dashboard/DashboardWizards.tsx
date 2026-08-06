@@ -170,8 +170,9 @@ export default function DashboardWizards() {
     'Browse TSL dashboard legal wizards and select a workflow to generate a document.',
   )
 
-  // Titles the user already has on their dashboard (from an active subscription)
-  const ownedTitles = new Set((wizardAccess?.selectedWizards ?? []).map((w) => w.title))
+  // Titles the user already has on their dashboard — normalised to lowercase
+  // so 'Employment Offer Letter' and 'Employment Offer letter' both match.
+  const ownedTitles = new Set((wizardAccess?.selectedWizards ?? []).map((w) => w.title.toLowerCase()))
 
   const updateQuantity = (title: string, nextQuantity: number) => {
     setQuantities((current) => ({
@@ -231,7 +232,7 @@ export default function DashboardWizards() {
           {wizardCards.map(({ title, description, time, runs, audience, included, icon: Icon, popular }) => {
             const quantity = quantities[title] ?? 0
             const isSelected = quantity > 0
-            const isOwned = ownedTitles.has(title)
+            const isOwned = ownedTitles.has(title.toLowerCase())
 
             return (
               <article

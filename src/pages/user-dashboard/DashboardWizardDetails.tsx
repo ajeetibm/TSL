@@ -388,8 +388,17 @@ export default function DashboardWizardDetails() {
   // navigation state: the authenticated plan always wins over guest intent.
   const existingWizardTitles = new Set(wizardAccess?.selectedWizards.map((wizard) => wizard.title) ?? [])
   const newSelections = selectedWizards.filter((wizard) => !existingWizardTitles.has(wizard.title))
-  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0 && newSelections.length <= (wizardAccess?.remainingWizards ?? 0)
-  const exceedsRemainingSlots = Boolean(wizardAccess?.hasSubscription) && newSelections.length > (wizardAccess?.remainingWizards ?? 0)
+  const existingWizardCount = existingWizardTitles.size
+  const activeWizardSelection = [...(wizardAccess?.selectedWizards ?? []), ...newSelections]
+  const totalActiveWizardCount = existingWizardCount + newSelections.length
+  const requiredPlan = totalActiveWizardCount > 0 ? getPlanFromCount(totalActiveWizardCount) : activePlan
+  const planTier: Record<PlanKey, number> = { Launchpad: 0, Operator: 1, Boardroom: 2 }
+  const needsUpgrade = Boolean(accountPlan && planTier[requiredPlan] > planTier[accountPlan])
+  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0 && !needsUpgrade
+
+  useEffect(() => {
+    if (needsUpgrade) setActivePlan(requiredPlan)
+  }, [needsUpgrade, requiredPlan])
 
   const addToDashboard = async () => {
     const response = await paymentApi.addWizardsToDashboard(newSelections.map(({ title, quantity }) => ({ title, quantity })))
@@ -412,8 +421,8 @@ export default function DashboardWizardDetails() {
   }
 
   const handlePayNow = async () => {
-    if (selectedWizardCount > planWizardLimit[activePlan]) {
-      setPaymentMessage({ tone: 'info', text: `${activePlan} includes any ${planWizardLimit[activePlan]} wizards. Choose which ${planWizardLimit[activePlan]} to activate, or upgrade to keep all ${selectedWizardCount}.` })
+    if (totalActiveWizardCount > planWizardLimit[activePlan]) {
+      setPaymentMessage({ tone: 'info', text: `${activePlan} includes any ${planWizardLimit[activePlan]} wizards. Upgrade to keep all ${totalActiveWizardCount} active wizards.` })
       return
     }
     if (!selectedPaymentMethod) {
@@ -433,8 +442,8 @@ export default function DashboardWizardDetails() {
       email: getStoredUserEmail(),
       paymentMethod: selectedPaymentMethod,
       plan: activePlan,
-      selectedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })),
-      totalWizards,
+      selectedWizards: activeWizardSelection.map(({ title, quantity }) => ({ title, quantity })),
+      totalWizards: totalActiveWizardCount,
     }
 
     const usesPaystackInline = selectedPaymentMethod === 'Credit/Debit Cards' && Boolean(import.meta.env.VITE_PAYSTACK_PUBLIC_KEY)
@@ -794,7 +803,11 @@ export default function DashboardWizardDetails() {
             disabled={selectedWizards.length === 0}
             onClick={() => {
               if (canAddToDashboard) { void addToDashboard(); return }
-              if (exceedsRemainingSlots) setWizardAccessWarning(`You have ${wizardAccess?.remainingWizards} wizard slot${wizardAccess?.remainingWizards === 1 ? '' : 's'} remaining. Select fewer wizards to add them now, or continue to payment to upgrade your plan.`)
+              if (needsUpgrade) {
+                setWizardAccessWarning(
+                  `${existingWizardCount} active plus ${newSelections.length} new wizards requires the ${requiredPlan} plan.`,
+                )
+              }
               setIsPaymentView(true)
             }}
           >
