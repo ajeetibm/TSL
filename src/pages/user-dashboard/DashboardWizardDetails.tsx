@@ -424,10 +424,10 @@ export default function DashboardWizardDetails() {
   // Document Catalogue unit cost. Paid subscriptions and manual tab choices
   // are intentionally never overridden.
   useEffect(() => {
-    if (!accountPlan && !isPlanManuallySelected && totalBlueprintUnits > 0) {
+    if ((!accountPlan || upgradeJourney) && !isPlanManuallySelected && totalBlueprintUnits > 0) {
       setActivePlan(recommendedPlan)
     }
-  }, [accountPlan, isPlanManuallySelected, recommendedPlan, totalBlueprintUnits])
+  }, [accountPlan, upgradeJourney, isPlanManuallySelected, recommendedPlan, totalBlueprintUnits])
   // This also handles a guest returning from sign-in with showPayment in the
   // navigation state: the authenticated plan always wins over guest intent.
   const existingWizardTitles = new Set(wizardAccess?.selectedWizards.map((wizard) => wizard.title) ?? [])
