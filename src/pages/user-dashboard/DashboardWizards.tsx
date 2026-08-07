@@ -385,8 +385,10 @@ export default function DashboardWizards() {
             pricePerUnit={250}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => {
+              const title = insufficientUnits.title
               setInsufficientUnits(null)
               setIsUpgradeJourney(true)
+              updateQuantity(title, 1)
             }}
           />
         )}
