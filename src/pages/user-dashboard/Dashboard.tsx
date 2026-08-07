@@ -21,6 +21,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import { UnderDevelopmentModal } from '../../components/dashboard/UnderDevelopmentModal'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
@@ -1076,6 +1077,7 @@ export default function Dashboard() {
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [showBrowseWizardsModal, setShowBrowseWizardsModal] = useState(false)
   const [ndaToast, setNdaToast] = useState('')
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1274,7 +1276,7 @@ export default function Dashboard() {
   }
 
   const browseWizards = () => {
-    navigate('/dashboard/wizards')
+    setShowBrowseWizardsModal(true)
   }
 
   const openReturningDashboard = () => {
@@ -1425,14 +1427,17 @@ export default function Dashboard() {
                     <button
                       type="button"
                       className="user-dashboard__new-wizard-button"
-                      onClick={isInitialSubscriptionDashboard ? () => {
+                      onClick={() => {
+                        // NDA and Employment Offer letter are always enabled for the demo
                         if (wizard.title === 'Non-Disclosure Agreement (NDA)') { startWizard(); setIsNdaModalOpen(true) }
                         else if (wizard.title === 'Employment Offer letter') { startEmp(); setIsEmpModalOpen(true) }
-                        else if (wizard.title === 'Privacy Policy') { startPP(); setIsPPModalOpen(true) }
-                        else if (wizard.title === 'Founder Agreement') { startFA(); setIsFAModalOpen(true) }
-                        else if (wizard.title === 'Service Agreement') { startSA(); setIsSAModalOpen(true) }
-                        else { setComingSoonTitle(wizard.title) }
-                      } : () => setShowUpgradeModal(true)}
+                        else if (isInitialSubscriptionDashboard) {
+                          if (wizard.title === 'Privacy Policy') { startPP(); setIsPPModalOpen(true) }
+                          else if (wizard.title === 'Founder Agreement') { startFA(); setIsFAModalOpen(true) }
+                          else if (wizard.title === 'Service Agreement') { startSA(); setIsSAModalOpen(true) }
+                          else { setComingSoonTitle(wizard.title) }
+                        } else { setShowUpgradeModal(true) }
+                      }}
                     >
                       <Play size={16} />
                       Start
@@ -1586,9 +1591,15 @@ export default function Dashboard() {
         {showUpgradeModal && (
           <UpgradePlanModal
             onClose={() => setShowUpgradeModal(false)}
-            onUpgrade={() => { setShowUpgradeModal(false); browseWizards() }}
+            onUpgrade={() => { setShowUpgradeModal(false) }}
           />
         )}
+
+        <UnderDevelopmentModal
+          isOpen={showBrowseWizardsModal}
+          featureName="Browse Wizards"
+          onClose={() => setShowBrowseWizardsModal(false)}
+        />
       </DashboardShell>
     )
   }
@@ -2096,6 +2107,12 @@ export default function Dashboard() {
           onClose={() => setComingSoonTitle(null)}
         />
       )}
+
+      <UnderDevelopmentModal
+        isOpen={showBrowseWizardsModal}
+        featureName="Browse Wizards"
+        onClose={() => setShowBrowseWizardsModal(false)}
+      />
     </DashboardShell>
   )
 }
