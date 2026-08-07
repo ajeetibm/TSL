@@ -101,16 +101,6 @@
   color: #ffffff;
 }
 
-.user-dashboard__nav-item--disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.user-dashboard__nav-item--disabled:hover {
-  background: transparent;
-  color: #c5cfda;
-}
-
 .user-dashboard__nav-item--active {
   background: linear-gradient(135deg, #d3a038, #e0b64f);
   color: #ffffff;

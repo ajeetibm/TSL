@@ -14,7 +14,6 @@ import { useNavigate } from 'react-router-dom'
 import { useNotificationCount } from '../../context/NotificationContext'
 import { notificationApi } from '../../services/tslApi'
 import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
-import { UnderDevelopmentModal } from './UnderDevelopmentModal'
 
 type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
@@ -22,9 +21,6 @@ interface DashboardShellProps {
   activeSection: DashboardSection
   children: ReactNode
 }
-
-/** Sections disabled for the demo — clicking them shows the "under development" modal */
-const DISABLED_SECTIONS = new Set<DashboardSection>(['Wizards', 'Counsel', 'Notifications', 'Settings'])
 
 const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
@@ -59,15 +55,6 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
   }, [])
 
   const [logoutModalOpen, setLogoutModalOpen] = useState(false)
-  const [underDevFeature, setUnderDevFeature] = useState<DashboardSection | null>(null)
-
-  const handleNavClick = (label: DashboardSection, path?: string) => {
-    if (DISABLED_SECTIONS.has(label)) {
-      setUnderDevFeature(label)
-      return
-    }
-    if (path) navigate(path)
-  }
 
   return (
     <div className="user-dashboard">
@@ -78,30 +65,22 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
         </div>
 
         <nav className="user-dashboard__nav" aria-label="Dashboard navigation">
-          {sidebarItems.map(({ label, icon: Icon, path }) => {
-            const isDisabled = DISABLED_SECTIONS.has(label)
-            return (
-              <button
-                key={label}
-                type="button"
-                className={[
-                  label === activeSection
-                    ? 'user-dashboard__nav-item user-dashboard__nav-item--active'
-                    : 'user-dashboard__nav-item',
-                  isDisabled ? 'user-dashboard__nav-item--disabled' : '',
-                ]
-                  .join(' ')
-                  .trim()}
-                onClick={() => handleNavClick(label, path)}
-                aria-disabled={isDisabled}
-                title={isDisabled ? 'Coming soon' : undefined}
-              >
-                <Icon size={18} />
-                <span>{label}</span>
-                {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
-              </button>
-            )
-          })}
+          {sidebarItems.map(({ label, icon: Icon, path }) => (
+            <button
+              key={label}
+              type="button"
+              className={
+                label === activeSection
+                  ? 'user-dashboard__nav-item user-dashboard__nav-item--active'
+                  : 'user-dashboard__nav-item'
+              }
+              onClick={() => path && navigate(path)}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+              {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
+            </button>
+          ))}
         </nav>
 
         <div className="user-dashboard__sidebar-footer">
@@ -129,12 +108,6 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
       <LogoutConfirmModal
         isOpen={logoutModalOpen}
         onClose={() => setLogoutModalOpen(false)}
-      />
-
-      <UnderDevelopmentModal
-        isOpen={underDevFeature !== null}
-        featureName={underDevFeature ?? ''}
-        onClose={() => setUnderDevFeature(null)}
       />
     </div>
   )
