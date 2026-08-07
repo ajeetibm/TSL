@@ -179,13 +179,16 @@ export function useEmploymentWizard() {
     setState((prev) => {
       const completedAt = new Date().toISOString()
       const next: EmploymentWizardState = { ...prev, status: 'completed', completedAt }
+      // Flush completion immediately so an older debounced step-save cannot
+      // overwrite the completed status after navigation.
+      persist(next, true)
       wizardService.complete('employment', prev.data).then((serverTime) => {
         setState((s) => ({ ...s, completedAt: serverTime }))
         wizardService.save({ ...stateToDraft(next), completedAt: serverTime })
       })
       return next
     })
-  }, [])
+  }, [persist])
 
   const resetWizard = useCallback(() => {
     setState(defaultState)

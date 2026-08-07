@@ -1,0 +1,258 @@
+/* ── Backdrop ──────────────────────────────────────────────────────────────── */
+.ibum__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(11, 28, 47, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+/* ── Modal shell ───────────────────────────────────────────────────────────── */
+.ibum {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 24px 64px rgba(11, 28, 47, 0.18);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+.ibum__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 0;
+}
+
+.ibum__header-icon {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(207, 155, 47, 0.15);
+  color: #cf9b2f;
+}
+
+.ibum__title {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0b1c2f;
+  margin: 0;
+}
+
+.ibum__close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  color: #57606a;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s;
+}
+.ibum__close:hover {
+  background: #f0f2f5;
+  color: #0b1c2f;
+}
+
+/* ── Description ───────────────────────────────────────────────────────────── */
+.ibum__desc {
+  margin: 14px 24px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #57606a;
+}
+
+/* ── Dividers ──────────────────────────────────────────────────────────────── */
+.ibum__divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 16px 24px 0;
+}
+
+.ibum__divider--inner {
+  margin: 12px 0 0;
+}
+
+/* ── Info rows — plain, no border box ─────────────────────────────────────── */
+.ibum__info {
+  margin: 4px 24px 0;
+}
+
+.ibum__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  font-size: 14px;
+}
+
+.ibum__row dt {
+  color: #57606a;
+  font-weight: 400;
+}
+
+.ibum__row dd {
+  font-weight: 700;
+  color: #0b1c2f;
+  margin: 0;
+  text-align: right;
+}
+
+/* Highlighted row — golden text only, no background */
+.ibum__row--highlight dt {
+  color: #cf9b2f;
+  font-weight: 700;
+}
+.ibum__row--highlight dd {
+  color: #cf9b2f;
+  font-weight: 700;
+}
+
+/* ── Stepper + total box ───────────────────────────────────────────────────── */
+.ibum__purchase {
+  margin: 14px 24px 0;
+  background: #f7f8fa;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.ibum__stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ibum__stepper-label {
+  font-size: 14px;
+  color: #57606a;
+}
+
+.ibum__stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.ibum__stepper button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  color: #0b1c2f;
+  display: grid;
+  place-items: center;
+  transition: background 0.12s;
+}
+.ibum__stepper button:hover:not(:disabled) {
+  background: #f0f2f5;
+}
+.ibum__stepper button:disabled {
+  color: #c9cdd4;
+  cursor: not-allowed;
+}
+
+.ibum__stepper span {
+  min-width: 38px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0b1c2f;
+  border-left: 1.5px solid #d1d5db;
+  border-right: 1.5px solid #d1d5db;
+  line-height: 36px;
+}
+
+.ibum__total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  padding-top: 12px;
+}
+.ibum__total-row span {
+  color: #57606a;
+}
+.ibum__total-row strong {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0b1c2f;
+}
+
+/* ── Actions — 3 buttons in a row ─────────────────────────────────────────── */
+.ibum__actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  padding: 20px 24px 24px;
+}
+
+.ibum__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 46px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  flex: 1;
+}
+.ibum__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Cancel — outlined white */
+.ibum__btn--cancel {
+  background: #ffffff;
+  color: #0b1c2f;
+  border: 1.5px solid #d1d5db;
+}
+.ibum__btn--cancel:hover {
+  background: #f7f8fa;
+}
+
+/* Upgrade — outlined golden */
+.ibum__btn--upgrade {
+  background: #ffffff;
+  color: #cf9b2f;
+  border: 1.5px solid #cf9b2f;
+}
+.ibum__btn--upgrade:hover {
+  background: rgba(207, 155, 47, 0.06);
+}
+
+/* Top Up — solid golden */
+.ibum__btn--topup {
+  background: #cf9b2f;
+  color: #ffffff;
+  border: 1.5px solid #cf9b2f;
+  box-shadow: 0 4px 12px rgba(207, 155, 47, 0.30);
+}
+.ibum__btn--topup:hover:not(:disabled) {
+  background: #b8871e;
+  border-color: #b8871e;
+}

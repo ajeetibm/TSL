@@ -172,6 +172,9 @@ export function useNdaWizard() {
     setState((prev) => {
       const completedAt = new Date().toISOString()
       const next: NdaWizardState = { ...prev, status: 'completed', completedAt }
+      // Flush completion immediately so an older debounced step-save cannot
+      // overwrite the completed status after navigation.
+      persist(next, true)
       // Fire complete through service (handles both local + API)
       wizardService.complete('nda', prev.data).then((serverTime) => {
         setState((s) => ({ ...s, completedAt: serverTime }))
@@ -179,7 +182,7 @@ export function useNdaWizard() {
       })
       return next
     })
-  }, [])
+  }, [persist])
 
   const resetWizard = useCallback(() => {
     setState(defaultState)

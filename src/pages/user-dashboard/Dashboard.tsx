@@ -1077,15 +1077,20 @@ export default function Dashboard() {
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [ndaToast, setNdaToast] = useState('')
-  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number } | null>(null)
+  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Toast shown after a wizard is added to dashboard without payment
-  const addedCount = (location.state as { addedCount?: number } | null)?.addedCount ?? 0
-  const [addToast, setAddToast] = useState(() => addedCount > 0
-    ? `${addedCount} wizard${addedCount !== 1 ? 's' : ''} added to your dashboard.`
-    : ''
-  )
+  const locationState = location.state as { addedCount?: number; blueprintTopUpSuccess?: boolean; unitsAdded?: number } | null
+  const addedCount = locationState?.addedCount ?? 0
+  const [addToast, setAddToast] = useState(() => {
+    if (locationState?.blueprintTopUpSuccess && locationState.unitsAdded) {
+      return `${locationState.unitsAdded} Blueprint Credit${locationState.unitsAdded !== 1 ? 's' : ''} added successfully.`
+    }
+    return addedCount > 0
+      ? `${addedCount} wizard${addedCount !== 1 ? 's' : ''} added to your dashboard.`
+      : ''
+  })
   const addToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
     if (!addToast) return
@@ -1217,9 +1222,14 @@ export default function Dashboard() {
     const alreadyCharged = localStorage.getItem(chargeKey) === 'true'
     const response = await subscriptionApi.consumeBlueprintRun(blueprintId, alreadyCharged)
     if (!response.success || !response.data) {
-      const shortage = response.data as { remainingBlueprintUnits?: number; requiredBlueprintUnits?: number } | undefined
+      const shortage = response.data as { remainingBlueprintUnits?: number; requiredBlueprintUnits?: number; blueprint?: { name: string }; blueprintRunTopUpRate?: number } | undefined
       if (shortage?.remainingBlueprintUnits !== undefined && shortage.requiredBlueprintUnits !== undefined) {
-        setInsufficientUnits({ remaining: shortage.remainingBlueprintUnits, required: shortage.requiredBlueprintUnits })
+        setInsufficientUnits({
+          remaining: shortage.remainingBlueprintUnits,
+          required: shortage.requiredBlueprintUnits,
+          blueprintName: shortage.blueprint?.name ?? 'Blueprint',
+          pricePerUnit: shortage.blueprintRunTopUpRate ?? 250,
+        })
       } else showNdaToast(response.message || 'Unable to generate the final document.')
       return
     }
@@ -1267,15 +1277,6 @@ export default function Dashboard() {
     navigate('/dashboard/wizards')
   }
 
-  const buyBlueprintRunUnits = async (units: number) => {
-    const response = await subscriptionApi.topUpBlueprintRuns(units)
-    if (!response.success || !response.data) {
-      showNdaToast(response.message || 'Unable to add Blueprint Credits. Please try again.')
-      return
-    }
-    setSubscription((current) => current ? { ...current, usage: response.data!.usage } : current)
-    showNdaToast(`${units} Blueprint Credit${units === 1 ? '' : 's'} added for R${(units * 250).toLocaleString()}.`)
-  }
   const openReturningDashboard = () => {
     // Keep the established tabbed dashboard flow as the place where a wizard
     // is started, resumed, and completed.
@@ -1717,9 +1718,12 @@ export default function Dashboard() {
                   wizard.title === 'Founder Agreement' ? faState.status :
                   wizard.title === 'Service Agreement' ? saState.status :
                   'idle' // Loan Agreement, Shareholder Resolutions, etc. have no in-progress state
-                if (wizardStatus !== 'idle') return null
+                // A second selection is a fresh run. Keep the prior completed
+                // run in Completed while showing this additional run in New.
+                const hasAdditionalRun = wizardStatus === 'completed' && wizard.selectedQuantity > 1
+                if (wizardStatus !== 'idle' && !hasAdditionalRun) return null
                 return (
-                  <article className="user-dashboard__new-row" key={wizard.id}>
+                  <article className="user-dashboard__new-row" key={`${wizard.id}-${hasAdditionalRun ? 'additional' : 'new'}`}>
                     <div className="user-dashboard__new-row-left">
                       <span className="user-dashboard__new-row-dot" aria-hidden="true">
                         <Info size={16} />
@@ -1740,7 +1744,7 @@ export default function Dashboard() {
                         <strong className="user-dashboard__new-row-meta-count">
                           {hasExhaustedWizardRuns
                             ? 'Monthly limit reached'
-                            : `${wizard.selectedQuantity} selected`}
+                            : hasAdditionalRun ? '1 selected' : `${wizard.selectedQuantity} selected`}
                         </strong>
                       </div>
                       <button
@@ -2029,8 +2033,9 @@ export default function Dashboard() {
         <InsufficientBlueprintUnitsModal
           remaining={insufficientUnits.remaining}
           required={insufficientUnits.required}
+          blueprintName={insufficientUnits.blueprintName}
+          pricePerUnit={insufficientUnits.pricePerUnit}
           onClose={() => setInsufficientUnits(null)}
-          onTopUp={(units) => { setInsufficientUnits(null); void buyBlueprintRunUnits(units) }}
           onUpgrade={() => { setInsufficientUnits(null); setShowUpgradeModal(true) }}
         />
       )}

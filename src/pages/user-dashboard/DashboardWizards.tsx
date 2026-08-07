@@ -23,8 +23,9 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
-import { paymentApi } from '../../services/tslApi'
-import type { WizardAccess } from '../../services/tslApi'
+import { paymentApi, subscriptionApi } from '../../services/tslApi'
+import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
+import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import './Dashboard.css'
 import './DashboardWizards.css'
 
@@ -156,12 +157,22 @@ export default function DashboardWizards() {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
 
+  const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
+  const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
+  const [insufficientUnits, setInsufficientUnits] = useState<{ title: string; required: number } | null>(null)
+  const [isUpgradeJourney, setIsUpgradeJourney] = useState(false)
   useEffect(() => {
     paymentApi.wizardAccess().then((res) => {
       if (res.success && res.data) {
         setWizardAccess(res.data)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(res.data))
       }
+    })
+    subscriptionApi.get().then((res) => {
+      if (res.success && res.data) setRemainingBlueprintUnits(res.data.usage.runsRemaining)
+    })
+    subscriptionApi.blueprints().then((res) => {
+      if (res.success && res.data) setCatalogue(res.data)
     })
   }, [])
 
@@ -180,6 +191,16 @@ export default function DashboardWizards() {
     }))
   }
 
+  const selectBlueprint = (title: string, nextQuantity: number) => {
+    const currentQuantity = quantities[title] ?? 0
+    if (nextQuantity > currentQuantity && !isUpgradeJourney && remainingBlueprintUnits !== null && remainingBlueprintUnits <= 0) {
+      const blueprint = catalogue.find((item) => item.name.toLowerCase() === title.toLowerCase())
+      setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 1 })
+      return
+    }
+    updateQuantity(title, nextQuantity)
+  }
+
   // Only newly selected wizards count (exclude already-owned ones)
   const selectedWizards = wizardCards
     .map((wizard) => ({ title: wizard.title, quantity: quantities[wizard.title] ?? 0 }))
@@ -194,7 +215,7 @@ export default function DashboardWizards() {
 
   const viewSelectedWizardDetails = () => {
     localStorage.setItem(selectedWizardStorageKey, JSON.stringify(selectedWizards))
-    navigate('/dashboard/wizard-details', { state: { selectedWizards } })
+    navigate('/dashboard/wizard-details', { state: { selectedWizards, forceUpgrade: isUpgradeJourney } })
   }
 
 
@@ -293,7 +314,7 @@ export default function DashboardWizards() {
                       type="button"
                       className="dashboard-wizards__stepper-button dashboard-wizards__stepper-button--plus"
                       aria-label={`Add one ${title}`}
-                      onClick={() => updateQuantity(title, quantity + 1)}
+                      onClick={() => selectBlueprint(title, quantity + 1)}
                     >
                       <Plus size={18} />
                     </button>
@@ -302,7 +323,7 @@ export default function DashboardWizards() {
                   <button
                     type="button"
                     className="dashboard-wizards__select"
-                    onClick={() => updateQuantity(title, 1)}
+                    onClick={() => selectBlueprint(title, 1)}
                   >
                     <CheckCircle2 size={18} />
                     Select
@@ -356,6 +377,19 @@ export default function DashboardWizards() {
           </section>
         )}
       </div>
+        {insufficientUnits && (
+          <InsufficientBlueprintUnitsModal
+            blueprintName={insufficientUnits.title}
+            remaining={0}
+            required={insufficientUnits.required}
+            pricePerUnit={250}
+            onClose={() => setInsufficientUnits(null)}
+            onUpgrade={() => {
+              setInsufficientUnits(null)
+              setIsUpgradeJourney(true)
+            }}
+          />
+        )}
     </DashboardShell>
   )
 }

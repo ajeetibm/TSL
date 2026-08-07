@@ -32,6 +32,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
+import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import { setPageMetadata } from '../../services/metadata'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
 import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
@@ -46,6 +47,7 @@ type SelectedWizard = {
 }
 
 type WizardLocationState = {
+  forceUpgrade?: boolean
   selectedWizards?: SelectedWizard[]
   showPayment?: boolean
 }
@@ -318,6 +320,8 @@ const wizardSteps = [
 export default function DashboardWizardDetails() {
   const navigate = useNavigate()
   const location = useLocation()
+  const upgradeJourney = Boolean((location.state as WizardLocationState | null)?.forceUpgrade)
+
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
@@ -328,9 +332,12 @@ export default function DashboardWizardDetails() {
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
+  const [isWizardAccessLoading, setIsWizardAccessLoading] = useState(true)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('')
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
+  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string } | null>(null)
   const [wizardAccessWarning, setWizardAccessWarning] = useState<string | null>(null)
+  const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
   const [isInitializingPayment, setIsInitializingPayment] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
@@ -402,9 +409,12 @@ export default function DashboardWizardDetails() {
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
       }
       if (plan) { setAccountPlan(plan); setActivePlan(plan) }
-    })
+    }).finally(() => setIsWizardAccessLoading(false))
     subscriptionApi.blueprints().then((response) => {
       if (response.success && response.data) setCatalogue(response.data)
+    })
+    subscriptionApi.get().then((response) => {
+      if (response.success && response.data) setRemainingBlueprintUnits(response.data.usage.runsRemaining)
     })
   }, [])
 
@@ -424,11 +434,33 @@ export default function DashboardWizardDetails() {
   const newSelections = selectedWizards.filter((wizard) => !existingWizardTitles.has(wizard.title))
   const activeWizardSelection = [...(wizardAccess?.selectedWizards ?? []), ...newSelections]
   const totalActiveWizardCount = existingWizardTitles.size + newSelections.length
-  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && newSelections.length > 0
+  // Blueprint selection is never a billable action. A subscribed user may
+  // revisit an existing Blueprint as long as they still have access to it.
+  const canAddToDashboard = Boolean(wizardAccess?.hasSubscription) && selectedWizards.length > 0 && !upgradeJourney
 
 
+  const validateAddEntitlement = async () => {
+    const response = await subscriptionApi.get()
+    const remaining = response.success && response.data
+      ? response.data.usage.runsRemaining
+      : remainingBlueprintUnits
+    if (remaining !== null && remaining <= 0) {
+      setInsufficientUnits({
+        remaining,
+        required: totalBlueprintUnits || 1,
+        blueprintName: selectedWizards.length === 1 ? selectedWizards[0].title : 'Selected Blueprints',
+      })
+      return false
+    }
+    if (remaining !== null) setRemainingBlueprintUnits(remaining)
+    return true
+  }
+
+    // Selecting a subscribed Blueprint is free; final generation consumes units.
   const addToDashboard = async () => {
-    const response = await paymentApi.addWizardsToDashboard(newSelections.map(({ title, quantity }) => ({ title, quantity })))
+    if (!(await validateAddEntitlement())) return
+    // Existing titles are included so a completed Blueprint can be added as a new run.
+    const response = await paymentApi.addWizardsToDashboard(selectedWizards.map(({ title, quantity }) => ({ title, quantity })))
     if (!response.success || !response.data) {
       setWizardAccessWarning(response.message || 'Unable to add these wizards to your dashboard.')
       return
@@ -437,7 +469,7 @@ export default function DashboardWizardDetails() {
     localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
     // Pass the count so the dashboard can show a success toast
-    navigate('/dashboard', { state: { addedCount: newSelections.length } })
+    navigate('/dashboard', { state: { addedCount: totalWizards } })
   }
 
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
@@ -823,13 +855,13 @@ export default function DashboardWizardDetails() {
           <button
             type="button"
             className="dashboard-wizard-details__payment-button"
-            disabled={selectedWizards.length === 0}
+            disabled={selectedWizards.length === 0 || isWizardAccessLoading}
             onClick={() => {
               if (canAddToDashboard) { void addToDashboard(); return }
               setIsPaymentView(true)
             }}
           >
-            {canAddToDashboard ? 'Add to Dashboard' : 'Proceed to Payment'}
+            {isWizardAccessLoading ? 'Checking subscription...' : canAddToDashboard ? 'Add to Dashboard' : 'Proceed to Payment'}
             <ChevronRight size={16} />
           </button>
         </section>
@@ -1112,6 +1144,16 @@ export default function DashboardWizardDetails() {
           </div>
         )}
       </main>
+        {insufficientUnits && (
+          <InsufficientBlueprintUnitsModal
+            blueprintName={insufficientUnits.blueprintName}
+            remaining={insufficientUnits.remaining}
+            required={insufficientUnits.required}
+            pricePerUnit={250}
+            onClose={() => setInsufficientUnits(null)}
+            onUpgrade={() => { setInsufficientUnits(null); setIsPaymentView(true) }}
+          />
+        )}
     </DashboardShell>
   )
 }

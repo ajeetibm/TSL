@@ -109,6 +109,7 @@ export async function request<T = unknown>(
       message: failure.message ?? `Request failed with status ${response.status}`,
       error: failure.error ?? 'REQUEST_FAILED',
       messages: failure.messages,
+      data: failure.data,
     }
   }
 
