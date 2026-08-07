@@ -1,3 +1,5 @@
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
@@ -26,11 +28,9 @@ import './DashboardPlaybooks.css'
 
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
-// Configure the PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url,
-).toString()
+// Configure the PDF.js worker — use Vite's ?url import so the worker is
+// served with the correct JavaScript MIME type (not application/octet-stream).
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
 
 type PlaybookCard = {
   title: string
