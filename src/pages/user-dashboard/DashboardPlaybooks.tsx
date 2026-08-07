@@ -12,14 +12,19 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import { API_BASE_URL, documentsApi, playbookApi } from '../../services/tslApi'
+import type { WizardAccess } from '../../services/tslApi'
+import UpgradePlanModal from './UpgradePlanModal'
 import './Dashboard.css'
 import './DashboardPlaybooks.css'
+
+const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 // Configure the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -383,9 +388,19 @@ function mapApiSections(
 }
 
 export default function DashboardPlaybooks() {
+  const navigate = useNavigate()
   const [selectedPlaybook, setSelectedPlaybook] = useState<PlaybookCard | null>(null)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [sections, setSections] = useState<PlaybookSection[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Read subscription status from cache — same pattern as Dashboard.tsx
+  const hasSubscription = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })()
 
   setPageMetadata('Playbooks', 'Browse guided legal playbooks for common business workflows.')
 
@@ -481,7 +496,7 @@ export default function DashboardPlaybooks() {
                       <button
                         type="button"
                         className="dashboard-playbooks__button"
-                        onClick={() => setSelectedPlaybook(card)}
+                        onClick={() => hasSubscription ? setSelectedPlaybook(card) : setShowUpgradeModal(true)}
                       >
                         Read Playbook
                         <ArrowRight size={18} />
@@ -502,6 +517,12 @@ export default function DashboardPlaybooks() {
         />
       )}
 
+      {showUpgradeModal && (
+        <UpgradePlanModal
+          onClose={() => setShowUpgradeModal(false)}
+          onUpgrade={() => { setShowUpgradeModal(false); navigate('/dashboard/wizards') }}
+        />
+      )}
     </DashboardShell>
   )
 }
