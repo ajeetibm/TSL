@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { BrowserRouter } from 'react-router-dom'
 import Dashboard from './Dashboard'
 import type { DashboardData } from '../../services/dashboardTypes'
@@ -310,6 +310,8 @@ describe('Queue-based workflow', () => {
       { title: 'Non-Disclosure Agreement (NDA)', quantity: 3 },
     ],
     plan: 'Operator',
+    wizardLimit: 5,
+    remainingWizards: 2,
   }
 
   // Seed localStorage so the paid dashboard tab view renders with 3 NDAs queued.

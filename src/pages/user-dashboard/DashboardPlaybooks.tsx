@@ -1,5 +1,3 @@
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
