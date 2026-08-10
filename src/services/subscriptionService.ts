@@ -21,9 +21,23 @@ import type { ApiResponse } from './tslApi'
 // ── Plan ordering (used by UI for upgrade / downgrade logic) ──────────────
 
 const PLAN_ORDER: Record<string, number> = {
+  free: -1,
   launchpad: 0,
   operator: 1,
   boardroom: 2,
+}
+
+// ── Per-plan Blueprint run units & Counsel credits ─────────────────────────
+export interface PlanSpec {
+  blueprintRunUnits: number
+  counselCredits: number
+}
+
+export const PLAN_SPECS: Record<string, PlanSpec> = {
+  free:      { blueprintRunUnits: 0,  counselCredits: 0 },
+  launchpad: { blueprintRunUnits: 4,  counselCredits: 0 },
+  operator:  { blueprintRunUnits: 12, counselCredits: 2 },
+  boardroom: { blueprintRunUnits: 30, counselCredits: 6 },
 }
 
 export function planTier(planId: string): number {

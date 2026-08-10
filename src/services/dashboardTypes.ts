@@ -151,6 +151,8 @@ export interface SubscriptionData {
     last4: string
   } | null
   pendingDowngrade: PendingDowngrade | null
+  counselCreditsTotal?: number
+  counselCreditsRemaining?: number
 }
 
 export interface ProratedUpgradePreview {

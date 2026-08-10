@@ -32,6 +32,7 @@ import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
 import { useFounderAgreementWizard } from '../../hooks/useFounderAgreementWizard'
 import { useServiceAgreementWizard } from '../../hooks/useServiceAgreementWizard'
+import { useBillingSubscription } from '../../hooks/useBillingSubscription'
 import NdaWizardModal from './NdaWizardModal'
 import type { NdaWizardData } from './NdaWizardModal'
 import EmploymentWizardModal from './EmploymentWizardModal'
@@ -45,6 +46,8 @@ import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import ComingSoonWizardModal from './ComingSoonWizardModal'
 import UpgradePlanModal from './UpgradePlanModal'
+import { UpgradePlansModal } from './billing/UpgradePlansModal'
+import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
 import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
@@ -1064,18 +1067,49 @@ export default function Dashboard() {
   const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard()
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
+
+  // ── Billing upgrade flow for Free plan users ──────────────────────────────
+  const {
+    subscription: billingSubscription,
+    plans: billingPlans,
+    plansLoading: billingPlansLoading,
+    plansError: billingPlansError,
+    selectedPlan: billingSelectedPlan,
+    upgradePreview: billingUpgradePreview,
+    previewLoading: billingPreviewLoading,
+    previewError: billingPreviewError,
+    actionLoading: billingActionLoading,
+    actionError: billingActionError,
+    activeModal: billingActiveModal,
+    openUpgradePlans: openBillingUpgradePlans,
+    selectPlan: billingSelectPlan,
+    confirmUpgrade: billingConfirmUpgrade,
+    cancelUpgradeConfirm: billingCancelUpgradeConfirm,
+    closeModal: billingCloseModal,
+  } = useBillingSubscription()
+
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
+  // True only after the server has confirmed wizard access — prevents stale
+  // localStorage cache from granting wizard start access before API responds.
+  const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(false)
 
-  // A wizard may only be started after it has been selected as part of an
-  // active subscription. Draft state alone must never grant access.
+  // A wizard may only be started after the server has confirmed subscription status.
+  // wizardAccessConfirmed ensures stale localStorage cache never grants access
+  // before the API has responded.
   const isInitialSubscriptionDashboard = Boolean(
+    wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
     wizardAccess.selectedWizards.length &&
     localStorage.getItem('tsl-dashboard-view-mode') === 'initial',
   )
-  const isPaidDashboard = Boolean(wizardAccess?.hasSubscription && wizardAccess.selectedWizards.length && !isInitialSubscriptionDashboard)
+  const isPaidDashboard = Boolean(
+    wizardAccessConfirmed &&
+    wizardAccess?.hasSubscription &&
+    wizardAccess.selectedWizards.length &&
+    !isInitialSubscriptionDashboard,
+  )
   const defaultTab: DashboardTab = 'new'
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
@@ -1267,6 +1301,11 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false
     paymentApi.wizardAccess().then((response) => {
+      if (!cancelled) {
+        // Mark server response received regardless of outcome — prevents stale
+        // cache from being treated as authoritative before API responds.
+        setWizardAccessConfirmed(true)
+      }
       if (!cancelled && response.success && response.data) {
         const freshAccess = response.data
         setWizardAccess(freshAccess)
@@ -1356,6 +1395,32 @@ export default function Dashboard() {
     return () => { cancelled = true }
   }, [])
 
+  // ── Sync Dashboard after a billing upgrade ────────────────────────────────
+  // When billingSubscription changes planId (Free → paid), propagate it into
+  // the local subscription state and flip wizardAccess so the UI gate opens.
+  // Only treat the subscription as active when the plan is genuinely paid
+  // (not 'free') — otherwise a free-plan record from the server would
+  // incorrectly set hasSubscription:true and open wizard modals for users
+  // who have not purchased a plan.
+  useEffect(() => {
+    if (!billingSubscription) return
+    setSubscription(billingSubscription)
+    if (billingPlans.length > 0) {
+      const matched = billingPlans.find(
+        (p) => p.planId.toLowerCase() === billingSubscription.planId.toLowerCase(),
+      )
+      if (matched) setCurrentPlan(matched)
+    }
+    const isPaidPlan = billingSubscription.planId.toLowerCase() !== 'free'
+    if (isPaidPlan) {
+      setWizardAccessConfirmed(true)
+      setWizardAccess((prev) => {
+        if (!prev) return prev
+        return { ...prev, hasSubscription: true, plan: billingSubscription.planId }
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billingSubscription?.planId])
 
   const derivedTab: DashboardTab = activeTab
 
@@ -1467,10 +1532,18 @@ export default function Dashboard() {
             <h2>Welcome to The Startup Legal! 🎉</h2>
             <p>
               You're all set up with your{' '}
-              <strong>{isInitialSubscriptionDashboard ? `${wizardAccess?.plan ?? ''} Plan` : 'no active subscription'}</strong>.{' '}
+              <strong>
+                {isInitialSubscriptionDashboard
+                  ? `${wizardAccess?.plan ?? ''} Plan`
+                  : wizardAccess?.hasSubscription
+                    ? `${wizardAccess.plan ?? ''} Plan`
+                    : 'no active subscription'}
+              </strong>.{' '}
               {isInitialSubscriptionDashboard
                 ? "Let's get your first legal document created."
-                : 'Choose a plan and select your wizards to start creating documents.'}
+                : wizardAccess?.hasSubscription
+                  ? 'Select your wizards to start creating documents.'
+                  : 'Choose a plan and select your wizards to start creating documents.'}
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
               Browse Wizards
@@ -1551,10 +1624,20 @@ export default function Dashboard() {
                   <Zap size={28} />
                 </span>
                 <div>
-                  <strong>{isInitialSubscriptionDashboard ? `${availableWizards.reduce((sum, wizard) => sum + wizard.selectedQuantity, 0)} Wizards Available` : 'Upgrade required'}</strong>
-                  <p>{isInitialSubscriptionDashboard
-                    ? 'Your selected wizards are ready to start.'
-                    : 'Your dashboard will show selected wizards with a Start button after successful payment.'}</p>
+                  <strong>
+                    {isInitialSubscriptionDashboard
+                      ? `${availableWizards.reduce((sum, wizard) => sum + wizard.selectedQuantity, 0)} Wizards Available`
+                      : wizardAccess?.hasSubscription
+                        ? 'Select your wizards'
+                        : 'Upgrade required'}
+                  </strong>
+                  <p>
+                    {isInitialSubscriptionDashboard
+                      ? 'Your selected wizards are ready to start.'
+                      : wizardAccess?.hasSubscription
+                        ? 'You have an active plan. Browse wizards to add them to your dashboard.'
+                        : 'Your dashboard will show selected wizards with a Start button after successful payment.'}
+                  </p>
                 </div>
               </div>
 
@@ -1581,7 +1664,12 @@ export default function Dashboard() {
                     <button
                       type="button"
                       className="user-dashboard__new-wizard-button"
-                      onClick={isInitialSubscriptionDashboard ? () => handleStart(wizard.title) : () => setShowUpgradeModal(true)}
+                      onClick={
+                        isInitialSubscriptionDashboard ||
+                        (wizardAccessConfirmed && wizardAccess?.hasSubscription)
+                          ? () => handleStart(wizard.title)
+                          : () => setShowUpgradeModal(true)
+                      }
                     >
                       <Play size={16} />
                       Start
@@ -2223,7 +2311,7 @@ export default function Dashboard() {
           blueprintName={insufficientUnits.blueprintName}
           pricePerUnit={insufficientUnits.pricePerUnit}
           onClose={() => setInsufficientUnits(null)}
-          onUpgrade={() => { setInsufficientUnits(null); setShowUpgradeModal(true) }}
+          onUpgrade={() => { setInsufficientUnits(null); void openBillingUpgradePlans() }}
         />
       )}
 

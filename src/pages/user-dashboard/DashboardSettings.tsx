@@ -373,19 +373,24 @@ export default function DashboardSettings() {
   })()
 
   // ── Derived display values ────────────────────────────────────────────────
-  const planName        = subscription?.planName  ?? 'Free'
-  const planTagline     = subscription?.tagline   ?? ''
-  const planPrice       = hasSubscription ? (subscription?.price     ?? 0) : 0
-  const wizardRuns      = hasSubscription ? (subscription?.wizardRuns ?? 0) : 0
-  const teamMembers     = hasSubscription ? (subscription?.teamMembers ?? 0) : 0
-  const runsUsed        = hasSubscription ? (subscription?.usage.runsUsed      ?? 0) : 0
-  const runsTotal       = hasSubscription ? (subscription?.usage.runsTotal     ?? 0) : 0
-  const runsRemaining   = hasSubscription ? (subscription?.usage.runsRemaining ?? 0) : 0
-  const nextBillingDate = hasSubscription ? (subscription?.nextBillingDate ?? '') : ''
-  const pendingDowngrade = subscription?.pendingDowngrade ?? null
+  const planName           = subscription?.planName  ?? 'Free'
+  const planTagline        = subscription?.tagline   ?? ''
+  const planPrice          = hasSubscription ? (subscription?.price          ?? 0) : 0
+  const wizardRuns         = hasSubscription ? (subscription?.wizardRuns     ?? 0) : 0
+  const teamMembers        = hasSubscription ? (subscription?.teamMembers    ?? 0) : 0
+  const runsUsed           = hasSubscription ? (subscription?.usage.runsUsed      ?? 0) : 0
+  const runsTotal          = hasSubscription ? (subscription?.usage.runsTotal     ?? 0) : 0
+  const runsRemaining      = hasSubscription ? (subscription?.usage.runsRemaining ?? 0) : 0
+  const nextBillingDate    = hasSubscription ? (subscription?.nextBillingDate ?? '') : ''
+  const pendingDowngrade   = subscription?.pendingDowngrade ?? null
+  const counselCreditsTotal     = hasSubscription ? (subscription?.counselCreditsTotal     ?? 0) : 0
+  const counselCreditsRemaining = hasSubscription ? (subscription?.counselCreditsRemaining ?? 0) : 0
+  // currentPlanId for the Choose a Plan modal: trust hasSubscription, not planId from server
+  // (mock server returns planId="launchpad" even for unpaid/free users)
+  const effectivePlanId = hasSubscription ? (subscription?.planId ?? 'free') : 'free'
 
-  const tax      = parseFloat((planPrice * 0.15).toFixed(2))
-  const totalInv = planPrice + tax
+  const tax         = parseFloat((planPrice * 0.15).toFixed(2))
+  const totalInv    = planPrice + tax
   const progressPct = runsTotal > 0 ? Math.min(100, Math.round((runsUsed / runsTotal) * 100)) : 0
 
   // Non-subscribers see no invoices regardless of what the server returns
@@ -785,6 +790,13 @@ export default function DashboardSettings() {
                 <span style={{ width: `${progressPct}%` }} />
               </div>
               <p className="dashboard-settings__remaining">{runsRemaining} runs remaining</p>
+
+              {hasSubscription && (
+                <div className="dashboard-settings__usage-copy" style={{ marginTop: '12px' }}>
+                  <span>Counsel Credits</span>
+                  <strong>{counselCreditsRemaining} of {counselCreditsTotal}</strong>
+                </div>
+              )}
             </section>
           </aside>
         </div>
@@ -792,9 +804,9 @@ export default function DashboardSettings() {
 
       {/* ── Modals ──────────────────────────────────────────────────────────── */}
 
-      {activeModal === 'upgrade-plans' && subscription && (
+      {activeModal === 'upgrade-plans' && (
         <UpgradePlansModal
-          currentPlanId={subscription.planId}
+          currentPlanId={effectivePlanId}
           plans={plans}
           plansLoading={plansLoading}
           plansError={plansError}

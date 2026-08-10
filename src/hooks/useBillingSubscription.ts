@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { subscriptionService } from '../services/subscriptionService'
+import { subscriptionService, PLAN_SPECS } from '../services/subscriptionService'
 import type {
   BillingHistoryInvoice,
   ProratedUpgradePreview,
@@ -158,7 +158,7 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
   // ── Select a plan — remembers which modal triggered the confirm screen ──
   const selectPlan = useCallback(
     async (plan: SubscriptionPlan, action: 'upgrade' | 'downgrade') => {
-      if (!subscription) return
+      // Free plan users have subscription === null; still allow selecting a plan
       setSelectedPlan(plan)
       setActionError(null)
 
@@ -180,7 +180,7 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
         setActiveModal('downgrade-confirm')
       }
     },
-    [subscription, activeModal],
+    [activeModal],
   )
 
   // ── Confirm upgrade ────────────────────────────────────────────────────
@@ -191,9 +191,12 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
   // Flow when payFn is absent (direct mock path):
   //   POST /subscription/upgrade without reference — server simulates payment
   const confirmUpgrade = useCallback(async () => {
-    if (!subscription || !selectedPlan || actionLoading) return
+    if (!selectedPlan || actionLoading) return
     setActionLoading(true)
     setActionError(null)
+
+    // Free plan users have no active subscription record — use 'free' as source planId
+    const currentPlanId = subscription?.planId ?? 'free'
 
     // ── Step 1: collect payment when a payFn is injected ─────────────────
     let paymentReference: string | undefined
@@ -209,7 +212,7 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
 
     // ── Step 2: activate the plan on the server ───────────────────────────
     const res = await subscriptionService.confirmUpgrade(
-      subscription.planId,
+      currentPlanId,
       selectedPlan.planId,
       paymentReference,
     )
@@ -223,23 +226,42 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
     const result = res.data as UpgradeResult
     setUpgradeResult(result)
 
-    // ── Step 3: update subscription state instantly — no page refresh ─────
-    setSubscription((prev) =>
-      prev
-        ? {
-            ...prev,
-            planId: result.planId,
-            planName: result.planName,
-            price: result.price,
-            tagline: result.tagline,
-            wizardRuns: result.wizardRuns,
-            teamMembers: result.teamMembers,
-            usage: result.usage,
-            nextBillingDate: result.nextBillingDate,
-            pendingDowngrade: null,
-          }
-        : prev,
-    )
+    // ── Step 3: apply correct Blueprint run units & Counsel credits ───────
+    const spec = PLAN_SPECS[result.planId.toLowerCase()]
+    const resolvedRuns = spec?.blueprintRunUnits ?? result.wizardRuns
+
+    // ── Step 4: update subscription state instantly — no page refresh ─────
+    setSubscription((prev) => ({
+      planId: result.planId,
+      planName: result.planName,
+      price: result.price,
+      currency: prev?.currency ?? 'ZAR',
+      tagline: result.tagline,
+      wizardRuns: resolvedRuns,
+      teamMembers: result.teamMembers,
+      usage: result.usage ?? {
+        runsUsed: 0,
+        runsTotal: resolvedRuns,
+        runsRemaining: resolvedRuns,
+        teamMembers: result.teamMembers,
+      },
+      nextBillingDate: result.nextBillingDate,
+      paymentMethod: prev?.paymentMethod ?? null,
+      pendingDowngrade: null,
+      counselCreditsTotal: spec?.counselCredits ?? 0,
+      counselCreditsRemaining: spec?.counselCredits ?? 0,
+    }))
+
+    // ── Step 5: update wizardAccess cache so Dashboard unlocks wizard access
+    try {
+      const cached = JSON.parse(
+        localStorage.getItem('tsl-wizard-access-cache') ?? 'null',
+      ) as Record<string, unknown> | null
+      localStorage.setItem(
+        'tsl-wizard-access-cache',
+        JSON.stringify({ ...(cached ?? {}), hasSubscription: true, plan: result.planId }),
+      )
+    } catch { /* ignore */ }
 
     setActiveModal('none')
     setSelectedPlan(null)
