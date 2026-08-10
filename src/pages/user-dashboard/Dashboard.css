@@ -770,6 +770,28 @@
   background: #cf9b2f;
 }
 
+/* Count badge on tab buttons (New / In Progress / Completed) */
+.user-dashboard__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  margin-left: 8px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #cf9b2f;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.user-dashboard__tab--active .user-dashboard__tab-badge {
+  background: #0d1b2a;
+}
+
 .user-dashboard__progress-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -926,6 +948,14 @@
 
 .user-dashboard__new-row-btn:hover {
   background: #b8871e;
+}
+
+.user-dashboard__new-row-btn--resume {
+  background: #0d1b2a;
+}
+
+.user-dashboard__new-row-btn--resume:hover {
+  background: #1a3250;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */

@@ -373,7 +373,7 @@ export default function DashboardSettings() {
   })()
 
   // ── Derived display values ────────────────────────────────────────────────
-  const planName        = subscription?.planName  ?? '—'
+  const planName        = subscription?.planName  ?? 'Free'
   const planTagline     = subscription?.tagline   ?? ''
   const planPrice       = hasSubscription ? (subscription?.price     ?? 0) : 0
   const wizardRuns      = hasSubscription ? (subscription?.wizardRuns ?? 0) : 0
@@ -494,7 +494,34 @@ export default function DashboardSettings() {
                     <p className="dashboard-settings__pm-error" role="alert">{subError}</p>
                   )}
 
-                  {!subLoading && !subError && subscription && (
+                  {!subLoading && !subError && !hasSubscription && (
+                    <article className="dashboard-settings__plan">
+                      <div className="dashboard-settings__plan-top">
+                        <div>
+                          <h3>
+                            <BadgeCheck size={32} />
+                            Free plan
+                          </h3>
+                          <p>Get started with the basics — upgrade anytime to unlock more.</p>
+                        </div>
+                        <div className="dashboard-settings__price">
+                          <strong>R0</strong>
+                          <span>per month</span>
+                        </div>
+                      </div>
+
+                      <div className="dashboard-settings__plan-actions">
+                        <button type="button" onClick={openUpgradePlans}>
+                          Upgrade plan
+                        </button>
+                        <button type="button" onClick={openComparePlans}>
+                          Compare plans
+                        </button>
+                      </div>
+                    </article>
+                  )}
+
+                  {!subLoading && !subError && hasSubscription && subscription && (
                     <article className="dashboard-settings__plan">
                       {pendingDowngrade && (
                         <p className="bs-plan-active-until">

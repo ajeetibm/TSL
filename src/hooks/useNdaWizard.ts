@@ -159,9 +159,12 @@ export function useNdaWizard() {
     setState((prev) => {
       const next: NdaWizardState = {
         ...prev,
+        status: prev.status === 'completed' ? 'completed' : 'inProgress',
         step,
         data,
         progress: calcNdaProgress(data),
+        startedAt: prev.startedAt ?? new Date().toISOString(),
+        completedAt: prev.status === 'completed' ? prev.completedAt : null,
       }
       persist(next, immediate)
       return next

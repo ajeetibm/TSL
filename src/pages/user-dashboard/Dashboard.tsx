@@ -49,6 +49,17 @@ import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
+// ── Completed-instance record ────────────────────────────────────────────────
+// Each time a blueprint run is completed we push one entry here rather than
+// relying on the single-slot hook state. This lets the Completed tab accumulate
+// multiple runs of the same blueprint type without overwriting earlier ones.
+interface CompletedInstance {
+  id: string              // unique per completion
+  wizardType: string      // matches wizard.title
+  completedAt: string
+  data: unknown           // typed narrowly in render helpers
+}
+
 // Per-plan benefit lines shown in the top-right hero card.
 // Numeric values (runs, team members) come from the live SubscriptionData so they
 // stay accurate after an upgrade/downgrade without any frontend changes.
@@ -1048,11 +1059,11 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { state: ndaState, startWizard, saveProgress, completeWizard } = useNdaWizard()
-  const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp } = useEmploymentWizard()
-  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP } = usePrivacyPolicyWizard()
-  const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA } = useFounderAgreementWizard()
-  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA } = useServiceAgreementWizard()
+  const { state: ndaState, startWizard, saveProgress, completeWizard, resetWizard: resetNda } = useNdaWizard()
+  const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp, resetWizard: resetEmp } = useEmploymentWizard()
+  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard()
+  const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
+  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
@@ -1065,9 +1076,7 @@ export default function Dashboard() {
     localStorage.getItem('tsl-dashboard-view-mode') === 'initial',
   )
   const isPaidDashboard = Boolean(wizardAccess?.hasSubscription && wizardAccess.selectedWizards.length && !isInitialSubscriptionDashboard)
-  const defaultTab: DashboardTab =
-    ndaState.status === 'completed' || empState.status === 'completed' || ppState.status === 'completed' || faState.status === 'completed' || saState.status === 'completed' ? 'completed' :
-    ndaState.status === 'inProgress' || empState.status === 'inProgress' || ppState.status === 'inProgress' || faState.status === 'inProgress' || saState.status === 'inProgress' ? 'inProgress' : 'new'
+  const defaultTab: DashboardTab = 'new'
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false)
@@ -1080,8 +1089,124 @@ export default function Dashboard() {
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // ── Queue state ──────────────────────────────────────────────────────────
+  // Tracks how many instances of each blueprint type are waiting in the New tab.
+  // Independent of the per-type wizard hooks so that:
+  //   • Multiple queued items of the same type all appear in New simultaneously
+  //   • Starting one moves only that instance to In Progress; the rest stay in New
+  //   • Completing a workflow does not remove queued items from New
+  const queueStorageKey = 'tsl-dashboard-queue'
+  const [queuedCounts, setQueuedCounts] = useState<Record<string, number>>(() => {
+    try {
+      const raw = localStorage.getItem(queueStorageKey)
+      if (raw) return JSON.parse(raw) as Record<string, number>
+      // No stored queue yet — seed synchronously from the cached wizardAccess
+      // so the New tab is correct even before the async API call resolves.
+      const cachedAccess = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { selectedWizards?: Array<{ title: string; quantity?: number }> } | null
+      if (cachedAccess?.selectedWizards?.length) {
+        const initial: Record<string, number> = {}
+        for (const w of cachedAccess.selectedWizards) {
+          initial[w.title] = (initial[w.title] ?? 0) + (w.quantity ?? 1)
+        }
+        localStorage.setItem(queueStorageKey, JSON.stringify(initial))
+        return initial
+      }
+      return {}
+    } catch { return {} }
+  })
+  // Whether the queue has been seeded from the server-authoritative selectedWizards
+  const queueSeedRef = useRef(false)
+
+  const persistQueue = (next: Record<string, number>) => {
+    localStorage.setItem(queueStorageKey, JSON.stringify(next))
+    setQueuedCounts(next)
+  }
+
+  // ── Completed instances ──────────────────────────────────────────────────
+  // Each completed run is appended here so the Completed tab accumulates
+  // multiple runs of the same blueprint type independently of the single-slot
+  // wizard hooks. The hook can be reset to start a new run without losing
+  // earlier completion records.
+  const completedInstancesKey = 'tsl-dashboard-completed-instances'
+  const [completedInstances, setCompletedInstances] = useState<CompletedInstance[]>(() => {
+    try {
+      const raw = localStorage.getItem(completedInstancesKey)
+      return raw ? (JSON.parse(raw) as CompletedInstance[]) : []
+    } catch { return [] }
+  })
+
+  const pushCompletedInstance = (wizardType: string, data: unknown, completedAt: string) => {
+    const entry: CompletedInstance = {
+      id: `${wizardType}:${completedAt}:${Math.random().toString(36).slice(2, 7)}`,
+      wizardType,
+      completedAt,
+      data,
+    }
+    setCompletedInstances((prev) => {
+      const next = [...prev, entry]
+      localStorage.setItem(completedInstancesKey, JSON.stringify(next))
+      return next
+    })
+  }
+
+  // ── In-progress set ──────────────────────────────────────────────────────
+  // Tracks which blueprint types currently have an active (inProgress) run in
+  // their single-slot hook. Prevents double-starting the same type while it is
+  // already open — the user must finish or close the current run first.
+  // Derived from live hook states so it is always in sync.
+  const inProgressTitles = new Set<string>([
+    ...(ndaState.status === 'inProgress' ? ['Non-Disclosure Agreement (NDA)'] : []),
+    ...(empState.status === 'inProgress' ? ['Employment Offer letter'] : []),
+    ...(ppState.status === 'inProgress' ? ['Privacy Policy'] : []),
+    ...(faState.status === 'inProgress' ? ['Founder Agreement'] : []),
+    ...(saState.status === 'inProgress' ? ['Service Agreement'] : []),
+  ])
+
+  // Decrement one instance from the New queue and open the corresponding modal.
+  // Guard: if this blueprint type is already inProgress, do not allow a second
+  // concurrent start — show the in-progress card instead by switching tabs.
+  // If the hook is in 'completed' state reset it first so startWizard() can
+  // transition it back to inProgress.
+  const handleStart = (title: string) => {
+    // Block double-start: a wizard slot can only hold one active run at a time.
+    // Switch to In Progress so the user can Continue rather than starting again.
+    if (inProgressTitles.has(title)) {
+      setActiveTab('inProgress')
+      return
+    }
+
+    setQueuedCounts((prev) => {
+      // On the initial landing view the queue may not yet be seeded (async API
+      // call still in flight). Use selectedWizards as the authoritative quantity
+      // so that clicking Start on NDA×3 still leaves NDA×2 in the New queue.
+      const authoritative = wizardAccess?.selectedWizards.find((w) => w.title === title)?.quantity ?? 1
+      const current = prev[title] ?? authoritative
+      const next = { ...prev, [title]: Math.max(current - 1, 0) }
+      localStorage.setItem(queueStorageKey, JSON.stringify(next))
+      return next
+    })
+    if (title === 'Non-Disclosure Agreement (NDA)') {
+      if (ndaState.status === 'completed') resetNda()
+      startWizard(); setIsNdaModalOpen(true)
+    } else if (title === 'Employment Offer letter') {
+      if (empState.status === 'completed') resetEmp()
+      startEmp(); setIsEmpModalOpen(true)
+    } else if (title === 'Privacy Policy') {
+      if (ppState.status === 'completed') resetPP()
+      startPP(); setIsPPModalOpen(true)
+    } else if (title === 'Founder Agreement') {
+      if (faState.status === 'completed') resetFA()
+      startFA(); setIsFAModalOpen(true)
+    } else if (title === 'Service Agreement') {
+      if (saState.status === 'completed') resetSA()
+      startSA(); setIsSAModalOpen(true)
+    } else {
+      setComingSoonTitle(title)
+    }
+  }
+
   // Toast shown after a wizard is added to dashboard without payment
-  const locationState = location.state as { addedCount?: number; blueprintTopUpSuccess?: boolean; unitsAdded?: number } | null
+  const locationState = location.state as { addedCount?: number; blueprintTopUpSuccess?: boolean; unitsAdded?: number; addedWizards?: Array<{ title: string; quantity: number }> } | null
   const addedCount = locationState?.addedCount ?? 0
   const [addToast, setAddToast] = useState(() => {
     if (locationState?.blueprintTopUpSuccess && locationState.unitsAdded) {
@@ -1143,8 +1268,39 @@ export default function Dashboard() {
     let cancelled = false
     paymentApi.wizardAccess().then((response) => {
       if (!cancelled && response.success && response.data) {
-        setWizardAccess(response.data)
-        localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
+        const freshAccess = response.data
+        setWizardAccess(freshAccess)
+        localStorage.setItem(wizardAccessCacheKey, JSON.stringify(freshAccess))
+
+        // Seed the queue from selectedWizards exactly once (first authoritative load).
+        // After that the queue is managed locally so Start/Complete don't clobber it.
+        if (!queueSeedRef.current) {
+          queueSeedRef.current = true
+          const stored = localStorage.getItem(queueStorageKey)
+          if (!stored) {
+            // First ever load — build the initial queue from server quantities
+            const initial: Record<string, number> = {}
+            for (const w of freshAccess.selectedWizards) {
+              initial[w.title] = (initial[w.title] ?? 0) + (w.quantity ?? 1)
+            }
+            persistQueue(initial)
+          }
+          // If stored already exists we keep it (user may have started some items)
+        }
+
+        // When the user just returned from "Add to Dashboard", bump the New queue
+        // for exactly the wizards that were added. This runs regardless of whether
+        // the queue has already been seeded — new additions must always appear immediately.
+        if (addedCount > 0 && locationState?.addedWizards) {
+          setQueuedCounts((prev) => {
+            const next = { ...prev }
+            for (const w of locationState.addedWizards!) {
+              next[w.title] = (next[w.title] ?? 0) + (w.quantity ?? 1)
+            }
+            localStorage.setItem(queueStorageKey, JSON.stringify(next))
+            return next
+          })
+        }
       }
     })
     return () => { cancelled = true }
@@ -1200,21 +1356,8 @@ export default function Dashboard() {
     return () => { cancelled = true }
   }, [])
 
-  // Derive active tab from wizard states — computed on every render, no effect needed
-  // Auto-advance to inProgress/completed only if the user hasn't manually selected a tab yet;
-  // otherwise honour their explicit choice so clicking "New" tab always works.
-  const derivedTab: DashboardTab = (() => {
-    const hasCompleted = ndaState.status === 'completed' || empState.status === 'completed' || ppState.status === 'completed' || faState.status === 'completed' || saState.status === 'completed'
-    const hasInProgress = ndaState.status === 'inProgress' || empState.status === 'inProgress' || ppState.status === 'inProgress' || faState.status === 'inProgress' || saState.status === 'inProgress'
-    // If user has explicitly chosen a tab, honour it (unless the content for it no longer exists)
-    if (activeTab === 'completed' && hasCompleted) return 'completed'
-    if (activeTab === 'inProgress' && hasInProgress) return 'inProgress'
-    if (activeTab === 'new') return 'new'
-    // Auto-select: prefer inProgress > completed > new
-    if (hasInProgress) return 'inProgress'
-    if (hasCompleted) return 'completed'
-    return 'new'
-  })()
+
+  const derivedTab: DashboardTab = activeTab
 
   const downloadFinalBlueprint = async (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
     const chargeKey = `tsl-blueprint-unit-charged:${downloadKey}`
@@ -1244,32 +1387,42 @@ export default function Dashboard() {
   }
 
   const handleNdaComplete = (data: NdaWizardData) => {
+    const completedAt = new Date().toISOString()
     saveProgress(6, data)
     completeWizard()
+    pushCompletedInstance('Non-Disclosure Agreement (NDA)', data, completedAt)
     showNdaToast('NDA generated successfully. Your document is ready to download.')
   }
 
   const handleEmpComplete = (data: EmploymentWizardData) => {
+    const completedAt = new Date().toISOString()
     saveEmpProgress(6, data)
     completeEmp()
+    pushCompletedInstance('Employment Offer letter', data, completedAt)
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
   const handlePPComplete = (data: PrivacyPolicyWizardData) => {
+    const completedAt = new Date().toISOString()
     savePPProgress(7, data)
     completePP()
+    pushCompletedInstance('Privacy Policy', data, completedAt)
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
   const handleFAComplete = (data: FounderAgreementWizardData) => {
+    const completedAt = new Date().toISOString()
     saveFAProgress(8, data)
     completeFA()
+    pushCompletedInstance('Founder Agreement', data, completedAt)
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
   const handleSAComplete = (data: ServiceAgreementWizardData) => {
+    const completedAt = new Date().toISOString()
     saveSAProgress(8, data)
     completeSA()
+    pushCompletedInstance('Service Agreement', data, completedAt)
     showNdaToast('Service Agreement generated successfully. Your document is ready to download.')
   }
 
@@ -1289,14 +1442,17 @@ export default function Dashboard() {
   // so that every saved wizard (including Loan Agreement, Shareholder Resolutions, etc.)
   // always appears — not just the subset present in the static newWizards array.
   const staticWizardMeta = new Map(newWizards.map((w, i) => [w.title, { id: w.id, note: w.note, idx: i }]))
+  // availableWizards: one entry per unique blueprint type.
+  //   selectedQuantity — authoritative count from the server (used in the landing view)
+  //   queuedCount      — runtime New-tab queue (used in the returning/tabbed dashboard)
   const availableWizards = (wizardAccess?.selectedWizards ?? []).map((wizard, idx) => {
     const meta = staticWizardMeta.get(wizard.title)
     return {
       id: meta?.id ?? 100 + idx,
-
       title: wizard.title,
       note: meta?.note ?? `Access your ${wizard.title} wizard`,
       selectedQuantity: wizard.quantity ?? 1,
+      queuedCount: queuedCounts[wizard.title] ?? 0,
     }
   })
   const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
@@ -1395,7 +1551,7 @@ export default function Dashboard() {
                   <Zap size={28} />
                 </span>
                 <div>
-                  <strong>{isInitialSubscriptionDashboard ? `${availableWizards.length} Wizards Available` : 'Upgrade required'}</strong>
+                  <strong>{isInitialSubscriptionDashboard ? `${availableWizards.reduce((sum, wizard) => sum + wizard.selectedQuantity, 0)} Wizards Available` : 'Upgrade required'}</strong>
                   <p>{isInitialSubscriptionDashboard
                     ? 'Your selected wizards are ready to start.'
                     : 'Your dashboard will show selected wizards with a Start button after successful payment.'}</p>
@@ -1418,21 +1574,14 @@ export default function Dashboard() {
                       <span>Wizards</span>
                       <strong>
                         {isInitialSubscriptionDashboard
-                          ? `${(wizard as typeof availableWizards[0]).selectedQuantity ?? 1} Item`
+                          ? `${(wizard as typeof availableWizards[0]).selectedQuantity} Selected`
                           : `${(wizard as typeof newWizards[0]).wizards} ${(wizard as typeof newWizards[0]).landingItems}`}
                       </strong>
                     </div>
                     <button
                       type="button"
                       className="user-dashboard__new-wizard-button"
-                      onClick={isInitialSubscriptionDashboard ? () => {
-                        if (wizard.title === 'Non-Disclosure Agreement (NDA)') { startWizard(); setIsNdaModalOpen(true) }
-                        else if (wizard.title === 'Employment Offer letter') { startEmp(); setIsEmpModalOpen(true) }
-                        else if (wizard.title === 'Privacy Policy') { startPP(); setIsPPModalOpen(true) }
-                        else if (wizard.title === 'Founder Agreement') { startFA(); setIsFAModalOpen(true) }
-                        else if (wizard.title === 'Service Agreement') { startSA(); setIsSAModalOpen(true) }
-                        else { setComingSoonTitle(wizard.title) }
-                      } : () => setShowUpgradeModal(true)}
+                      onClick={isInitialSubscriptionDashboard ? () => handleStart(wizard.title) : () => setShowUpgradeModal(true)}
                     >
                       <Play size={16} />
                       Start
@@ -1535,7 +1684,7 @@ export default function Dashboard() {
             so the user lands on In Progress if they left mid-way */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={() => { setIsNdaModalOpen(false); openReturningDashboard() }}
+            onClose={() => { setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
             initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
             onStepChange={(step, data) => saveProgress(step, data)}
@@ -1545,7 +1694,7 @@ export default function Dashboard() {
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={() => { setIsEmpModalOpen(false); openReturningDashboard() }}
+            onClose={() => { setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
             initialData={empState.status === 'completed' ? undefined : empState.data}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
@@ -1555,7 +1704,7 @@ export default function Dashboard() {
 
         {isPPModalOpen && (
           <PrivacyPolicyWizardModal
-            onClose={() => { setIsPPModalOpen(false); openReturningDashboard() }}
+            onClose={() => { setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
             initialData={ppState.status === 'completed' ? undefined : ppState.data}
             onStepChange={(step, data) => savePPProgress(step, data)}
@@ -1565,7 +1714,7 @@ export default function Dashboard() {
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={() => { setIsFAModalOpen(false); openReturningDashboard() }}
+            onClose={() => { setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
@@ -1575,7 +1724,7 @@ export default function Dashboard() {
 
         {isSAModalOpen && (
           <ServiceAgreementWizardModal
-            onClose={() => { setIsSAModalOpen(false); openReturningDashboard() }}
+            onClose={() => { setIsSAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
             initialData={saState.status === 'completed' ? undefined : saState.data}
             onStepChange={(step, data) => saveSAProgress(step, data)}
@@ -1672,58 +1821,72 @@ export default function Dashboard() {
         </section>
 
         <section className="user-dashboard__workflow-panel">
-          <div className="user-dashboard__tabs" role="tablist" aria-label="Dashboard workflow status">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={derivedTab === 'new'}
-              className={
-                derivedTab === 'new' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
-              }
-              onClick={() => setActiveTab('new')}
-            >
-              New
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={derivedTab === 'inProgress'}
-              className={
-                derivedTab === 'inProgress' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
-              }
-              onClick={() => setActiveTab('inProgress')}
-            >
-              In Progress
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={derivedTab === 'completed'}
-              className={
-                derivedTab === 'completed' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
-              }
-              onClick={() => setActiveTab('completed')}
-            >
-              Completed
-            </button>
-          </div>
+          {/* ── Tab counts ────────────────────────────────────────────── */}
+          {(() => {
+            const newCount = availableWizards.reduce((sum, w) => sum + w.queuedCount, 0)
+            const inProgressCount = inProgressTitles.size
+            const completedCount = completedInstances.length
+            return (
+              <div className="user-dashboard__tabs" role="tablist" aria-label="Dashboard workflow status">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={derivedTab === 'new'}
+                  className={
+                    derivedTab === 'new' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
+                  }
+                  onClick={() => setActiveTab('new')}
+                >
+                  New
+                  {newCount > 0 && (
+                    <span className="user-dashboard__tab-badge" aria-label={`${newCount} queued`}>
+                      {newCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={derivedTab === 'inProgress'}
+                  className={
+                    derivedTab === 'inProgress' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
+                  }
+                  onClick={() => setActiveTab('inProgress')}
+                >
+                  In Progress
+                  {inProgressCount > 0 && (
+                    <span className="user-dashboard__tab-badge" aria-label={`${inProgressCount} in progress`}>
+                      {inProgressCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={derivedTab === 'completed'}
+                  className={
+                    derivedTab === 'completed' ? 'user-dashboard__tab user-dashboard__tab--active' : 'user-dashboard__tab'
+                  }
+                  onClick={() => setActiveTab('completed')}
+                >
+                  Completed
+                  {completedCount > 0 && (
+                    <span className="user-dashboard__tab-badge" aria-label={`${completedCount} completed`}>
+                      {completedCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+            )
+          })()}
 
           {derivedTab === 'new' && (
             <div className="user-dashboard__new-list" role="tabpanel">
               {availableWizards.map((wizard) => {
-                const wizardStatus =
-                  wizard.title === 'Non-Disclosure Agreement (NDA)' ? ndaState.status :
-                  wizard.title === 'Employment Offer letter' ? empState.status :
-                  wizard.title === 'Privacy Policy' ? ppState.status :
-                  wizard.title === 'Founder Agreement' ? faState.status :
-                  wizard.title === 'Service Agreement' ? saState.status :
-                  'idle' // Loan Agreement, Shareholder Resolutions, etc. have no in-progress state
-                // A second selection is a fresh run. Keep the prior completed
-                // run in Completed while showing this additional run in New.
-                const hasAdditionalRun = wizardStatus === 'completed' && wizard.selectedQuantity > 1
-                if (wizardStatus !== 'idle' && !hasAdditionalRun) return null
+                if (wizard.queuedCount <= 0) return null
+                const isRunning = inProgressTitles.has(wizard.title)
                 return (
-                  <article className="user-dashboard__new-row" key={`${wizard.id}-${hasAdditionalRun ? 'additional' : 'new'}`}>
+                  <article className="user-dashboard__new-row" key={`${wizard.id}-new`}>
                     <div className="user-dashboard__new-row-left">
                       <span className="user-dashboard__new-row-dot" aria-hidden="true">
                         <Info size={16} />
@@ -1744,45 +1907,35 @@ export default function Dashboard() {
                         <strong className="user-dashboard__new-row-meta-count">
                           {hasExhaustedWizardRuns
                             ? 'Monthly limit reached'
-                            : hasAdditionalRun ? '1 selected' : `${wizard.selectedQuantity} selected`}
+                            : isRunning
+                              ? `${wizard.queuedCount} queued · 1 in progress`
+                              : `${wizard.queuedCount} queued`}
                         </strong>
                       </div>
-                      <button
-                        type="button"
-                        className="user-dashboard__new-row-btn"
-                        onClick={() => {
-                          if (wizard.title === 'Non-Disclosure Agreement (NDA)') {
-                            startWizard(); setIsNdaModalOpen(true)
-                          } else if (wizard.title === 'Employment Offer letter') {
-                            startEmp(); setIsEmpModalOpen(true)
-                          } else if (wizard.title === 'Privacy Policy') {
-                            startPP(); setIsPPModalOpen(true)
-                          } else if (wizard.title === 'Founder Agreement') {
-                            startFA(); setIsFAModalOpen(true)
-                          } else if (wizard.title === 'Service Agreement') {
-                            startSA(); setIsSAModalOpen(true)
-                          } else {
-                            setComingSoonTitle(wizard.title)
-                          }
-                        }}
-                      >
-                        <><Play size={14} /> Start</>
-                      </button>
+                      {isRunning ? (
+                        <button
+                          type="button"
+                          className="user-dashboard__new-row-btn user-dashboard__new-row-btn--resume"
+                          onClick={() => setActiveTab('inProgress')}
+                          title="Finish the current run before starting the next"
+                        >
+                          <ArrowRight size={14} /> Resume
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="user-dashboard__new-row-btn"
+                          onClick={() => handleStart(wizard.title)}
+                        >
+                          <Play size={14} /> Start
+                        </button>
+                      )}
                     </div>
                   </article>
                 )
               })}
 
-              {availableWizards.length > 0 && availableWizards.every((wizard) => {
-                const s =
-                  wizard.title === 'Non-Disclosure Agreement (NDA)' ? ndaState.status :
-                  wizard.title === 'Employment Offer letter' ? empState.status :
-                  wizard.title === 'Privacy Policy' ? ppState.status :
-                  wizard.title === 'Founder Agreement' ? faState.status :
-                  wizard.title === 'Service Agreement' ? saState.status :
-                  'idle'
-                return s !== 'idle'
-              }) && (
+              {availableWizards.every((w) => w.queuedCount <= 0) && (
                 <div className="user-dashboard__empty-state">
                   <FileText size={32} />
                   <p>All wizards have been started.</p>
@@ -1896,7 +2049,7 @@ export default function Dashboard() {
                 </article>
               )}
 
-              {ndaState.status !== 'inProgress' && empState.status !== 'inProgress' && ppState.status !== 'inProgress' && faState.status !== 'inProgress' && saState.status !== 'inProgress' && (
+              {[ndaState, empState, ppState, faState, saState].every((s) => s.status !== 'inProgress') && (
                 <div className="user-dashboard__empty-state">
                   <FileText size={32} />
                   <p>No documents in progress.</p>
@@ -1910,112 +2063,146 @@ export default function Dashboard() {
 
           {derivedTab === 'completed' && (
             <div className="user-dashboard__completed-list" role="tabpanel">
-              {ndaState.status === 'completed' && (
-                <article className="user-dashboard__completed-card">
-                  <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
-                  <div className="user-dashboard__completed-copy">
-                    <h3>Non-Disclosure Agreement (NDA)</h3>
-                    <p>Completed {ndaState.completedAt ? formatDate(ndaState.completedAt) : 'Just now'}</p>
-                  </div>
-                  <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => void downloadFinalBlueprint('nda', `nda:${ndaState.completedAt}`, 'NDA-Document.pdf', () => buildNdaPdf(ndaState.data, ndaState.completedAt))}>
-                      <Download size={16} /> Download PDF
-                    </button>
-                    <button type="button" onClick={() => void downloadFinalBlueprint('nda', `nda:${ndaState.completedAt}`, 'NDA-Document.docx', () => buildNdaDocx(ndaState.data, ndaState.completedAt))}>
-                      <Download size={16} /> Download DOCX
-                    </button>
-                    <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaState.data, ndaState.completedAt), 'NDA-Evidence-Pack.txt')}>
-                      <FolderOpen size={16} /> Evidence Pack
-                    </button>
-                  </div>
-                </article>
-              )}
+              {/* Each entry in completedInstances is an independently completed run.
+                  Multiple runs of the same blueprint type each appear as a separate card,
+                  ordered chronologically (oldest first = original push order). */}
+              {completedInstances.map((instance) => {
+                const { id, wizardType, completedAt, data } = instance
+                const displayDate = completedAt ? formatDate(completedAt) : 'Just now'
 
-              {empState.status === 'completed' && (
-                <article className="user-dashboard__completed-card">
-                  <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
-                  <div className="user-dashboard__completed-copy">
-                    <h3>Employment Offer Letter</h3>
-                    <p>Completed {empState.completedAt ? formatDate(empState.completedAt) : 'Just now'}</p>
-                  </div>
-                  <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', `employment:${empState.completedAt}`, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empState.data, empState.completedAt))}>
-                      <Download size={16} /> Download PDF
-                    </button>
-                    <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', `employment:${empState.completedAt}`, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empState.data, empState.completedAt))}>
-                      <Download size={16} /> Download DOCX
-                    </button>
-                    <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empState.data, empState.completedAt), 'Employment-Evidence-Pack.txt')}>
-                      <FolderOpen size={16} /> Evidence Pack
-                    </button>
-                  </div>
-                </article>
-              )}
+                if (wizardType === 'Non-Disclosure Agreement (NDA)') {
+                  const ndaData = data as import('./NdaWizardModal').NdaWizardData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Non-Disclosure Agreement (NDA)</h3>
+                        <p>Completed {displayDate}</p>
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.pdf', () => buildNdaPdf(ndaData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.docx', () => buildNdaDocx(ndaData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaData, completedAt), 'NDA-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
 
-              {ppState.status === 'completed' && (
-                <article className="user-dashboard__completed-card">
-                  <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
-                  <div className="user-dashboard__completed-copy">
-                    <h3>Privacy Policy (POPIA Compliant)</h3>
-                    <p>Completed {ppState.completedAt ? formatDate(ppState.completedAt) : 'Just now'}</p>
-                  </div>
-                  <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', `privacy-policy:${ppState.completedAt}`, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppState.data, ppState.completedAt))}>
-                      <Download size={16} /> Download PDF
-                    </button>
-                    <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', `privacy-policy:${ppState.completedAt}`, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppState.data, ppState.completedAt))}>
-                      <Download size={16} /> Download DOCX
-                    </button>
-                    <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppState.data, ppState.completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
-                      <FolderOpen size={16} /> Evidence Pack
-                    </button>
-                  </div>
-                </article>
-              )}
+                if (wizardType === 'Employment Offer letter') {
+                  const empData = data as import('./EmploymentWizardModal').EmploymentWizardData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Employment Offer Letter</h3>
+                        <p>Completed {displayDate}</p>
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empData, completedAt), 'Employment-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
 
-              {faState.status === 'completed' && (
-                <article className="user-dashboard__completed-card">
-                  <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
-                  <div className="user-dashboard__completed-copy">
-                    <h3>Founders' Agreement</h3>
-                    <p>Completed {faState.completedAt ? formatDate(faState.completedAt) : 'Just now'}</p>
-                  </div>
-                  <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', `founder-agreement:${faState.completedAt}`, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faState.data, faState.completedAt))}>
-                      <Download size={16} /> Download PDF
-                    </button>
-                    <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', `founder-agreement:${faState.completedAt}`, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faState.data, faState.completedAt))}>
-                      <Download size={16} /> Download DOCX
-                    </button>
-                    <button type="button" onClick={() => triggerDownload(buildFounderAgreementEvidencePack(faState.data, faState.completedAt), 'Founders-Agreement-Evidence-Pack.txt')}>
-                      <FolderOpen size={16} /> Evidence Pack
-                    </button>
-                  </div>
-                </article>
-              )}
+                if (wizardType === 'Privacy Policy') {
+                  const ppData = data as import('./PrivacyPolicyWizardModal').PrivacyPolicyWizardData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Privacy Policy (POPIA Compliant)</h3>
+                        <p>Completed {displayDate}</p>
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', id, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', id, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppData, completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
 
-              {saState.status === 'completed' && (
-                <article className="user-dashboard__completed-card">
-                  <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
-                  <div className="user-dashboard__completed-copy">
-                    <h3>Service Agreement</h3>
-                    <p>Completed {saState.completedAt ? formatDate(saState.completedAt) : 'Just now'}</p>
-                  </div>
-                  <div className="user-dashboard__completed-actions">
-                    <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', `service-agreement:${saState.completedAt}`, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saState.data, saState.completedAt))}>
-                      <Download size={16} /> Download PDF
-                    </button>
-                    <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', `service-agreement:${saState.completedAt}`, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saState.data, saState.completedAt))}>
-                      <Download size={16} /> Download DOCX
-                    </button>
-                    <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saState.data, saState.completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
-                      <FolderOpen size={16} /> Evidence Pack
-                    </button>
-                  </div>
-                </article>
-              )}
+                if (wizardType === 'Founder Agreement') {
+                  const faData = data as import('./FounderAgreementWizardModal').FounderAgreementWizardData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Founders' Agreement</h3>
+                        <p>Completed {displayDate}</p>
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildFounderAgreementEvidencePack(faData, completedAt), 'Founders-Agreement-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
 
-              {ndaState.status !== 'completed' && empState.status !== 'completed' && ppState.status !== 'completed' && faState.status !== 'completed' && saState.status !== 'completed' && (
+                if (wizardType === 'Service Agreement') {
+                  const saData = data as import('./ServiceAgreementWizardModal').ServiceAgreementWizardData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Service Agreement</h3>
+                        <p>Completed {displayDate}</p>
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', id, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', id, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saData, completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                // Fallback for coming-soon wizard types that were somehow completed
+                return (
+                  <article className="user-dashboard__completed-card" key={id}>
+                    <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                    <div className="user-dashboard__completed-copy">
+                      <h3>{wizardType}</h3>
+                      <p>Completed {displayDate}</p>
+                    </div>
+                  </article>
+                )
+              })}
+
+              {completedInstances.length === 0 && (
                 <div className="user-dashboard__empty-state">
                   <CircleCheckBig size={32} />
                   <p>No completed documents yet.</p>

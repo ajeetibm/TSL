@@ -468,8 +468,8 @@ export default function DashboardWizardDetails() {
     setWizardAccess(response.data)
     localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
-    // Pass the count so the dashboard can show a success toast
-    navigate('/dashboard', { state: { addedCount: totalWizards } })
+    // Pass the count (for the toast) and the exact list (for the New-tab queue bump)
+    navigate('/dashboard', { state: { addedCount: totalWizards, addedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })) } })
   }
 
   const OverviewIcon = selectedWizards[0]?.icon ?? Shield
@@ -538,7 +538,7 @@ export default function DashboardWizardDetails() {
         ...(wizardAccess?.selectedWizards ?? []),
         ...selectedWizards
           .filter(({ title }) => !existingTitles.has(title))
-          .map(({ title }) => ({ title, quantity: 1 })),
+          .map(({ title, quantity }) => ({ title, quantity })),
       ]
       const access: WizardAccess = {
         hasSubscription: true,
@@ -552,6 +552,8 @@ export default function DashboardWizardDetails() {
       localStorage.setItem(wizardAccessCacheKey, JSON.stringify(access))
       localStorage.setItem('tsl-dashboard-payment-complete', 'true')
       localStorage.setItem('tsl-dashboard-view-mode', 'initial')
+      // Clear any stale queue so the dashboard seeds it from the purchased quantities.
+      localStorage.removeItem('tsl-dashboard-queue')
       setPaymentMessage({
         tone: 'success',
         text: 'Payment successful. Redirecting to your dashboard...',
