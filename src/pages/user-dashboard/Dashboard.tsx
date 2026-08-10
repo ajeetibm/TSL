@@ -1546,7 +1546,7 @@ export default function Dashboard() {
                   : 'Choose a plan and select your wizards to start creating documents.'}
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-              Browse Wizards
+              Browse Blueprints
               <ArrowRight size={18} />
             </button>
           </div>
@@ -1837,7 +1837,7 @@ export default function Dashboard() {
           <h2>Dashboard</h2>
           <p>Track your legal workflows and completed documents across all your business operations.</p>
           <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-            Browse Wizards
+            Browse Blueprints
             <ArrowRight size={18} />
           </button>
         </div>
