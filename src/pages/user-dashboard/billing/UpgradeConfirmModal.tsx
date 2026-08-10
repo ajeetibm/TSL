@@ -49,16 +49,27 @@ export function UpgradeConfirmModal({
         aria-labelledby="upgrade-confirm-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className="bs-modal-close"
-          aria-label="Close upgrade confirmation"
-          onClick={onCancel}
-        >
-          <X size={20} />
-        </button>
+        <header className="bs-confirm-modal__header">
+          <div>
+            <h2 id="upgrade-confirm-title">Confirm your upgrade</h2>
+            {preview && !previewLoading && (
+              <p>
+                You're switching from {preview.currentPlanName} to {preview.newPlanName}.
+                This takes effect immediately.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            className="bs-confirm-modal__header-close"
+            aria-label="Close upgrade confirmation"
+            onClick={onCancel}
+          >
+            <X size={20} />
+          </button>
+        </header>
 
-        <h2 id="upgrade-confirm-title">Confirm your upgrade</h2>
+        <div className="bs-confirm-modal__body">
 
         {previewLoading && (
           <div className="bs-modal-loading">
@@ -73,11 +84,6 @@ export function UpgradeConfirmModal({
 
         {preview && !previewLoading && (
           <>
-            <p className="bs-confirm-modal__subtitle">
-              You're switching from {preview.currentPlanName} to {preview.newPlanName}.
-              This takes effect immediately.
-            </p>
-
             <dl className="bs-confirm-modal__breakdown">
               <div>
                 <dt>Current plan</dt>
@@ -144,6 +150,7 @@ export function UpgradeConfirmModal({
                 ? `Confirm & pay ${fmt(preview.totalDueToday)}`
                 : `Upgrade to ${plan.name}`}
           </button>
+        </div>
         </div>
       </section>
     </div>

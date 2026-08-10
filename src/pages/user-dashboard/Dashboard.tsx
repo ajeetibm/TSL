@@ -1350,6 +1350,27 @@ export default function Dashboard() {
         setWizardAccess(freshAccess)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(freshAccess))
 
+        // When the user just returned from "Add to Dashboard", set the queue
+        // directly from the server-authoritative selectedWizards so there is no
+        // double-count (the seed block below would add on top of what the server
+        // already includes for the newly added wizards).
+        if (addedCount > 0 && locationState?.addedWizards) {
+          queueSeedRef.current = true
+          setQueuedCounts((prev) => {
+            const next = { ...prev }
+            for (const w of freshAccess.selectedWizards) {
+              // Use the server quantity as the authoritative count; preserve any
+              // count that is already higher (e.g. user had extras queued).
+              if ((next[w.title] ?? 0) < (w.quantity ?? 1)) {
+                next[w.title] = w.quantity ?? 1
+              }
+            }
+            localStorage.setItem(queueStorageKey, JSON.stringify(next))
+            return next
+          })
+          return
+        }
+
         // Merge server-authoritative selectedWizards into the queue: any title
         // that is missing or has been zeroed out (stale data) is restored to its
         // server quantity. Titles already > 0 are left untouched so the user's
@@ -1362,20 +1383,6 @@ export default function Dashboard() {
               if ((next[w.title] ?? 0) <= 0) {
                 next[w.title] = w.quantity ?? 1
               }
-            }
-            localStorage.setItem(queueStorageKey, JSON.stringify(next))
-            return next
-          })
-        }
-
-        // When the user just returned from "Add to Dashboard", bump the New queue
-        // for exactly the wizards that were added. This runs regardless of whether
-        // the queue has already been seeded — new additions must always appear immediately.
-        if (addedCount > 0 && locationState?.addedWizards) {
-          setQueuedCounts((prev) => {
-            const next = { ...prev }
-            for (const w of locationState.addedWizards!) {
-              next[w.title] = (next[w.title] ?? 0) + (w.quantity ?? 1)
             }
             localStorage.setItem(queueStorageKey, JSON.stringify(next))
             return next
@@ -1456,6 +1463,10 @@ export default function Dashboard() {
     if (isPaidPlan) {
       setWizardAccessConfirmed(true)
       const clicked = localStorage.getItem('tsl-payment-clicked-wizards')
+      // Detect whether payment came from the dashboard landing-page Start button
+      // (view-mode was NOT yet 'returning') or from an external path like Settings.
+      const fromDashboardStart = clicked !== null &&
+        localStorage.getItem('tsl-dashboard-view-mode') !== 'returning'
       setWizardAccess((prev) => {
         const base = prev ?? { hasSubscription: false, plan: '', wizardLimit: 0, selectedWizards: [], remainingWizards: 0 }
         const alreadySelected = base.selectedWizards.some((w) => w.title === clicked)
@@ -1466,19 +1477,35 @@ export default function Dashboard() {
       })
       if (clicked) {
         setQueuedCounts((prev) => {
-          const next = { ...prev, [clicked]: (prev[clicked] ?? 0) + 1 }
+          if ((prev[clicked] ?? 0) > 0) return prev
+          const next = { ...prev, [clicked]: 1 }
           localStorage.setItem(queueStorageKey, JSON.stringify(next))
           return next
         })
         localStorage.removeItem('tsl-payment-clicked-wizards')
+        // Open the modal only when the Start button on the landing page triggered payment.
+        if (fromDashboardStart) handleStart(clicked)
       }
-      setDashboardViewMode('returning')
-      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+      // Only flip to 'returning' (tabbed dashboard) when paying from the landing-page
+      // Start button. Paying from Settings should land on the landing view so the
+      // user sees the wizard list and can choose what to start.
+      if (fromDashboardStart) {
+        setDashboardViewMode('returning')
+        localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingSubscription?.planId])
 
   const derivedTab: DashboardTab = activeTab
+
+  const blueprintIdToTitle: Record<string, string> = {
+    'nda': 'Non-Disclosure Agreement (NDA)',
+    'employment-offer-letter': 'Employment Offer Letter',
+    'privacy-policy': 'Privacy & Cookies Policy',
+    'founder-agreement': 'Founder Agreement',
+    'service-agreement': 'Service Agreement',
+  }
 
   const downloadFinalBlueprint = async (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
     const chargeKey = `tsl-blueprint-unit-charged:${downloadKey}`
@@ -1507,11 +1534,22 @@ export default function Dashboard() {
     ndaToastTimerRef.current = setTimeout(() => setNdaToast(''), 5000)
   }
 
+  const decrementQueue = (title: string) => {
+    setQueuedCounts((prev) => {
+      const current = prev[title] ?? 0
+      if (current <= 0) return prev
+      const next = { ...prev, [title]: current - 1 }
+      localStorage.setItem(queueStorageKey, JSON.stringify(next))
+      return next
+    })
+  }
+
   const handleNdaComplete = (data: NdaWizardData) => {
     const completedAt = new Date().toISOString()
     saveProgress(6, data)
     completeWizard()
     pushCompletedInstance('Non-Disclosure Agreement (NDA)', data, completedAt)
+    if (isPaidDashboard) decrementQueue('Non-Disclosure Agreement (NDA)')
     showNdaToast('NDA generated successfully. Your document is ready to download.')
   }
 
@@ -1520,6 +1558,7 @@ export default function Dashboard() {
     saveEmpProgress(6, data)
     completeEmp()
     pushCompletedInstance('Employment Offer Letter', data, completedAt)
+    if (isPaidDashboard) decrementQueue('Employment Offer Letter')
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
@@ -1528,6 +1567,7 @@ export default function Dashboard() {
     savePPProgress(7, data)
     completePP()
     pushCompletedInstance('Privacy & Cookies Policy', data, completedAt)
+    if (isPaidDashboard) decrementQueue('Privacy & Cookies Policy')
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
@@ -1536,6 +1576,7 @@ export default function Dashboard() {
     saveFAProgress(8, data)
     completeFA()
     pushCompletedInstance('Founder Agreement', data, completedAt)
+    if (isPaidDashboard) decrementQueue('Founder Agreement')
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
@@ -1544,6 +1585,7 @@ export default function Dashboard() {
     saveSAProgress(8, data)
     completeSA()
     pushCompletedInstance('Service Agreement', data, completedAt)
+    if (isPaidDashboard) decrementQueue('Service Agreement')
     showNdaToast('Service Agreement generated successfully. Your document is ready to download.')
   }
 
@@ -1852,7 +1894,7 @@ export default function Dashboard() {
             visible. Completing lands on Completed tab. */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={() => { setIsNdaModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
+            onClose={() => { setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
             initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
             onStepChange={(step, data) => saveProgress(step, data)}
@@ -1862,7 +1904,7 @@ export default function Dashboard() {
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={() => { setIsEmpModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
+            onClose={() => { setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
             initialData={empState.status === 'completed' ? undefined : empState.data}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
@@ -1872,7 +1914,7 @@ export default function Dashboard() {
 
         {isPPModalOpen && (
           <PrivacyPolicyWizardModal
-            onClose={() => { setIsPPModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
+            onClose={() => { setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
             initialData={ppState.status === 'completed' ? undefined : ppState.data}
             onStepChange={(step, data) => savePPProgress(step, data)}
@@ -1882,7 +1924,7 @@ export default function Dashboard() {
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={() => { setIsFAModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
+            onClose={() => { setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
@@ -1892,7 +1934,7 @@ export default function Dashboard() {
 
         {isSAModalOpen && (
           <ServiceAgreementWizardModal
-            onClose={() => { setIsSAModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
+            onClose={() => { setIsSAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
             initialData={saState.status === 'completed' ? undefined : saState.data}
             onStepChange={(step, data) => saveSAProgress(step, data)}

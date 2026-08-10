@@ -1183,15 +1183,65 @@
   position: relative;
   width: min(540px, 100%);
   border-radius: 20px;
-  padding: 40px 36px 32px;
+  padding: 0;
   background: #ffffff;
   color: #0d1b2a;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
 }
 
 .bs-confirm-modal--sm {
   width: min(420px, 100%);
-  padding: 36px 28px 28px;
+}
+
+.bs-confirm-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 104px;
+  padding: 27px 24px 24px;
+  background: linear-gradient(135deg, #0c2034 0%, #183651 100%);
+  color: #ffffff;
+}
+
+.bs-confirm-modal__header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.bs-confirm-modal__header p {
+  margin: 8px 0 0;
+  color: #d4a12f;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.bs-confirm-modal__header-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.bs-confirm-modal__header-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.bs-confirm-modal__body {
+  padding: 28px 36px 32px;
 }
 
 .bs-modal-close {
@@ -1474,14 +1524,6 @@
 }
 
 /* ── Confirm modals ────────────────────────────────────────────────────────── */
-
-.bs-confirm-modal h2 {
-  margin: 0 0 10px;
-  font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 700;
-  color: #0d1b2a;
-}
 
 .bs-confirm-modal__subtitle {
   margin: 0 0 24px;
