@@ -2,16 +2,12 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
   Briefcase,
-  Building,
   Building2,
   CheckCircle2,
-  CircleDollarSign,
   Clock3,
-  FileCheck2,
+  Code2,
   FileText,
-  Lock,
   Minus,
-  Package,
   Plus,
   Shield,
   ShoppingCart,
@@ -31,116 +27,89 @@ import './DashboardWizards.css'
 
 const wizardCards = [
   {
-    title: 'Loan Agreement',
-    description: 'Document loans between business parties, interest terms, payment schedules, and security details.',
-    time: '14-18 minutes',
-    runs: '1 runs',
-    audience: 'Lenders and borrowers',
-    included: ['Installment options', 'Security details', 'Default terms'],
-    icon: CircleDollarSign,
-  },
-  {
     title: 'Non-Disclosure Agreement (NDA)',
     description: 'Protect confidential information when sharing with potential partners, investors, or contractors.',
     time: '5-8 minutes',
-    runs: '1 run',
+    credits: '1 credit',
     audience: 'Startups sharing sensitive information',
     included: ['SA-specific legal drafting', 'E-signature ready', 'Plain-language preview'],
     icon: Shield,
     popular: true,
   },
   {
-    title: 'Employment Offer letter',
+    title: 'Board Resolution',
+    description: 'Document board decisions and authorise company actions with a legally valid resolution.',
+    time: '5-8 minutes',
+    credits: '1 credit',
+    audience: 'Registered companies (Pty Ltd)',
+    included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
+    icon: Briefcase,
+  },
+  {
+    title: 'Employment Offer Letter',
     description: 'Create legally compliant employment offers that meet South African labour requirements.',
     time: '10-12 minutes',
-    runs: '1 run',
+    credits: '2 credits',
     audience: 'Companies hiring new employees',
     included: ['BCEA compliance checks', 'Clause options & risk indicators', 'Built-in negotiation'],
     icon: UsersRound,
     popular: true,
   },
   {
-    title: 'Founder Agreement',
-    description: 'Establish clear roles, equity splits, and responsibilities for multi-founder startup teams.',
-    time: '15-20 minutes',
-    runs: '1 run',
-    audience: 'Multi-founder startups (2-5 founders)',
-    included: ['Equity vesting schedules', 'Roles & responsibilities', 'Exit scenarios'],
-    icon: Briefcase,
-  },
-  {
-    title: 'Privacy Policy',
-    description: 'Generate a POPIA-compliant privacy policy for your website, app, or data collection process.',
+    title: 'Privacy & Cookies Policy',
+    description: 'Generate a POPIA-compliant privacy and cookies policy for your website, app, or data collection process.',
     time: '8-10 minutes',
-    runs: '1 run',
+    credits: '2 credits',
     audience: 'Businesses collecting personal data',
-    included: ['100% POPIA compliant', 'Plain language', 'Website ready'],
-    icon: Lock,
+    included: ['100% POPIA compliant', 'Cookie consent clauses', 'Website ready'],
+    icon: Shield,
     popular: true,
   },
   {
-    title: 'Service Agreement',
-    description: 'Create a comprehensive service agreement for client engagements, covering scope, fees, SLAs, and legal terms.',
-    time: '15-20 minutes',
-    runs: '1 run',
-    audience: 'Service providers and their clients',
-    included: ['SLA clauses', 'Fee & billing terms', 'Termination & renewal'],
+    title: 'Memorandum of Agreement (MOA)',
+    description: 'Formalise an understanding between two or more parties before a binding contract is signed.',
+    time: '10-14 minutes',
+    credits: '2 credits',
+    audience: 'Businesses entering partnerships or collaborations',
+    included: ['SA-specific drafting', 'Scope & obligations', 'Dispute resolution'],
     icon: FileText,
+  },
+  {
+    title: 'Software Development Agreement',
+    description: 'Comprehensive agreement covering scope, deliverables, IP ownership, and payment terms for software projects.',
+    time: '15-20 minutes',
+    credits: '3 credits',
+    audience: 'Software developers and their clients',
+    included: ['IP & ownership clauses', 'Milestone & payment terms', 'Warranty & liability'],
+    icon: Code2,
     popular: true,
   },
   {
-    title: 'Shareholder Resolutions',
-    description: 'Draft approval documents for shareholders to authorize company actions and governance decisions.',
-    time: '12-15 minutes',
-    runs: '1 run',
-    audience: 'Registered companies (Pty Ltd)',
-    included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
-    icon: Building,
+    title: 'Employment Contract Pack',
+    description: 'A full employment contract pack covering terms, conditions, and statutory requirements for new hires.',
+    time: '15-20 minutes',
+    credits: '3 credits',
+    audience: 'Companies formalising employment relationships',
+    included: ['BCEA compliance', 'Leave & benefits', 'Termination clauses'],
+    icon: UsersRound,
   },
   {
-    title: 'Company Registration Package',
+    title: 'Company Registration',
     description: 'Complete CIPC company registration with all required documents and compliance checks.',
     time: '20-25 minutes',
-    runs: '2 runs',
+    credits: '4 credits',
     audience: 'First-time business owners',
     included: ['MOI templates', 'Share register', 'Director appointments'],
     icon: Building2,
   },
   {
-    title: 'Data Processing Agreement',
-    description: 'POPIA-compliant agreements for sharing data with third-party processors.',
-    time: '8-10 minutes',
-    runs: '1 run',
-    audience: 'Businesses using cloud services/vendors',
-    included: ['Processor obligations', 'Data breach protocols', 'Audit terms'],
-    icon: FileText,
-  },
-  {
     title: 'Shareholders Agreement',
     description: 'Comprehensive agreement covering rights, obligations, and dispute resolution for shareholders.',
     time: '18-22 minutes',
-    runs: '1 run',
+    credits: '6 credits',
     audience: 'Companies with multiple shareholders',
     included: ['Exit clauses', 'Voting rights', 'Dividend policies'],
     icon: UsersRound,
-  },
-  {
-    title: 'Commercial Lease Agreement',
-    description: 'Professional lease agreements for office, retail, and industrial spaces in South Africa.',
-    time: '12-16 minutes',
-    runs: '1 run',
-    audience: 'Businesses leasing commercial property',
-    included: ['Escalation clauses', 'Maintenance terms', 'Rental Tribunals Act'],
-    icon: FileCheck2,
-  },
-  {
-    title: 'Sale of Goods Agreement',
-    description: 'Formalize product sales with payment terms, warranties, and delivery conditions.',
-    time: '10-14 minutes',
-    runs: '1 run',
-    audience: 'B2B product companies',
-    included: ['Warranty clauses', 'Delivery schedules', 'Consumer Protection Act'],
-    icon: Package,
   },
 ]
 
@@ -243,10 +212,18 @@ export default function DashboardWizards() {
             <p>Choose a Blueprint to prepare your legal document</p>
           </div>
 
+          {wizardAccess?.hasSubscription && remainingBlueprintUnits !== null && (
+            <div className="dashboard-wizards__credits-badge">
+              <Zap size={18} style={{ color: '#cf9b2f' }} />
+              <span>
+                <strong>{remainingBlueprintUnits}</strong> Credits Remaining
+              </span>
+            </div>
+          )}
         </header>
 
         <section className="dashboard-wizards__grid" aria-label="Available legal wizards">
-          {wizardCards.map(({ title, description, time, runs, audience, included, icon: Icon, popular }) => {
+          {wizardCards.map(({ title, description, time, credits, audience, included, icon: Icon, popular }) => {
             const quantity = quantities[title] ?? 0
             const isSelected = quantity > 0
 
@@ -287,10 +264,10 @@ export default function DashboardWizards() {
                   </div>
                   <div>
                     <dt>
-                      <Zap size={14} />
-                      Blueprint Units:
+                      <Zap size={14} style={{ color: '#cf9b2f' }} />
+                      Cost:
                     </dt>
-                    <dd>{runs}</dd>
+                    <dd>{credits}</dd>
                   </div>
                   <div>
                     <dt>

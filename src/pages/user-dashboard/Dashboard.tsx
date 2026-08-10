@@ -75,9 +75,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
-      '4 Blueprint Units per month',
+      '4 Credits per month',
       '0 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Standard support (48-72h response)',
       '1GB document storage',
       'PDF export',
@@ -86,9 +86,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'operator') {
     return [
-      '12 Blueprint Units per month',
+      '12 Credits per month',
       '2 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Priority support (24-48h response)',
       'Unlimited document storage',
       'API access for integrations',
@@ -97,9 +97,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'boardroom') {
     return [
-      '30 Blueprint Units per month',
+      '30 Credits per month',
       '6 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access + white-label options',
@@ -108,7 +108,7 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   // Fallback: generic list built from API fields
   return [
-    `${runs} Blueprint Units per month`,
+    `${runs} Credits per month`,
     `${members} team member${sub.teamMembers === 1 ? '' : 's'}`,
   ]
 }

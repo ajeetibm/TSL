@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock3, Gavel, Minus, Plus, ShoppingCart, Star } from 'lucide-react'
+import { CheckCircle2, Clock3, Gavel, Minus, Plus, Star, Zap } from 'lucide-react'
 import type { WizardItem } from './types'
 import './WizardCard.css'
 
@@ -12,6 +12,7 @@ export function WizardCard({
   title,
   description,
   time,
+  credits,
   audience,
   included,
   icon: Icon,
@@ -44,7 +45,7 @@ export function WizardCard({
 
       <div className="wizard-card__facts">
         <InfoRow icon={Clock3} label="Time:" value={time} />
-        <InfoRow icon={ShoppingCart} label="Runs:" value={`${quantity || 1} run${(quantity || 1) > 1 ? 's' : ''}`} />
+        <InfoRow icon={Zap} label="Cost:" value={credits} iconColor="#cf9b2f" />
         <InfoRow icon={Gavel} label="For:" value={audience} />
       </div>
 
@@ -81,15 +82,17 @@ function InfoRow({
   icon: Icon,
   label,
   value,
+  iconColor,
 }: {
   icon: typeof Clock3
   label: string
   value: string
+  iconColor?: string
 }) {
   return (
     <div className="wizard-card__fact-row">
       <span>
-        <Icon size={14} />
+        <Icon size={14} style={iconColor ? { color: iconColor } : undefined} />
         {label}
       </span>
       <strong>{value}</strong>
