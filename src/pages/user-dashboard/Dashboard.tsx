@@ -1095,6 +1095,9 @@ export default function Dashboard() {
   // localStorage cache from granting wizard start access before API responds.
   const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(false)
 
+  const [dashboardViewMode, setDashboardViewMode] = useState(() =>
+    localStorage.getItem('tsl-dashboard-view-mode') ?? 'returning',
+  )
   // A wizard may only be started after the server has confirmed subscription status.
   // wizardAccessConfirmed ensures stale localStorage cache never grants access
   // before the API has responded.
@@ -1102,7 +1105,7 @@ export default function Dashboard() {
     wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
     wizardAccess.selectedWizards.length &&
-    localStorage.getItem('tsl-dashboard-view-mode') === 'initial',
+    dashboardViewMode === 'initial',
   )
   const isPaidDashboard = Boolean(
     wizardAccessConfirmed &&
@@ -1207,6 +1210,16 @@ export default function Dashboard() {
     if (inProgressTitles.has(title)) {
       setActiveTab('inProgress')
       return
+    }
+
+    // The first Start action turns the first-login landing view into the
+    // standard workflow dashboard immediately. The modal remains open above
+    // it, but the queued Blueprint has already moved to In Progress and will
+    // still be there if the user closes the modal without completing it.
+    if (isInitialSubscriptionDashboard) {
+      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+      setActiveTab('inProgress')
+      setDashboardViewMode('returning')
     }
 
     setQueuedCounts((prev) => {
@@ -1496,6 +1509,7 @@ export default function Dashboard() {
   }
 
   const openReturningDashboard = () => {
+    setDashboardViewMode('returning')
     // Keep the established tabbed dashboard flow as the place where a wizard
     // is started, resumed, and completed.
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
