@@ -195,7 +195,7 @@ const newWizards = [
   },
   {
     id: 2,
-    title: 'Employment Offer letter',
+    title: 'Employment Offer Letter',
     note: 'Hiring our first developer next month',
     wizards: 3,
     paidItems: 'Item',
@@ -204,7 +204,7 @@ const newWizards = [
   },
   {
     id: 3,
-    title: 'Privacy Policy',
+    title: 'Privacy & Cookies Policy',
     note: 'Required for our web app launch',
     wizards: 2,
     paidItems: 'Item',
@@ -1190,8 +1190,8 @@ export default function Dashboard() {
   // Derived from live hook states so it is always in sync.
   const inProgressTitles = new Set<string>([
     ...(ndaState.status === 'inProgress' ? ['Non-Disclosure Agreement (NDA)'] : []),
-    ...(empState.status === 'inProgress' ? ['Employment Offer letter'] : []),
-    ...(ppState.status === 'inProgress' ? ['Privacy Policy'] : []),
+    ...(empState.status === 'inProgress' ? ['Employment Offer Letter'] : []),
+    ...(ppState.status === 'inProgress' ? ['Privacy & Cookies Policy'] : []),
     ...(faState.status === 'inProgress' ? ['Founder Agreement'] : []),
     ...(saState.status === 'inProgress' ? ['Service Agreement'] : []),
   ])
@@ -1222,10 +1222,10 @@ export default function Dashboard() {
     if (title === 'Non-Disclosure Agreement (NDA)') {
       if (ndaState.status === 'completed') resetNda()
       startWizard(); setIsNdaModalOpen(true)
-    } else if (title === 'Employment Offer letter') {
+    } else if (title === 'Employment Offer Letter') {
       if (empState.status === 'completed') resetEmp()
       startEmp(); setIsEmpModalOpen(true)
-    } else if (title === 'Privacy Policy') {
+    } else if (title === 'Privacy & Cookies Policy') {
       if (ppState.status === 'completed') resetPP()
       startPP(); setIsPPModalOpen(true)
     } else if (title === 'Founder Agreement') {
@@ -1463,7 +1463,7 @@ export default function Dashboard() {
     const completedAt = new Date().toISOString()
     saveEmpProgress(6, data)
     completeEmp()
-    pushCompletedInstance('Employment Offer letter', data, completedAt)
+    pushCompletedInstance('Employment Offer Letter', data, completedAt)
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
@@ -1471,7 +1471,7 @@ export default function Dashboard() {
     const completedAt = new Date().toISOString()
     savePPProgress(7, data)
     completePP()
-    pushCompletedInstance('Privacy Policy', data, completedAt)
+    pushCompletedInstance('Privacy & Cookies Policy', data, completedAt)
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
@@ -2182,7 +2182,7 @@ export default function Dashboard() {
                   )
                 }
 
-                if (wizardType === 'Employment Offer letter') {
+                if (wizardType === 'Employment Offer Letter') {
                   const empData = data as import('./EmploymentWizardModal').EmploymentWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
@@ -2206,7 +2206,7 @@ export default function Dashboard() {
                   )
                 }
 
-                if (wizardType === 'Privacy Policy') {
+                if (wizardType === 'Privacy & Cookies Policy') {
                   const ppData = data as import('./PrivacyPolicyWizardModal').PrivacyPolicyWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
