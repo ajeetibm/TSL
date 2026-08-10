@@ -141,6 +141,28 @@ const blueprintIdByWizardTitle: Record<string, string> = {
   'Commercial Lease Agreement': 'contractor-agreement',
   'Sale of Goods Agreement': 'contractor-agreement',
 }
+
+// Static credit cost per wizard title — used for recommended-plan calculation
+// so the correct tab is highlighted even before the catalogue API responds.
+const creditCostByWizardTitle: Record<string, number> = {
+  'Non-Disclosure Agreement (NDA)': 1,
+  'Board Resolution': 1,
+  'Employment Offer Letter': 2,
+  'Privacy & Cookies Policy': 2,
+  'Memorandum of Agreement (MOA)': 2,
+  'Software Development Agreement': 3,
+  'Employment Contract Pack': 3,
+  'Company Registration': 4,
+  'Shareholders Agreement': 6,
+  // aliases
+  'Founder Agreement': 6,
+  'Service Agreement': 2,
+  'Privacy Policy': 2,
+  'Privacy Policy (POPIA Compliant)': 2,
+  'Shareholder Resolutions': 1,
+  'Employment Offer letter': 2,
+}
+
 type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
 
 function recommendedPlanForBlueprintUnits(units: number): PlanKey {
@@ -325,8 +347,30 @@ export default function DashboardWizardDetails() {
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
-  const [activePlan, setActivePlan] = useState<PlanKey>('Launchpad')
-  const [accountPlan, setAccountPlan] = useState<PlanKey | null>(null)
+  const [activePlan, setActivePlan] = useState<PlanKey>(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { plan?: string; hasSubscription?: boolean } | null
+      if (cached?.hasSubscription && cached.plan) {
+        const p = cached.plan.toLowerCase()
+        if (p === 'launchpad') return 'Launchpad'
+        if (p === 'operator') return 'Operator'
+        if (p === 'boardroom') return 'Boardroom'
+      }
+    } catch { /* ignore */ }
+    return 'Launchpad'
+  })
+  const [accountPlan, setAccountPlan] = useState<PlanKey | null>(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { plan?: string; hasSubscription?: boolean } | null
+      if (cached?.hasSubscription && cached.plan) {
+        const p = cached.plan.toLowerCase()
+        if (p === 'launchpad') return 'Launchpad'
+        if (p === 'operator') return 'Operator'
+        if (p === 'boardroom') return 'Boardroom'
+      }
+    } catch { /* ignore */ }
+    return null
+  })
   const [isPlanManuallySelected, setIsPlanManuallySelected] = useState(false)
   const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
@@ -394,13 +438,17 @@ export default function DashboardWizardDetails() {
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
   const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
   const totalBlueprintUnits = selectedWizards.reduce((total, wizard) => {
+    // Use static cost map first; fall back to catalogue API weight if available.
+    const staticCost = creditCostByWizardTitle[wizard.title]
+    if (staticCost !== undefined) return total + staticCost * wizard.quantity
     const blueprintId = blueprintIdByWizardTitle[wizard.title]
     const blueprint = catalogue.find((item) => item.blueprintId === blueprintId)
-    return total + (blueprint?.blueprintUnitWeight ?? 0) * wizard.quantity
+    return total + (blueprint?.blueprintUnitWeight ?? 1) * wizard.quantity
   }, 0)
   const recommendedPlan = recommendedPlanForBlueprintUnits(totalBlueprintUnits)
 
   useEffect(() => {
+    let hasLoadedAuthoritativeSubscription = false
     paymentApi.wizardAccess().then((response) => {
       const planId = response.success && response.data?.hasSubscription ? response.data.plan?.toLowerCase() : ''
       const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
@@ -408,13 +456,19 @@ export default function DashboardWizardDetails() {
         setWizardAccess(response.data)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
       }
-      if (plan) { setAccountPlan(plan); setActivePlan(plan) }
+      if (plan && !hasLoadedAuthoritativeSubscription) { setAccountPlan(plan); setActivePlan(plan) }
     }).finally(() => setIsWizardAccessLoading(false))
     subscriptionApi.blueprints().then((response) => {
       if (response.success && response.data) setCatalogue(response.data)
     })
     subscriptionApi.get().then((response) => {
-      if (response.success && response.data) setRemainingBlueprintUnits(response.data.usage.runsRemaining)
+      if (response.success && response.data) {
+        setRemainingBlueprintUnits(response.data.usage.runsRemaining)
+        hasLoadedAuthoritativeSubscription = true
+        const planId = response.data.planId.toLowerCase()
+        const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
+        if (plan) { setAccountPlan(plan); setActivePlan(plan) }
+      }
     })
   }, [])
 
@@ -424,7 +478,7 @@ export default function DashboardWizardDetails() {
   // Document Catalogue unit cost. Paid subscriptions and manual tab choices
   // are intentionally never overridden.
   useEffect(() => {
-    if ((!accountPlan || upgradeJourney) && !isPlanManuallySelected && totalBlueprintUnits > 0) {
+    if (!accountPlan && !isPlanManuallySelected && totalBlueprintUnits > 0) {
       setActivePlan(recommendedPlan)
     }
   }, [accountPlan, upgradeJourney, isPlanManuallySelected, recommendedPlan, totalBlueprintUnits])
@@ -551,7 +605,9 @@ export default function DashboardWizardDetails() {
       // the paid dashboard correct while a browser navigation is in progress.
       localStorage.setItem(wizardAccessCacheKey, JSON.stringify(access))
       localStorage.setItem('tsl-dashboard-payment-complete', 'true')
-      localStorage.setItem('tsl-dashboard-view-mode', 'initial')
+      // Land directly on the tabbed dashboard (New/In Progress/Completed) so the
+      // selected wizard is immediately visible in the New tab.
+      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
       // Clear any stale queue so the dashboard seeds it from the purchased quantities.
       localStorage.removeItem('tsl-dashboard-queue')
       setPaymentMessage({
@@ -851,7 +907,7 @@ export default function DashboardWizardDetails() {
             <OverviewIcon size={34} />
           </span>
           <div>
-            <h1>Wizard Details &amp; Overview</h1>
+            <h1>Blueprints Details &amp; Overview</h1>
             <p>Everything you need to know before starting this legal workflow</p>
           </div>
           <button
@@ -878,7 +934,7 @@ export default function DashboardWizardDetails() {
                   <WandSparkles size={16} />
                   Selection
                 </span>
-                <h1>Selected Wizards</h1>
+                <h1>Blueprints Wizards</h1>
               </div>
               <span className="dashboard-wizard-details__count">
                 <ShoppingCart size={16} />
@@ -963,6 +1019,9 @@ export default function DashboardWizardDetails() {
                       <h3>
                         <PlanIcon size={20} className="dashboard-wizard-details__plan-title-icon" />
                         {plan.title}
+                        {accountPlan === activePlan && (
+                          <span className="dashboard-wizard-details__plan-active-badge">Active</span>
+                        )}
                       </h3>
                       <p>{plan.description}</p>
                     </div>

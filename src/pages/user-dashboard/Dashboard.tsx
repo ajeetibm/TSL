@@ -1117,9 +1117,15 @@ export default function Dashboard() {
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
-  // True only after the server has confirmed wizard access — prevents stale
-  // localStorage cache from granting wizard start access before API responds.
-  const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(false)
+  // Pre-confirm from cache when the cache was written by a verified payment —
+  // avoids a blank/landing flash while the API call is still in flight.
+  // The API response will always overwrite with the authoritative value.
+  const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { hasSubscription?: boolean } | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })
 
   const [dashboardViewMode, setDashboardViewMode] = useState(() =>
     localStorage.getItem('tsl-dashboard-view-mode') ?? 'returning',
@@ -1133,11 +1139,15 @@ export default function Dashboard() {
     wizardAccess.selectedWizards.length &&
     dashboardViewMode === 'initial',
   )
+  // isPaidDashboard: show the tabbed (New / In Progress / Completed) dashboard.
+  // Also reached when a subscribed user with no pre-selected wizards starts a
+  // wizard from the landing view — dashboardViewMode flips to 'returning' in
+  // handleStart, and we allow entry even with an empty selectedWizards list.
   const isPaidDashboard = Boolean(
     wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
-    wizardAccess.selectedWizards.length &&
-    !isInitialSubscriptionDashboard,
+    !isInitialSubscriptionDashboard &&
+    (wizardAccess.selectedWizards.length > 0 || dashboardViewMode === 'returning'),
   )
   const defaultTab: DashboardTab = 'new'
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
@@ -1160,20 +1170,23 @@ export default function Dashboard() {
   const queueStorageKey = 'tsl-dashboard-queue'
   const [queuedCounts, setQueuedCounts] = useState<Record<string, number>>(() => {
     try {
-      const raw = localStorage.getItem(queueStorageKey)
-      if (raw) return JSON.parse(raw) as Record<string, number>
-      // No stored queue yet — seed synchronously from the cached wizardAccess
-      // so the New tab is correct even before the async API call resolves.
+      // Always build the initial queue by merging the stored queue with the
+      // cached selectedWizards — so every selected wizard has a non-zero entry
+      // even if localStorage is stale from a previous session.
+      const storedRaw = localStorage.getItem(queueStorageKey)
+      const stored: Record<string, number> = storedRaw ? (JSON.parse(storedRaw) as Record<string, number>) : {}
       const cachedAccess = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { selectedWizards?: Array<{ title: string; quantity?: number }> } | null
       if (cachedAccess?.selectedWizards?.length) {
-        const initial: Record<string, number> = {}
+        const merged = { ...stored }
         for (const w of cachedAccess.selectedWizards) {
-          initial[w.title] = (initial[w.title] ?? 0) + (w.quantity ?? 1)
+          if ((merged[w.title] ?? 0) <= 0) {
+            merged[w.title] = w.quantity ?? 1
+          }
         }
-        localStorage.setItem(queueStorageKey, JSON.stringify(initial))
-        return initial
+        localStorage.setItem(queueStorageKey, JSON.stringify(merged))
+        return merged
       }
-      return {}
+      return stored
     } catch { return {} }
   })
   // Whether the queue has been seeded from the server-authoritative selectedWizards
@@ -1237,26 +1250,14 @@ export default function Dashboard() {
       return
     }
 
-    // The first Start action turns the first-login landing view into the
-    // standard workflow dashboard immediately. The modal remains open above
-    // it, but the queued Blueprint has already moved to In Progress and will
-    // still be there if the user closes the modal without completing it.
-    if (isInitialSubscriptionDashboard) {
-      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
-      setActiveTab('inProgress')
-      setDashboardViewMode('returning')
-    }
+    // Do NOT flip the view yet — the landing page stays visible behind the
+    // modal. The transition to the tabbed dashboard happens only when the
+    // user closes or completes the modal (see onClose / onComplete handlers).
 
-    setQueuedCounts((prev) => {
-      // On the initial landing view the queue may not yet be seeded (async API
-      // call still in flight). Use selectedWizards as the authoritative quantity
-      // so that clicking Start on NDA×3 still leaves NDA×2 in the New queue.
-      const authoritative = wizardAccess?.selectedWizards.find((w) => w.title === title)?.quantity ?? 1
-      const current = prev[title] ?? authoritative
-      const next = { ...prev, [title]: Math.max(current - 1, 0) }
-      localStorage.setItem(queueStorageKey, JSON.stringify(next))
-      return next
-    })
+    // Queue is NOT touched here — the landing-page Start just opens the modal.
+    // The queue is seeded from selectedWizards on load (so the wizard already
+    // appears in New at its full count). Decrementing happens only when the
+    // user clicks Start from the New tab of the tabbed dashboard.
     if (title === 'Non-Disclosure Agreement (NDA)') {
       if (ndaState.status === 'completed') resetNda()
       startWizard(); setIsNdaModalOpen(true)
@@ -1349,20 +1350,22 @@ export default function Dashboard() {
         setWizardAccess(freshAccess)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(freshAccess))
 
-        // Seed the queue from selectedWizards exactly once (first authoritative load).
-        // After that the queue is managed locally so Start/Complete don't clobber it.
+        // Merge server-authoritative selectedWizards into the queue: any title
+        // that is missing or has been zeroed out (stale data) is restored to its
+        // server quantity. Titles already > 0 are left untouched so the user's
+        // in-progress / remaining counts are preserved.
         if (!queueSeedRef.current) {
           queueSeedRef.current = true
-          const stored = localStorage.getItem(queueStorageKey)
-          if (!stored) {
-            // First ever load — build the initial queue from server quantities
-            const initial: Record<string, number> = {}
+          setQueuedCounts((prev) => {
+            const next = { ...prev }
             for (const w of freshAccess.selectedWizards) {
-              initial[w.title] = (initial[w.title] ?? 0) + (w.quantity ?? 1)
+              if ((next[w.title] ?? 0) <= 0) {
+                next[w.title] = w.quantity ?? 1
+              }
             }
-            persistQueue(initial)
-          }
-          // If stored already exists we keep it (user may have started some items)
+            localStorage.setItem(queueStorageKey, JSON.stringify(next))
+            return next
+          })
         }
 
         // When the user just returned from "Add to Dashboard", bump the New queue
@@ -1534,11 +1537,12 @@ export default function Dashboard() {
   }
 
   const openReturningDashboard = () => {
+    // Flip the view-mode state in-place — no navigate() needed.
+    // navigate('/dashboard') would remount the component and reset
+    // wizardAccessConfirmed to false, causing the landing view to flash
+    // before the API call re-confirms the subscription.
     setDashboardViewMode('returning')
-    // Keep the established tabbed dashboard flow as the place where a wizard
-    // is started, resumed, and completed.
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
-    navigate('/dashboard')
   }
 
   const user = dashboardData?.user
@@ -1549,16 +1553,34 @@ export default function Dashboard() {
   // availableWizards: one entry per unique blueprint type.
   //   selectedQuantity — authoritative count from the server (used in the landing view)
   //   queuedCount      — runtime New-tab queue (used in the returning/tabbed dashboard)
-  const availableWizards = (wizardAccess?.selectedWizards ?? []).map((wizard, idx) => {
-    const meta = staticWizardMeta.get(wizard.title)
-    return {
-      id: meta?.id ?? 100 + idx,
-      title: wizard.title,
-      note: meta?.note ?? `Access your ${wizard.title} wizard`,
-      selectedQuantity: wizard.quantity ?? 1,
-      queuedCount: queuedCounts[wizard.title] ?? 0,
-    }
-  })
+  // Also include any wizard that was started directly from the predefined landing
+  // list (no selectedWizards entry) — those live only in queuedCounts.
+  const selectedTitles = new Set((wizardAccess?.selectedWizards ?? []).map((w) => w.title))
+  const queueOnlyEntries = Object.keys(queuedCounts)
+    .filter((title) => !selectedTitles.has(title) && queuedCounts[title] > 0)
+    .map((title, idx) => {
+      const meta = staticWizardMeta.get(title)
+      return {
+        id: meta?.id ?? 200 + idx,
+        title,
+        note: meta?.note ?? `Access your ${title} wizard`,
+        selectedQuantity: 1,
+        queuedCount: queuedCounts[title],
+      }
+    })
+  const availableWizards = [
+    ...(wizardAccess?.selectedWizards ?? []).map((wizard, idx) => {
+      const meta = staticWizardMeta.get(wizard.title)
+      return {
+        id: meta?.id ?? 100 + idx,
+        title: wizard.title,
+        note: meta?.note ?? `Access your ${wizard.title} wizard`,
+        selectedQuantity: wizard.quantity ?? 1,
+        queuedCount: queuedCounts[wizard.title] ?? 0,
+      }
+    }),
+    ...queueOnlyEntries,
+  ]
   const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
   const paidRunsTotal = subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
   const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
@@ -1807,55 +1829,56 @@ export default function Dashboard() {
           />
         )}
 
-        {/* Initial-view modals: onClose transitions to the tabbed (returning) dashboard
-            so the user lands on In Progress if they left mid-way */}
+        {/* Landing-view modals: background stays as the landing page while the
+            modal is open. Closing (X) lands on New tab so the queued wizard is
+            visible. Completing lands on Completed tab. */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={() => { setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            onClose={() => { setIsNdaModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
             initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
             initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
             onStepChange={(step, data) => saveProgress(step, data)}
-            onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false); openReturningDashboard() }}
+            onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
         )}
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={() => { setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            onClose={() => { setIsEmpModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
             initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
             initialData={empState.status === 'completed' ? undefined : empState.data}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
-            onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false); openReturningDashboard() }}
+            onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
         )}
 
         {isPPModalOpen && (
           <PrivacyPolicyWizardModal
-            onClose={() => { setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            onClose={() => { setIsPPModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
             initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
             initialData={ppState.status === 'completed' ? undefined : ppState.data}
             onStepChange={(step, data) => savePPProgress(step, data)}
-            onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false); openReturningDashboard() }}
+            onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
         )}
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={() => { setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            onClose={() => { setIsFAModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
             initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
-            onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); openReturningDashboard() }}
+            onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
         )}
 
         {isSAModalOpen && (
           <ServiceAgreementWizardModal
-            onClose={() => { setIsSAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            onClose={() => { setIsSAModalOpen(false); setActiveTab('new'); openReturningDashboard() }}
             initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
             initialData={saState.status === 'completed' ? undefined : saState.data}
             onStepChange={(step, data) => saveSAProgress(step, data)}
-            onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false); openReturningDashboard() }}
+            onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
         )}
 
