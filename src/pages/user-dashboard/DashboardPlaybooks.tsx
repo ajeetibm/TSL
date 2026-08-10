@@ -11,16 +11,18 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
-import { API_BASE_URL, documentsApi, playbookApi } from '../../services/tslApi'
+import { API_BASE_URL, documentsApi, playbookApi, paymentApi } from '../../services/tslApi'
 import type { WizardAccess } from '../../services/tslApi'
-import UpgradePlanModal from './UpgradePlanModal'
+import { openPaystackCheckout } from '../../services/paystackClient'
+import { useBillingSubscription } from '../../hooks/useBillingSubscription'
+import { UpgradePlansModal } from './billing/UpgradePlansModal'
+import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
 import './Dashboard.css'
 import './DashboardPlaybooks.css'
 
@@ -386,11 +388,31 @@ function mapApiSections(
 }
 
 export default function DashboardPlaybooks() {
-  const navigate = useNavigate()
   const [selectedPlaybook, setSelectedPlaybook] = useState<PlaybookCard | null>(null)
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [sections, setSections] = useState<PlaybookSection[]>([])
   const [loading, setLoading] = useState(true)
+
+  const [upgradePayError, setUpgradePayError] = useState<string | null>(null)
+  const upgradePayFn = useCallback(async (amountZAR: number, planName: string): Promise<string | null> => {
+    setUpgradePayError(null)
+    const checkoutResult = await openPaystackCheckout({
+      amount: amountZAR, currency: 'ZAR',
+      email: (() => { try { return (JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }).email || 'user@example.com' } catch { return 'user@example.com' } })(),
+      plan: planName.toLowerCase(), paymentMethod: 'card', selectedWizards: [], totalWizards: 0,
+    })
+    if (checkoutResult.status === 'cancelled') return null
+    if (checkoutResult.status === 'failed') { setUpgradePayError(checkoutResult.message || 'Payment failed.'); return null }
+    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, type: 'subscription-upgrade' })
+    if (!verifyRes.success || verifyRes.data?.status !== 'success') { setUpgradePayError(verifyRes.message || 'Payment could not be verified.'); return null }
+    return checkoutResult.reference
+  }, [])
+
+  const {
+    plans, plansLoading, plansError,
+    selectedPlan, upgradePreview, previewLoading, previewError,
+    actionLoading, actionError, activeModal,
+    openUpgradePlans, selectPlan, confirmUpgrade, cancelUpgradeConfirm, closeModal,
+  } = useBillingSubscription(upgradePayFn)
 
   // Read subscription status from cache — same pattern as Dashboard.tsx
   const hasSubscription = (() => {
@@ -494,7 +516,9 @@ export default function DashboardPlaybooks() {
                       <button
                         type="button"
                         className="dashboard-playbooks__button"
-                        onClick={() => hasSubscription ? setSelectedPlaybook(card) : setShowUpgradeModal(true)}
+                        onClick={() => {
+                          if (hasSubscription) { setSelectedPlaybook(card) } else { void openUpgradePlans() }
+                        }}
                       >
                         Read Playbook
                         <ArrowRight size={18} />
@@ -515,10 +539,28 @@ export default function DashboardPlaybooks() {
         />
       )}
 
-      {showUpgradeModal && (
-        <UpgradePlanModal
-          onClose={() => setShowUpgradeModal(false)}
-          onUpgrade={() => { setShowUpgradeModal(false); navigate('/dashboard/wizards') }}
+      {activeModal === 'upgrade-plans' && (
+        <UpgradePlansModal
+          currentPlanId="free"
+          plans={plans}
+          plansLoading={plansLoading}
+          plansError={plansError}
+          onSelectUpgrade={(plan) => void selectPlan(plan, 'upgrade')}
+          onSelectDowngrade={(plan) => void selectPlan(plan, 'downgrade')}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === 'upgrade-confirm' && selectedPlan && (
+        <UpgradeConfirmModal
+          plan={selectedPlan}
+          preview={upgradePreview}
+          previewLoading={previewLoading}
+          previewError={previewError}
+          actionLoading={actionLoading}
+          actionError={upgradePayError ?? actionError}
+          onConfirm={() => void confirmUpgrade()}
+          onCancel={cancelUpgradeConfirm}
         />
       )}
     </DashboardShell>

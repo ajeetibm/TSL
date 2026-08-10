@@ -1,0 +1,487 @@
+/* ── Shared modal backdrop ─────────────────────────────────────────────────── */
+
+.bs-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 32px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+/* ── Compare Plans modal shell ─────────────────────────────────────────────── */
+
+.bs-compare-modal {
+  position: relative;
+  width: min(860px, 100%);
+  border-radius: 20px;
+  padding: 40px 32px 36px;
+  background: #ffffff;
+  color: #0d1b2a;
+}
+
+/* ── Close button ──────────────────────────────────────────────────────────── */
+
+.bs-modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #374151;
+  cursor: pointer;
+}
+
+.bs-modal-close:hover {
+  background: #e5e7eb;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+
+.bs-modal-header {
+  margin-bottom: 28px;
+}
+
+.bs-modal-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #0d1b2a;
+}
+
+.bs-modal-header p {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* ── Loading & error states ────────────────────────────────────────────────── */
+
+.bs-modal-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 0;
+  color: #6d6d6d;
+  font-size: 14px;
+}
+
+.bs-modal-error {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #fff2f2;
+  color: #c0392b;
+  font-size: 13px;
+}
+
+/* ── Plan cards grid ───────────────────────────────────────────────────────── */
+
+.bs-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 4px;
+  margin-bottom: 28px;
+}
+
+.bs-compare-card-wrapper {
+  position: relative;
+  padding-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Popular badge ─────────────────────────────────────────────────────────── */
+
+.bs-compare-popular-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 16px;
+  border-radius: 20px;
+  background: #b8872a;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Base card ─────────────────────────────────────────────────────────────── */
+
+.bs-compare-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #e0e3e8;
+  border-radius: 16px;
+  padding: 24px 22px 26px;
+  background: #f9fafb;
+}
+
+.bs-compare-card--launchpad {
+  border-color: #cf9b2f;
+  background: #fffbf0;
+}
+
+.bs-compare-card--popular {
+  border-color: #c8cdd6;
+  background: #f4f6f9;
+}
+
+.bs-compare-card--current {
+  border-color: #cf9b2f;
+  background: #fffbf0;
+}
+
+/* ── Plan name row ─────────────────────────────────────────────────────────── */
+
+.bs-compare-card__name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #0d1b2a;
+}
+
+.bs-compare-card__name svg {
+  flex: 0 0 auto;
+  color: #0d1b2a;
+}
+
+/* ── Price block ───────────────────────────────────────────────────────────── */
+
+.bs-compare-card__price-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.bs-compare-card__price-amount {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0d1b2a;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.bs-compare-card__price-period {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* ── Feature list ──────────────────────────────────────────────────────────── */
+
+.bs-compare-card__features {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bs-compare-card__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.bs-compare-card__feature--included {
+  color: #1f2937;
+}
+
+.bs-compare-card__feature--included svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #cf9b2f;
+}
+
+.bs-compare-card__feature--excluded {
+  color: #9ca3af;
+}
+
+.bs-compare-card__feature--excluded svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #c4c9d4;
+}
+
+/* ── Footer close pill ─────────────────────────────────────────────────────── */
+
+.bs-compare-footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 4px;
+}
+
+.bs-compare-close-btn {
+  padding: 12px 80px;
+  border-radius: 32px;
+  border: 1.5px solid #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bs-compare-close-btn:hover {
+  background: #e9ebee;
+  border-color: #b0b7c3;
+}
+
+/* ── Spinner ───────────────────────────────────────────────────────────────── */
+
+.bs-spin {
+  animation: bs-spin 0.8s linear infinite;
+  flex: 0 0 auto;
+}
+
+@keyframes bs-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 760px) {
+  .bs-modal-backdrop {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .bs-compare-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Upgrade Plans modal — action buttons (bs-upm-*) ──────────────────────── */
+
+.bs-upm-card__action {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.bs-upm-btn {
+  width: 100%;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1.5px solid #e5e7eb;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.bs-upm-btn--current {
+  border-color: #e5e7eb;
+  background: #f3f4f6;
+  color: #9ca3af;
+  cursor: default;
+}
+
+.bs-upm-btn--upgrade {
+  border-color: #cf9b2f;
+  background: #cf9b2f;
+  color: #ffffff;
+}
+
+.bs-upm-btn--upgrade:hover {
+  background: #b8872a;
+  border-color: #b8872a;
+}
+
+.bs-upm-btn--downgrade {
+  border-color: #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+.bs-upm-btn--downgrade:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* ── Confirm modal shell ───────────────────────────────────────────────────── */
+
+.bs-confirm-modal {
+  position: relative;
+  width: min(540px, 100%);
+  border-radius: 20px;
+  padding: 40px 36px 32px;
+  background: #ffffff;
+  color: #0d1b2a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+}
+
+.bs-confirm-modal--sm {
+  width: min(420px, 100%);
+  padding: 36px 28px 28px;
+}
+
+/* ── Confirm modal content ─────────────────────────────────────────────────── */
+
+.bs-confirm-modal h2 {
+  margin: 0 0 10px;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: #0d1b2a;
+}
+
+.bs-confirm-modal__subtitle {
+  margin: 0 0 24px;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.bs-confirm-modal__breakdown {
+  display: grid;
+  gap: 0;
+  margin: 0 0 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.bs-confirm-modal__breakdown div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.bs-confirm-modal__breakdown dt {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.bs-confirm-modal__breakdown dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d1b2a;
+  text-align: right;
+}
+
+.bs-confirm-modal__credit {
+  color: #1a7a45 !important;
+}
+
+.bs-confirm-modal__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  border-top: 2px solid #e5e7eb;
+  padding: 16px 0 0;
+  margin-bottom: 8px;
+}
+
+.bs-confirm-modal__total span {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0d1b2a;
+}
+
+.bs-confirm-modal__total strong {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 900;
+  color: #cf9b2f;
+}
+
+.bs-confirm-modal__total--zero strong {
+  color: #1a7a45;
+}
+
+.bs-confirm-modal__card-note {
+  margin: 0 0 20px;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+.bs-confirm-modal__actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.bs-confirm-modal__btn-cancel {
+  flex: 1;
+  min-height: 46px;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bs-confirm-modal__btn-cancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bs-confirm-modal__btn-confirm {
+  flex: 2;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: #cf9b2f;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.bs-confirm-modal__btn-confirm:hover:not(:disabled) {
+  background: #b8872a;
+}
+
+.bs-confirm-modal__btn-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .bs-confirm-modal {
+    padding: 28px 20px 24px;
+  }
+
+  .bs-confirm-modal__actions {
+    flex-direction: column-reverse;
+  }
+}

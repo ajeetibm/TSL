@@ -8,6 +8,7 @@
 
 import { CheckCircle2, FileText, Loader2, ShoppingCart, X, Sparkles } from 'lucide-react'
 import type { SubscriptionPlan } from '../../../services/dashboardTypes'
+import './ComparePlansModal.css'
 
 interface Props {
   plans: SubscriptionPlan[]

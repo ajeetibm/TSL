@@ -18,13 +18,14 @@ import {
   Target,
   Zap,
 } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
 import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
@@ -45,7 +46,6 @@ import ServiceAgreementWizardModal from './ServiceAgreementWizardModal'
 import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import ComingSoonWizardModal from './ComingSoonWizardModal'
-import UpgradePlanModal from './UpgradePlanModal'
 import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
 import './Dashboard.css'
@@ -1069,6 +1069,32 @@ export default function Dashboard() {
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
 
   // ── Billing upgrade flow for Free plan users ──────────────────────────────
+  const [upgradePayError, setUpgradePayError] = useState<string | null>(null)
+
+  const upgradePayFn = useCallback(async (amountZAR: number, planName: string): Promise<string | null> => {
+    setUpgradePayError(null)
+    const checkoutResult = await openPaystackCheckout({
+      amount: amountZAR,
+      currency: 'ZAR',
+      email: (() => { try { return (JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }).email || 'user@example.com' } catch { return 'user@example.com' } })(),
+      plan: planName.toLowerCase(),
+      paymentMethod: 'card',
+      selectedWizards: [],
+      totalWizards: 0,
+    })
+    if (checkoutResult.status === 'cancelled') return null
+    if (checkoutResult.status === 'failed') {
+      setUpgradePayError(checkoutResult.message || 'Payment failed. Please try again.')
+      return null
+    }
+    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, type: 'subscription-upgrade' })
+    if (!verifyRes.success || verifyRes.data?.status !== 'success') {
+      setUpgradePayError(verifyRes.message || 'Payment could not be verified. Please try again.')
+      return null
+    }
+    return checkoutResult.reference
+  }, [])
+
   const {
     subscription: billingSubscription,
     plans: billingPlans,
@@ -1086,7 +1112,7 @@ export default function Dashboard() {
     confirmUpgrade: billingConfirmUpgrade,
     cancelUpgradeConfirm: billingCancelUpgradeConfirm,
     closeModal: billingCloseModal,
-  } = useBillingSubscription()
+  } = useBillingSubscription(upgradePayFn)
 
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
@@ -1118,7 +1144,6 @@ export default function Dashboard() {
   const [isFAModalOpen, setIsFAModalOpen] = useState(false)
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [ndaToast, setNdaToast] = useState('')
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -1668,7 +1693,7 @@ export default function Dashboard() {
                         isInitialSubscriptionDashboard ||
                         (wizardAccessConfirmed && wizardAccess?.hasSubscription)
                           ? () => handleStart(wizard.title)
-                          : () => setShowUpgradeModal(true)
+                          : () => void openBillingUpgradePlans()
                       }
                     >
                       <Play size={16} />
@@ -1820,10 +1845,28 @@ export default function Dashboard() {
           />
         )}
 
-        {showUpgradeModal && (
-          <UpgradePlanModal
-            onClose={() => setShowUpgradeModal(false)}
-            onUpgrade={() => { setShowUpgradeModal(false); browseWizards() }}
+        {billingActiveModal === 'upgrade-plans' && (
+          <UpgradePlansModal
+            currentPlanId="free"
+            plans={billingPlans}
+            plansLoading={billingPlansLoading}
+            plansError={billingPlansError}
+            onSelectUpgrade={(plan) => void billingSelectPlan(plan, 'upgrade')}
+            onSelectDowngrade={(plan) => void billingSelectPlan(plan, 'downgrade')}
+            onClose={billingCloseModal}
+          />
+        )}
+
+        {billingActiveModal === 'upgrade-confirm' && billingSelectedPlan && (
+          <UpgradeConfirmModal
+            plan={billingSelectedPlan}
+            preview={billingUpgradePreview}
+            previewLoading={billingPreviewLoading}
+            previewError={billingPreviewError}
+            actionLoading={billingActionLoading}
+            actionError={upgradePayError ?? billingActionError}
+            onConfirm={() => void billingConfirmUpgrade()}
+            onCancel={billingCancelUpgradeConfirm}
           />
         )}
       </DashboardShell>

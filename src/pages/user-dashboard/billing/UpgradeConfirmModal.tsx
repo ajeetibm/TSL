@@ -9,6 +9,7 @@
 import { Loader2, X } from 'lucide-react'
 import type { ProratedUpgradePreview, SubscriptionPlan } from '../../../services/dashboardTypes'
 import { formatDate } from '../../../services/dashboardTypes'
+import './ComparePlansModal.css'
 
 interface Props {
   plan: SubscriptionPlan

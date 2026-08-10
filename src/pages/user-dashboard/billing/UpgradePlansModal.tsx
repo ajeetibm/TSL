@@ -13,6 +13,7 @@
 import { CheckCircle2, FileText, Loader2, ShoppingCart, Sparkles, X } from 'lucide-react'
 import type { SubscriptionPlan } from '../../../services/dashboardTypes'
 import { planTier } from '../../../services/subscriptionService'
+import './ComparePlansModal.css'
 
 interface Props {
   currentPlanId: string
