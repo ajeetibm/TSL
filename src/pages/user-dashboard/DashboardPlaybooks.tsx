@@ -28,9 +28,9 @@ import './DashboardPlaybooks.css'
 
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
-// Configure the PDF.js worker — use Vite's ?url import so the worker is
-// served with the correct JavaScript MIME type (not application/octet-stream).
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
+// Configure the PDF.js worker — use CDN to avoid MIME type issues on servers
+// that serve .mjs files as application/octet-stream instead of text/javascript.
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 type PlaybookCard = {
   title: string
