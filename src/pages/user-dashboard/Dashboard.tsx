@@ -75,9 +75,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
-      '4 Blueprint Units per month',
+      '4 Credits per month',
       '0 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Standard support (48-72h response)',
       '1GB document storage',
       'PDF export',
@@ -86,9 +86,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'operator') {
     return [
-      '12 Blueprint Units per month',
+      '12 Credits per month',
       '2 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Priority support (24-48h response)',
       'Unlimited document storage',
       'API access for integrations',
@@ -97,9 +97,9 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'boardroom') {
     return [
-      '30 Blueprint Units per month',
+      '30 Credits per month',
       '6 Counsel credits per month',
-      'Blueprint top-ups at R250 per Unit',
+      'Credit top-ups at R250 per Credit',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access + white-label options',
@@ -108,7 +108,7 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   // Fallback: generic list built from API fields
   return [
-    `${runs} Blueprint Units per month`,
+    `${runs} Credits per month`,
     `${members} team member${sub.teamMembers === 1 ? '' : 's'}`,
   ]
 }
@@ -195,7 +195,7 @@ const newWizards = [
   },
   {
     id: 2,
-    title: 'Employment Offer letter',
+    title: 'Employment Offer Letter',
     note: 'Hiring our first developer next month',
     wizards: 3,
     paidItems: 'Item',
@@ -204,7 +204,7 @@ const newWizards = [
   },
   {
     id: 3,
-    title: 'Privacy Policy',
+    title: 'Privacy & Cookies Policy',
     note: 'Required for our web app launch',
     wizards: 2,
     paidItems: 'Item',
@@ -1121,6 +1121,9 @@ export default function Dashboard() {
   // localStorage cache from granting wizard start access before API responds.
   const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(false)
 
+  const [dashboardViewMode, setDashboardViewMode] = useState(() =>
+    localStorage.getItem('tsl-dashboard-view-mode') ?? 'returning',
+  )
   // A wizard may only be started after the server has confirmed subscription status.
   // wizardAccessConfirmed ensures stale localStorage cache never grants access
   // before the API has responded.
@@ -1128,7 +1131,7 @@ export default function Dashboard() {
     wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
     wizardAccess.selectedWizards.length &&
-    localStorage.getItem('tsl-dashboard-view-mode') === 'initial',
+    dashboardViewMode === 'initial',
   )
   const isPaidDashboard = Boolean(
     wizardAccessConfirmed &&
@@ -1215,8 +1218,8 @@ export default function Dashboard() {
   // Derived from live hook states so it is always in sync.
   const inProgressTitles = new Set<string>([
     ...(ndaState.status === 'inProgress' ? ['Non-Disclosure Agreement (NDA)'] : []),
-    ...(empState.status === 'inProgress' ? ['Employment Offer letter'] : []),
-    ...(ppState.status === 'inProgress' ? ['Privacy Policy'] : []),
+    ...(empState.status === 'inProgress' ? ['Employment Offer Letter'] : []),
+    ...(ppState.status === 'inProgress' ? ['Privacy & Cookies Policy'] : []),
     ...(faState.status === 'inProgress' ? ['Founder Agreement'] : []),
     ...(saState.status === 'inProgress' ? ['Service Agreement'] : []),
   ])
@@ -1234,6 +1237,16 @@ export default function Dashboard() {
       return
     }
 
+    // The first Start action turns the first-login landing view into the
+    // standard workflow dashboard immediately. The modal remains open above
+    // it, but the queued Blueprint has already moved to In Progress and will
+    // still be there if the user closes the modal without completing it.
+    if (isInitialSubscriptionDashboard) {
+      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+      setActiveTab('inProgress')
+      setDashboardViewMode('returning')
+    }
+
     setQueuedCounts((prev) => {
       // On the initial landing view the queue may not yet be seeded (async API
       // call still in flight). Use selectedWizards as the authoritative quantity
@@ -1247,10 +1260,10 @@ export default function Dashboard() {
     if (title === 'Non-Disclosure Agreement (NDA)') {
       if (ndaState.status === 'completed') resetNda()
       startWizard(); setIsNdaModalOpen(true)
-    } else if (title === 'Employment Offer letter') {
+    } else if (title === 'Employment Offer Letter') {
       if (empState.status === 'completed') resetEmp()
       startEmp(); setIsEmpModalOpen(true)
-    } else if (title === 'Privacy Policy') {
+    } else if (title === 'Privacy & Cookies Policy') {
       if (ppState.status === 'completed') resetPP()
       startPP(); setIsPPModalOpen(true)
     } else if (title === 'Founder Agreement') {
@@ -1488,7 +1501,7 @@ export default function Dashboard() {
     const completedAt = new Date().toISOString()
     saveEmpProgress(6, data)
     completeEmp()
-    pushCompletedInstance('Employment Offer letter', data, completedAt)
+    pushCompletedInstance('Employment Offer Letter', data, completedAt)
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
@@ -1496,7 +1509,7 @@ export default function Dashboard() {
     const completedAt = new Date().toISOString()
     savePPProgress(7, data)
     completePP()
-    pushCompletedInstance('Privacy Policy', data, completedAt)
+    pushCompletedInstance('Privacy & Cookies Policy', data, completedAt)
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
@@ -1521,6 +1534,7 @@ export default function Dashboard() {
   }
 
   const openReturningDashboard = () => {
+    setDashboardViewMode('returning')
     // Keep the established tabbed dashboard flow as the place where a wizard
     // is started, resumed, and completed.
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
@@ -1571,7 +1585,7 @@ export default function Dashboard() {
                   : 'Choose a plan and select your wizards to start creating documents.'}
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-              Browse Wizards
+              Browse Blueprints
               <ArrowRight size={18} />
             </button>
           </div>
@@ -1880,7 +1894,7 @@ export default function Dashboard() {
           <h2>Dashboard</h2>
           <p>Track your legal workflows and completed documents across all your business operations.</p>
           <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-            Browse Wizards
+            Browse Blueprints
             <ArrowRight size={18} />
           </button>
         </div>
@@ -2225,7 +2239,7 @@ export default function Dashboard() {
                   )
                 }
 
-                if (wizardType === 'Employment Offer letter') {
+                if (wizardType === 'Employment Offer Letter') {
                   const empData = data as import('./EmploymentWizardModal').EmploymentWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
@@ -2249,7 +2263,7 @@ export default function Dashboard() {
                   )
                 }
 
-                if (wizardType === 'Privacy Policy') {
+                if (wizardType === 'Privacy & Cookies Policy') {
                   const ppData = data as import('./PrivacyPolicyWizardModal').PrivacyPolicyWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>

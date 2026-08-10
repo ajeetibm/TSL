@@ -88,16 +88,20 @@ export function UpgradeConfirmModal({
                 <dd>{preview.newPlanName} — R{preview.newPrice.toLocaleString('en-ZA')}/mo</dd>
               </div>
               <div>
-                <dt>Days remaining</dt>
-                <dd>{preview.daysRemaining} of {preview.daysInCycle} days</dd>
+                <dt>{preview.isFullMonthlyCharge ? 'Billing period' : 'Days remaining'}</dt>
+                <dd>{preview.isFullMonthlyCharge ? '30 days from today' : `${preview.daysRemaining} of ${preview.daysInCycle} days`}</dd>
               </div>
               <div>
                 <dt>Credit, unused time</dt>
                 <dd className="bs-confirm-modal__credit">− {fmt(preview.creditUnusedTime)}</dd>
               </div>
               <div>
-                <dt>Prorated {preview.newPlanName} charge</dt>
+                <dt>{preview.isFullMonthlyCharge ? `Full monthly ${preview.newPlanName} charge` : `Prorated ${preview.newPlanName} charge`}</dt>
                 <dd>{fmt(preview.proratedNewCharge)}</dd>
+              </div>
+              <div>
+                <dt>VAT (15%)</dt>
+                <dd>{fmt(preview.tax)}</dd>
               </div>
             </dl>
 

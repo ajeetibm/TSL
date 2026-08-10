@@ -148,7 +148,7 @@ export default function BlueprintTopUpPayment() {
   }
 
   return (
-    <DashboardShell activeSection="Wizards">
+    <DashboardShell activeSection="Blueprints">
       <main className="counsel-topup-payment">
         <header className="counsel-topup-payment__header">
           <span className="counsel-topup-payment__header-marker" aria-hidden="true">

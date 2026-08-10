@@ -122,7 +122,7 @@ describe('DashboardShell', () => {
 
     it('should highlight Wizards when it is active', () => {
       renderWithRouter(
-        <DashboardShell activeSection="Wizards">
+        <DashboardShell activeSection="Blueprints">
           <div>Content</div>
         </DashboardShell>
       )
@@ -177,7 +177,7 @@ describe('DashboardShell', () => {
 
     it('should only highlight one section at a time', () => {
       renderWithRouter(
-        <DashboardShell activeSection="Wizards">
+        <DashboardShell activeSection="Blueprints">
           <div>Content</div>
         </DashboardShell>
       )
@@ -195,7 +195,7 @@ describe('DashboardShell', () => {
     it('should navigate to dashboard when Dashboard is clicked', async () => {
       const user = userEvent.setup()
       renderWithRouter(
-        <DashboardShell activeSection="Wizards">
+        <DashboardShell activeSection="Blueprints">
           <div>Content</div>
         </DashboardShell>
       )

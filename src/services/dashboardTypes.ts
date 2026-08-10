@@ -164,7 +164,9 @@ export interface ProratedUpgradePreview {
   daysInCycle: number
   creditUnusedTime: number   // negative value = credit
   proratedNewCharge: number
+  tax: number
   totalDueToday: number
+  isFullMonthlyCharge: boolean
   nextBillingDate: string
   paymentMethod: {
     brand: string
