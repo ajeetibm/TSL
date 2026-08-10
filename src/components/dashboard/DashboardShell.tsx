@@ -15,7 +15,7 @@ import { useNotificationCount } from '../../context/NotificationContext'
 import { notificationApi } from '../../services/tslApi'
 import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
 
-type DashboardSection = 'Dashboard' | 'Wizards' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
+type DashboardSection = 'Dashboard' | 'Blueprints' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
 interface DashboardShellProps {
   activeSection: DashboardSection
@@ -24,7 +24,7 @@ interface DashboardShellProps {
 
 const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Wizards', icon: WandSparkles, path: '/dashboard/wizards' },
+  { label: 'Blueprints', icon: WandSparkles, path: '/dashboard/wizards' },
   { label: 'Counsel', icon: Scale, path: '/dashboard/counsel' },
   { label: 'Playbooks', icon: BookOpen, path: '/dashboard/playbooks' },
   { label: 'Notifications', icon: Bell, path: '/dashboard/notifications' },

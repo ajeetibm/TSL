@@ -576,7 +576,7 @@ export default function DashboardWizardDetails() {
 
   if (showDashboardView) {
     return (
-      <DashboardShell activeSection="Wizards">
+      <DashboardShell activeSection="Blueprints">
         <main className="dashboard-wizard-details dashboard-wizard-details--success">
           <header className="user-dashboard__hero">
             <div>
@@ -753,7 +753,7 @@ export default function DashboardWizardDetails() {
 
   if (isPaymentView) {
     return (
-      <DashboardShell activeSection="Wizards">
+      <DashboardShell activeSection="Blueprints">
         <main className="dashboard-wizard-details dashboard-wizard-details--payment">
           <button
             type="button"
@@ -827,7 +827,7 @@ export default function DashboardWizardDetails() {
   }
 
   return (
-    <DashboardShell activeSection="Wizards">
+    <DashboardShell activeSection="Blueprints">
       <main className="dashboard-wizard-details">
         <section className="dashboard-wizard-details__page-head">
           <BackButton to="/dashboard" label="Back to Dashboard" />

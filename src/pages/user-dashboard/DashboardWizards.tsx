@@ -231,7 +231,7 @@ export default function DashboardWizards() {
 
 
   return (
-    <DashboardShell activeSection="Wizards">
+    <DashboardShell activeSection="Blueprints">
       <div className="dashboard-wizards">
         <header className="dashboard-wizards__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
