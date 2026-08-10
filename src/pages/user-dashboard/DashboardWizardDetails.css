@@ -384,6 +384,20 @@
   line-height: 28px;
 }
 
+.dashboard-wizard-details__plan-active-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
 .dashboard-wizard-details__plan-summary p {
   margin: 8px 0 0;
   color: #364153;
