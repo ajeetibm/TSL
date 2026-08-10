@@ -605,6 +605,8 @@ export default function DashboardWizardDetails() {
       // the paid dashboard correct while a browser navigation is in progress.
       localStorage.setItem(wizardAccessCacheKey, JSON.stringify(access))
       localStorage.setItem('tsl-dashboard-payment-complete', 'true')
+      // Store clicked wizard titles so the dashboard can alert them after redirect.
+      localStorage.setItem('tsl-payment-clicked-wizards', JSON.stringify(selectedWizards.map((w) => w.title)))
       // Land directly on the tabbed dashboard (New/In Progress/Completed) so the
       // selected wizard is immediately visible in the New tab.
       localStorage.setItem('tsl-dashboard-view-mode', 'returning')

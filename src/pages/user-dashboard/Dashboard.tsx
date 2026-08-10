@@ -1455,10 +1455,25 @@ export default function Dashboard() {
     const isPaidPlan = billingSubscription.planId.toLowerCase() !== 'free'
     if (isPaidPlan) {
       setWizardAccessConfirmed(true)
+      const clicked = localStorage.getItem('tsl-payment-clicked-wizards')
       setWizardAccess((prev) => {
-        if (!prev) return prev
-        return { ...prev, hasSubscription: true, plan: billingSubscription.planId }
+        const base = prev ?? { hasSubscription: false, plan: '', wizardLimit: 0, selectedWizards: [], remainingWizards: 0 }
+        const alreadySelected = base.selectedWizards.some((w) => w.title === clicked)
+        const updatedWizards = clicked && !alreadySelected
+          ? [...base.selectedWizards, { title: clicked, quantity: 1 }]
+          : base.selectedWizards
+        return { ...base, hasSubscription: true, plan: billingSubscription.planId, selectedWizards: updatedWizards }
       })
+      if (clicked) {
+        setQueuedCounts((prev) => {
+          const next = { ...prev, [clicked]: (prev[clicked] ?? 0) + 1 }
+          localStorage.setItem(queueStorageKey, JSON.stringify(next))
+          return next
+        })
+        localStorage.removeItem('tsl-payment-clicked-wizards')
+      }
+      setDashboardViewMode('returning')
+      localStorage.setItem('tsl-dashboard-view-mode', 'returning')
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingSubscription?.planId])
@@ -1729,7 +1744,10 @@ export default function Dashboard() {
                         isInitialSubscriptionDashboard ||
                         (wizardAccessConfirmed && wizardAccess?.hasSubscription)
                           ? () => handleStart(wizard.title)
-                          : () => void openBillingUpgradePlans()
+                          : () => {
+                              localStorage.setItem('tsl-payment-clicked-wizards', wizard.title)
+                              void openBillingUpgradePlans()
+                            }
                       }
                     >
                       <Play size={16} />
