@@ -153,7 +153,7 @@ export default function DashboardWizards() {
     Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])),
   )
   // Wizard access fetched from the server — null while loading
-  const [, setWizardAccess] = useState<WizardAccess | null>(() => {
+  const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
 
@@ -193,7 +193,18 @@ export default function DashboardWizards() {
 
   const selectBlueprint = (title: string, nextQuantity: number) => {
     const currentQuantity = quantities[title] ?? 0
-    if (nextQuantity > currentQuantity && !isUpgradeJourney && remainingBlueprintUnits !== null && remainingBlueprintUnits <= 0) {
+    // Users without a subscription have 0 blueprint units but must be allowed
+    // to select wizards so they can proceed through the payment/upgrade flow.
+    // Only block with the insufficient-units modal when they have an active
+    // paid subscription whose units are exhausted.
+    const hasSubscription = wizardAccess?.hasSubscription === true
+    if (
+      nextQuantity > currentQuantity &&
+      !isUpgradeJourney &&
+      hasSubscription &&
+      remainingBlueprintUnits !== null &&
+      remainingBlueprintUnits <= 0
+    ) {
       const blueprint = catalogue.find((item) => item.name.toLowerCase() === title.toLowerCase())
       setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 1 })
       return
