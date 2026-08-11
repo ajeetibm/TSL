@@ -1134,26 +1134,27 @@ export default function Dashboard() {
   })
 
   const [dashboardViewMode, setDashboardViewMode] = useState(() =>
-    localStorage.getItem('tsl-dashboard-view-mode') ?? 'returning',
+    localStorage.getItem('tsl-dashboard-view-mode') ?? 'initial',
   )
   // A wizard may only be started after the server has confirmed subscription status.
   // wizardAccessConfirmed ensures stale localStorage cache never grants access
   // before the API has responded.
+  // Show the first-time landing for every subscribed user until they explicitly
+  // click Start — regardless of prior session view-mode stored in localStorage.
   const isInitialSubscriptionDashboard = Boolean(
     wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
     wizardAccess.selectedWizards.length &&
-    dashboardViewMode === 'initial',
+    dashboardViewMode !== 'returning',
   )
   // isPaidDashboard: show the tabbed (New / In Progress / Completed) dashboard.
-  // Also reached when a subscribed user with no pre-selected wizards starts a
-  // wizard from the landing view — dashboardViewMode flips to 'returning' in
-  // handleStart, and we allow entry even with an empty selectedWizards list.
+  // Only reached after the user clicks Start from the landing view (which flips
+  // dashboardViewMode to 'returning').
   const isPaidDashboard = Boolean(
     wizardAccessConfirmed &&
     wizardAccess?.hasSubscription &&
     !isInitialSubscriptionDashboard &&
-    (wizardAccess.selectedWizards.length > 0 || dashboardViewMode === 'returning'),
+    dashboardViewMode === 'returning',
   )
   const defaultTab: DashboardTab = 'new'
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
@@ -1176,23 +1177,12 @@ export default function Dashboard() {
   const queueStorageKey = 'tsl-dashboard-queue'
   const [queuedCounts, setQueuedCounts] = useState<Record<string, number>>(() => {
     try {
-      // Always build the initial queue by merging the stored queue with the
-      // cached selectedWizards — so every selected wizard has a non-zero entry
-      // even if localStorage is stale from a previous session.
+      // Only restore a previously persisted queue — do NOT auto-seed from
+      // selectedWizards here. Seeding happens only after the user leaves the
+      // first-time landing (dashboardViewMode === 'returning'), so the New tab
+      // starts empty until the user explicitly clicks Start on a wizard.
       const storedRaw = localStorage.getItem(queueStorageKey)
-      const stored: Record<string, number> = storedRaw ? (JSON.parse(storedRaw) as Record<string, number>) : {}
-      const cachedAccess = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { selectedWizards?: Array<{ title: string; quantity?: number }> } | null
-      if (cachedAccess?.selectedWizards?.length) {
-        const merged = { ...stored }
-        for (const w of cachedAccess.selectedWizards) {
-          if ((merged[w.title] ?? 0) <= 0) {
-            merged[w.title] = w.quantity ?? 1
-          }
-        }
-        localStorage.setItem(queueStorageKey, JSON.stringify(merged))
-        return merged
-      }
-      return stored
+      return storedRaw ? (JSON.parse(storedRaw) as Record<string, number>) : {}
     } catch { return {} }
   })
   // Whether the queue has been seeded from the server-authoritative selectedWizards
@@ -1390,11 +1380,12 @@ export default function Dashboard() {
           return
         }
 
-        // Merge server-authoritative selectedWizards into the queue: any title
-        // that is missing or has been zeroed out (stale data) is restored to its
-        // server quantity. Titles already > 0 are left untouched so the user's
-        // in-progress / remaining counts are preserved.
-        if (!queueSeedRef.current) {
+        // Only seed the queue from server data when the user is already on the
+        // returning (tabbed) dashboard — not on the first-time landing.
+        // On the first-time landing the queue is populated one wizard at a time
+        // as the user clicks Start, so auto-seeding all selectedWizards would
+        // flood the New tab with every blueprint the account has ever saved.
+        if (!queueSeedRef.current && localStorage.getItem('tsl-dashboard-view-mode') === 'returning') {
           queueSeedRef.current = true
           setQueuedCounts((prev) => {
             const next = { ...prev }
@@ -1786,10 +1777,9 @@ export default function Dashboard() {
               </div>
 
               <div className="user-dashboard__landing-wizard-list">
-                {(isInitialSubscriptionDashboard ? availableWizards : newWizards).map((wizard) => {
+                {newWizards.map((wizard) => {
                   const w = wizard as typeof newWizards[0]
-                  const av = wizard as typeof availableWizards[0]
-                  const selectedQty = isInitialSubscriptionDashboard ? av.selectedQuantity : w.wizards
+                  const selectedQty = w.wizards
                   const unitCost = w.unitCost ?? 1
                   const costLabel = `${unitCost} ${unitCost === 1 ? 'Credit' : 'Credits'} each`
                   return (
@@ -1803,7 +1793,6 @@ export default function Dashboard() {
                           <strong>Note:</strong> {wizard.note}
                         </p>
                       </div>
-                      <div className="user-dashboard__landing-wizard-divider" aria-hidden="true" />
                       <div className="user-dashboard__landing-wizard-meta">
                         <span>
                           <FileText size={13} />
@@ -1823,10 +1812,9 @@ export default function Dashboard() {
                         type="button"
                         className="user-dashboard__new-wizard-button"
                         onClick={
-                          isInitialSubscriptionDashboard ||
-                          (wizardAccessConfirmed && wizardAccess?.hasSubscription)
-                            ? () => handleStart(wizard.title)
-                            : () => {
+                            wizardAccessConfirmed && wizardAccess?.hasSubscription
+                              ? () => handleStart(wizard.title)
+                              : () => {
                                 localStorage.setItem('tsl-payment-clicked-wizards', wizard.title)
                                 void openBillingUpgradePlans()
                               }

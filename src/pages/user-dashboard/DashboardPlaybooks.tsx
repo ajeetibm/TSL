@@ -513,7 +513,7 @@ export default function DashboardPlaybooks() {
                       <div className="dashboard-playbooks__related">
                         <h4>
                           <WandSparkles size={14} />
-                          Related Wizards
+                          Related Blueprints
                         </h4>
                         <ul>
                           {wizards.map((wizard) => (

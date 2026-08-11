@@ -141,6 +141,11 @@ export function clearAuthSession() {
   localStorage.removeItem('tsl-auth-token')
   localStorage.removeItem('tsl-auth-user')
   localStorage.removeItem('tsl-dashboard-payment-complete')
+  localStorage.removeItem('tsl-dashboard-view-mode')
+  localStorage.removeItem('tsl-wizard-access-cache')
+  localStorage.removeItem('tsl-dashboard-queue')
+  localStorage.removeItem('tsl-selected-dashboard-wizards')
+  localStorage.removeItem('tsl-dashboard-completed-instances')
   emitAuthSessionChanged()
 }
 
