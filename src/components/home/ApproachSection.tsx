@@ -44,13 +44,13 @@ export function ApproachSection() {
           <span className="inline-flex h-[40px] items-center justify-center rounded-[20px] bg-[#FCF8EE] px-[48px] text-[13px] font-semibold leading-none text-[#3D3D3D]" style={{ border: '1px solid #E8DFC8' }}>
             Our Approach
           </span>
-          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[36px] font-semibold leading-[34px] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[24px] font-semibold leading-[1.2] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             How We Make Legal Simple
           </h2>
         </motion.div>
 
         <motion.div
-          className="mx-auto mt-[86px] grid max-w-[1180px] gap-[82px] md:grid-cols-3"
+          className="mx-auto mt-[60px] grid max-w-[1080px] gap-[56px] md:grid-cols-3"
           initial="hidden"
           whileInView="visible"
           viewport={defaultViewport}
@@ -59,38 +59,38 @@ export function ApproachSection() {
           {approachColumns.map(({ title, subtitle, paragraph, bullets, icon: Icon }) => (
             <motion.article
               key={title}
-              className="mx-auto flex w-full max-w-[310px] flex-col items-center text-center"
+              className="mx-auto flex w-full max-w-[280px] flex-col items-center text-center"
               variants={revealUp}
             >
-              <span className="grid h-[74px] w-[74px] place-items-center rounded-full bg-[#D4A437] text-white shadow-[0_10px_18px_rgba(0,0,0,0.16)]">
-                <Icon size={35} strokeWidth={2.2} />
+              <span className="grid h-[64px] w-[64px] place-items-center rounded-full bg-[#C79A3B] text-white shadow-[0_10px_18px_rgba(0,0,0,0.16)]">
+                <Icon size={28} strokeWidth={2.2} />
               </span>
 
-              <h3 className="mt-[28px] text-[18px] font-bold leading-tight tracking-[0] text-[#102033]">
+              <h3 className="mt-[20px] text-[16px] font-semibold leading-[1.2] tracking-[0] text-[#102033]">
                 {title}
               </h3>
 
-              <p className="mt-[30px] text-[15px] font-bold uppercase leading-none tracking-[0.08em] text-[#4F4F4F]">
+              <p className="mt-[16px] text-[12px] font-semibold uppercase leading-none tracking-[0.1em] text-[#4F4F4F]">
                 {subtitle}
               </p>
 
-              <p className="mt-[48px] font-sans text-[18px] font-normal leading-[26px] text-center tracking-[0] text-[rgba(51,51,51,0.9)]">
+              <p className="mt-[22px] font-sans text-[14px] font-normal leading-[24px] text-center tracking-[0] text-[rgba(51,51,51,0.9)]">
                 {paragraph}
               </p>
 
-              <ul className="mt-[26px] grid gap-[22px] text-center">
+              <ul className="mt-[18px] grid gap-[12px] text-center">
                 {bullets.map((bullet) => (
                   <li
                     key={bullet}
-                    className="flex items-center gap-[20px]"
+                    className="flex items-center gap-[12px]"
                   >
-                    <span className="h-[9px] w-[9px] shrink-0 rounded-full bg-[#D4A437]" />
-                    <span className="font-sans text-[14px] font-normal leading-[23px] text-[rgba(51,51,51,0.8)]">{bullet}</span>
+                    <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#C79A3B]" />
+                    <span className="font-sans text-[12px] font-normal leading-[20px] text-[rgba(51,51,51,0.8)]">{bullet}</span>
                   </li>
                 ))}
               </ul>
 
-              <span className="mt-[54px] h-[3px] w-[112px] rounded-full bg-[#D4A437]" />
+              <span className="mt-[40px] h-[3px] w-[80px] rounded-full bg-[#C79A3B]" />
             </motion.article>
           ))}
         </motion.div>
@@ -98,7 +98,7 @@ export function ApproachSection() {
         <div className="mt-[100px] flex justify-center">
           <a
             href="#contact"
-            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-center gap-[22px] rounded-full bg-[#D4A437] px-8 text-[16px] font-bold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#E0B24E] hover:text-white"
+            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-center gap-[22px] rounded-full bg-[#C79A3B] px-8 text-[16px] font-bold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#b8891f] hover:text-white"
           >
             Book Your Free Consultation
             <span aria-hidden="true">→</span>

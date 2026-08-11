@@ -108,10 +108,7 @@ export function PricingSection() {
                     )}
                   >
                     <span
-                      className={cn(
-                        'text-xs font-bold uppercase tracking-wide text-center',
-                        plan.highlight ? 'text-[#0D1B2A]' : 'text-[rgba(51,51,51,0.7)]',
-                      )}
+                      style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', lineHeight: '16px', textTransform: 'uppercase', textAlign: 'center', color: plan.highlight ? '#0D1B2A' : 'rgba(51,51,51,0.8)' }}
                     >
                       {plan.tagline}
                     </span>
@@ -153,8 +150,8 @@ export function PricingSection() {
                 >
                   {/* Plan Name & Runs */}
                   <div className="flex flex-col items-center gap-1">
-                    <h3 className="text-lg font-bold text-[#0D1B2A] font-display">{plan.name}</h3>
-                    <p className="text-xs font-normal text-[rgba(51,51,51,0.8)]">
+                    <h3 style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 700, fontSize: '18px', lineHeight: '25px', color: '#0D1B2A', textAlign: 'center' }}>{plan.name}</h3>
+                    <p style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 400, fontSize: '12px', lineHeight: '16px', color: '#333333', textAlign: 'center' }}>
                       {plan.features[0]}
                     </p>
                   </div>
@@ -162,20 +159,20 @@ export function PricingSection() {
                   {/* Price — Operator shows pill above price, others below */}
                   <div className="flex flex-col items-center gap-2">
                     {plan.highlight && (
-                      <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full text-xs font-semibold text-[#333333]">
+                      <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full" style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', lineHeight: '16px', textTransform: 'uppercase', color: 'rgba(51,51,51,0.8)', textAlign: 'center' }}>
                         {plan.period}
                       </span>
                     )}
-                    <strong className="text-3xl font-bold text-[#0D1B2A]">{plan.price}</strong>
+                    <strong style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '30px', lineHeight: '36px', color: '#0D1B2A', textAlign: 'center' }}>{plan.price}</strong>
                     {!plan.highlight && (
-                      <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full text-xs font-semibold text-[#333333]">
+                      <span className="inline-flex items-center px-6 py-2 bg-[rgba(199,154,59,0.33)] rounded-full" style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', lineHeight: '16px', textTransform: 'uppercase', color: 'rgba(51,51,51,0.8)', textAlign: 'center' }}>
                         {plan.period}
                       </span>
                     )}
                   </div>
 
                   {/* Description */}
-                  <p className="text-xs font-normal text-center text-[#333333] px-2">
+                  <p style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 400, fontSize: '12px', lineHeight: '16px', color: '#333333', textAlign: 'center' }} className="px-2">
                     {plan.description}
                   </p>
 

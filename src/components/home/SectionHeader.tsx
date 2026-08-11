@@ -33,10 +33,11 @@ export function SectionHeader({ eyebrow, title, description, inverse }: SectionH
       )}
       <h2
         className={cn(
-          'font-display text-[36px] font-bold leading-[1.12] tracking-[0]',
+          'mx-auto max-w-[1190px] font-bold tracking-[0]',
           eyebrow != null ? 'mt-8 md:mt-[30px]' : 'mt-0',
-          inverse ? 'text-white' : 'text-navy-primary',
+          inverse ? 'text-white' : 'text-[#101828]',
         )}
+        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '48px', lineHeight: '48px' }}
       >
         {title}
       </h2>
