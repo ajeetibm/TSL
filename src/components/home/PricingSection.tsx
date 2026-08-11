@@ -83,7 +83,7 @@ export function PricingSection() {
           {/* ── Non-sticky top strip: tagline bar + icon ── */}
           <div className="rounded-t-3xl overflow-hidden border-2 border-b-0 border-[#E5E7EB] bg-white">
             <motion.div
-              className="hidden md:grid md:grid-cols-4"
+              className="hidden md:grid md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr]"
               initial="visible"
               animate="visible"
               variants={staggerContainer}
@@ -103,9 +103,10 @@ export function PricingSection() {
                   {/* Tagline */}
                   <div
                     className={cn(
-                      'w-full flex items-center justify-center',
-                      plan.highlight ? 'bg-gold py-2' : 'pt-3 pb-0',
+                      'flex items-center justify-center',
+                      plan.highlight ? 'bg-gold py-[9px]' : 'pt-3 pb-0 w-full',
                     )}
+                    style={plan.highlight ? { width: 'calc(100% + 48px)', marginLeft: '-24px', marginRight: '-24px' } : {}}
                   >
                     <span
                       style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', lineHeight: '16px', textTransform: 'uppercase', textAlign: 'center', color: plan.highlight ? '#0D1B2A' : 'rgba(51,51,51,0.8)' }}
@@ -131,7 +132,7 @@ export function PricingSection() {
           {/* ── Sticky lid: plan names + price + badge ── */}
           <div className="sticky top-16 lg:top-20 z-20 overflow-hidden border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15),0_2px_4px_-2px_rgba(0,0,0,0.1)]">
             <motion.div
-              className="hidden md:grid md:grid-cols-4"
+              className="hidden md:grid md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr]"
               initial="visible"
               animate="visible"
               variants={staggerContainer}
@@ -205,22 +206,22 @@ export function PricingSection() {
             ].map((section, si) => (
               <div key={section.title} className={si === 0 ? 'border-t-2 border-[#E5E7EB]' : ''}>
                 {/* Section header — spans full label col only, value cols stay empty */}
-                <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-b border-[#E5E7EB]">
-                  <div className="px-6 md:px-8 py-8 flex items-center gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] border-b border-[#E5E7EB]">
+                  <div className="px-6 md:px-8 py-8 flex items-center gap-2 bg-[#F9FAFB] md:border-r border-[#F3F4F6]">
                     <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">
                       {section.title}
                     </h3>
                     <Info size={14} className="text-gold" />
                   </div>
-                  <div className="hidden md:block border-l border-[#E5E7EB]" />
-                  <div className="hidden md:block border-l border-[#E5E7EB] bg-[rgba(199,154,59,0.05)]" />
-                  <div className="hidden md:block border-l border-[#E5E7EB]" />
+                  <div className="hidden md:block bg-[#F9FAFB] md:border-r border-[#F3F4F6]" />
+                  <div className="hidden md:block bg-[rgba(199,154,59,0.05)] md:border-r border-[#F3F4F6]" />
+                  <div className="hidden md:block bg-[#F9FAFB]" />
                 </div>
                 {/* Feature rows */}
                 <div className="divide-y divide-[#F3F4F6]">
                   {section.features.map((feature: any) => (
-                    <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-stretch text-sm bg-white">
-                      <div className="flex items-center px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
+                    <div key={feature.name} className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch text-sm">
+                      <div className="flex items-center px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6] bg-white">
                         <span>
                           {feature.name}
                           {feature.exclusive && (
@@ -230,13 +231,13 @@ export function PricingSection() {
                           )}
                         </span>
                       </div>
-                      <div className="flex md:border-r border-[#F3F4F6]">
+                      <div className="flex md:border-r border-[#F3F4F6] bg-white">
                         <FeatureValue value={feature.launchpad} exclusive={feature.exclusive} />
                       </div>
                       <div className="flex md:border-r border-[#F3F4F6] bg-[rgba(199,154,59,0.05)]">
                         <FeatureValue value={feature.operator} exclusive={feature.exclusive} />
                       </div>
-                      <div className="flex">
+                      <div className="flex bg-white">
                         <FeatureValue value={feature.boardroom} exclusive={feature.exclusive} />
                       </div>
                     </div>
@@ -246,7 +247,7 @@ export function PricingSection() {
             ))}
 
             {/* ── Playbooks & Resources ── */}
-            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
               <div className="px-6 md:px-8 py-8 flex items-center gap-2">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">PLAYBOOKS & RESOURCES</h3>
                 <Info size={14} className="text-gold shrink-0" />
@@ -258,7 +259,7 @@ export function PricingSection() {
 
             <div className="divide-y divide-[#F3F4F6]">
               {/* Playbooks Lite */}
-              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch bg-white text-sm">
                 <div className="flex items-center px-6 md:px-8 py-5 font-medium text-[#4F5F78] md:border-r border-[#F3F4F6]">
                   Playbooks Lite
                 </div>
@@ -279,7 +280,7 @@ export function PricingSection() {
                 </div>
               </div>
               {/* Playbooks Core */}
-              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch bg-white text-sm">
                 <div className="flex items-center px-6 md:px-8 py-5 font-medium text-[#4F5F78] md:border-r border-[#F3F4F6]">
                   Playbooks Core
                 </div>
@@ -300,7 +301,7 @@ export function PricingSection() {
                 </div>
               </div>
               {/* Playbooks Pro */}
-              <div className="grid grid-cols-1 md:grid-cols-4 items-stretch bg-white text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch bg-white text-sm">
                 <div className="flex items-center px-6 md:px-8 py-5 font-medium text-[#4F5F78] md:border-r border-[#F3F4F6]">
                   Playbooks Pro
                 </div>
@@ -324,7 +325,7 @@ export function PricingSection() {
 
             {/* ── Premium Benefits ── */}
             {/* Section header */}
-            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
               <div className="px-6 md:px-8 py-8 flex items-center gap-2">
                 <h3 className="text-sm font-bold uppercase tracking-wide text-[#0D1B2A]">PREMIUM BENEFITS</h3>
                 <Info size={14} className="text-gold shrink-0" />
@@ -366,7 +367,7 @@ export function PricingSection() {
                   boardroom: true,
                 },
               ].map((feature) => (
-                <div key={feature.name} className="grid grid-cols-1 md:grid-cols-4 items-stretch text-sm bg-white">
+                <div key={feature.name} className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch text-sm bg-white">
                   <div className="flex items-center px-6 md:px-8 py-5 font-normal text-[#364153] md:border-r border-[#F3F4F6]">
                     <span>
                       {feature.name}
@@ -397,7 +398,7 @@ export function PricingSection() {
 
             {/* ── Counsel Credits & SLA ── */}
             {/* Dark header row */}
-            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#0D1B2A] border-t-2 border-[#0D1B2A]">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] bg-[#0D1B2A] border-t-2 border-[#0D1B2A]">
               <div className="px-6 md:px-8 py-8 flex items-center gap-2">
                 <span className="text-sm font-bold uppercase tracking-wide text-white">COUNSEL CREDITS & SLA</span>
                 <Info size={14} className="text-gold shrink-0" />
@@ -433,25 +434,25 @@ export function PricingSection() {
               <div
                 key={row.label}
                 className={cn(
-                  'grid grid-cols-1 md:grid-cols-4 items-stretch bg-[#EDE8D8]',
-                  i < arr.length - 1 && 'border-b border-[#D9D0BE]',
+                  'grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] items-stretch bg-[#F4EBD8]',
+                  i < arr.length - 1 && 'border-b border-[#C8B99A]',
                 )}
               >
-                <div className="flex items-center px-6 md:px-8 py-6 text-sm font-normal text-[#364153] md:border-r border-[#D9D0BE]">
+                <div className="flex items-center px-6 md:px-8 py-6 text-sm font-normal text-[#364153] md:border-r border-white">
                   {row.label}
                 </div>
-                <div className="flex items-center justify-center px-4 py-6 md:border-r border-[#D9D0BE]">
-                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                <div className="flex items-center justify-center px-4 py-6 md:border-r border-white">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
                     {row.launchpad}
                   </span>
                 </div>
-                <div className="flex items-center justify-center px-4 py-6 bg-[rgba(199,154,59,0.06)] md:border-r border-[#D9D0BE]">
-                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                <div className="flex items-center justify-center px-4 py-6 bg-[#F2E7D0] md:border-r border-white">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
                     {row.operator}
                   </span>
                 </div>
                 <div className="flex items-center justify-center px-4 py-6">
-                  <span className="inline-flex items-center justify-center rounded-full bg-[rgba(196,168,100,0.28)] px-5 py-2 text-sm font-normal text-[#5C4A1E]">
+                  <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
                     {row.boardroom}
                   </span>
                 </div>
@@ -459,7 +460,7 @@ export function PricingSection() {
             ))}
 
             {/* CTA Footer — also 4-col to match */}
-            <div className="grid grid-cols-1 md:grid-cols-4 bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr] bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
               <div className="hidden md:block" />
               <div className="flex items-center justify-center py-12 md:border-r border-[#E5E7EB]">
                 <button onClick={openSignUp} className="px-8 py-4 bg-[#0D1B2A] text-white text-base font-semibold rounded-3xl shadow-md hover:bg-[#1a2d42] transition">
