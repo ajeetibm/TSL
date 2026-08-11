@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, X, Zap, ArrowUpCircle } from 'lucide-react'
+import { X, Zap, ArrowUpCircle } from 'lucide-react'
 import type { BlueprintTopUpLocationState } from './BlueprintTopUpPayment'
 import './InsufficientBlueprintUnitsModal.css'
 
@@ -48,8 +48,10 @@ export default function InsufficientBlueprintUnitsModal({
 
         {/* Header */}
         <div className="ibum__header">
-          <span className="ibum__header-icon"><AlertTriangle size={18} /></span>
-          <h2 className="ibum__title" id="ibum-title">Insufficient Blueprint Units</h2>
+          <div className="ibum__header-copy">
+            <h2 className="ibum__title" id="ibum-title">Insufficient Blueprint Units</h2>
+            <span className="ibum__subtitle">Purchase units or upgrade your subscription</span>
+          </div>
           <button type="button" className="ibum__close" onClick={onClose} aria-label="Close dialog">
             <X size={18} />
           </button>

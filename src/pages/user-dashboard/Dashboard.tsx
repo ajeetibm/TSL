@@ -1569,7 +1569,7 @@ export default function Dashboard() {
     saveProgress(6, data)
     completeWizard()
     pushCompletedInstance('Non-Disclosure Agreement (NDA)', data, completedAt)
-    if (isPaidDashboard) decrementQueue('Non-Disclosure Agreement (NDA)')
+    decrementQueue('Non-Disclosure Agreement (NDA)')
     showNdaToast('NDA generated successfully. Your document is ready to download.')
   }
 
@@ -1578,7 +1578,7 @@ export default function Dashboard() {
     saveEmpProgress(6, data)
     completeEmp()
     pushCompletedInstance('Employment Offer Letter', data, completedAt)
-    if (isPaidDashboard) decrementQueue('Employment Offer Letter')
+    decrementQueue('Employment Offer Letter')
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
@@ -1587,7 +1587,7 @@ export default function Dashboard() {
     savePPProgress(7, data)
     completePP()
     pushCompletedInstance('Privacy & Cookies Policy', data, completedAt)
-    if (isPaidDashboard) decrementQueue('Privacy & Cookies Policy')
+    decrementQueue('Privacy & Cookies Policy')
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
@@ -1596,7 +1596,7 @@ export default function Dashboard() {
     saveFAProgress(8, data)
     completeFA()
     pushCompletedInstance('Founder Agreement', data, completedAt)
-    if (isPaidDashboard) decrementQueue('Founder Agreement')
+    decrementQueue('Founder Agreement')
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
@@ -1605,7 +1605,7 @@ export default function Dashboard() {
     saveSAProgress(8, data)
     completeSA()
     pushCompletedInstance('Service Agreement', data, completedAt)
-    if (isPaidDashboard) decrementQueue('Service Agreement')
+    decrementQueue('Service Agreement')
     showNdaToast('Service Agreement generated successfully. Your document is ready to download.')
   }
 

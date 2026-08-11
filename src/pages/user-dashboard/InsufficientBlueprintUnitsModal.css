@@ -25,46 +25,57 @@
 /* ── Header ────────────────────────────────────────────────────────────────── */
 .ibum__header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 24px 24px 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 104px;
+  padding: 27px 24px 24px;
+  background: linear-gradient(135deg, #0c2034 0%, #183651 100%);
+  color: #ffffff;
 }
 
 .ibum__header-icon {
-  flex: 0 0 auto;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  background: rgba(207, 155, 47, 0.15);
-  color: #cf9b2f;
+  display: none;
+}
+
+.ibum__header-copy {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .ibum__title {
-  flex: 1;
-  font-size: 17px;
-  font-weight: 700;
-  color: #0b1c2f;
   margin: 0;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.16;
+}
+
+.ibum__subtitle {
+  display: block;
+  margin: 8px 0 0;
+  color: #d4a12f;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
 }
 
 .ibum__close {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
   border: none;
-  background: none;
-  color: #57606a;
-  cursor: pointer;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  cursor: pointer;
   transition: background 0.15s;
 }
 .ibum__close:hover {
-  background: #f0f2f5;
-  color: #0b1c2f;
+  background: rgba(255, 255, 255, 0.20);
 }
 
 /* ── Description ───────────────────────────────────────────────────────────── */
