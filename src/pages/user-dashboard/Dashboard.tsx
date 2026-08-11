@@ -1107,6 +1107,7 @@ export default function Dashboard() {
     actionLoading: billingActionLoading,
     actionError: billingActionError,
     activeModal: billingActiveModal,
+    upgradeResult: billingUpgradeResult,
     openUpgradePlans: openBillingUpgradePlans,
     selectPlan: billingSelectPlan,
     confirmUpgrade: billingConfirmUpgrade,
@@ -2010,6 +2011,13 @@ export default function Dashboard() {
       </header>
 
       <main className="user-dashboard__content">
+        {billingUpgradeResult && (
+          <div className="tsl-upgrade-success-banner" role="status" aria-live="polite">
+            <CheckCircle2 size={16} />
+            You're now on the <strong>{billingUpgradeResult.planName} plan</strong> — effective today, {formatDate(billingUpgradeResult.paidAt)}
+          </div>
+        )}
+
         {ndaToast && (
           <div className="user-dashboard__nda-toast" role="status" aria-live="polite">
             <CheckCircle2 size={18} />

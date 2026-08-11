@@ -2,6 +2,7 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
   BookOpen,
+  CheckCircle2,
   CircleAlert,
   FileText,
   Shield,
@@ -11,6 +12,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react'
+import { formatDate } from '../../services/dashboardTypes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
@@ -410,7 +412,7 @@ export default function DashboardPlaybooks() {
   const {
     plans, plansLoading, plansError,
     selectedPlan, upgradePreview, previewLoading, previewError,
-    actionLoading, actionError, activeModal,
+    actionLoading, actionError, activeModal, upgradeResult,
     openUpgradePlans, selectPlan, confirmUpgrade, cancelUpgradeConfirm, closeModal,
   } = useBillingSubscription(upgradePayFn)
 
@@ -456,6 +458,13 @@ export default function DashboardPlaybooks() {
         </header>
 
         <div className="dashboard-playbooks__content">
+          {upgradeResult && (
+            <div className="tsl-upgrade-success-banner" role="status" aria-live="polite">
+              <CheckCircle2 size={16} />
+              You're now on the <strong>{upgradeResult.planName} plan</strong> — effective today, {formatDate(upgradeResult.paidAt)}
+            </div>
+          )}
+
           <div className="dashboard-playbooks__info-banner">
             <span className="dashboard-playbooks__info-banner-icon" aria-hidden="true">
               <CircleAlert size={18} />

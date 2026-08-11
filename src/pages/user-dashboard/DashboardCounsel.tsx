@@ -1,5 +1,6 @@
 import { BackButton } from '../../components/dashboard/BackButton'
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, FileText, MessageSquare, Scale, Upload, X } from 'lucide-react'
+import { formatDate } from '../../services/dashboardTypes'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -185,7 +186,7 @@ export default function DashboardCounsel() {
   const {
     plans, plansLoading, plansError,
     selectedPlan, upgradePreview, previewLoading, previewError,
-    actionLoading, actionError, activeModal,
+    actionLoading, actionError, activeModal, upgradeResult,
     openUpgradePlans, selectPlan, confirmUpgrade, cancelUpgradeConfirm, closeModal,
   } = useBillingSubscription(upgradePayFn)
   // Non-subscribers land on history tab (form stays hidden until they upgrade)
@@ -413,6 +414,13 @@ export default function DashboardCounsel() {
             <p>Connect with experienced attorneys for expert guidance</p>
           </div>
         </header>
+
+        {upgradeResult && (
+          <div className="tsl-upgrade-success-banner" role="status" aria-live="polite">
+            <CheckCircle2 size={16} />
+            You're now on the <strong>{upgradeResult.planName} plan</strong> — effective today, {formatDate(upgradeResult.paidAt)}
+          </div>
+        )}
 
         {topUpToast && (
           <div className="dashboard-counsel__toast" role="status" aria-live="polite">
