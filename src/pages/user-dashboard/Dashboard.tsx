@@ -188,46 +188,51 @@ const newWizards = [
     id: 1,
     title: 'Non-Disclosure Agreement (NDA)',
     note: 'Need NDAs for investor meetings and contractor agreements',
-    wizards: 3,
+    wizards: 1,
     paidItems: 'Items',
     landingItems: 'Items',
-    landingLabel: 'Wizards',
+    landingLabel: 'Blueprints',
+    unitCost: 1,
   },
   {
     id: 2,
     title: 'Employment Offer Letter',
     note: 'Hiring our first developer next month',
-    wizards: 3,
+    wizards: 1,
     paidItems: 'Item',
     landingItems: 'Items',
-    landingLabel: 'Wizards',
+    landingLabel: 'Blueprints',
+    unitCost: 2,
   },
   {
     id: 3,
     title: 'Privacy & Cookies Policy',
     note: 'Required for our web app launch',
-    wizards: 2,
+    wizards: 1,
     paidItems: 'Item',
     landingItems: 'Items',
-    landingLabel: 'Runs',
+    landingLabel: 'Blueprints',
+    unitCost: 1,
   },
   {
     id: 4,
     title: 'Founder Agreement',
     note: 'Setting up co-founder equity split',
-    wizards: 2,
+    wizards: 1,
     paidItems: 'Item',
     landingItems: 'Items',
-    landingLabel: 'Runs Used',
+    landingLabel: 'Blueprints',
+    unitCost: 1,
   },
   {
     id: 5,
     title: 'Service Agreement',
     note: 'Multiple client contracts needed',
-    wizards: 3,
+    wizards: 1,
     paidItems: 'Item',
     landingItems: 'Items',
-    landingLabel: 'Runs Used',
+    landingLabel: 'Blueprints',
+    unitCost: 1,
   },
 ]
 
@@ -1781,43 +1786,58 @@ export default function Dashboard() {
               </div>
 
               <div className="user-dashboard__landing-wizard-list">
-                {(isInitialSubscriptionDashboard ? availableWizards : newWizards).map((wizard) => (
-                  <article className="user-dashboard__landing-wizard-card" key={wizard.id}>
-                    <div className="user-dashboard__landing-wizard-copy">
-                      <h3>
-                        <Info size={15} />
-                        {wizard.title}
-                      </h3>
-                      <p>
-                        <strong>Note:</strong> {wizard.note}
-                      </p>
-                    </div>
-                    <div className="user-dashboard__landing-wizard-meta">
-                      <span>Wizards</span>
-                      <strong>
-                        {isInitialSubscriptionDashboard
-                          ? `${(wizard as typeof availableWizards[0]).selectedQuantity} Selected`
-                          : `${(wizard as typeof newWizards[0]).wizards} ${(wizard as typeof newWizards[0]).landingItems}`}
-                      </strong>
-                    </div>
-                    <button
-                      type="button"
-                      className="user-dashboard__new-wizard-button"
-                      onClick={
-                        isInitialSubscriptionDashboard ||
-                        (wizardAccessConfirmed && wizardAccess?.hasSubscription)
-                          ? () => handleStart(wizard.title)
-                          : () => {
-                              localStorage.setItem('tsl-payment-clicked-wizards', wizard.title)
-                              void openBillingUpgradePlans()
-                            }
-                      }
-                    >
-                      <Play size={16} />
-                      Start
-                    </button>
-                  </article>
-                ))}
+                {(isInitialSubscriptionDashboard ? availableWizards : newWizards).map((wizard) => {
+                  const w = wizard as typeof newWizards[0]
+                  const av = wizard as typeof availableWizards[0]
+                  const selectedQty = isInitialSubscriptionDashboard ? av.selectedQuantity : w.wizards
+                  const unitCost = w.unitCost ?? 1
+                  const costLabel = `${unitCost} ${unitCost === 1 ? 'Credit' : 'Credits'} each`
+                  return (
+                    <article className="user-dashboard__landing-wizard-card" key={wizard.id}>
+                      <div className="user-dashboard__landing-wizard-copy">
+                        <h3>
+                          <Info size={15} />
+                          {wizard.title}
+                        </h3>
+                        <p>
+                          <strong>Note:</strong> {wizard.note}
+                        </p>
+                      </div>
+                      <div className="user-dashboard__landing-wizard-divider" aria-hidden="true" />
+                      <div className="user-dashboard__landing-wizard-meta">
+                        <span>
+                          <FileText size={13} />
+                          Blueprints
+                        </span>
+                        <strong>{selectedQty} selected</strong>
+                      </div>
+                      <div className="user-dashboard__landing-wizard-divider" aria-hidden="true" />
+                      <div className="user-dashboard__landing-wizard-meta">
+                        <span>
+                          <Zap size={13} style={{ color: '#cf9b2f' }} />
+                          Unit cost
+                        </span>
+                        <strong>{costLabel}</strong>
+                      </div>
+                      <button
+                        type="button"
+                        className="user-dashboard__new-wizard-button"
+                        onClick={
+                          isInitialSubscriptionDashboard ||
+                          (wizardAccessConfirmed && wizardAccess?.hasSubscription)
+                            ? () => handleStart(wizard.title)
+                            : () => {
+                                localStorage.setItem('tsl-payment-clicked-wizards', wizard.title)
+                                void openBillingUpgradePlans()
+                              }
+                        }
+                      >
+                        <Play size={16} />
+                        Start
+                      </button>
+                    </article>
+                  )
+                })}
               </div>
             </section>
 

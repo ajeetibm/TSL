@@ -128,11 +128,17 @@ const wizardDetails: Record<string, { note: string; icon: LucideIcon }> = {
 const blueprintIdByWizardTitle: Record<string, string> = {
   'Loan Agreement': 'moa',
   'Non-Disclosure Agreement (NDA)': 'nda',
+  'Board Resolution': 'board-resolution',
   'Employment Offer Letter': 'employment-offer-letter',
   'Employment Offer letter': 'employment-offer-letter',
+  'Privacy & Cookies Policy': 'privacy-policy',
   'Founder Agreement': 'shareholders-agreement',
   'Privacy Policy': 'privacy-policy',
   'Privacy Policy (POPIA Compliant)': 'privacy-policy',
+  'Memorandum of Agreement (MOA)': 'moa',
+  'Software Development Agreement': 'software-development-agreement',
+  'Employment Contract Pack': 'employment-pack',
+  'Company Registration': 'company-registration',
   'Shareholder Resolutions': 'board-resolution',
   'Service Agreement': 'contractor-agreement',
   'Company Registration Package': 'company-registration',
@@ -140,27 +146,6 @@ const blueprintIdByWizardTitle: Record<string, string> = {
   'Shareholders Agreement': 'shareholders-agreement',
   'Commercial Lease Agreement': 'contractor-agreement',
   'Sale of Goods Agreement': 'contractor-agreement',
-}
-
-// Static credit cost per wizard title — used for recommended-plan calculation
-// so the correct tab is highlighted even before the catalogue API responds.
-const creditCostByWizardTitle: Record<string, number> = {
-  'Non-Disclosure Agreement (NDA)': 1,
-  'Board Resolution': 1,
-  'Employment Offer Letter': 2,
-  'Privacy & Cookies Policy': 2,
-  'Memorandum of Agreement (MOA)': 2,
-  'Software Development Agreement': 3,
-  'Employment Contract Pack': 3,
-  'Company Registration': 4,
-  'Shareholders Agreement': 6,
-  // aliases
-  'Founder Agreement': 6,
-  'Service Agreement': 2,
-  'Privacy Policy': 2,
-  'Privacy Policy (POPIA Compliant)': 2,
-  'Shareholder Resolutions': 1,
-  'Employment Offer letter': 2,
 }
 
 type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
@@ -438,12 +423,9 @@ export default function DashboardWizardDetails() {
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
   const wizardLabel = totalWizards === 1 ? 'Blueprint' : 'Blueprints'
   const totalBlueprintUnits = selectedWizards.reduce((total, wizard) => {
-    // Use static cost map first; fall back to catalogue API weight if available.
-    const staticCost = creditCostByWizardTitle[wizard.title]
-    if (staticCost !== undefined) return total + staticCost * wizard.quantity
     const blueprintId = blueprintIdByWizardTitle[wizard.title]
     const blueprint = catalogue.find((item) => item.blueprintId === blueprintId)
-    return total + (blueprint?.blueprintUnitWeight ?? 1) * wizard.quantity
+    return total + (blueprint?.blueprintUnitWeight ?? 0) * wizard.quantity
   }, 0)
   const recommendedPlan = recommendedPlanForBlueprintUnits(totalBlueprintUnits)
 
@@ -721,85 +703,46 @@ export default function DashboardWizardDetails() {
             </div>
 
             <div className="dashboard-wizard-details__workflow-list">
-              <article className="dashboard-wizard-details__workflow-item">
-                <span className="dashboard-wizard-details__workflow-icon">i</span>
-                <div className="dashboard-wizard-details__workflow-content">
-                  <h3>Non-Disclosure Agreement (NDA)</h3>
-                  <p><strong>Note:</strong> Need NDAs for investor meetings and contractor agreements</p>
-                </div>
-                <div className="dashboard-wizard-details__workflow-meta">
-                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
-                  <strong>3 Items</strong>
-                </div>
-                <button type="button" className="dashboard-wizard-details__workflow-start">
-                  <Play size={18} />
-                  Start
-                </button>
-              </article>
-
-              <article className="dashboard-wizard-details__workflow-item">
-                <span className="dashboard-wizard-details__workflow-icon">i</span>
-                <div className="dashboard-wizard-details__workflow-content">
-                  <h3>Employment Offer letter</h3>
-                  <p><strong>Note:</strong> Hiring our first developer next month</p>
-                </div>
-                <div className="dashboard-wizard-details__workflow-meta">
-                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
-                  <strong>3 Item</strong>
-                </div>
-                <button type="button" className="dashboard-wizard-details__workflow-start">
-                  <Play size={18} />
-                  Start
-                </button>
-              </article>
-
-              <article className="dashboard-wizard-details__workflow-item">
-                <span className="dashboard-wizard-details__workflow-icon">i</span>
-                <div className="dashboard-wizard-details__workflow-content">
-                  <h3>Privacy Policy</h3>
-                  <p><strong>Note:</strong> Required for our web app launch</p>
-                </div>
-                <div className="dashboard-wizard-details__workflow-meta">
-                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
-                  <strong>2 Item</strong>
-                </div>
-                <button type="button" className="dashboard-wizard-details__workflow-start">
-                  <Play size={18} />
-                  Start
-                </button>
-              </article>
-
-              <article className="dashboard-wizard-details__workflow-item">
-                <span className="dashboard-wizard-details__workflow-icon">i</span>
-                <div className="dashboard-wizard-details__workflow-content">
-                  <h3>Founder Agreement</h3>
-                  <p><strong>Note:</strong> Setting up co-founder equity split</p>
-                </div>
-                <div className="dashboard-wizard-details__workflow-meta">
-                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
-                  <strong>2 Item</strong>
-                </div>
-                <button type="button" className="dashboard-wizard-details__workflow-start">
-                  <Play size={18} />
-                  Start
-                </button>
-              </article>
-
-              <article className="dashboard-wizard-details__workflow-item">
-                <span className="dashboard-wizard-details__workflow-icon">i</span>
-                <div className="dashboard-wizard-details__workflow-content">
-                  <h3>Service Agreement</h3>
-                  <p><strong>Note:</strong> Multiple client contracts needed</p>
-                </div>
-                <div className="dashboard-wizard-details__workflow-meta">
-                  <span className="dashboard-wizard-details__workflow-badge">Wizards</span>
-                  <strong>3 Item</strong>
-                </div>
-                <button type="button" className="dashboard-wizard-details__workflow-start">
-                  <Play size={18} />
-                  Start
-                </button>
-              </article>
+              {[
+                { title: 'Non-Disclosure Agreement (NDA)', note: 'Need NDAs for investor meetings and contractor agreements', blueprintId: 'nda' },
+                { title: 'Employment Offer Letter', note: 'Hiring our first developer next month', blueprintId: 'employment-offer-letter' },
+                { title: 'Privacy & Cookies Policy', note: 'Required for our web app launch', blueprintId: 'privacy-policy' },
+                { title: 'Founder Agreement', note: 'Setting up co-founder equity split', blueprintId: 'shareholders-agreement' },
+                { title: 'Service Agreement', note: 'Multiple client contracts needed', blueprintId: 'contractor-agreement' },
+              ].map(({ title, note, blueprintId }) => {
+                const bp = catalogue.find((item) => item.blueprintId === blueprintId)
+                const unitWeight = bp?.blueprintUnitWeight
+                const costLabel = unitWeight === undefined ? '—' : `${unitWeight} ${unitWeight === 1 ? 'Credit' : 'Credits'} each`
+                return (
+                  <article className="dashboard-wizard-details__workflow-item" key={title}>
+                    <span className="dashboard-wizard-details__workflow-icon">i</span>
+                    <div className="dashboard-wizard-details__workflow-content">
+                      <h3>{title}</h3>
+                      <p><strong>Note:</strong> {note}</p>
+                    </div>
+                    <div className="dashboard-wizard-details__workflow-divider" aria-hidden="true" />
+                    <div className="dashboard-wizard-details__workflow-meta">
+                      <span className="dashboard-wizard-details__workflow-badge">
+                        <FileText size={14} />
+                        Blueprints
+                      </span>
+                      <strong>1 selected</strong>
+                    </div>
+                    <div className="dashboard-wizard-details__workflow-divider" aria-hidden="true" />
+                    <div className="dashboard-wizard-details__workflow-meta">
+                      <span className="dashboard-wizard-details__workflow-badge">
+                        <Zap size={14} style={{ color: '#c79a3b' }} />
+                        Unit cost
+                      </span>
+                      <strong>{costLabel}</strong>
+                    </div>
+                    <button type="button" className="dashboard-wizard-details__workflow-start">
+                      <Play size={18} />
+                      Start
+                    </button>
+                  </article>
+                )
+              })}
             </div>
           </section>
         </main>

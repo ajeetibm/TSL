@@ -30,7 +30,6 @@ const wizardCards = [
     title: 'Non-Disclosure Agreement (NDA)',
     description: 'Protect confidential information when sharing with potential partners, investors, or contractors.',
     time: '5-8 minutes',
-    credits: '1 credit',
     audience: 'Startups sharing sensitive information',
     included: ['SA-specific legal drafting', 'E-signature ready', 'Plain-language preview'],
     icon: Shield,
@@ -40,7 +39,6 @@ const wizardCards = [
     title: 'Board Resolution',
     description: 'Document board decisions and authorise company actions with a legally valid resolution.',
     time: '5-8 minutes',
-    credits: '1 credit',
     audience: 'Registered companies (Pty Ltd)',
     included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
     icon: Briefcase,
@@ -49,7 +47,6 @@ const wizardCards = [
     title: 'Employment Offer Letter',
     description: 'Create legally compliant employment offers that meet South African labour requirements.',
     time: '10-12 minutes',
-    credits: '2 credits',
     audience: 'Companies hiring new employees',
     included: ['BCEA compliance checks', 'Clause options & risk indicators', 'Built-in negotiation'],
     icon: UsersRound,
@@ -59,7 +56,6 @@ const wizardCards = [
     title: 'Privacy & Cookies Policy',
     description: 'Generate a POPIA-compliant privacy and cookies policy for your website, app, or data collection process.',
     time: '8-10 minutes',
-    credits: '2 credits',
     audience: 'Businesses collecting personal data',
     included: ['100% POPIA compliant', 'Cookie consent clauses', 'Website ready'],
     icon: Shield,
@@ -69,7 +65,6 @@ const wizardCards = [
     title: 'Memorandum of Agreement (MOA)',
     description: 'Formalise an understanding between two or more parties before a binding contract is signed.',
     time: '10-14 minutes',
-    credits: '2 credits',
     audience: 'Businesses entering partnerships or collaborations',
     included: ['SA-specific drafting', 'Scope & obligations', 'Dispute resolution'],
     icon: FileText,
@@ -78,7 +73,6 @@ const wizardCards = [
     title: 'Software Development Agreement',
     description: 'Comprehensive agreement covering scope, deliverables, IP ownership, and payment terms for software projects.',
     time: '15-20 minutes',
-    credits: '3 credits',
     audience: 'Software developers and their clients',
     included: ['IP & ownership clauses', 'Milestone & payment terms', 'Warranty & liability'],
     icon: Code2,
@@ -88,7 +82,6 @@ const wizardCards = [
     title: 'Employment Contract Pack',
     description: 'A full employment contract pack covering terms, conditions, and statutory requirements for new hires.',
     time: '15-20 minutes',
-    credits: '3 credits',
     audience: 'Companies formalising employment relationships',
     included: ['BCEA compliance', 'Leave & benefits', 'Termination clauses'],
     icon: UsersRound,
@@ -97,7 +90,6 @@ const wizardCards = [
     title: 'Company Registration',
     description: 'Complete CIPC company registration with all required documents and compliance checks.',
     time: '20-25 minutes',
-    credits: '4 credits',
     audience: 'First-time business owners',
     included: ['MOI templates', 'Share register', 'Director appointments'],
     icon: Building2,
@@ -106,12 +98,25 @@ const wizardCards = [
     title: 'Shareholders Agreement',
     description: 'Comprehensive agreement covering rights, obligations, and dispute resolution for shareholders.',
     time: '18-22 minutes',
-    credits: '6 credits',
     audience: 'Companies with multiple shareholders',
     included: ['Exit clauses', 'Voting rights', 'Dividend policies'],
     icon: UsersRound,
   },
 ]
+
+// UI labels are mapped to stable Document Catalogue identifiers. Unit weights
+// themselves are never stored in the UI; they are returned by the catalogue API.
+const blueprintIdByTitle: Record<string, string> = {
+  'Non-Disclosure Agreement (NDA)': 'nda',
+  'Board Resolution': 'board-resolution',
+  'Employment Offer Letter': 'employment-offer-letter',
+  'Privacy & Cookies Policy': 'privacy-policy',
+  'Memorandum of Agreement (MOA)': 'moa',
+  'Software Development Agreement': 'software-development-agreement',
+  'Employment Contract Pack': 'employment-pack',
+  'Company Registration': 'company-registration',
+  'Shareholders Agreement': 'shareholders-agreement',
+}
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
@@ -174,8 +179,8 @@ export default function DashboardWizards() {
       remainingBlueprintUnits !== null &&
       remainingBlueprintUnits <= 0
     ) {
-      const blueprint = catalogue.find((item) => item.name.toLowerCase() === title.toLowerCase())
-      setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 1 })
+      const blueprint = catalogue.find((item) => item.blueprintId === blueprintIdByTitle[title])
+      setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 0 })
       return
     }
     updateQuantity(title, nextQuantity)
@@ -223,9 +228,14 @@ export default function DashboardWizards() {
         </header>
 
         <section className="dashboard-wizards__grid" aria-label="Available legal wizards">
-          {wizardCards.map(({ title, description, time, credits, audience, included, icon: Icon, popular }) => {
+          {wizardCards.map(({ title, description, time, audience, included, icon: Icon, popular }) => {
             const quantity = quantities[title] ?? 0
             const isSelected = quantity > 0
+            const blueprint = catalogue.find((item) => item.blueprintId === blueprintIdByTitle[title])
+            const unitWeight = blueprint?.blueprintUnitWeight
+            const costLabel = unitWeight === undefined
+              ? 'Loading…'
+              : `${unitWeight} ${unitWeight === 1 ? 'Credit' : 'Credits'}`
 
             return (
               <article
@@ -267,7 +277,7 @@ export default function DashboardWizards() {
                       <Zap size={14} style={{ color: '#cf9b2f' }} />
                       Cost:
                     </dt>
-                    <dd>{credits}</dd>
+                    <dd>{costLabel}</dd>
                   </div>
                   <div>
                     <dt>
