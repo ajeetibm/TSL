@@ -25,29 +25,37 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mx-auto inline-flex items-center gap-4 rounded-full px-7"
+          className="mx-auto inline-flex items-center gap-6 rounded-full px-8"
           style={{
-            width: '425.56px',
             height: '88px',
-            background: 'rgba(54, 65, 83, 0.6)',
-            boxShadow: '0px 20px 25px -5px rgba(0,0,0,0.1), 0px 8px 10px -6px rgba(0,0,0,0.1)',
+            background: 'rgba(30, 41, 57, 0.85)',
+            boxShadow: '0px 20px 25px -5px rgba(0,0,0,0.2), 0px 8px 10px -6px rgba(0,0,0,0.15)',
             borderRadius: '9999px',
           }}
         >
           <div className="flex items-center">
-            <span className="relative z-10 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
-              <Scale size={20} />
+            <span className="relative z-10 grid h-12 w-12 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
+              <Scale size={22} />
             </span>
-            <span className="relative -ml-4 z-20 grid h-10 w-10 place-items-center rounded-full bg-[#1E2939] text-white ring-2 ring-white">
-              <Shield size={20} />
+            <span className="relative -ml-4 z-20 grid h-12 w-12 place-items-center rounded-full bg-[#2d3748] text-white ring-2 ring-white">
+              <Shield size={22} />
             </span>
-            <span className="relative -ml-4 z-30 grid h-10 w-10 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
-              <CircleCheck size={20} />
+            <span className="relative -ml-4 z-30 grid h-12 w-12 place-items-center rounded-full bg-gold text-white ring-2 ring-white">
+              <CircleCheck size={22} />
             </span>
           </div>
-          <span className="text-left text-xs sm:text-sm">
-            <strong className="block text-white">300+ SA SMEs Empowered</strong>
-            <span className="text-white/65">Your legal partner, not just your lawyer</span>
+          <span
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '217.56px',
+              height: '36px',
+              justifyContent: 'center',
+            }}
+          >
+            <strong style={{ fontSize: '14px', fontWeight: 700, color: '#ffffff', lineHeight: '18px', whiteSpace: 'nowrap' }}>300+ SA SMEs Empowered</strong>
+            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', lineHeight: '18px', whiteSpace: 'nowrap' }}>Your legal partner, not just your lawyer</span>
           </span>
         </motion.div>
 

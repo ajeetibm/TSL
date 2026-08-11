@@ -71,7 +71,7 @@ export function AboutSection() {
               variants={revealUp}
               className="flex flex-col items-center text-center"
             >
-              <span className="grid h-[60px] w-[60px] place-items-center rounded-full bg-[#D4A437] text-white shadow-[0_12px_18px_rgba(0,0,0,0.18)]">
+              <span className="grid h-[60px] w-[60px] place-items-center rounded-full bg-[#C79A3B] text-white shadow-[0_12px_18px_rgba(0,0,0,0.18)]">
                 <Icon size={31} strokeWidth={2.2} />
               </span>
               <h3 className="mt-[40px] font-display text-[18px] font-bold leading-[25px] tracking-[0] text-center text-[#333333]">
@@ -84,7 +84,7 @@ export function AboutSection() {
           ))}
         </motion.div>
 
-        <div className="mx-auto mt-[80px] h-[8px] w-[112px] rounded-full bg-[#D4A437]" />
+        <div className="mx-auto mt-[80px] h-[8px] w-[96px] rounded-full bg-[#C79A3B]" />
       </Container>
     </section>
   )
