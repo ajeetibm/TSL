@@ -1191,6 +1191,10 @@ export default function Dashboard() {
   })
   // Whether the queue has been seeded from the server-authoritative selectedWizards
   const queueSeedRef = useRef(false)
+  // Tracks whether the initial billingSubscription load has been observed so
+  // the billing upgrade effect only fires on genuine in-place plan changes,
+  // not on the initial mount hydration from the server.
+  const billingPlanSeenRef = useRef<string | null>(null)
 
   const persistQueue = (next: Record<string, number>) => {
     localStorage.setItem(queueStorageKey, JSON.stringify(next))
@@ -1254,10 +1258,19 @@ export default function Dashboard() {
     // modal. The transition to the tabbed dashboard happens only when the
     // user closes or completes the modal (see onClose / onComplete handlers).
 
-    // Queue is NOT touched here — the landing-page Start just opens the modal.
-    // The queue is seeded from selectedWizards on load (so the wizard already
-    // appears in New at its full count). Decrementing happens only when the
-    // user clicks Start from the New tab of the tabbed dashboard.
+    // Ensure the New tab has an entry for this wizard when we transition to the
+    // paid tabbed dashboard after the modal closes. This guards against the case
+    // where the queue has not yet been seeded from the API (e.g. the user starts
+    // a wizard from the initial subscription view before the wizardAccess response
+    // arrives). Without this, the New tab would be empty after the transition.
+    if ((queuedCounts[title] ?? 0) <= 0) {
+      setQueuedCounts((prev) => {
+        const next = { ...prev, [title]: 1 }
+        localStorage.setItem(queueStorageKey, JSON.stringify(next))
+        return next
+      })
+    }
+
     if (title === 'Non-Disclosure Agreement (NDA)') {
       if (ndaState.status === 'completed') resetNda()
       startWizard(); setIsNdaModalOpen(true)
@@ -1418,9 +1431,10 @@ export default function Dashboard() {
     return () => { cancelled = true }
   }, [])
 
-  // Clean up the old legacy key so it never interferes again
+  // Clean up legacy keys on mount so stale data never triggers side-effects.
   useEffect(() => {
     localStorage.removeItem('tsl-dashboard-payment-complete')
+    localStorage.removeItem('tsl-payment-clicked-wizards')
   }, [])
 
   // ── Fetch live subscription + plan data ───────────────────────────────────
@@ -1462,38 +1476,44 @@ export default function Dashboard() {
     const isPaidPlan = billingSubscription.planId.toLowerCase() !== 'free'
     if (isPaidPlan) {
       setWizardAccessConfirmed(true)
-      const clicked = localStorage.getItem('tsl-payment-clicked-wizards')
-      // Detect whether payment came from the dashboard landing-page Start button
-      // (view-mode was NOT yet 'returning') or from an external path like Settings.
-      const fromDashboardStart = clicked !== null &&
-        localStorage.getItem('tsl-dashboard-view-mode') !== 'returning'
       setWizardAccess((prev) => {
         const base = prev ?? { hasSubscription: false, plan: '', wizardLimit: 0, selectedWizards: [], remainingWizards: 0 }
-        const alreadySelected = base.selectedWizards.some((w) => w.title === clicked)
-        const updatedWizards = clicked && !alreadySelected
-          ? [...base.selectedWizards, { title: clicked, quantity: 1 }]
-          : base.selectedWizards
-        return { ...base, hasSubscription: true, plan: billingSubscription.planId, selectedWizards: updatedWizards }
+        return { ...base, hasSubscription: true, plan: billingSubscription.planId }
       })
-      if (clicked) {
-        setQueuedCounts((prev) => {
-          if ((prev[clicked] ?? 0) > 0) return prev
-          const next = { ...prev, [clicked]: 1 }
-          localStorage.setItem(queueStorageKey, JSON.stringify(next))
-          return next
-        })
-        localStorage.removeItem('tsl-payment-clicked-wizards')
-        // Open the modal only when the Start button on the landing page triggered payment.
-        if (fromDashboardStart) handleStart(clicked)
-      }
-      // Only flip to 'returning' (tabbed dashboard) when paying from the landing-page
-      // Start button. Paying from Settings should land on the landing view so the
-      // user sees the wizard list and can choose what to start.
-      if (fromDashboardStart) {
-        setDashboardViewMode('returning')
-        localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+
+      // Only process the modal/view-flip logic when this is a genuine in-place
+      // upgrade (plan changed while the component was already mounted), not the
+      // initial hydration load on a fresh mount after navigating from Settings.
+      const isInPlaceUpgrade = billingPlanSeenRef.current !== null &&
+        billingPlanSeenRef.current !== billingSubscription.planId
+      if (isInPlaceUpgrade) {
+        const clicked = localStorage.getItem('tsl-payment-clicked-wizards')
+        const fromDashboardStart = clicked !== null &&
+          localStorage.getItem('tsl-dashboard-view-mode') !== 'returning'
+        if (clicked) {
+          setQueuedCounts((prev) => {
+            if ((prev[clicked] ?? 0) > 0) return prev
+            const next = { ...prev, [clicked]: 1 }
+            localStorage.setItem(queueStorageKey, JSON.stringify(next))
+            return next
+          })
+          localStorage.removeItem('tsl-payment-clicked-wizards')
+          if (fromDashboardStart) handleStart(clicked)
+        }
+        if (fromDashboardStart) {
+          setDashboardViewMode('returning')
+          localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+        } else {
+          // Upgrade happened from Dashboard without a specific wizard Start click
+          // (e.g. user clicked Upgrade Plan from the plan card). Reset the view-mode
+          // flag so any 'initial' written by confirmUpgrade doesn't persist across
+          // future Dashboard mounts for an already-subscribed user.
+          localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+        }
       }
     }
+    // Record the current planId so the next change can be detected as in-place.
+    billingPlanSeenRef.current = billingSubscription.planId
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingSubscription?.planId])
 

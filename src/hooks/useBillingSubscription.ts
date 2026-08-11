@@ -263,6 +263,14 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
       )
     } catch { /* ignore */ }
 
+    // ── Step 6: flag that the next Dashboard visit should show the initial
+    // subscription view (wizard list with Start buttons), not the returning
+    // tabbed dashboard. Only applies to first-time purchases (free → paid).
+    // Paid → paid upgrades keep the existing view mode untouched.
+    if (currentPlanId.toLowerCase() === 'free') {
+      localStorage.setItem('tsl-dashboard-view-mode', 'initial')
+    }
+
     setActiveModal('none')
     setSelectedPlan(null)
     setUpgradePreview(null)

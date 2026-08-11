@@ -436,7 +436,7 @@ export default function DashboardWizardDetails() {
     }))
 
   const totalWizards = selectedWizards.reduce((total, wizard) => total + wizard.quantity, 0)
-  const wizardLabel = totalWizards === 1 ? 'wizard' : 'wizards'
+  const wizardLabel = totalWizards === 1 ? 'Blueprint' : 'Blueprints'
   const totalBlueprintUnits = selectedWizards.reduce((total, wizard) => {
     // Use static cost map first; fall back to catalogue API weight if available.
     const staticCost = creditCostByWizardTitle[wizard.title]
@@ -887,8 +887,18 @@ export default function DashboardWizardDetails() {
       <main className="dashboard-wizard-details">
         <section className="dashboard-wizard-details__page-head">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <h1>Browse All Wizards</h1>
-          <p>Select a legal wizard to generate your document</p>
+          <div className="dashboard-wizard-details__page-head-copy">
+            <h1>Browse All Blueprints</h1>
+            <p>Select a legal blueprint to generate your document</p>
+          </div>
+          {wizardAccess?.hasSubscription && remainingBlueprintUnits !== null && (
+            <div className="dashboard-wizards__credits-badge">
+              <Zap size={18} style={{ color: '#cf9b2f' }} />
+              <span>
+                <strong>{remainingBlueprintUnits}</strong> Credits Remaining
+              </span>
+            </div>
+          )}
         </section>
 
         <div className="dashboard-wizard-details__backbar">
@@ -938,7 +948,7 @@ export default function DashboardWizardDetails() {
               </div>
               <span className="dashboard-wizard-details__count">
                 <ShoppingCart size={16} />
-                {totalWizards}{wizardLabel}
+                {totalWizards} {wizardLabel}
               </span>
             </div>
 
@@ -986,7 +996,7 @@ export default function DashboardWizardDetails() {
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__pricing">
             <div className="dashboard-wizard-details__section-heading dashboard-wizard-details__pricing-heading">
               <div>
-                <h2>Pricing for This Wizard</h2>
+                <h2>Pricing for This Blueprint</h2>
               </div>
               <div className="dashboard-wizard-details__tabs" aria-label="Pricing plans">
                 {(['Launchpad', 'Operator', 'Boardroom'] as PlanKey[]).map((plan) => {
