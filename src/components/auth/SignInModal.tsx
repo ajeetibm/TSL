@@ -45,7 +45,7 @@ function validateFullName(v: string): string {
   return ''
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 
 function validateEmail(v: string): string {
   const trimmed = v.trim()
