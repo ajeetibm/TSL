@@ -1,4 +1,5 @@
-import { ArrowLeft, CheckCircle2, CreditCard, Minus, Plus, Zap } from 'lucide-react'
+import { ArrowLeft, Briefcase, Building2, CheckCircle2, Code2, CreditCard, FileText, Minus, Plus, Shield, UsersRound, Zap } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -7,7 +8,7 @@ import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
-import './CounselTopUpPayment.css'
+import './BlueprintTopUpPayment.css'
 
 const PRICE_PER_UNIT = 250
 const VAT_RATE = 0.15
@@ -31,6 +32,16 @@ export type BlueprintTopUpLocationState = {
   units: number
   blueprintName: string
   pricePerUnit?: number
+  iconName?: string
+}
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Shield,
+  Briefcase,
+  UsersRound,
+  FileText,
+  Code2,
+  Building2,
 }
 
 export default function BlueprintTopUpPayment() {
@@ -149,35 +160,40 @@ export default function BlueprintTopUpPayment() {
 
   return (
     <DashboardShell activeSection="Blueprints">
-      <main className="counsel-topup-payment">
-        <header className="counsel-topup-payment__header">
-          <span className="counsel-topup-payment__header-marker" aria-hidden="true">
-            <Zap size={18} />
-          </span>
-          <div>
-            <h1>Purchase Blueprint Credits</h1>
-            <p>Top up your Blueprint Units to continue</p>
-          </div>
-        </header>
+      <main className="btu-page">
 
-        <div className="counsel-topup-payment__content">
-          <button
-            type="button"
-            className="counsel-topup-payment__back"
-            onClick={() => navigate('/dashboard')}
-          >
-            <ArrowLeft size={16} />
-            Back to Dashboard
-          </button>
+        {/* Back button — outside the card */}
+        <button
+          type="button"
+          className="btu-back"
+          onClick={() => navigate('/dashboard')}
+        >
+          <ArrowLeft size={16} />
+          Back to Dashboard
+        </button>
 
-          <div className="counsel-topup-payment__layout">
+        {/* ── Outer single card ── */}
+        <div className="btu-card">
 
-            {/* ── Blueprint info card ── */}
-            <section className="counsel-topup-payment__plan-card">
-              <h2>Blueprint Details</h2>
-              <div className="counsel-topup-payment__plan-name">{blueprintName}</div>
+          {/* ── Top section: two columns ── */}
+          <div className="btu-body">
 
-              <ul className="counsel-topup-payment__plan-details">
+            {/* ── Left: Blueprint Details ── */}
+            <section className="btu-col btu-col--left">
+              <div className="btu-section-header">
+                <span className="btu-icon-badge">
+                  <FileText size={18} strokeWidth={1.8} />
+                </span>
+                <h2>Blueprint Details</h2>
+              </div>
+
+              {/* Plan name pill with dynamic icon matching the blueprint card */}
+              <div className="btu-plan-pill">
+                {(() => { const Icon = ICON_MAP[state?.iconName ?? ''] ?? Shield; return <Icon size={16} strokeWidth={2} /> })()}
+                <span>{blueprintName}</span>
+              </div>
+
+              <ul className="btu-detail-rows">
                 <li>
                   <span>Minimum units required</span>
                   <strong>{minimumUnits}</strong>
@@ -193,29 +209,34 @@ export default function BlueprintTopUpPayment() {
               </ul>
             </section>
 
-            {/* ── Payment summary card ── */}
-            <section className="counsel-topup-payment__summary-card">
-              <div className="counsel-topup-payment__summary-header">
-                <CreditCard size={22} />
+            {/* ── Vertical divider ── */}
+            <div className="btu-divider" aria-hidden="true" />
+
+            {/* ── Right: Payment Summary ── */}
+            <section className="btu-col btu-col--right">
+              <div className="btu-section-header">
+                <span className="btu-icon-badge">
+                  <CreditCard size={18} strokeWidth={1.8} />
+                </span>
                 <h2>Payment Summary</h2>
               </div>
 
               {/* Quantity selector */}
-              <div className="counsel-topup-payment__qty-row">
-                <span className="counsel-topup-payment__qty-label">Blueprint Credits to purchase</span>
-                <div className="counsel-topup-payment__qty-controls">
+              <div className="btu-qty-row">
+                <span className="btu-qty-label">Blueprint Credits to purchase</span>
+                <div className="btu-qty-controls">
                   <button
                     type="button"
-                    className="counsel-topup-payment__qty-btn"
+                    className="btu-qty-btn"
                     aria-label="Remove one unit"
                     disabled={qty <= minimumUnits || isPaying}
                     onClick={() => setQty((q) => clamp(q - 1))}
                   >
-                    <Minus size={15} />
+                    <Minus size={14} />
                   </button>
                   <input
                     type="number"
-                    className="counsel-topup-payment__qty-input"
+                    className="btu-qty-input"
                     min={minimumUnits}
                     max={MAX_UNITS}
                     value={qty}
@@ -226,18 +247,18 @@ export default function BlueprintTopUpPayment() {
                   />
                   <button
                     type="button"
-                    className="counsel-topup-payment__qty-btn"
+                    className="btu-qty-btn"
                     aria-label="Add one unit"
                     disabled={qty >= MAX_UNITS || isPaying}
                     onClick={() => setQty((q) => clamp(q + 1))}
                   >
-                    <Plus size={15} />
+                    <Plus size={14} />
                   </button>
                 </div>
               </div>
 
               {/* Order breakdown */}
-              <ul className="counsel-topup-payment__summary-rows">
+              <ul className="btu-summary-rows">
                 <li>
                   <span>Blueprint Credits ({qty} × {fmtZAR(pricePerUnit)})</span>
                   <span>{fmtZAR(subtotal)}</span>
@@ -248,31 +269,32 @@ export default function BlueprintTopUpPayment() {
                 </li>
               </ul>
 
-              <div className="counsel-topup-payment__total">
+              <div className="btu-total">
                 <span>Total</span>
                 <strong>{fmtZAR(total)}</strong>
               </div>
-
-              {error && (
-                <p className="counsel-topup-payment__error" role="alert">{error}</p>
-              )}
-
-              <button
-                type="button"
-                className="counsel-topup-payment__cta"
-                onClick={handleProceedToPay}
-                disabled={isPaying}
-              >
-                <CheckCircle2 size={18} />
-                {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
-              </button>
-
-              <p className="counsel-topup-payment__secure-note">
-                Secured via Paystack · ZAR · VAT incl.
-              </p>
             </section>
-
           </div>
+
+          {/* ── Footer: CTA — full width, beige bg ── */}
+          <div className="btu-footer">
+            {error && (
+              <p className="btu-error" role="alert">{error}</p>
+            )}
+            <button
+              type="button"
+              className="btu-cta"
+              onClick={handleProceedToPay}
+              disabled={isPaying}
+            >
+              <CheckCircle2 size={18} />
+              {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
+            </button>
+            <p className="btu-secure-note">
+              Secured via Paystack · ZAR · VAT incl.
+            </p>
+          </div>
+
         </div>
       </main>
     </DashboardShell>

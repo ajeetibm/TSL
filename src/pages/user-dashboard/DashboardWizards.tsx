@@ -133,7 +133,7 @@ export default function DashboardWizards() {
 
   const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
   const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
-  const [insufficientUnits, setInsufficientUnits] = useState<{ title: string; required: number } | null>(null)
+  const [insufficientUnits, setInsufficientUnits] = useState<{ title: string; required: number; iconName: string } | null>(null)
   const [isUpgradeJourney, setIsUpgradeJourney] = useState(false)
   useEffect(() => {
     paymentApi.wizardAccess().then((res) => {
@@ -180,7 +180,8 @@ export default function DashboardWizards() {
       remainingBlueprintUnits <= 0
     ) {
       const blueprint = catalogue.find((item) => item.blueprintId === blueprintIdByTitle[title])
-      setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 0 })
+      const iconName = wizardCards.find((w) => w.title === title)?.icon.displayName ?? wizardCards.find((w) => w.title === title)?.icon.name ?? 'Shield'
+      setInsufficientUnits({ title, required: blueprint?.blueprintUnitWeight ?? 0, iconName })
       return
     }
     updateQuantity(title, nextQuantity)
@@ -381,6 +382,7 @@ export default function DashboardWizards() {
             remaining={0}
             required={insufficientUnits.required}
             pricePerUnit={250}
+            iconName={insufficientUnits.iconName}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => {
               const title = insufficientUnits.title

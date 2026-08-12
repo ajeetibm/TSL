@@ -80,7 +80,7 @@ export function AppRoutes() {
             <Route path="dashboard/playbooks" element={<DashboardPlaybooks />} />
             <Route path="dashboard/profile" element={<DashboardProfile />} />
             <Route path="dashboard/settings" element={<DashboardSettings />} />
-            <Route path="dashboard/wizards" element={<DashboardWizards />} />
+            <Route path="dashboard/blueprints" element={<DashboardWizards />} />
             <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
             <Route path="admin/dashboard" element={<AdminDashboard />} />
             <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />

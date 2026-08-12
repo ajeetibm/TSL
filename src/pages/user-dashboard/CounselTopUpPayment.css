@@ -82,21 +82,19 @@
 
 /* ── Plan card ─────────────────────────────────────────────────────── */
 .counsel-topup-payment__plan-card {
-  border: 1px solid #dedede;
+  border: 2px solid #d3a038;
   border-radius: 28px;
   padding: 32px;
   background: #ffffff;
-  box-shadow: 0 1px 4px rgba(7, 25, 43, 0.08);
+  box-shadow: 0 4px 16px rgba(207, 155, 47, 0.12);
 }
 
 .counsel-topup-payment__plan-card h2 {
   margin: 0 0 18px;
-  color: #6d6d6d;
+  color: #0b1c2f;
   font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .counsel-topup-payment__plan-name {

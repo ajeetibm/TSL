@@ -52,6 +52,18 @@ import './Dashboard.css'
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
+const BLUEPRINT_ICON_NAME: Record<string, string> = {
+  'Non-Disclosure Agreement (NDA)': 'Shield',
+  'Board Resolution': 'Briefcase',
+  'Employment Offer Letter': 'UsersRound',
+  'Privacy & Cookies Policy': 'Shield',
+  'Memorandum of Agreement (MOA)': 'FileText',
+  'Software Development Agreement': 'Code2',
+  'Employment Contract Pack': 'UsersRound',
+  'Company Registration': 'Building2',
+  'Shareholders Agreement': 'UsersRound',
+}
+
 // ── Completed-instance record ────────────────────────────────────────────────
 // Each time a blueprint run is completed we push one entry here rather than
 // relying on the single-slot hook state. This lets the Completed tab accumulate
@@ -1165,7 +1177,7 @@ export default function Dashboard() {
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
-  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number } | null>(null)
+  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number; iconName?: string } | null>(null)
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Queue state ──────────────────────────────────────────────────────────
@@ -1532,11 +1544,13 @@ export default function Dashboard() {
     if (!response.success || !response.data) {
       const shortage = response.data as { remainingBlueprintUnits?: number; requiredBlueprintUnits?: number; blueprint?: { name: string }; blueprintRunTopUpRate?: number } | undefined
       if (shortage?.remainingBlueprintUnits !== undefined && shortage.requiredBlueprintUnits !== undefined) {
+        const bpName = shortage.blueprint?.name ?? 'Blueprint'
         setInsufficientUnits({
           remaining: shortage.remainingBlueprintUnits,
           required: shortage.requiredBlueprintUnits,
-          blueprintName: shortage.blueprint?.name ?? 'Blueprint',
+          blueprintName: bpName,
           pricePerUnit: shortage.blueprintRunTopUpRate ?? 250,
+          iconName: BLUEPRINT_ICON_NAME[bpName] ?? 'Shield',
         })
       } else showNdaToast(response.message || 'Unable to generate the final document.')
       return
@@ -1607,7 +1621,7 @@ export default function Dashboard() {
   }
 
   const browseWizards = () => {
-    navigate('/dashboard/wizards')
+    navigate('/dashboard/blueprints')
   }
 
   const openReturningDashboard = () => {
@@ -2486,6 +2500,7 @@ export default function Dashboard() {
           required={insufficientUnits.required}
           blueprintName={insufficientUnits.blueprintName}
           pricePerUnit={insufficientUnits.pricePerUnit}
+          iconName={insufficientUnits.iconName}
           onClose={() => setInsufficientUnits(null)}
           onUpgrade={() => { setInsufficientUnits(null); void openBillingUpgradePlans() }}
         />

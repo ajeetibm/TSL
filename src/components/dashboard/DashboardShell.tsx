@@ -24,7 +24,7 @@ interface DashboardShellProps {
 
 const sidebarItems = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Blueprints', icon: WandSparkles, path: '/dashboard/wizards' },
+  { label: 'Blueprints', icon: WandSparkles, path: '/dashboard/blueprints' },
   { label: 'Counsel', icon: Scale, path: '/dashboard/counsel' },
   { label: 'Playbooks', icon: BookOpen, path: '/dashboard/playbooks' },
   { label: 'Notifications', icon: Bell, path: '/dashboard/notifications' },

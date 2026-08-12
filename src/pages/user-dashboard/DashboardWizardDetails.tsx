@@ -364,7 +364,7 @@ export default function DashboardWizardDetails() {
   const [isWizardAccessLoading, setIsWizardAccessLoading] = useState(true)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | ''>('')
   const [paymentMessage, setPaymentMessage] = useState<PaymentMessage | null>(null)
-  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string } | null>(null)
+  const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; iconName?: string } | null>(null)
   const [wizardAccessWarning, setWizardAccessWarning] = useState<string | null>(null)
   const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
   const [isInitializingPayment, setIsInitializingPayment] = useState(false)
@@ -481,10 +481,23 @@ export default function DashboardWizardDetails() {
       ? response.data.usage.runsRemaining
       : remainingBlueprintUnits
     if (remaining !== null && remaining <= 0) {
+      const bpName = selectedWizards.length === 1 ? selectedWizards[0].title : 'Selected Blueprints'
+      const ICON_MAP: Record<string, string> = {
+        'Non-Disclosure Agreement (NDA)': 'Shield',
+        'Board Resolution': 'Briefcase',
+        'Employment Offer Letter': 'UsersRound',
+        'Privacy & Cookies Policy': 'Shield',
+        'Memorandum of Agreement (MOA)': 'FileText',
+        'Software Development Agreement': 'Code2',
+        'Employment Contract Pack': 'UsersRound',
+        'Company Registration': 'Building2',
+        'Shareholders Agreement': 'UsersRound',
+      }
       setInsufficientUnits({
         remaining,
         required: totalBlueprintUnits || 1,
-        blueprintName: selectedWizards.length === 1 ? selectedWizards[0].title : 'Selected Blueprints',
+        blueprintName: bpName,
+        iconName: ICON_MAP[bpName] ?? 'Shield',
       })
       return false
     }
@@ -622,7 +635,7 @@ export default function DashboardWizardDetails() {
               <p>
                 Track your legal workflows and completed documents across all your business operations.
               </p>
-              <button type="button" className="user-dashboard__gold-button" onClick={() => navigate('/dashboard/wizards')}>
+              <button type="button" className="user-dashboard__gold-button" onClick={() => navigate('/dashboard/blueprints')}>
                 Browse Wizards
                 <ArrowRight size={18} />
               </button>
@@ -848,7 +861,7 @@ export default function DashboardWizardDetails() {
           <button
             type="button"
             className="dashboard-wizard-details__back"
-            onClick={() => navigate('/dashboard/wizards')}
+            onClick={() => navigate('/dashboard/blueprints')}
           >
             <ArrowLeft size={18} />
             Back to Wizards
@@ -929,7 +942,7 @@ export default function DashboardWizardDetails() {
             ) : (
               <div className="dashboard-wizard-details__empty">
                 <p>No wizards selected yet.</p>
-                <button type="button" onClick={() => navigate('/dashboard/wizards')}>
+                <button type="button" onClick={() => navigate('/dashboard/blueprints')}>
                   Browse Wizards
                 </button>
               </div>
@@ -1164,6 +1177,7 @@ export default function DashboardWizardDetails() {
             remaining={insufficientUnits.remaining}
             required={insufficientUnits.required}
             pricePerUnit={250}
+            iconName={insufficientUnits.iconName}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => { setInsufficientUnits(null); setIsPaymentView(true) }}
           />

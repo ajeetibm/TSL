@@ -1,0 +1,340 @@
+/* ── Page wrapper ─────────────────────────────────────────────────── */
+.btu-page {
+  min-height: 100vh;
+  background: #f4f4f4;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 900px;
+}
+
+/* ── Back button ─────────────────────────────────────────────────── */
+.btu-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #6d6d6d;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.btu-back:hover {
+  color: #0b1c2f;
+}
+
+/* ── Outer card ──────────────────────────────────────────────────── */
+.btu-card {
+  border: 2px solid #d3a038;
+  border-radius: 24px;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* ── Body: two columns ───────────────────────────────────────────── */
+.btu-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: stretch;
+}
+
+/* ── Vertical divider ────────────────────────────────────────────── */
+.btu-divider {
+  width: 1px;
+  background: #ebebeb;
+  margin: 32px 0;
+}
+
+/* ── Column shared ───────────────────────────────────────────────── */
+.btu-col {
+  padding: 36px 36px 32px;
+}
+
+/* ── Section heading: icon badge + title ─────────────────────────── */
+.btu-section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.btu-icon-badge {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: rgba(211, 160, 56, 0.12);
+  color: #c79a3b;
+  flex-shrink: 0;
+}
+
+.btu-section-header h2 {
+  margin: 0;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ── Blueprint plan name pill ────────────────────────────────────── */
+.btu-plan-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 28px;
+}
+
+/* ── Detail rows (left column) ───────────────────────────────────── */
+.btu-detail-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.btu-detail-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+}
+
+.btu-detail-rows li:last-child {
+  border-bottom: 0;
+}
+
+.btu-detail-rows li span {
+  color: #6d6d6d;
+  font-weight: 400;
+}
+
+.btu-detail-rows li strong {
+  color: #0b1c2f;
+  font-weight: 700;
+}
+
+/* ── Quantity row ────────────────────────────────────────────────── */
+.btu-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 0 18px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 4px;
+}
+
+.btu-qty-label {
+  color: #0b1c2f;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.btu-qty-controls {
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #d3a038;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.btu-qty-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  background: transparent;
+  color: #c79a3b;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.btu-qty-btn:hover:not(:disabled) {
+  background: rgba(199, 154, 59, 0.1);
+}
+
+.btu-qty-btn:disabled {
+  color: #cccccc;
+  cursor: not-allowed;
+}
+
+.btu-qty-input {
+  width: 44px;
+  height: 34px;
+  border: 0;
+  border-left: 1.5px solid #e8d5a0;
+  border-right: 1.5px solid #e8d5a0;
+  text-align: center;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b1c2f;
+  background: #fffdf5;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.btu-qty-input::-webkit-inner-spin-button,
+.btu-qty-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+.btu-qty-input:disabled {
+  background: #f7f7f7;
+  color: #aaaaaa;
+}
+
+/* ── Summary rows ────────────────────────────────────────────────── */
+.btu-summary-rows {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.btu-summary-rows li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #6d6d6d;
+  font-size: 15px;
+}
+
+.btu-summary-rows li:last-child {
+  border-bottom: 0;
+}
+
+/* ── Total row ───────────────────────────────────────────────────── */
+.btu-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0 0;
+  border-top: 2px solid #0b1c2f;
+  margin-top: 8px;
+}
+
+.btu-total span {
+  color: #0b1c2f;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btu-total strong {
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+/* ── Footer: full-width beige CTA strip ──────────────────────────── */
+.btu-footer {
+  border-top: 1.5px solid #e8d5a0;
+  background: #fdf6ea;
+  padding: 28px 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* ── Error ───────────────────────────────────────────────────────── */
+.btu-error {
+  width: 100%;
+  max-width: 560px;
+  margin: 0;
+  border: 1px solid #ffc9c9;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fff3f3;
+  color: #c10007;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ── CTA button ──────────────────────────────────────────────────── */
+.btu-cta {
+  width: auto;
+  min-width: 220px;
+  max-width: 320px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: #c79a3b;
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btu-cta:hover:not(:disabled) {
+  background: #b8891f;
+}
+
+.btu-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Secure note ─────────────────────────────────────────────────── */
+.btu-secure-note {
+  margin: 0;
+  text-align: center;
+  color: #a0a0a0;
+  font-size: 12px;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 720px) {
+  .btu-page {
+    padding: 20px 16px 40px;
+  }
+
+  .btu-body {
+    grid-template-columns: 1fr;
+  }
+
+  .btu-divider {
+    width: auto;
+    height: 1px;
+    margin: 0 32px;
+  }
+
+  .btu-col {
+    padding: 28px 24px;
+  }
+
+  .btu-footer {
+    padding: 24px 20px 20px;
+  }
+}

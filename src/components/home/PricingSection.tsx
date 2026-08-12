@@ -200,7 +200,7 @@ export function PricingSection() {
                     <Info size={14} className="text-gold shrink-0" />
                   </div>
                   <div className={cn('bg-[#F9FAFB] border-b border-[#E5E7EB]', si === 0 && 'border-t-2 border-t-[#E5E7EB]')} />
-                  <div className={cn('bg-[#F9FAFB] border-b border-[#E5E7EB]', si === 0 && 'border-t-2 border-t-[#E5E7EB]')} />
+                  <div className={cn('bg-[rgba(199,154,59,0.1)] border-b border-[#E5E7EB]', si === 0 && 'border-t-2 border-t-[#E5E7EB]')} />
                   <div className={cn('bg-[#F9FAFB] border-b border-[#E5E7EB]', si === 0 && 'border-t-2 border-t-[#E5E7EB]')} />
 
                   {/* Feature rows — every row always has border-b so border-r renders full height */}
