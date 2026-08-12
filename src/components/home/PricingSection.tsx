@@ -93,7 +93,7 @@ export function PricingSection() {
                   <div
                     className={cn(
                       'flex items-center justify-center',
-                      plan.highlight ? 'bg-gold py-[9px]' : 'pt-3 pb-0 w-full',
+                      plan.highlight ? 'bg-[#C79A3B] py-[9px]' : 'pt-3 pb-0 w-full',
                     )}
                     style={plan.highlight ? { width: 'calc(100% + 48px)', marginLeft: '-24px', marginRight: '-24px' } : {}}
                   >
