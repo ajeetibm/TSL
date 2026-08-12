@@ -159,7 +159,7 @@ export function FAQSection() {
               onClick={() => setActiveCategory(cat)}
               className={
                 cat === activeCategory
-                  ? 'rounded-full bg-[#C9982A] px-5 py-2 text-[14px] font-semibold text-white shadow-[0_2px_8px_rgba(201,152,42,0.40)] transition-all'
+                  ? 'rounded-full bg-[#C79A3B] px-5 py-2 text-[14px] font-semibold text-[#0D1B2A] shadow-none transition-all'
                   : 'rounded-full px-5 py-2 text-[14px] font-medium text-[#374151] transition-all hover:bg-[#F3F4F6]'
               }
             >
@@ -199,7 +199,7 @@ export function FAQSection() {
           </p>
           <a
             href="/contact"
-            className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#C9982A] px-10 font-sans text-[14px] font-semibold tracking-wide text-white shadow-[0_6px_22px_rgba(201,152,42,0.45)] transition-all duration-200 hover:bg-[#b8881f] hover:-translate-y-[2px] hover:shadow-[0_10px_28px_rgba(201,152,42,0.55)] active:translate-y-0 active:shadow-[0_4px_14px_rgba(201,152,42,0.40)]"
+            className="mt-8 inline-flex min-h-[52px] items-center justify-center rounded-full bg-[#C79A3B] px-10 font-sans text-[14px] font-semibold tracking-wide text-[#0D1B2A] shadow-none transition-all duration-200 hover:-translate-y-[2px]"
           >
             Contact Support
           </a>

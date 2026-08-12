@@ -1,4 +1,4 @@
-import { Target, Shield, FileCheck, TrendingUp, Clock, Zap, ArrowRight, CircleCheck } from 'lucide-react'
+import { Target, Shield, FileCheck, TrendingUp, Clock, Zap, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -7,7 +7,7 @@ import { SectionHeader } from './SectionHeader'
 const reasons = [
   {
     icon: Target,
-    iconBg: 'bg-gold',
+    iconBg: 'bg-[#C79A3B]',
     title: 'Outcome Over Text',
     description:
       'AI generates paragraphs; we provide signed transactions with evidence.',
@@ -21,7 +21,7 @@ const reasons = [
   },
   {
     icon: FileCheck,
-    iconBg: 'bg-gold',
+    iconBg: 'bg-[#C79A3B]',
     title: 'Jurisdiction Accuracy',
     description:
       'POPIA, Companies Act, BCEA, LRA, CPA compliance built-in.',
@@ -35,7 +35,7 @@ const reasons = [
   },
   {
     icon: Clock,
-    iconBg: 'bg-gold',
+    iconBg: 'bg-[#C79A3B]',
     title: 'Records Stay Accurate',
     description:
       'Automated Company Snapshot sync keeps everything up to date.',
@@ -56,11 +56,16 @@ export function WhyChooseTSLSection() {
         <SectionHeader
           eyebrow={
             <>
-              <CircleCheck size={16} className="text-[#D4A437]" strokeWidth={2.2} />
+              {/* Outlined circle-check matching Figma — thin stroke, no fill */}
+              <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                <circle cx="8.5" cy="8.5" r="7.5" stroke="#D4A437" strokeWidth="1.5"/>
+                <path d="M5.5 8.5L7.5 10.5L11.5 6.5" stroke="#D4A437" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               Why Choose TSL
             </>
           }
           title="Why This Beats DIY AI Solutions"
+          titleStyle={{ fontSize: '36px', lineHeight: '44px' }}
         />
 
         <motion.div
@@ -77,19 +82,19 @@ export function WhyChooseTSLSection() {
                 key={reason.title}
                 variants={revealUp}
                 whileHover={{ y: -6 }}
-                className="flex flex-col items-center rounded-2xl bg-white px-6 py-8 text-center shadow-[0_4px_24px_rgba(10,25,48,0.08)] transition"
+                className="flex flex-col items-center rounded-[28px] border border-[#E5E7EB] bg-white px-6 py-8 text-center shadow-[0_4px_10px_rgba(13,27,42,0.10)] transition"
               >
                 <span
-                  className={`grid h-12 w-12 place-items-center rounded-full ${reason.iconBg} text-white shadow-md`}
+                  className={`grid h-12 w-12 place-items-center rounded-full ${reason.iconBg} text-white`}
                 >
-                  <Icon size={22} strokeWidth={2.2} />
+                  <Icon size={22} strokeWidth={2} />
                 </span>
 
                 <h3 className="mt-5 font-sans text-[15px] font-bold leading-snug tracking-[0] text-[#0D1B2A]">
                   {reason.title}
                 </h3>
 
-                <p className="mt-2.5 font-sans text-[13px] font-normal leading-[1.65] tracking-[0] text-[#6B7280]">
+                <p className="mt-2.5 font-sans text-[13px] font-normal leading-[1.65] tracking-[0] text-[#5C5C5C]">
                   {reason.description}
                 </p>
               </motion.article>
@@ -111,7 +116,7 @@ export function WhyChooseTSLSection() {
 
           <a
             href="#pricing"
-            className="inline-flex h-[56px] min-w-[240px] items-center justify-center gap-3 rounded-full bg-gold px-10 font-sans text-[15px] font-semibold leading-none text-white shadow-[0_8px_24px_rgba(212,164,55,0.35)] transition hover:-translate-y-1 hover:bg-gold-light"
+            className="inline-flex h-[56px] min-w-[240px] items-center justify-center gap-3 rounded-full bg-[#C79A3B] px-10 font-sans text-[15px] font-semibold leading-none text-[#0D1B2A] shadow-none transition hover:-translate-y-1"
           >
             View Pricing Options
             <ArrowRight size={18} strokeWidth={2.2} />

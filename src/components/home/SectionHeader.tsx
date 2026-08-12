@@ -8,9 +8,10 @@ interface SectionHeaderProps {
   title: string
   description?: string
   inverse?: boolean
+  titleStyle?: React.CSSProperties
 }
 
-export function SectionHeader({ eyebrow, title, description, inverse }: SectionHeaderProps) {
+export function SectionHeader({ eyebrow, title, description, inverse, titleStyle }: SectionHeaderProps) {
   return (
     <motion.div
       className="mx-auto max-w-[1312px] text-center"
@@ -37,7 +38,7 @@ export function SectionHeader({ eyebrow, title, description, inverse }: SectionH
           eyebrow != null ? 'mt-8 md:mt-[30px]' : 'mt-0',
           inverse ? 'text-white' : 'text-[#101828]',
         )}
-        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '48px', lineHeight: '48px' }}
+        style={{ fontFamily: 'Montserrat, sans-serif', fontSize: '48px', lineHeight: '48px', ...titleStyle }}
       >
         {title}
       </h2>
