@@ -1,4 +1,5 @@
 import { ArrowRight, BookOpen, CircleCheck, FileText, Lightbulb, Scale, Shield, Users } from 'lucide-react'
+import checkmarkImg from '../../assets/checkmark.png'
 import { motion } from 'framer-motion'
 import { Container } from '../layout/Container'
 
@@ -95,10 +96,13 @@ export function HeroSection() {
           <button
             type="button"
             onClick={openSignUp}
-            className="inline-flex min-h-13 min-w-[200px] items-center justify-center gap-3 rounded-full bg-gold px-8 font-sans font-semibold text-[14px] leading-[20px] text-white shadow-premium transition hover:-translate-y-1 hover:bg-gold-light hover:text-white"
+            className="inline-flex min-h-13 min-w-[200px] items-center justify-center gap-3 rounded-full px-8 shadow-premium transition hover:-translate-y-1"
+            style={{ background: '#C79A3B' }}
           >
-            Get Started Today
-            <ArrowRight size={18} />
+            <span style={{ fontFamily: "'Open Sans'", fontStyle: 'normal', fontWeight: 600, fontSize: '14px', lineHeight: '20px', textAlign: 'center', color: '#FFFFFF' }}>
+              Get Started Today
+            </span>
+            <ArrowRight size={18} color="#FFFFFF" />
           </button>
           <a
             href="#about"
@@ -110,8 +114,8 @@ export function HeroSection() {
 
         <div className="mt-14 flex flex-wrap items-center justify-center gap-x-12 gap-y-4">
           {['Clear & Approachable', 'Empowering Solutions', 'Affordable Pricing'].map((item) => (
-            <span key={item} className="inline-flex items-center gap-1.5 font-sans font-semibold text-[14px] leading-[20px] text-white">
-              <span className="font-sans font-normal text-[16px] leading-none text-white">✓</span>
+            <span key={item} className="inline-flex items-center gap-1 font-sans font-semibold text-[14px] leading-[20px] text-white">
+              <img src={checkmarkImg} alt="" aria-hidden="true" className="w-5 h-5 object-contain" />
               {item}
             </span>
           ))}

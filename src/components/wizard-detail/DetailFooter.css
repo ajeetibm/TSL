@@ -41,14 +41,20 @@
   margin-top: 24px;
 }
 
-.detail-footer__brand a {
+.detail-footer__social-mark {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.75);
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.detail-footer__social-mark:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 .detail-footer__group {
@@ -69,8 +75,8 @@
 }
 
 .detail-footer__bottom {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);

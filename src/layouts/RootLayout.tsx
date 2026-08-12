@@ -30,7 +30,7 @@ export function RootLayout() {
   return (
     <div className="min-h-screen bg-white">
       {!isFocusedAppFlow && <Navbar />}
-      {!isFocusedAppFlow && <div className="h-16 lg:h-20" aria-hidden="true" />}
+      {!isFocusedAppFlow && <div className="h-16 lg:h-20 bg-[#0D1B2A]" aria-hidden="true" />}
       {isMarketing ? (
         <main key={pathname} className="page-transition-marketing">
           <Outlet />

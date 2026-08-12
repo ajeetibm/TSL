@@ -18,6 +18,7 @@
 
 .navbar__inner {
   display: flex;
+  position: relative;
   min-height: 4rem;
   align-items: center;
   justify-content: space-between;
@@ -28,7 +29,7 @@
 .navbar__brand {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .navbar__brand-mark {
@@ -339,20 +340,25 @@
 @media (min-width: 1024px) {
   .navbar__inner {
     min-height: 4.0625rem;
-    padding-inline: 4rem;
+    max-width: none;
+    padding-inline: 2.5rem;
   }
 
   .navbar__links {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: 4rem;
-    margin-left: 3rem; 
+    margin-left: 0;
   }
 
   .navbar__actions {
     display: flex;
     align-items: center;
     gap: 1.5rem;
+    margin-left: auto;
   }
 
   .navbar__account-wrap {
