@@ -1,4 +1,4 @@
-import { ArrowLeft, Briefcase, Building2, CheckCircle2, Code2, CreditCard, FileText, Minus, Plus, Shield, UsersRound, Zap } from 'lucide-react'
+import { ArrowLeft, Briefcase, Building2, CheckCircle2, Code2, CreditCard, FileText, Minus, Plus, Shield, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'

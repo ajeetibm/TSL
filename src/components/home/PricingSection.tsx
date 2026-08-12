@@ -204,8 +204,7 @@ export function PricingSection() {
                   <div className={cn('bg-[#F9FAFB] border-b border-[#E5E7EB]', si === 0 && 'border-t-2 border-t-[#E5E7EB]')} />
 
                   {/* Feature rows — every row always has border-b so border-r renders full height */}
-                  {section.features.map((feature: any, fi: number) => {
-                    const isLast = fi === section.features.length - 1
+                  {section.features.map((feature: any) => {
                     const rowBorder = 'border-b border-[#F3F4F6]'
                     return (
                       <div key={feature.name} className="contents">
@@ -328,9 +327,8 @@ export function PricingSection() {
                 { name: 'Audit Trail & Evidence Packs',    badge: null,         launchpad: true,  operator: true,  boardroom: true },
                 { name: 'Startup Legal Resources Library', badge: 'EXCLUSIVE',  launchpad: false, operator: true,  boardroom: true },
                 { name: 'Dedicated Account Manager',       badge: 'ENTERPRISE', launchpad: false, operator: false, boardroom: true },
-              ].map((feature, fi, arr) => {
-                const isLast = fi === arr.length - 1
-                const rowBorder = 'border-b border-[#F3F4F6]'
+              ].map((feature) => {
+                  const rowBorder = 'border-b border-[#F3F4F6]'
                 return (
                   <div key={feature.name} className="contents">
                     <div className={cn('flex items-center px-6 md:px-8 py-5 font-normal text-sm text-[#364153] bg-white border-r border-[#E5E7EB]', rowBorder)}>

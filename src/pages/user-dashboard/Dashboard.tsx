@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowRight,
   BookOpen,
   Box,
@@ -1204,11 +1204,6 @@ export default function Dashboard() {
   // not on the initial mount hydration from the server.
   const billingPlanSeenRef = useRef<string | null>(null)
 
-  const persistQueue = (next: Record<string, number>) => {
-    localStorage.setItem(queueStorageKey, JSON.stringify(next))
-    setQueuedCounts(next)
-  }
-
   // ── Completed instances ──────────────────────────────────────────────────
   // Each completed run is appended here so the Completed tab accumulates
   // multiple runs of the same blueprint type independently of the single-slot
@@ -1527,15 +1522,6 @@ export default function Dashboard() {
   }, [billingSubscription?.planId])
 
   const derivedTab: DashboardTab = activeTab
-
-  const blueprintIdToTitle: Record<string, string> = {
-    'nda': 'Non-Disclosure Agreement (NDA)',
-    'employment-offer-letter': 'Employment Offer Letter',
-    'privacy-policy': 'Privacy & Cookies Policy',
-    'founder-agreement': 'Founder Agreement',
-    'service-agreement': 'Service Agreement',
-  }
-
   const downloadFinalBlueprint = async (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
     const chargeKey = `tsl-blueprint-unit-charged:${downloadKey}`
     const blob = await build()

@@ -8,6 +8,7 @@ const mockWizardProps = {
   title: 'Shareholders Agreement',
   description: 'Define ownership, rights, and responsibilities between shareholders',
   time: '15-20 min',
+  credits: '2 credits',
   audience: 'Startups with multiple founders',
   included: ['Ownership Structure', 'Voting Rights', 'Exit Clauses'],
   icon: FileText,
