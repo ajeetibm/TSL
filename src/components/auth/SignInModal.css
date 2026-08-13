@@ -197,6 +197,43 @@
   transform: none;
 }
 
+/* ── Consent checkbox ────────────────────────────────────── */
+.signin-modal__consents {
+  margin-bottom: 1.5rem;
+}
+
+.signin-modal__consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.signin-modal__consent-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: #c79a3b;
+  cursor: pointer;
+}
+
+.signin-modal__consent-label span {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.signin-modal__consent-link {
+  color: #c79a3b;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.signin-modal__consent-link:hover {
+  color: #b88a31;
+}
+
 .signin-modal__error {
   margin: -0.75rem 0 1rem;
   border: 1px solid rgba(220, 38, 38, 0.2);

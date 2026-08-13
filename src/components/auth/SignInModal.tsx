@@ -201,6 +201,7 @@ function SignInModalContent({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+  const [acceptedPolicy, setAcceptedPolicy] = useState(false)
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -405,6 +406,7 @@ function SignInModalContent({
     setFormError('')
     setShowPassword(false)
     setShowConfirmPassword(false)
+    setAcceptedPolicy(false)
   }
 
   // Input border class helper
@@ -624,10 +626,35 @@ function SignInModalContent({
               </p>
             )}
 
+            {/* ── Consent checkbox (signup only) ── */}
+            {mode === 'signup' && (
+              <div className="signin-modal__consents">
+                <label className="signin-modal__consent-label">
+                  <input
+                    type="checkbox"
+                    checked={acceptedPolicy}
+                    onChange={e => setAcceptedPolicy(e.target.checked)}
+                    className="signin-modal__consent-checkbox"
+                  />
+                  <span>
+                    I agree to the{' '}
+                    <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
+                      Privacy Policy
+                    </a>
+                    {' '}and consent to data processing under POPIA and TSL's{' '}
+                    <a href="/popia-compliance" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
+                      POPIA Compliance
+                    </a>
+                    {' '}obligations.
+                  </span>
+                </label>
+              </div>
+            )}
+
             <button
               type="submit"
               className="signin-modal__primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (mode === 'signup' && !acceptedPolicy)}
             >
               {isSubmitting ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
