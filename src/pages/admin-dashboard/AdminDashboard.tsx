@@ -1066,6 +1066,11 @@ export default function AdminDashboard() {
           />
         ) : showAllRequests ? (
           <section className="admin-dashboard__all-requests">
+            <BackButton
+              onClick={() => setShowAllRequests(false)}
+              label="Back to Dashboard"
+              className="admin-dashboard__back-btn"
+            />
             {/* ── Single white container: search bar + divider + list ── */}
             <div className="ar-container">
               {/* Search + filter row */}

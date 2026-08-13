@@ -122,10 +122,15 @@ const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 export default function DashboardWizards() {
-  const navigate = useNavigate()
-  const [quantities, setQuantities] = useState(() =>
-    Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])),
-  )
+   const navigate = useNavigate()
+   const [quantities, setQuantities] = useState(() => {
+     try {
+       const stored = localStorage.getItem('tsl-blueprint-quantities')
+       return stored ? JSON.parse(stored) : Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
+     } catch {
+       return Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
+     }
+   })
   // Wizard access fetched from the server — null while loading
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
@@ -159,10 +164,14 @@ export default function DashboardWizards() {
   // so 'Employment Offer Letter' and 'Employment Offer letter' both match.
 
   const updateQuantity = (title: string, nextQuantity: number) => {
-    setQuantities((current) => ({
-      ...current,
-      [title]: Math.max(nextQuantity, 0),
-    }))
+    setQuantities((current) => {
+      const updated = {
+        ...current,
+        [title]: Math.max(nextQuantity, 0),
+      }
+      localStorage.setItem('tsl-blueprint-quantities', JSON.stringify(updated))
+      return updated
+    })
   }
 
   const selectBlueprint = (title: string, nextQuantity: number) => {
@@ -195,7 +204,9 @@ export default function DashboardWizards() {
 
 
   const clearCart = () => {
-    setQuantities(Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0])))
+    const emptyQuantities = Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
+    setQuantities(emptyQuantities)
+    localStorage.setItem('tsl-blueprint-quantities', JSON.stringify(emptyQuantities))
     localStorage.removeItem(selectedWizardStorageKey)
   }
 
