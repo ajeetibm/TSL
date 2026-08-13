@@ -46,7 +46,7 @@ interface AdminUsersApiData {
 type ToastState = { msg: string; type: 'success' | 'error' } | null
 
 function formatPlan(plan?: string) {
-  if (!plan) return 'Operator'
+  if (!plan) return 'Free'
   const normalized = plan.toLowerCase()
   return normalized.charAt(0).toUpperCase() + normalized.slice(1)
 }
