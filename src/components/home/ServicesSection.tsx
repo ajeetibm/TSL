@@ -62,17 +62,17 @@ export function ServicesSection() {
           {proofCards.map(({ title, description, icon: Icon }) => (
             <motion.article
               key={title}
-              className="relative flex h-[194px] flex-col items-center rounded-[26px] border border-[#E1E4E8] bg-white px-[22px] pb-[27px] pt-[59px] text-center shadow-[0_5px_7px_rgba(0,0,0,0.18)]"
+              className="relative flex h-[205px] flex-col items-center rounded-[20px] border border-[#E1E4E8] bg-white px-[24px] pb-[16px] pt-[56px] text-center shadow-[0_4px_6px_rgba(0,0,0,0.1)]"
               variants={revealUp}
             >
-              <span className="absolute left-1/2 top-[22px] grid h-[46px] w-[46px] -translate-x-1/2 place-items-center rounded-full bg-[#08192B] text-white shadow-[0_6px_8px_rgba(0,0,0,0.25)]">
-                <Icon size={23} strokeWidth={2.1} />
+              <span className="absolute left-1/2 top-[16px] grid h-[44px] w-[44px] -translate-x-1/2 place-items-center rounded-full bg-[#08192B] text-white shadow-[0_6px_12px_rgba(0,0,0,0.2)]">
+                <Icon size={20} strokeWidth={2} />
               </span>
 
-              <h3 className="mt-[22px] text-[15px] font-bold leading-tight tracking-[0] text-[#07192B]">
+              <h3 className="mt-[28px] text-[14px] font-bold leading-[1.2] tracking-[0] text-[#07192B]">
                 {title}
               </h3>
-              <p className="mt-[20px] text-[14px] font-normal leading-[1.28] tracking-[0] text-[#4F4F4F]">
+              <p className="mt-[18px] text-[13px] font-normal leading-[1.35] tracking-[0] text-[#5A6270]">
                 {description}
               </p>
             </motion.article>
