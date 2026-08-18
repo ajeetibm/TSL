@@ -43,6 +43,7 @@ import {
   UsersActivity,
 } from './components'
 import AddCounselModal from './components/AddCounselModal'
+import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import type { CounselMember } from './components/CounselManagement'
 import { initialCounselMembers } from './components/CounselManagement'
 import {
@@ -301,6 +302,7 @@ export default function AdminDashboard() {
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
   const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
@@ -690,7 +692,7 @@ export default function AdminDashboard() {
             <UserRound size={17} />
             <span>Profile</span>
           </button>
-          <button type="button" className="admin-dashboard__nav-item" onClick={signOut}>
+          <button type="button" className="admin-dashboard__nav-item" onClick={() => setLogoutModalOpen(true)}>
             <LogOut size={17} />
             <span>Sign Out</span>
           </button>
@@ -1605,6 +1607,10 @@ export default function AdminDashboard() {
         />
       </div>
     )}
+    <LogoutConfirmModal
+      isOpen={logoutModalOpen}
+      onClose={() => setLogoutModalOpen(false)}
+    />
     </>
   )
 }
