@@ -246,17 +246,24 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
   }, [apiUsers, profile])
 
   const filteredUsers = useMemo(() => {
-    const filtered = mergedUsers.filter((u) => {
+    // Preserve original insertion index before filtering so same-date users
+    // can be tiebroken by who was added last (highest index = most recent).
+    const indexed = mergedUsers.map((u, i) => ({ u, i }))
+    const filtered = indexed.filter(({ u }) => {
       const matchesSearch = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesPlan   = selectedPlan   === 'All Plans'  || u.plan   === selectedPlan
       const matchesStatus = selectedStatus === 'All Status' || u.status === selectedStatus
       return matchesSearch && matchesPlan && matchesStatus
     })
-    return [...filtered].sort((a, b) => {
-      const da = a.joinDate ? new Date(a.joinDate).getTime() : 0
-      const db = b.joinDate ? new Date(b.joinDate).getTime() : 0
-      return dateSort === 'newest' ? db - da : da - db
-    })
+    return filtered
+      .sort(({ u: a, i: ia }, { u: b, i: ib }) => {
+        const da = a.joinDate ? new Date(a.joinDate).getTime() : (dateSort === 'newest' ? Infinity : -Infinity)
+        const db = b.joinDate ? new Date(b.joinDate).getTime() : (dateSort === 'newest' ? Infinity : -Infinity)
+        if (da !== db) return dateSort === 'newest' ? db - da : da - db
+        // Same date — use insertion index as tiebreaker (later index = newer)
+        return dateSort === 'newest' ? ib - ia : ia - ib
+      })
+      .map(({ u }) => u)
   }, [mergedUsers, searchQuery, selectedPlan, selectedStatus, dateSort])
 
   const filteredAdmins = useMemo(() =>
