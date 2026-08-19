@@ -7,74 +7,188 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { wizardService, type WizardDraft } from '../services/wizardService'
 
-/* ─── Types ─────────────────────────────────────────────── */
+/* ─── Address ────────────────────────────────────────────── */
+export interface NdaAddress {
+  street_number: string
+  building: string
+  street_name: string
+  suburb: string
+  city: string
+  province: string
+  postal_code: string
+  country: string
+}
+
+export function emptyAddress(country = 'South Africa'): NdaAddress {
+  return { street_number: '', building: '', street_name: '', suburb: '', city: '', province: '', postal_code: '', country }
+}
+
+/* ─── Party ──────────────────────────────────────────────── */
+export type NdaEntityType = 'Company' | 'Close corporation' | 'Trust' | 'Partnership' | 'Individual'
+export type NdaSignatoryCapacity = 'Director' | 'Member' | 'Trustee' | 'Partner' | 'Authorised representative'
+
+export interface NdaParty {
+  entity_type: NdaEntityType
+  // Entity fields
+  legal_name: string
+  reg_number: string
+  trading_name: string
+  // Individual fields
+  full_names: string
+  id_number: string
+  address: NdaAddress
+  email: string
+  phone: string
+  // Signatory (entities only)
+  signatory_name: string
+  signatory_capacity: NdaSignatoryCapacity
+}
+
+export function emptyParty(entity_type: NdaEntityType = 'Company'): NdaParty {
+  return {
+    entity_type,
+    legal_name: '', reg_number: '', trading_name: '',
+    full_names: '', id_number: '',
+    address: emptyAddress(),
+    email: '', phone: '',
+    signatory_name: '', signatory_capacity: 'Director',
+  }
+}
+
+/* ─── Main wizard data ───────────────────────────────────── */
 export interface NdaWizardData {
-  ndaType: 'Mutual' | 'One-Way' | ''
-  purpose: 'Investor Discussions' | 'Contractor/Supplier/Commercial' | ''
-  disclosingName: string
-  disclosingReg: string        // optional
-  disclosingAddress: string
-  receivingName: string
-  receivingReg: string         // optional
-  receivingAddress: string
-  disclosurePurpose: string
-  duration: '12 months' | '24 months' | '36 months' | 'Custom' | ''
-  tradeSecrets: boolean        // optional
-  permitEmployees: boolean     // optional
-  returnDestroy: boolean       // optional
-  governingLaw: string
-  jurisdictionCity: string
-  disclosingSignatoryName: string
-  disclosingSignatoryTitle: string
-  receivingSignatoryName: string
-  receivingSignatoryTitle: string
+  // Step 1 – Parties
+  agreement_type: 'Mutual' | 'One way'
+  disclosing_party: 'Your company' | 'The other party'
+  party_b_type: 'A company' | 'A close corporation' | 'A trust' | 'A partnership' | 'An individual'
+  party_a: NdaParty
+  party_b: NdaParty
+
+  // Step 2 – Purpose & Scope
+  purpose: string
+  ci_definition: 'Broad with standard exclusions' | 'Specified categories only'
+  ci_categories: string[]
+  ci_exclusions: string[]
+  marking_required: boolean
+
+  // Step 3 – Obligations
+  duration_years: number
+  duration_start: 'Date of disclosure' | 'End of the agreement'
+  permitted_recipients: string[]
+  return_or_destroy: 'Return or destroy at the discloser election' | 'Return' | 'Destroy'
+  archival_copy: boolean
+  non_solicit: boolean
+  non_solicit_months: number
+
+  // Step 4 – Legal + Signing
+  governing_law: string
+  dispute_forum: 'Arbitration under AFSA rules' | 'South African courts'
+  domicilium_a: NdaAddress
+  domicilium_b: NdaAddress
+  signature_method: 'Platform signature' | 'Print and sign'
+  signing_order: 'Either order' | 'Your company first' | 'Other party first'
 }
 
 export type NdaWizardStatus = 'idle' | 'inProgress' | 'completed'
 
 export interface NdaWizardState {
   status: NdaWizardStatus
-  /** Last fully-completed step (0 = nothing done; 5 = all steps done) */
+  /** Last fully-completed step (0 = nothing done) */
   step: number
-  /** Progress 0-100 based on required fields filled */
+  /** Progress 0-100 */
   progress: number
   data: NdaWizardData
   startedAt: string | null
   completedAt: string | null
 }
 
-/* ─── Required fields (14 total) ────────────────────────── */
-const REQUIRED_FIELDS: (keyof NdaWizardData)[] = [
-  'ndaType', 'purpose',
-  'disclosingName', 'disclosingAddress',
-  'receivingName', 'receivingAddress',
-  'disclosurePurpose', 'duration',
-  'governingLaw', 'jurisdictionCity',
-  'disclosingSignatoryName', 'disclosingSignatoryTitle',
-  'receivingSignatoryName', 'receivingSignatoryTitle',
-]
-
-export const NDA_TOTAL_REQUIRED = REQUIRED_FIELDS.length // 14
-
-/** Returns 0-100 based on how many required fields contain a non-empty value */
-export function calcNdaProgress(data: NdaWizardData): number {
-  const filled = REQUIRED_FIELDS.filter((key) => {
-    const val = data[key]
-    return typeof val === 'string' ? val.trim() !== '' : true
-  }).length
-  return Math.round((filled / NDA_TOTAL_REQUIRED) * 100)
+/* ─── Required fields per step ───────────────────────────── */
+function isEntity(entity_type: NdaEntityType) {
+  return entity_type !== 'Individual'
 }
+
+export function partyTypeToEntity(t: string): NdaEntityType {
+  const map: Record<string, NdaEntityType> = {
+    'A company': 'Company',
+    'A close corporation': 'Close corporation',
+    'A trust': 'Trust',
+    'A partnership': 'Partnership',
+    'An individual': 'Individual',
+  }
+  return map[t] ?? 'Company'
+}
+
+export function calcNdaProgress(data: NdaWizardData): number {
+  const checks: boolean[] = [
+    // Party A core
+    isEntity(data.party_a.entity_type) ? !!data.party_a.legal_name.trim() : !!data.party_a.full_names.trim(),
+    isEntity(data.party_a.entity_type) ? !!data.party_a.signatory_name.trim() : !!data.party_a.id_number.trim(),
+    !!data.party_a.address.street_number.trim(),
+    !!data.party_a.address.street_name.trim(),
+    !!data.party_a.address.suburb.trim(),
+    !!data.party_a.address.city.trim(),
+    !!data.party_a.address.postal_code.trim(),
+    !!data.party_a.email.trim(),
+    // Party B core
+    isEntity(partyTypeToEntity(data.party_b_type)) ? !!data.party_b.legal_name.trim() : !!data.party_b.full_names.trim(),
+    isEntity(partyTypeToEntity(data.party_b_type)) ? !!data.party_b.signatory_name.trim() : !!data.party_b.id_number.trim(),
+    !!data.party_b.address.street_number.trim(),
+    !!data.party_b.address.street_name.trim(),
+    !!data.party_b.address.suburb.trim(),
+    !!data.party_b.address.city.trim(),
+    !!data.party_b.address.postal_code.trim(),
+    !!data.party_b.email.trim(),
+    // Step 2
+    !!data.purpose.trim(),
+    // Step 3
+    data.duration_years > 0,
+    // Step 4
+    !!data.governing_law.trim(),
+    !!data.domicilium_a.street_number.trim(),
+    !!data.domicilium_a.street_name.trim(),
+    !!data.domicilium_a.suburb.trim(),
+    !!data.domicilium_a.city.trim(),
+    !!data.domicilium_a.postal_code.trim(),
+    !!data.domicilium_b.street_number.trim(),
+    !!data.domicilium_b.street_name.trim(),
+    !!data.domicilium_b.suburb.trim(),
+    !!data.domicilium_b.city.trim(),
+    !!data.domicilium_b.postal_code.trim(),
+  ]
+  const filled = checks.filter(Boolean).length
+  return Math.round((filled / checks.length) * 100)
+}
+
+export const NDA_TOTAL_REQUIRED = 29 // kept for compat
 
 /* ─── Defaults ──────────────────────────────────────────── */
 export const NDA_EMPTY_DATA: NdaWizardData = {
-  ndaType: '', purpose: '',
-  disclosingName: '', disclosingReg: '', disclosingAddress: '',
-  receivingName: '', receivingReg: '', receivingAddress: '',
-  disclosurePurpose: '', duration: '',
-  tradeSecrets: true, permitEmployees: true, returnDestroy: true,
-  governingLaw: 'South Africa', jurisdictionCity: 'Johannesburg',
-  disclosingSignatoryName: '', disclosingSignatoryTitle: '',
-  receivingSignatoryName: '', receivingSignatoryTitle: '',
+  agreement_type: 'Mutual',
+  disclosing_party: 'Your company',
+  party_b_type: 'A company',
+  party_a: emptyParty('Company'),
+  party_b: emptyParty('Company'),
+
+  purpose: '',
+  ci_definition: 'Broad with standard exclusions',
+  ci_categories: [],
+  ci_exclusions: ['Already public', 'Independently developed', 'Lawfully received from a third party', 'Required to be disclosed by law'],
+  marking_required: false,
+
+  duration_years: 3,
+  duration_start: 'Date of disclosure',
+  permitted_recipients: ['Employees', 'Directors', 'Professional advisers'],
+  return_or_destroy: 'Return or destroy at the discloser election',
+  archival_copy: true,
+  non_solicit: false,
+  non_solicit_months: 12,
+
+  governing_law: 'South African law',
+  dispute_forum: 'Arbitration under AFSA rules',
+  domicilium_a: emptyAddress(),
+  domicilium_b: emptyAddress(),
+  signature_method: 'Platform signature',
+  signing_order: 'Either order',
 }
 
 const defaultState: NdaWizardState = {
@@ -84,13 +198,11 @@ const defaultState: NdaWizardState = {
 
 function draftToState(draft: WizardDraft<NdaWizardData>): NdaWizardState {
   const data = { ...NDA_EMPTY_DATA, ...draft.data }
-  // completedAt is the source of truth — if it exists the wizard is completed,
-  // regardless of any stale 'inProgress' value that may have been persisted.
   const status: NdaWizardStatus = draft.completedAt ? 'completed' : draft.status as NdaWizardStatus
   return {
     status,
     step: draft.step,
-    progress: calcNdaProgress(data), // always recompute
+    progress: calcNdaProgress(data),
     data,
     startedAt: draft.startedAt,
     completedAt: draft.completedAt,
@@ -112,8 +224,6 @@ function stateToDraft(state: NdaWizardState): WizardDraft<NdaWizardData> {
 /* ─── Hook ──────────────────────────────────────────────── */
 export function useNdaWizard() {
   const [state, setState] = useState<NdaWizardState>(() => {
-    // Synchronously hydrate from localStorage on first render
-    // (wizardService.load is async; we use localStorage directly for SSR-safe init)
     const raw = localStorage.getItem('tsl-nda-wizard-state')
     if (raw) {
       try {
@@ -126,10 +236,6 @@ export function useNdaWizard() {
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  /**
-   * Debounced persist — fires immediately for status/complete changes,
-   * debounced 400 ms for field-level changes so fast typing doesn't spam the API.
-   */
   const persist = useCallback((nextState: NdaWizardState, immediate = false) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     const flush = () => { wizardService.save(stateToDraft(nextState)) }
@@ -150,11 +256,6 @@ export function useNdaWizard() {
     })
   }, [persist])
 
-  /**
-   * Save the current step number and form data.
-   * Progress is always recomputed from actual field values.
-   * Called on every field change (debounced) and on Next click (immediate).
-   */
   const saveProgress = useCallback((step: number, data: NdaWizardData, immediate = false) => {
     setState((prev) => {
       const next: NdaWizardState = {
@@ -175,10 +276,7 @@ export function useNdaWizard() {
     setState((prev) => {
       const completedAt = new Date().toISOString()
       const next: NdaWizardState = { ...prev, status: 'completed', completedAt }
-      // Flush completion immediately so an older debounced step-save cannot
-      // overwrite the completed status after navigation.
       persist(next, true)
-      // Fire complete through service (handles both local + API)
       wizardService.complete('nda', prev.data).then((serverTime) => {
         setState((s) => ({ ...s, completedAt: serverTime }))
         wizardService.save({ ...stateToDraft(next), completedAt: serverTime })
@@ -192,7 +290,6 @@ export function useNdaWizard() {
     wizardService.reset('nda')
   }, [])
 
-  // On mount, if API mode, refresh from server to sync across devices/tabs
   useEffect(() => {
     if (wizardService.mode !== 'api') return
     wizardService.load<NdaWizardData>('nda').then((draft) => {
