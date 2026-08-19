@@ -1,4 +1,4 @@
-import { BackButton } from '../../components/dashboard/BackButton'
+﻿import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
   Briefcase,
@@ -305,10 +305,9 @@ export default function AdminDashboard() {
     confirmPassword: '',
   })
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
-  const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
   const [showAdminPasswordSuccessModal, setShowAdminPasswordSuccessModal] = useState(false)
-  // ── Active Sessions ──────────────────────────────────────────────────────
+  // â”€â”€ Active Sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const [adminSessions, setAdminSessions] = useState<ActiveSession[]>([])
   const [adminSessionsLoading, setAdminSessionsLoading] = useState(true)
   const [adminRevokingId, setAdminRevokingId] = useState<string | null>(null)
@@ -321,7 +320,7 @@ export default function AdminDashboard() {
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
 
-  // ── Admin profile preferences ─────────────────────────────────────────────
+  // â”€â”€ Admin profile preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   type AdminPrefs = { workflowUpdates: boolean; weeklySummary: boolean; productUpdates: boolean }
   const EMPTY_PREFS: AdminPrefs = { workflowUpdates: true, weeklySummary: true, productUpdates: true }
   const [prefBaseline, setPrefBaseline] = useState<AdminPrefs>(EMPTY_PREFS)
@@ -423,7 +422,7 @@ export default function AdminDashboard() {
     const res = await adminApi.revokeSession(sessionId)
     setAdminRevokingId(null)
     if (!res.success) {
-      setAdminSessionMessage('⚠ ' + (res.message ?? 'Failed to revoke session.'))
+      setAdminSessionMessage('âš  ' + (res.message ?? 'Failed to revoke session.'))
     } else {
       if (res.data) setAdminSessions(res.data)
       setAdminSessionMessage('Session revoked successfully.')
@@ -439,7 +438,7 @@ export default function AdminDashboard() {
     const res = await adminApi.saveProfilePreferences(prefs as unknown as Record<string, unknown>)
     setPrefSaving(false)
     if (!res.success) {
-      setPrefMessage('⚠ ' + (res.message ?? 'Failed to save preferences.'))
+      setPrefMessage('âš  ' + (res.message ?? 'Failed to save preferences.'))
       return
     }
     const saved = (res.data as Partial<AdminPrefs>) ?? {}
@@ -491,11 +490,6 @@ export default function AdminDashboard() {
     percent: [92, 85, 88, 79, 91][index] ?? 82,
   }))
   const revenueLinePoints = buildRevenueLinePoints(revenueMonths, revenueAxis)
-
-  const signOut = () => {
-    clearAuthSession()
-    navigate('/')
-  }
 
   const openPreviewModal = (request: AdminCounselRequest) => {
     setActiveRequest(request)
@@ -585,7 +579,6 @@ export default function AdminDashboard() {
 
   const updateAdminPassword = (field: keyof PasswordForm, value: string) => {
     setAdminPassword((current) => ({ ...current, [field]: value }))
-    setAdminPasswordMessage(null)
     setAdminPasswordError(null)
   }
 
@@ -619,7 +612,6 @@ export default function AdminDashboard() {
 
   const updateAdminProfilePassword = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setAdminPasswordMessage(null)
     setAdminPasswordError(null)
 
     if (!adminPassword.currentPassword || !adminPassword.newPassword || !adminPassword.confirmPassword) {
@@ -988,8 +980,8 @@ export default function AdminDashboard() {
 
                     {adminSessionMessage && (
                       <p
-                        className={`admin-profile__message ${adminSessionMessage.startsWith('⚠') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
-                        role={adminSessionMessage.startsWith('⚠') ? 'alert' : 'status'}
+                        className={`admin-profile__message ${adminSessionMessage.startsWith('âš ') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
+                        role={adminSessionMessage.startsWith('âš ') ? 'alert' : 'status'}
                       >
                         {adminSessionMessage}
                       </p>
@@ -998,7 +990,7 @@ export default function AdminDashboard() {
                     {adminSessionsLoading ? (
                       <div className="admin-profile__sessions-loading">
                         <Loader2 size={18} className="admin-settings__save-spinner" />
-                        <span>Loading sessions…</span>
+                        <span>Loading sessionsâ€¦</span>
                       </div>
                     ) : (
                       <div className="admin-profile__sessions-list">
@@ -1017,7 +1009,7 @@ export default function AdminDashboard() {
                                 {session.device}
                                 {session.isCurrent && <span className="admin-profile__session-badge">Current</span>}
                               </div>
-                              <div className="admin-profile__session-meta">{session.location} · {session.ip}</div>
+                              <div className="admin-profile__session-meta">{session.location} Â· {session.ip}</div>
                               <div className="admin-profile__session-time">Last active: {new Date(session.lastActive).toLocaleString()}</div>
                             </div>
                             {!session.isCurrent && (
@@ -1072,7 +1064,7 @@ export default function AdminDashboard() {
                   ))}
 
                   {prefMessage && (
-                    <p className={`admin-profile__message ${prefMessage.startsWith('⚠') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
+                    <p className={`admin-profile__message ${prefMessage.startsWith('âš ') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
                       style={{ marginTop: '16px' }}>
                       {prefMessage}
                     </p>
@@ -1086,7 +1078,7 @@ export default function AdminDashboard() {
                       onClick={handlePrefSave}
                     >
                       {prefSaving
-                        ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
+                        ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Savingâ€¦</>
                         : 'Save Preferences'}
                     </button>
                   </footer>
@@ -1153,7 +1145,7 @@ export default function AdminDashboard() {
               label="Back to Dashboard"
               className="admin-dashboard__back-btn"
             />
-            {/* ── Single white container: search bar + divider + list ── */}
+            {/* â”€â”€ Single white container: search bar + divider + list â”€â”€ */}
             <div className="ar-container">
               {/* Search + filter row */}
               <div className="ar-container__search">
@@ -1174,7 +1166,7 @@ export default function AdminDashboard() {
                   <option>All Status</option>
                   <option>Pending</option>
                   <option>In Progress</option>
-                  <option>Rejected — Reassignment Needed</option>
+                  <option>Rejected â€” Reassignment Needed</option>
                   <option>Completed</option>
                 </select>
               </div>
@@ -1228,7 +1220,7 @@ export default function AdminDashboard() {
                               {/* Col 3 rows 1-2: status badge + accept button stacked */}
                               <div className="ar-card__right">
                                 <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
-                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : normStatus === 'rejected reassignment needed' ? 'Rejected — reassignment needed' : request.status}
+                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : normStatus === 'rejected reassignment needed' ? 'Rejected â€” reassignment needed' : request.status}
                                 </span>
                                 {(normStatus === 'pending' || normStatus === 'rejected reassignment needed') && (
                                   <button
@@ -1505,7 +1497,7 @@ export default function AdminDashboard() {
                               <div>
                                 <strong>{file.name}</strong>
                                 <small>
-                                  {(file.size / (1024 * 1024)).toFixed(1)} MB •{' '}
+                                  {(file.size / (1024 * 1024)).toFixed(1)} MB â€¢{' '}
                                   {file.type === 'application/pdf' ? 'PDF Document' : 'Word Document'}
                                 </small>
                               </div>
@@ -1695,7 +1687,7 @@ export default function AdminDashboard() {
       onClose={() => setLogoutModalOpen(false)}
     />
 
-    {/* ── Revoke Session Confirmation Dialog ──────────────────────── */}
+    {/* â”€â”€ Revoke Session Confirmation Dialog â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
     {adminConfirmRevokeId && (
       <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-revoke-dialog-title">
         <div className="admin-profile__dialog">
@@ -1728,7 +1720,7 @@ export default function AdminDashboard() {
       </div>
     )}
 
-    {/* ── Password Changed — Sign In Again Modal ──────────────────── */}
+    {/* â”€â”€ Password Changed â€” Sign In Again Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
     {showAdminPasswordSuccessModal && (
       <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-pw-success-title">
         <div className="admin-profile__dialog admin-profile__dialog--success">

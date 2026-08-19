@@ -123,7 +123,7 @@ const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 export default function DashboardWizards() {
    const navigate = useNavigate()
-   const [quantities, setQuantities] = useState(() => {
+   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
      try {
        const stored = localStorage.getItem('tsl-blueprint-quantities')
        return stored ? JSON.parse(stored) : Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
