@@ -1407,7 +1407,10 @@ export default function AdminDashboard() {
                 {revenueMonths.map((item) => (
                   <div className="admin-dashboard__bar-group" key={item.month}>
                     <span style={{ height: `${getRevenuePlotHeight(item.target, revenueAxis)}px` }} />
-                    <i style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }} />
+                    <i
+                      style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }}
+                      data-tooltip={formatCurrency(item.actual)}
+                    />
                     <b>{item.month}</b>
                   </div>
                 ))}

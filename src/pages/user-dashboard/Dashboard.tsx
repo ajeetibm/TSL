@@ -386,60 +386,124 @@ function buildNdaPdf(data: import('./NdaWizardModal').NdaWizardData, completedAt
 }
 
 /**
- * Build a plain-text Evidence Pack containing all wizard answers + audit log.
+ * Build a tamper-evident Evidence Pack for the NDA wizard.
+ * Matches the Employment Offer Letter evidence pack pattern:
+ * SHA-256 fingerprints are computed over the canonical inputs, the PDF output,
+ * and the DOCX output so that any post-generation modification is detectable.
  */
-function buildEvidencePack(data: import('./NdaWizardModal').NdaWizardData, completedAt: string | null): Blob {
-  const now = new Date()
+async function buildNdaEvidencePack(
+  data: import('./NdaWizardModal').NdaWizardData,
+  completedAt: string | null,
+  instanceId: string,
+): Promise<Blob> {
+  const generatedAt = completedAt ?? new Date().toISOString()
+
+  const fmtAddr = (a: import('./NdaWizardModal').NdaWizardData['party_a']['address']) =>
+    [a.street_number, a.building, a.street_name, a.suburb, a.city, a.province, a.postal_code, a.country].filter(Boolean).join(', ')
+
+  const inputs = {
+    agreement_type: data.agreement_type,
+    disclosing_party: data.disclosing_party,
+    party_b_type: data.party_b_type,
+    'party_a.entity_type': data.party_a.entity_type,
+    'party_a.legal_name': data.party_a.legal_name || data.party_a.full_names,
+    'party_a.reg_number': data.party_a.reg_number,
+    'party_a.email': data.party_a.email,
+    'party_a.signatory_name': data.party_a.signatory_name,
+    'party_a.signatory_capacity': data.party_a.signatory_capacity,
+    'party_b.entity_type': data.party_b.entity_type,
+    'party_b.legal_name': data.party_b.legal_name || data.party_b.full_names,
+    'party_b.reg_number': data.party_b.reg_number,
+    'party_b.email': data.party_b.email,
+    'party_b.signatory_name': data.party_b.signatory_name,
+    'party_b.signatory_capacity': data.party_b.signatory_capacity,
+    purpose: data.purpose,
+    ci_definition: data.ci_definition,
+    ci_categories: data.ci_categories,
+    ci_exclusions: data.ci_exclusions,
+    marking_required: data.marking_required,
+    duration_years: data.duration_years,
+    duration_start: data.duration_start,
+    permitted_recipients: data.permitted_recipients,
+    return_or_destroy: data.return_or_destroy,
+    archival_copy: data.archival_copy,
+    non_solicit: data.non_solicit,
+    non_solicit_months: data.non_solicit_months,
+    governing_law: data.governing_law,
+    dispute_forum: data.dispute_forum,
+    signature_method: data.signature_method,
+    signing_order: data.signing_order,
+  }
+
+  const pdf = buildNdaPdf(data, completedAt)
+  const docx = await buildNdaDocx(data, completedAt)
+  const [inputFingerprint, pdfFingerprint, docxFingerprint] = await Promise.all([
+    sha256(canonicalise(inputs)),
+    sha256(pdf),
+    sha256(docx),
+  ])
+
   const lines = [
-    'TSL EVIDENCE PACK',
-    '==================',
-    `Wizard ID          : tsl-nda-${now.getTime()}`,
-    `Template Version   : v1.0`,
-    `Document Version   : NDA-2025`,
-    `Generated Date     : ${now.toLocaleDateString('en-ZA')}`,
-    `Completion Time    : ${completedAt ? new Date(completedAt).toLocaleString('en-ZA') : now.toLocaleString('en-ZA')}`,
-    `Platform           : The Startup Legal`,
+    'TSL EVIDENCE PACK - NON-DISCLOSURE AGREEMENT',
+    '=============================================',
+    `Blueprint ID            : nda`,
+    `Blueprint Instance ID   : ${instanceId}`,
+    `Schema Version          : 2.0`,
+    `Template Version        : nda-v2.0`,
+    `Generation Timestamp    : ${generatedAt}`,
+    `Input Fingerprint       : sha256:${inputFingerprint}`,
+    `Output Fingerprint (PDF): sha256:${pdfFingerprint}`,
+    `Output Fingerprint (DOCX): sha256:${docxFingerprint}`,
     '',
-    '── WIZARD ANSWERS ──────────────────────────',
+    'CANONICAL BLUEPRINT INPUTS',
+    '==========================',
     '',
-    '1. PARTIES',
-    `   Agreement Type   : ${data.agreement_type || '—'}`,
-    '   Party A',
-    `     Type           : ${data.party_a.entity_type || '—'}`,
-    `     Legal Name     : ${data.party_a.legal_name || data.party_a.full_names || '—'}`,
-    `     Reg No.        : ${data.party_a.reg_number || '—'}`,
-    `     Email          : ${data.party_a.email || '—'}`,
-    `     Signatory      : ${data.party_a.signatory_name || '—'} (${data.party_a.signatory_capacity || '—'})`,
-    '   Party B',
-    `     Type           : ${data.party_b.entity_type || '—'}`,
-    `     Legal Name     : ${data.party_b.legal_name || data.party_b.full_names || '—'}`,
-    `     Reg No.        : ${data.party_b.reg_number || '—'}`,
-    `     Email          : ${data.party_b.email || '—'}`,
-    `     Signatory      : ${data.party_b.signatory_name || '—'} (${data.party_b.signatory_capacity || '—'})`,
+    'PARTIES',
+    `  agreement_type              : ${inputs.agreement_type || '—'}`,
+    `  disclosing_party            : ${inputs.disclosing_party || '—'}`,
+    `  party_b_type                : ${inputs.party_b_type || '—'}`,
     '',
-    '2. PURPOSE & SCOPE',
-    `   Purpose          : ${data.purpose || '—'}`,
-    `   CI Definition    : ${data.ci_definition || '—'}`,
-    `   Must be marked   : ${data.marking_required ? 'Yes' : 'No'}`,
+    '  Party A',
+    `    entity_type               : ${inputs['party_a.entity_type'] || '—'}`,
+    `    legal_name                : ${inputs['party_a.legal_name'] || '—'}`,
+    `    reg_number                : ${inputs['party_a.reg_number'] || '—'}`,
+    `    address                   : ${fmtAddr(data.party_a.address) || '—'}`,
+    `    email                     : ${inputs['party_a.email'] || '—'}`,
+    `    signatory_name            : ${inputs['party_a.signatory_name'] || '—'}`,
+    `    signatory_capacity        : ${inputs['party_a.signatory_capacity'] || '—'}`,
     '',
-    '3. OBLIGATIONS',
-    `   Duration         : ${data.duration_years} years, from ${data.duration_start}`,
-    `   Return/Destroy   : ${data.return_or_destroy}`,
-    `   Archival copy    : ${data.archival_copy ? 'Yes' : 'No'}`,
-    `   Non-solicitation : ${data.non_solicit ? `Yes (${data.non_solicit_months} months)` : 'No'}`,
+    '  Party B',
+    `    entity_type               : ${inputs['party_b.entity_type'] || '—'}`,
+    `    legal_name                : ${inputs['party_b.legal_name'] || '—'}`,
+    `    reg_number                : ${inputs['party_b.reg_number'] || '—'}`,
+    `    address                   : ${fmtAddr(data.party_b.address) || '—'}`,
+    `    email                     : ${inputs['party_b.email'] || '—'}`,
+    `    signatory_name            : ${inputs['party_b.signatory_name'] || '—'}`,
+    `    signatory_capacity        : ${inputs['party_b.signatory_capacity'] || '—'}`,
     '',
-    '4. LEGAL + SIGNING',
-    `   Governing Law    : ${data.governing_law || '—'}`,
-    `   Dispute Forum    : ${data.dispute_forum || '—'}`,
-    `   Signature Method : ${data.signature_method || '—'}`,
-    `   Signing Order    : ${data.signing_order || '—'}`,
+    'PURPOSE & SCOPE',
+    `  purpose                     : ${inputs.purpose || '—'}`,
+    `  ci_definition               : ${inputs.ci_definition || '—'}`,
+    `  ci_categories               : ${inputs.ci_categories.length ? inputs.ci_categories.join(', ') : '—'}`,
+    `  ci_exclusions               : ${inputs.ci_exclusions.length ? inputs.ci_exclusions.join(', ') : '—'}`,
+    `  marking_required            : ${inputs.marking_required ? 'Yes' : 'No'}`,
     '',
-    '── AUDIT LOG ───────────────────────────────',
-    `${now.toISOString()}  WIZARD_COMPLETED`,
-    `${now.toISOString()}  DOCUMENT_GENERATED`,
-    `${now.toISOString()}  EVIDENCE_PACK_EXPORTED`,
+    'OBLIGATIONS',
+    `  duration_years              : ${inputs.duration_years || '—'}`,
+    `  duration_start              : ${inputs.duration_start || '—'}`,
+    `  permitted_recipients        : ${inputs.permitted_recipients.length ? inputs.permitted_recipients.join(', ') : '—'}`,
+    `  return_or_destroy           : ${inputs.return_or_destroy || '—'}`,
+    `  archival_copy               : ${inputs.archival_copy ? 'Yes' : 'No'}`,
+    `  non_solicit                 : ${inputs.non_solicit ? `Yes (${inputs.non_solicit_months} months)` : 'No'}`,
     '',
-    'DISCLAIMER: For reference purposes only. Not legal advice.',
+    'LEGAL + SIGNING',
+    `  governing_law               : ${inputs.governing_law || '—'}`,
+    `  dispute_forum               : ${inputs.dispute_forum || '—'}`,
+    `  domicilium_a                : ${fmtAddr(data.domicilium_a) || '—'}`,
+    `  domicilium_b                : ${fmtAddr(data.domicilium_b) || '—'}`,
+    `  signature_method            : ${inputs.signature_method || '—'}`,
+    `  signing_order               : ${inputs.signing_order || '—'}`,
+    '',
   ]
   return new Blob([lines.join('\n')], { type: 'text/plain' })
 }
@@ -2374,7 +2438,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.docx', () => buildNdaDocx(ndaData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
-                        <button type="button" onClick={() => triggerDownload(buildEvidencePack(ndaData, completedAt), 'NDA-Evidence-Pack.txt')}>
+                        <button type="button" onClick={() => void buildNdaEvidencePack(ndaData, completedAt, id).then((pack) => triggerDownload(pack, 'NDA-Evidence-Pack.txt'))}>
                           <FolderOpen size={16} /> Evidence Pack
                         </button>
                       </div>
