@@ -284,6 +284,35 @@
   line-height: 24px;
   outline: 0;
 }
+
+.dashboard-profile__input-wrap select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #0d1b2a;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
+  outline: 0;
+}
+
+.dashboard-profile__field em {
+  color: #6d6d6d;
+  font-style: normal;
+  font-weight: 400;
+}
+
+.dashboard-profile__snapshot-heading {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e5e5;
+  color: #0b1c2f;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+}
 .dashboard-profile__input-wrap input:disabled {
   color: #999999;
   cursor: not-allowed;

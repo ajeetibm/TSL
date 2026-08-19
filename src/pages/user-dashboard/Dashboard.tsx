@@ -529,65 +529,89 @@ function buildEmploymentPdf(d: EmploymentWizardData, completedAt: string | null)
   return new Blob([`${header}${body}\n${xref}\n${trailer}`], { type: 'application/pdf' })
 }
 
-function buildEmploymentEvidencePack(d: EmploymentWizardData, completedAt: string | null): Blob {
-  const now = new Date()
-  const salary = d.salaryAmount ? `R${Number(d.salaryAmount).toLocaleString('en-ZA')} ${d.salaryFrequency}` : '—'
+function canonicalise(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalise).join(',')}]`
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalise(record[key])}`).join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+async function sha256(value: string | Blob): Promise<string> {
+  const bytes = typeof value === 'string' ? new TextEncoder().encode(value) : await value.arrayBuffer()
+  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+async function buildEmploymentEvidencePack(d: EmploymentWizardData, completedAt: string | null, instanceId: string): Promise<Blob> {
+  const generatedAt = completedAt ?? new Date().toISOString()
+  const inputs = {
+    company_id: d.company_id,
+    'candidate.full_names': d['candidate.full_names'],
+    'candidate.email': d['candidate.email'],
+    job_title: d.job_title,
+    reports_to: d.reports_to,
+    start_date: d.start_date,
+    work_location: d.work_location,
+    salary_amount: d.salary_amount,
+    salary_period: d.salary_period,
+    benefits: d.benefits,
+    benefits_detail: d.benefits_detail,
+    probation_months: d.probation_months,
+    restraint_flag: d.restraint_flag,
+    conditions: d.conditions,
+    medical_justification: d.medical_justification,
+    work_permit_type: d.work_permit_type,
+    work_permit_expiry: d.work_permit_expiry,
+    offer_expiry: d.offer_expiry,
+  }
+  const pdf = buildEmploymentPdf(d, completedAt)
+  const docx = await buildEmploymentDocx(d, completedAt)
+  const [inputFingerprint, pdfFingerprint, docxFingerprint] = await Promise.all([
+    sha256(canonicalise(inputs)),
+    sha256(pdf),
+    sha256(docx),
+  ])
   const lines = [
-    'TSL EVIDENCE PACK — EMPLOYMENT OFFER LETTER',
-    '============================================',
-    `Wizard ID          : tsl-emp-${now.getTime()}`,
-    `Template Version   : v1.0`,
-    `Document Version   : EMP-2025`,
-    `Generated Date     : ${now.toLocaleDateString('en-ZA')}`,
-    `Completion Time    : ${completedAt ? new Date(completedAt).toLocaleString('en-ZA') : now.toLocaleString('en-ZA')}`,
-    `Platform           : The Startup Legal`,
+    'TSL EVIDENCE PACK - EMPLOYMENT OFFER LETTER',
+    '=============================================',
+    `Blueprint ID       : employment-offer-letter`,
+    `Blueprint Instance ID: ${instanceId}`,
+    `Schema Version     : 2.0`,
+    `Template Version   : employment-offer-letter-v2.0`,
+    `Generation Timestamp: ${generatedAt}`,
+    `Input Fingerprint  : sha256:${inputFingerprint}`,
+    `Output Fingerprint (PDF): sha256:${pdfFingerprint}`,
+    `Output Fingerprint (DOCX): sha256:${docxFingerprint}`,
     '',
-    '── WIZARD ANSWERS ──────────────────────────',
+    'CANONICAL BLUEPRINT INPUTS',
+    '==========================',
     '',
-    '1. EMPLOYER',
-    `   Company Name     : ${d.companyName || '—'}`,
-    `   Reg. Number      : ${d.companyReg || '—'}`,
-    `   Address          : ${d.employerAddress || '—'}`,
-    `   Contact Person   : ${d.employerContactPerson || '—'}`,
-    `   Email            : ${d.employerEmail || '—'}`,
+    'ROLE',
+    `  company_id                : ${inputs.company_id || '—'}`,
+    `  candidate.full_names      : ${inputs['candidate.full_names'] || '—'}`,
+    `  candidate.email           : ${inputs['candidate.email'] || '—'}`,
+    `  job_title                 : ${inputs.job_title || '—'}`,
+    `  reports_to                : ${inputs.reports_to || '—'}`,
+    `  start_date                : ${inputs.start_date || '—'}`,
+    `  work_location             : ${inputs.work_location || '—'}`,
     '',
-    '2. EMPLOYEE',
-    `   Full Name        : ${d.employeeFullName || '—'}`,
-    `   ID / Passport    : ${d.employeeIdNumber || '—'}`,
-    `   Address          : ${d.employeeAddress || '—'}`,
-    `   Email            : ${d.employeeEmail || '—'}`,
-    `   Phone            : ${d.employeePhone || '—'}`,
+    'PACKAGE',
+    `  salary_amount             : ${inputs.salary_amount || '—'}`,
+    `  salary_period             : ${inputs.salary_period}`,
+    `  benefits                  : ${inputs.benefits.join(', ') || '—'}`,
+    `  benefits_detail           : ${inputs.benefits_detail || '—'}`,
+    `  probation_months          : ${inputs.probation_months || '—'}`,
+    `  restraint_flag            : ${inputs.restraint_flag === null ? '—' : inputs.restraint_flag ? 'Yes' : 'No'}`,
     '',
-    '3. EMPLOYMENT',
-    `   Job Title        : ${d.jobTitle || '—'}`,
-    `   Department       : ${d.department || '—'}`,
-    `   Employment Type  : ${d.employmentType || '—'}`,
-    `   Start Date       : ${d.startDate || '—'}`,
-    `   Probation        : ${d.probationPeriod || '—'}`,
-    `   Working Hours    : ${d.workingHours || '—'}`,
-    `   Work Location    : ${d.workLocation || '—'}`,
+    'CONDITIONS',
+    `  conditions                : ${inputs.conditions.join(', ') || '—'}`,
+    `  medical_justification     : ${inputs.medical_justification || '—'}`,
+    `  work_permit_type          : ${inputs.work_permit_type || '—'}`,
+    `  work_permit_expiry        : ${inputs.work_permit_expiry || '—'}`,
+    `  offer_expiry              : ${inputs.offer_expiry || '—'}`,
     '',
-    '4. SALARY & BENEFITS',
-    `   Salary           : ${salary}`,
-    `   Bonuses          : ${d.bonuses || '—'}`,
-    `   Leave            : ${d.leaveEntitlement || '—'}`,
-    `   Medical          : ${d.medicalBenefits || '—'}`,
-    `   Pension          : ${d.pension || '—'}`,
-    `   Other Benefits   : ${d.otherBenefits || '—'}`,
-    '',
-    '5. CONTRACT TERMS',
-    `   Notice Period    : ${d.noticePeriod || '—'}`,
-    `   Governing Law    : ${d.governingLaw || '—'}`,
-    `   Confidentiality  : ${d.confidentialityClause ? 'Yes' : 'No'}`,
-    `   IP Clause        : ${d.intellectualPropertyClause ? 'Yes' : 'No'}`,
-    `   Non-Compete      : ${d.nonCompeteClause ? 'Yes' : 'No'}`,
-    '',
-    '── AUDIT LOG ───────────────────────────────',
-    `${now.toISOString()}  WIZARD_COMPLETED`,
-    `${now.toISOString()}  DOCUMENT_GENERATED`,
-    `${now.toISOString()}  EVIDENCE_PACK_EXPORTED`,
-    '',
-    'DISCLAIMER: For reference purposes only. Not legal advice.',
   ]
   return new Blob([lines.join('\n')], { type: 'text/plain' })
 }
@@ -2374,7 +2398,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
-                        <button type="button" onClick={() => triggerDownload(buildEmploymentEvidencePack(empData, completedAt), 'Employment-Evidence-Pack.txt')}>
+                        <button type="button" onClick={() => void buildEmploymentEvidencePack(empData, completedAt, id).then((pack) => triggerDownload(pack, 'Employment-Evidence-Pack.txt'))}>
                           <FolderOpen size={16} /> Evidence Pack
                         </button>
                       </div>

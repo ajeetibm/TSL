@@ -14,6 +14,21 @@ import './DashboardProfile.css'
 
 type ProfileTab = 'information' | 'security' | 'preferences'
 
+function isValidSaId(idNumber: string) {
+  if (!/^\d{13}$/.test(idNumber)) return false
+  const digits = idNumber.split('').map(Number)
+  let sum = 0
+  for (let index = 0; index < 13; index += 1) {
+    let digit = digits[12 - index]
+    if (index % 2 === 1) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+  }
+  return sum % 10 === 0
+}
+
 export default function DashboardProfile() {
   const navigate = useNavigate()
   const { profile, updateProfile } = useUserProfile()
@@ -69,12 +84,31 @@ export default function DashboardProfile() {
       if (!isCurrent || !result.success || !result.data) return
       const data = result.data as Partial<UserProfile>
       const nextProfile: UserProfile = {
+        ...profile,
+        companySnapshotId: data.companySnapshotId ?? profile.companySnapshotId,
         companyName: data.companyName ?? '',
         registrationNumber: data.registrationNumber ?? '',
         email: data.email ?? profile.email,
         phone: data.phone ?? '',
         physicalAddress: data.physicalAddress ?? '',
         contactPerson: data.contactPerson ?? '',
+        entityType: data.entityType ?? '',
+        legalName: data.legalName ?? data.companyName ?? '',
+        tradingName: data.tradingName ?? '',
+        individualFullNames: data.individualFullNames ?? '',
+        idNumber: data.idNumber ?? '',
+        businessEmail: data.businessEmail ?? data.email ?? profile.email,
+        businessPhone: data.businessPhone ?? data.phone ?? '',
+        unitNumber: data.unitNumber ?? '',
+        building: data.building ?? '',
+        streetName: data.streetName ?? '',
+        suburb: data.suburb ?? '',
+        city: data.city ?? '',
+        province: data.province ?? '',
+        postalCode: data.postalCode ?? '',
+        country: data.country ?? 'South Africa',
+        signatoryName: data.signatoryName ?? data.contactPerson ?? '',
+        signatoryCapacity: data.signatoryCapacity ?? '',
       }
       updateProfile(nextProfile)
     })
@@ -203,6 +237,18 @@ export default function DashboardProfile() {
   }
 
   const handleSave = async () => {
+    if (!formData.entityType) {
+      setSaveError('Select the legal entity type for this Company Snapshot.')
+      return
+    }
+    if (formData.entityType === 'Individual' && formData.idNumber && !isValidSaId(formData.idNumber)) {
+      setSaveError('Enter a valid 13-digit South African ID number.')
+      return
+    }
+    if (formData.country === 'South Africa' && formData.postalCode && !/^\d{4}$/.test(formData.postalCode)) {
+      setSaveError('A South African postal code must contain 4 digits.')
+      return
+    }
     setIsSaving(true)
     setSaveError(null)
     setSaveMessage(null)
@@ -212,7 +258,7 @@ export default function DashboardProfile() {
       setSaveError(result.message ?? 'Failed to save profile.')
       return
     }
-    updateProfile(formData)
+    updateProfile({ ...formData, ...(result.data as Partial<UserProfile>) })
     setSaveMessage(result.message ?? 'Profile saved successfully.')
   }
 
@@ -246,7 +292,7 @@ export default function DashboardProfile() {
             }
             onClick={() => setActiveTab('information')}
           >
-            Profile Information
+            Company Snapshot
           </button>
           <button
             type="button"
@@ -286,7 +332,7 @@ export default function DashboardProfile() {
                     />
                   ) : (
                     <span>
-                      {formData.companyName
+                      {(formData.legalName || formData.individualFullNames || formData.companyName)
                         .split(' ')
                         .slice(0, 2)
                         .map((w) => w[0])
@@ -316,8 +362,8 @@ export default function DashboardProfile() {
                   />
                 </div>
                 <div className="dashboard-profile__identity">
-                  <h2>{formData.companyName || 'Your Company'}</h2>
-                  <p>Member since December 2025</p>
+                  <h2>{formData.legalName || formData.individualFullNames || formData.companyName || 'Your Company'}</h2>
+                  <p>Company Snapshot — confirm legal data before using it in a Blueprint.</p>
                   <div>
                     <span>Operator Plan1</span>
                     <span>Account Active</span>
@@ -326,31 +372,90 @@ export default function DashboardProfile() {
               </div>
 
               <div className="dashboard-profile__fields">
-                <label className="dashboard-profile__field">
-                  <span>Company Name</span>
+                <label className="dashboard-profile__field dashboard-profile__field--wide">
+                  <span>Legal entity type</span>
                   <div className="dashboard-profile__input-wrap">
                     <BriefcaseBusiness size={18} />
-                    <input
-                      type="text"
-                      value={formData.companyName}
-                      onChange={(e) => handleInputChange('companyName', e.target.value)}
-                    />
+                    <select
+                      value={formData.entityType}
+                      onChange={(e) => handleInputChange('entityType', e.target.value)}
+                    >
+                      <option value="">Select entity type</option>
+                      <option value="Company">Company</option>
+                      <option value="Close corporation">Close corporation</option>
+                      <option value="Trust">Trust</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="Individual">Individual</option>
+                    </select>
                   </div>
                 </label>
 
+                {formData.entityType === 'Individual' ? (
+                  <>
+                    <label className="dashboard-profile__field">
+                      <span>Full names</span>
+                      <div className="dashboard-profile__input-wrap">
+                        <UserRound size={18} />
+                        <input type="text" value={formData.individualFullNames} onChange={(e) => handleInputChange('individualFullNames', e.target.value)} />
+                      </div>
+                    </label>
+                    <label className="dashboard-profile__field">
+                      <span>South African ID number</span>
+                      <div className="dashboard-profile__input-wrap">
+                        <input type="text" inputMode="numeric" maxLength={13} value={formData.idNumber} onChange={(e) => handleInputChange('idNumber', e.target.value.replace(/\D/g, ''))} />
+                      </div>
+                    </label>
+                  </>
+                ) : (
+                  <>
+                    <label className="dashboard-profile__field">
+                      <span>Registered / legal name</span>
+                      <div className="dashboard-profile__input-wrap">
+                        <BriefcaseBusiness size={18} />
+                        <input type="text" value={formData.legalName} onChange={(e) => handleInputChange('legalName', e.target.value)} />
+                      </div>
+                    </label>
+                    <label className="dashboard-profile__field">
+                      <span>Registration number</span>
+                      <div className="dashboard-profile__input-wrap">
+                        <input type="text" value={formData.registrationNumber} onChange={(e) => handleInputChange('registrationNumber', e.target.value)} />
+                      </div>
+                    </label>
+                    <label className="dashboard-profile__field dashboard-profile__field--wide">
+                      <span>Trading name <em>(optional)</em></span>
+                      <div className="dashboard-profile__input-wrap">
+                        <input type="text" value={formData.tradingName} onChange={(e) => handleInputChange('tradingName', e.target.value)} />
+                      </div>
+                    </label>
+                  </>
+                )}
+
                 <label className="dashboard-profile__field">
-                  <span>Registration Number</span>
+                  <span>Business email</span>
                   <div className="dashboard-profile__input-wrap">
+                    <Mail size={18} />
                     <input
-                      type="text"
-                      value={formData.registrationNumber}
-                      onChange={(e) => handleInputChange('registrationNumber', e.target.value)}
+                      type="email"
+                      value={formData.businessEmail}
+                      onChange={(e) => handleInputChange('businessEmail', e.target.value)}
                     />
                   </div>
                 </label>
 
                 <label className="dashboard-profile__field">
-                   <span>Email Address</span>
+                  <span>Business telephone</span>
+                  <div className="dashboard-profile__input-wrap">
+                    <Phone size={18} />
+                    <input
+                      type="tel"
+                      value={formData.businessPhone}
+                      onChange={(e) => handleInputChange('businessPhone', e.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="dashboard-profile__field">
+                   <span>Account email</span>
                    <div className="dashboard-profile__input-wrap">
                      <Mail size={18} />
                      <input
@@ -363,41 +468,79 @@ export default function DashboardProfile() {
                  </label>
 
                 <label className="dashboard-profile__field">
-                  <span>Phone Number</span>
-                  <div className="dashboard-profile__input-wrap">
-                    <Phone size={18} />
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                    />
-                  </div>
-                </label>
-
-                <label className="dashboard-profile__field dashboard-profile__field--wide">
-                  <span>Physical Address</span>
+                  <span>Unit / street number</span>
                   <div className="dashboard-profile__input-wrap">
                     <MapPin size={18} />
                     <input
                       type="text"
-                      value={formData.physicalAddress}
-                      onChange={(e) => handleInputChange('physicalAddress', e.target.value)}
+                      value={formData.unitNumber}
+                      onChange={(e) => handleInputChange('unitNumber', e.target.value)}
                     />
                   </div>
                 </label>
 
-                <label className="dashboard-profile__field dashboard-profile__field--wide">
-                   <span>Contact Person</span>
+                <label className="dashboard-profile__field">
+                  <span>Building / complex <em>(optional)</em></span>
+                  <div className="dashboard-profile__input-wrap">
+                    <MapPin size={18} />
+                    <input
+                      type="text"
+                      value={formData.building}
+                      onChange={(e) => handleInputChange('building', e.target.value)}
+                    />
+                  </div>
+                </label>
+
+                <label className="dashboard-profile__field">
+                  <span>Street name</span>
                    <div className="dashboard-profile__input-wrap">
-                     <UserRound size={18} />
+                     <MapPin size={18} />
                      <input
                        type="text"
-                       value={formData.contactPerson}
-                       onChange={(e) => handleInputChange('contactPerson', e.target.value)}
-                       disabled
+                       value={formData.streetName}
+                       onChange={(e) => handleInputChange('streetName', e.target.value)}
                      />
                    </div>
-                 </label>
+                </label>
+
+                <label className="dashboard-profile__field">
+                  <span>Suburb</span>
+                  <div className="dashboard-profile__input-wrap"><input type="text" value={formData.suburb} onChange={(e) => handleInputChange('suburb', e.target.value)} /></div>
+                </label>
+                <label className="dashboard-profile__field">
+                  <span>City / town</span>
+                  <div className="dashboard-profile__input-wrap"><input type="text" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} /></div>
+                </label>
+                {formData.country === 'South Africa' && (
+                  <label className="dashboard-profile__field">
+                    <span>Province</span>
+                    <div className="dashboard-profile__input-wrap">
+                      <select value={formData.province} onChange={(e) => handleInputChange('province', e.target.value)}>
+                        <option value="">Select province</option>
+                        <option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>Northern Cape</option><option>North West</option><option>Western Cape</option>
+                      </select>
+                    </div>
+                  </label>
+                )}
+                <label className="dashboard-profile__field">
+                  <span>Postal code</span>
+                  <div className="dashboard-profile__input-wrap"><input type="text" inputMode="numeric" maxLength={formData.country === 'South Africa' ? 4 : undefined} value={formData.postalCode} onChange={(e) => handleInputChange('postalCode', e.target.value.replace(/\D/g, ''))} /></div>
+                </label>
+                <label className="dashboard-profile__field dashboard-profile__field--wide">
+                  <span>Country</span>
+                  <div className="dashboard-profile__input-wrap"><select value={formData.country} onChange={(e) => handleInputChange('country', e.target.value)}><option>South Africa</option><option>Other</option></select></div>
+                </label>
+
+                <div className="dashboard-profile__snapshot-heading">Authorised signatory</div>
+                <p className="dashboard-profile__section-description dashboard-profile__field--wide">The person authorised to confirm Company Snapshot data for use in a Blueprint.</p>
+                <label className="dashboard-profile__field">
+                  <span>Full name</span>
+                  <div className="dashboard-profile__input-wrap"><UserRound size={18} /><input type="text" value={formData.signatoryName} onChange={(e) => handleInputChange('signatoryName', e.target.value)} /></div>
+                </label>
+                <label className="dashboard-profile__field">
+                  <span>Capacity</span>
+                  <div className="dashboard-profile__input-wrap"><select value={formData.signatoryCapacity} onChange={(e) => handleInputChange('signatoryCapacity', e.target.value)}><option value="">Select capacity</option><option>Director</option><option>Member</option><option>Trustee</option><option>Partner</option><option>Authorised representative</option></select></div>
+                </label>
               </div>
 
               {saveError && (

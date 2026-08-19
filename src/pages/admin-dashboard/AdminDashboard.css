@@ -5039,6 +5039,74 @@
   margin: -4px 0 0;
 }
 
+/* password changed success modal */
+.admin-profile__dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 16px;
+}
+
+.admin-profile__dialog {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 36px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.admin-profile__dialog--success .admin-profile__dialog-success-icon {
+  color: #16a34a;
+  margin-bottom: 4px;
+}
+
+.admin-profile__dialog-title {
+  color: #0d1b2a;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.admin-profile__dialog-desc {
+  color: #555555;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.admin-profile__dialog-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+
+.admin-profile__dialog-primary {
+  border: none;
+  border-radius: 9999px;
+  background: #0d1b2a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.admin-profile__dialog-primary:hover {
+  opacity: 0.85;
+}
+
 .admin-profile__message--success {
   color: #16a34a;
 }
@@ -5126,33 +5194,158 @@
   color: #666666;
 }
 
-.admin-profile__session {
-  min-height: 88px;
+/* ── Active Sessions ──────────────────────────────────────────────── */
+.admin-profile__section-desc {
+  color: #666666;
+  font-size: 13px;
+  margin: -4px 0 4px;
+}
+
+.admin-profile__sessions-loading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  border-radius: 28px;
-  padding: 18px 18px;
-  background: #f4f4f4;
+  gap: 10px;
+  color: #6d6d6d;
+  font-size: 14px;
+  margin-top: 8px;
 }
 
-.admin-profile__session strong {
-  display: block;
-  margin-bottom: 6px;
+.admin-profile__sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.admin-profile__session p {
-  margin: 0;
-  color: #666666;
+.admin-profile__session-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  background: #f7f8fa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
 }
 
-.admin-profile__session span {
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: #d9fbe6;
-  color: #00a63e;
-  font-weight: 800;
+.admin-profile__session-item--current {
+  border-color: #c9a84c;
+  background: #fdfaf2;
+}
+
+.admin-profile__session-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #1e2434;
+  border-radius: 8px;
+  color: #ffffff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.admin-profile__session-item--current .admin-profile__session-icon {
+  background: #c9a84c;
+}
+
+.admin-profile__session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-profile__session-device {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e2434;
+  margin-bottom: 4px;
+}
+
+.admin-profile__session-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  background: #c9a84c;
+  color: #ffffff;
+  border-radius: 20px;
+  line-height: 1.5;
+}
+
+.admin-profile__session-meta {
+  font-size: 13px;
+  color: #6d6d6d;
+  margin-bottom: 2px;
+}
+
+.admin-profile__session-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.admin-profile__session-revoke {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #dc2626;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.admin-profile__session-revoke:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #dc2626;
+}
+
+.admin-profile__session-revoke:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* dialog cancel + confirm buttons */
+.admin-profile__dialog-cancel {
+  border: 1px solid #d7d7d7;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.admin-profile__dialog-cancel:hover {
+  background: #f5f5f5;
+}
+
+.admin-profile__dialog-confirm {
+  border: none;
+  border-radius: 9999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.admin-profile__dialog-confirm:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.admin-profile__dialog-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-profile__preferences {

@@ -3,12 +3,32 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 export const PROFILE_STORAGE_KEY = 'tsl-profile-data'
 
 export interface UserProfile {
+  companySnapshotId: string
+  // Legacy summary fields kept for existing dashboard and admin views.
   companyName: string
   registrationNumber: string
   email: string
   phone: string
   physicalAddress: string
   contactPerson: string
+  // Company Snapshot — the legal/business information reused by Blueprints.
+  entityType: string
+  legalName: string
+  tradingName: string
+  individualFullNames: string
+  idNumber: string
+  businessEmail: string
+  businessPhone: string
+  unitNumber: string
+  building: string
+  streetName: string
+  suburb: string
+  city: string
+  province: string
+  postalCode: string
+  country: string
+  signatoryName: string
+  signatoryCapacity: string
 }
 
 interface UserProfileContextValue {
@@ -18,12 +38,30 @@ interface UserProfileContextValue {
 
 function emptyProfile(): UserProfile {
   return {
+    companySnapshotId: '',
     companyName: '',
     registrationNumber: '',
     email: '',
     phone: '',
     physicalAddress: '',
     contactPerson: '',
+    entityType: '',
+    legalName: '',
+    tradingName: '',
+    individualFullNames: '',
+    idNumber: '',
+    businessEmail: '',
+    businessPhone: '',
+    unitNumber: '',
+    building: '',
+    streetName: '',
+    suburb: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    country: 'South Africa',
+    signatoryName: '',
+    signatoryCapacity: '',
   }
 }
 
@@ -50,17 +88,35 @@ function readFromStorage(): UserProfile {
 
   try {
     const raw = localStorage.getItem(getProfileStorageKey(auth?.email))
-    if (raw) return JSON.parse(raw) as UserProfile
+    if (raw) return { ...emptyProfile(), ...(JSON.parse(raw) as Partial<UserProfile>) }
   } catch { /* ignore */ }
 
   if (auth) {
     return {
+      companySnapshotId: '',
       companyName: auth.fullName ?? '',
       registrationNumber: '',
       email: auth.email ?? '',
       phone: '',
       physicalAddress: '',
       contactPerson: auth.fullName ?? '',
+      entityType: '',
+      legalName: '',
+      tradingName: '',
+      individualFullNames: '',
+      idNumber: '',
+      businessEmail: auth.email ?? '',
+      businessPhone: '',
+      unitNumber: '',
+      building: '',
+      streetName: '',
+      suburb: '',
+      city: '',
+      province: '',
+      postalCode: '',
+      country: 'South Africa',
+      signatoryName: auth.fullName ?? '',
+      signatoryCapacity: '',
     }
   }
 

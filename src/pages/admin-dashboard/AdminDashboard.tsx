@@ -4,10 +4,12 @@ import {
   Briefcase,
   CalendarDays,
   Camera,
+  CheckCircle2,
   LockKeyhole,
   Loader2,
   Mail,
   MapPin,
+  Monitor,
   Phone,
   ArrowLeft,
   ArrowRight,
@@ -21,6 +23,8 @@ import {
   Search,
   Settings,
   Shield,
+  Smartphone,
+  Trash2,
   X,
   UserPlus,
   UserRound,
@@ -31,6 +35,7 @@ import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
+import type { ActiveSession } from '../../services/tslApi'
 import { useCounselRequests } from '../../context/CounselRequestContext'
 import {
   BillingInvoices,
@@ -302,6 +307,14 @@ export default function AdminDashboard() {
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
   const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
+  const [showAdminPasswordSuccessModal, setShowAdminPasswordSuccessModal] = useState(false)
+  // ── Active Sessions ──────────────────────────────────────────────────────
+  const [adminSessions, setAdminSessions] = useState<ActiveSession[]>([])
+  const [adminSessionsLoading, setAdminSessionsLoading] = useState(true)
+  const [adminRevokingId, setAdminRevokingId] = useState<string | null>(null)
+  const [adminConfirmRevokeId, setAdminConfirmRevokeId] = useState<string | null>(null)
+  const [adminSessionMessage, setAdminSessionMessage] = useState<string | null>(null)
+  const adminSessionMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
@@ -392,6 +405,32 @@ export default function AdminDashboard() {
     })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    adminApi.getSessions().then((res) => {
+      if (cancelled) return
+      setAdminSessionsLoading(false)
+      if (res.success && res.data) setAdminSessions(res.data)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const handleAdminRevokeSession = async (sessionId: string) => {
+    if (adminRevokingId) return
+    setAdminRevokingId(sessionId)
+    setAdminSessionMessage(null)
+    const res = await adminApi.revokeSession(sessionId)
+    setAdminRevokingId(null)
+    if (!res.success) {
+      setAdminSessionMessage('⚠ ' + (res.message ?? 'Failed to revoke session.'))
+    } else {
+      if (res.data) setAdminSessions(res.data)
+      setAdminSessionMessage('Session revoked successfully.')
+    }
+    if (adminSessionMsgTimer.current) clearTimeout(adminSessionMsgTimer.current)
+    adminSessionMsgTimer.current = setTimeout(() => setAdminSessionMessage(null), 4000)
+  }
 
   const handlePrefSave = async () => {
     if (!isPrefDirty || prefSaving) return
@@ -610,7 +649,7 @@ export default function AdminDashboard() {
       newPassword: '',
       confirmPassword: '',
     })
-    setAdminPasswordMessage(response.message ?? 'Password changed successfully.')
+    setShowAdminPasswordSuccessModal(true)
   }
 
   const headerTitle =
@@ -916,11 +955,6 @@ export default function AdminDashboard() {
                           {adminPasswordError}
                         </p>
                       )}
-                      {adminPasswordMessage && (
-                        <p className="admin-profile__message admin-profile__message--success" role="status">
-                          {adminPasswordMessage}
-                        </p>
-                      )}
                       <button type="submit" className="admin-profile__primary-button" disabled={adminPasswordSaving}>
                         {adminPasswordSaving ? 'Updating...' : 'Update Password'}
                       </button>
@@ -950,13 +984,59 @@ export default function AdminDashboard() {
                       </span>
                       <h2>Active Sessions</h2>
                     </div>
-                    <div className="admin-profile__session">
-                      <div>
-                        <strong>Current Session</strong>
-                        <p>Chrome on Windows - Johannesburg, South Africa</p>
+                    <p className="admin-profile__section-desc">Manage your active sessions across different devices</p>
+
+                    {adminSessionMessage && (
+                      <p
+                        className={`admin-profile__message ${adminSessionMessage.startsWith('⚠') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
+                        role={adminSessionMessage.startsWith('⚠') ? 'alert' : 'status'}
+                      >
+                        {adminSessionMessage}
+                      </p>
+                    )}
+
+                    {adminSessionsLoading ? (
+                      <div className="admin-profile__sessions-loading">
+                        <Loader2 size={18} className="admin-settings__save-spinner" />
+                        <span>Loading sessions…</span>
                       </div>
-                      <span>Active</span>
-                    </div>
+                    ) : (
+                      <div className="admin-profile__sessions-list">
+                        {adminSessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className={`admin-profile__session-item${session.isCurrent ? ' admin-profile__session-item--current' : ''}`}
+                          >
+                            <span className="admin-profile__session-icon">
+                              {session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('android')
+                                ? <Smartphone size={18} />
+                                : <Monitor size={18} />}
+                            </span>
+                            <div className="admin-profile__session-info">
+                              <div className="admin-profile__session-device">
+                                {session.device}
+                                {session.isCurrent && <span className="admin-profile__session-badge">Current</span>}
+                              </div>
+                              <div className="admin-profile__session-meta">{session.location} · {session.ip}</div>
+                              <div className="admin-profile__session-time">Last active: {new Date(session.lastActive).toLocaleString()}</div>
+                            </div>
+                            {!session.isCurrent && (
+                              <button
+                                type="button"
+                                className="admin-profile__session-revoke"
+                                onClick={() => setAdminConfirmRevokeId(session.id)}
+                                disabled={adminRevokingId === session.id}
+                                aria-label={`Revoke session on ${session.device}`}
+                              >
+                                {adminRevokingId === session.id
+                                  ? <Loader2 size={15} className="admin-settings__save-spinner" />
+                                  : <Trash2 size={15} />}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 </div>
               )}
@@ -1611,6 +1691,70 @@ export default function AdminDashboard() {
       isOpen={logoutModalOpen}
       onClose={() => setLogoutModalOpen(false)}
     />
+
+    {/* ── Revoke Session Confirmation Dialog ──────────────────────── */}
+    {adminConfirmRevokeId && (
+      <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-revoke-dialog-title">
+        <div className="admin-profile__dialog">
+          <h3 id="admin-revoke-dialog-title" className="admin-profile__dialog-title">Sign Out from This Device?</h3>
+          <p className="admin-profile__dialog-desc">This will sign out the selected device immediately.</p>
+          <div className="admin-profile__dialog-actions">
+            <button
+              type="button"
+              className="admin-profile__dialog-cancel"
+              onClick={() => setAdminConfirmRevokeId(null)}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="admin-profile__dialog-confirm"
+              disabled={adminRevokingId === adminConfirmRevokeId}
+              onClick={async () => {
+                const id = adminConfirmRevokeId
+                setAdminConfirmRevokeId(null)
+                await handleAdminRevokeSession(id)
+              }}
+            >
+              {adminRevokingId === adminConfirmRevokeId
+                ? <Loader2 size={15} className="admin-settings__save-spinner" />
+                : 'Sign Out Device'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* ── Password Changed — Sign In Again Modal ──────────────────── */}
+    {showAdminPasswordSuccessModal && (
+      <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-pw-success-title">
+        <div className="admin-profile__dialog admin-profile__dialog--success">
+          <div className="admin-profile__dialog-success-icon">
+            <CheckCircle2 size={40} strokeWidth={1.8} />
+          </div>
+          <h3 id="admin-pw-success-title" className="admin-profile__dialog-title">
+            Password Updated Successfully
+          </h3>
+          <p className="admin-profile__dialog-desc">
+            Your password has been changed. Please sign in again to continue.
+          </p>
+          <div className="admin-profile__dialog-actions">
+            <button
+              type="button"
+              className="admin-profile__dialog-primary"
+              onClick={() => {
+                setShowAdminPasswordSuccessModal(false)
+                clearAuthSession()
+                navigate('/')
+                window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin' } }))
+              }}
+            >
+              Sign In Again
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }
