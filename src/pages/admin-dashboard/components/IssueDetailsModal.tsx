@@ -47,63 +47,63 @@ export default function IssueDetailsModal({ isOpen, onClose, issue }: IssueDetai
             <p>{issue.id} • {issue.category}</p>
           </div>
           <button type="button" className="modal-close" onClick={onClose} aria-label="Close modal">
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         <div className="issue-details">
           <h3>{issue.title}</h3>
           <span className={`issue-details__badge ${getSeverityClass(issue.severity)}`}>
-            {issue.severity}
+            {issue.severity} Priority
           </span>
 
           <div className="issue-details__grid">
             <div className="issue-details__item">
-              <Calendar size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <Calendar size={16} />
                 <span className="issue-details__label">REPORTED</span>
-                <p>{issue.reported}</p>
               </div>
+              <p>{issue.reported}</p>
             </div>
 
             <div className="issue-details__item">
-              <Clock size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <Clock size={16} />
                 <span className="issue-details__label">LAST UPDATED</span>
-                <p>2024-01-09 09:15</p>
               </div>
+              <p>2024-01-09 09:15</p>
             </div>
 
             <div className="issue-details__item">
-              <User size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <User size={16} />
                 <span className="issue-details__label">REPORTER</span>
-                <p>{issue.by}</p>
               </div>
+              <p>{issue.by}</p>
             </div>
 
             <div className="issue-details__item">
-              <Users size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <Users size={16} />
                 <span className="issue-details__label">ASSIGNED TO</span>
-                <p>DevOps Team</p>
               </div>
+              <p>DevOps Team</p>
             </div>
 
             <div className="issue-details__item">
-              <Tag size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <Tag size={16} />
                 <span className="issue-details__label">CATEGORY</span>
-                <p>{issue.category}</p>
               </div>
+              <p>{issue.category}</p>
             </div>
 
             <div className="issue-details__item">
-              <Users size={16} />
-              <div>
+              <div className="issue-details__item-header">
+                <Users size={16} />
                 <span className="issue-details__label">AFFECTED USERS</span>
-                <p>47 users</p>
               </div>
+              <p>47 users</p>
             </div>
           </div>
 
@@ -115,8 +115,8 @@ export default function IssueDetailsModal({ isOpen, onClose, issue }: IssueDetai
             </p>
           </div>
 
-          <div className="modal-actions modal-actions--single">
-            <button type="button" className="modal-btn modal-btn--primary modal-btn--full" onClick={onClose}>
+          <div className="issue-details__actions">
+            <button type="button" className="modal-btn modal-btn--primary" onClick={onClose}>
               Close
             </button>
           </div>
