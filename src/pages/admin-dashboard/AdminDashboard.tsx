@@ -1,4 +1,4 @@
-﻿import { BackButton } from '../../components/dashboard/BackButton'
+import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
   Briefcase,
@@ -1387,12 +1387,53 @@ export default function AdminDashboard() {
 
             <div className="admin-dashboard__chart-wrap">
               <div className="admin-dashboard__chart-axis" aria-hidden="true">
-                {getRevenueAxisTicks(revenueAxis).map((value) => (
-                  <span key={value}>{formatRevenueAxisLabel(value, revenueAxis)}</span>
-                ))}
+                {getRevenueAxisTicks(revenueAxis).map((value) => {
+                  const label = formatRevenueAxisLabel(value, revenueAxis)
+                  const match = label.match(/^(R\d+)(k)$/)
+                  return (
+                    <span key={value} className="admin-dashboard__chart-axis-tick">
+                      {match ? (
+                        <>
+                          <span className="admin-dashboard__chart-axis-tick__top">
+                            <b>{match[1]}</b>
+                            <em />
+                          </span>
+                          <b className="admin-dashboard__chart-axis-tick__k">{match[2]}</b>
+                        </>
+                      ) : (
+                        <b>{label}</b>
+                      )}
+                    </span>
+                  )
+                })}
               </div>
 
               <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
+                {/* dashed grid overlay */}
+                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
+                  {/* horizontal dashed lines at each y-tick (71px intervals from bottom, excluding bottom border) */}
+                  {[71, 142, 213, 284].map((y) => (
+                    <line
+                      key={y}
+                      x1="0" y1={286 - y}
+                      x2="100%" y2={286 - y}
+                      stroke="#bfc4c9"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                  {/* vertical dashed lines at each month column */}
+                  {Array.from({ length: 11 }, (_, i) => (
+                    <line
+                      key={i}
+                      x1={`${((i + 1) / 12) * 100}%`} y1="0"
+                      x2={`${((i + 1) / 12) * 100}%`} y2="100%"
+                      stroke="#bfc4c9"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                </svg>
                 <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                   <polyline points={revenueLinePoints} />
                 </svg>
