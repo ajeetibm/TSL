@@ -990,7 +990,7 @@ export default function AdminDashboard() {
                     {adminSessionsLoading ? (
                       <div className="admin-profile__sessions-loading">
                         <Loader2 size={18} className="admin-settings__save-spinner" />
-                        <span>Loading sessionsâ€¦</span>
+                        <span>Loading sessions…</span>
                       </div>
                     ) : (
                       <div className="admin-profile__sessions-list">
@@ -1078,7 +1078,7 @@ export default function AdminDashboard() {
                       onClick={handlePrefSave}
                     >
                       {prefSaving
-                        ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Savingâ€¦</>
+                        ? <><Loader2 size={18} className="admin-settings__save-spinner" /> Saving…</>
                         : 'Save Preferences'}
                     </button>
                   </footer>
@@ -1166,7 +1166,7 @@ export default function AdminDashboard() {
                   <option>All Status</option>
                   <option>Pending</option>
                   <option>In Progress</option>
-                  <option>Rejected â€” Reassignment Needed</option>
+                  <option>Rejected — Reassignment Needed</option>
                   <option>Completed</option>
                 </select>
               </div>
@@ -1220,7 +1220,7 @@ export default function AdminDashboard() {
                               {/* Col 3 rows 1-2: status badge + accept button stacked */}
                               <div className="ar-card__right">
                                 <span className={`admin-dashboard__request-status admin-dashboard__request-status--${normStatus?.replace(/ /g, '-')}`}>
-                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : normStatus === 'rejected reassignment needed' ? 'Rejected â€” reassignment needed' : request.status}
+                                  {normStatus === 'in progress' ? 'In Progress' : normStatus === 'pending' ? 'Pending' : normStatus === 'completed' ? 'Completed' : normStatus === 'rejected reassignment needed' ? 'Rejected — reassignment needed' : request.status}
                                 </span>
                                 {(normStatus === 'pending' || normStatus === 'rejected reassignment needed') && (
                                   <button
@@ -1538,7 +1538,7 @@ export default function AdminDashboard() {
                               <div>
                                 <strong>{file.name}</strong>
                                 <small>
-                                  {(file.size / (1024 * 1024)).toFixed(1)} MB â€¢{' '}
+                                  {(file.size / (1024 * 1024)).toFixed(1)} MB •{' '}
                                   {file.type === 'application/pdf' ? 'PDF Document' : 'Word Document'}
                                 </small>
                               </div>
