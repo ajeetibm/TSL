@@ -887,7 +887,7 @@
 .admin-dashboard__chart-line polyline {
   fill: none;
   stroke: #cf9b2f;
-  stroke-width: 0.9;
+  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -944,9 +944,10 @@
   left: 50%;
   transform: translateX(-50%);
   background: #fff;
-  color: #0d1b2a;
+  color: #C79A3B;
   font-size: 12px;
   font-style: normal;
+  font-weight: 700;
   white-space: nowrap;
   padding: 4px 8px;
   border-radius: 4px;
