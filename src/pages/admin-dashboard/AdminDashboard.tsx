@@ -51,6 +51,7 @@ import AddCounselModal from './components/AddCounselModal'
 import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import type { CounselMember } from './components/CounselManagement'
 import { initialCounselMembers } from './components/CounselManagement'
+import { inviteAdmin } from './services/adminManagementService'
 import {
   getRevenueAxisTicks,
   buildRevenueLinePoints,
@@ -316,6 +317,7 @@ export default function AdminDashboard() {
   const adminSessionMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteToast, setInviteToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
@@ -1409,31 +1411,6 @@ export default function AdminDashboard() {
               </div>
 
               <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
-                {/* dashed grid overlay */}
-                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
-                  {/* horizontal dashed lines at each y-tick (71px intervals from bottom, excluding bottom border) */}
-                  {[71, 142, 213, 284].map((y) => (
-                    <line
-                      key={y}
-                      x1="0" y1={286 - y}
-                      x2="100%" y2={286 - y}
-                      stroke="#dde1e5"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                  {/* vertical dashed lines at each month column */}
-                  {Array.from({ length: 11 }, (_, i) => (
-                    <line
-                      key={i}
-                      x1={`${((i + 1) / 12) * 100}%`} y1="0"
-                      x2={`${((i + 1) / 12) * 100}%`} y2="100%"
-                      stroke="#dde1e5"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                </svg>
                 <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                   <polyline points={revenueLinePoints} />
                 </svg>
@@ -1447,6 +1424,31 @@ export default function AdminDashboard() {
                     <b>{item.month}</b>
                   </div>
                 ))}
+                {/* dashed grid overlay — rendered last so it paints above bars */}
+                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
+                  {/* horizontal dashed lines at each y-tick */}
+                  {[71, 142, 213, 284].map((y) => (
+                    <line
+                      key={y}
+                      x1="0" y1={286 - y}
+                      x2="100%" y2={286 - y}
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                  {/* vertical dashed lines centered on each month column */}
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <line
+                      key={i}
+                      x1={`${((i + 0.5) / 12) * 100}%`} y1="0"
+                      x2={`${((i + 0.5) / 12) * 100}%`} y2="100%"
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                </svg>
               </div>
             </div>
 
@@ -1684,8 +1686,16 @@ export default function AdminDashboard() {
       <InviteSubAdminModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSendInvitation={(data) => {
-          console.log('Sending invitation:', data)
+        onSendInvitation={async (data) => {
+          setIsInviteModalOpen(false)
+          const res = await inviteAdmin({ fullName: data.fullName, email: data.email, message: data.message })
+          setInviteToast({
+            msg: res.success
+              ? `Invitation sent to ${data.email}. ${data.fullName} will receive an email to join as Sub Admin.`
+              : (res.message ?? 'Failed to send invitation.'),
+            type: res.success ? 'success' : 'error',
+          })
+          setTimeout(() => setInviteToast(null), 5000)
         }}
       />
 
@@ -1789,6 +1799,17 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
+      </div>
+    )}
+
+    {/* ── Invite Sub Admin toast ── */}
+    {inviteToast && (
+      <div className={`adm-toast adm-toast--${inviteToast.type}`} role="status" aria-live="polite">
+        <span className="adm-toast__icon"><CheckCircle2 size={17} /></span>
+        <p className="adm-toast__msg">{inviteToast.msg}</p>
+        <button type="button" className="adm-toast__close" onClick={() => setInviteToast(null)} aria-label="Dismiss">
+          <X size={14} />
+        </button>
       </div>
     )}
     </>

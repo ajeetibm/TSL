@@ -5,13 +5,21 @@
  * PRODUCTION: replace each mock* call below with the real adminApi.* call.
  * No other files need to change.
  *
- *   getAdmins()    → GET  /api/v1/admin/admins
- *   updateAdmin()  → PUT  /api/v1/admin/admins/:id
+ *   getAdmins()    → GET    /api/v1/admin/admins
+ *   inviteAdmin()  → POST   /api/v1/admin/admins/invite
+ *   updateAdmin()  → PUT    /api/v1/admin/admins/:id
  *   revokeAdmin()  → DELETE /api/v1/admin/admins/:id
  */
 
+import { adminApi } from '../../../services/tslApi'
 import type { AdminManagementApiResponse, AdminRecord, UpdateAdminPayload } from '../types/adminManagement'
 import { mockGetAdmins, mockRevokeAdmin, mockUpdateAdmin } from '../mock-data/adminManagementMock'
+
+export interface InviteAdminPayload {
+  fullName: string
+  email: string
+  message?: string
+}
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -46,6 +54,16 @@ export async function revokeAdmin(id: string): Promise<AdminManagementApiRespons
     return { success: true, message: 'Admin access revoked successfully.' }
   } catch (e) {
     return { success: false, message: e instanceof Error ? e.message : 'Revoke failed.' }
+  }
+}
+
+export async function inviteAdmin(payload: InviteAdminPayload): Promise<AdminManagementApiResponse<{ email: string; invitedAt: string }>> {
+  try {
+    const res = await adminApi.inviteAdmin({ fullName: payload.fullName, email: payload.email, message: payload.message ?? '' })
+    if (!res.success) return { success: false, message: res.message ?? 'Failed to send invitation.' }
+    return { success: true, message: res.message ?? 'Invitation sent successfully.', data: res.data as { email: string; invitedAt: string } }
+  } catch (e) {
+    return { success: false, message: e instanceof Error ? e.message : 'Failed to send invitation.' }
   }
 }
 

@@ -1,8 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react'
 import {
-  Activity,
   Award,
-  Check,
   CheckCircle,
   ChevronDown,
   Clock,
@@ -225,7 +223,10 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
             <strong>61</strong>
             <p>Active Cases</p>
             <small>
-              <Activity size={16} />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14.6654 4.66699L8.9987 10.3337L5.66536 7.00033L1.33203 11.3337" stroke="#00A63E" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M10.668 4.66699H14.668V8.66699" stroke="#00A63E" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               <b>18% increase</b>
             </small>
           </div>
@@ -238,7 +239,17 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
             <strong>1,618</strong>
             <p>Completed Cases</p>
             <small>
-              <Check size={16} />
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_893_517)">
+                  <path d="M14.535 6.66666C14.8395 8.16086 14.6225 9.71427 13.9203 11.0679C13.218 12.4214 12.073 13.4934 10.6761 14.1049C9.27913 14.7164 7.71479 14.8305 6.24391 14.4282C4.77302 14.026 3.4845 13.1316 2.59323 11.8943C1.70195 10.657 1.26179 9.15148 1.34615 7.62892C1.43051 6.10635 2.0343 4.65872 3.05681 3.52744C4.07932 2.39616 5.45876 1.64961 6.96509 1.4123C8.47141 1.17498 10.0136 1.46123 11.3344 2.22333" stroke="#00A63E" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 7.33366L8 9.33366L14.6667 2.66699" stroke="#00A63E" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_893_517">
+                    <rect width="16" height="16" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
               <b>This month: 68</b>
             </small>
           </div>
