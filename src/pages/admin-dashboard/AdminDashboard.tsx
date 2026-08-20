@@ -1417,7 +1417,7 @@ export default function AdminDashboard() {
                       key={y}
                       x1="0" y1={286 - y}
                       x2="100%" y2={286 - y}
-                      stroke="#bfc4c9"
+                      stroke="#dde1e5"
                       strokeWidth="1"
                       strokeDasharray="4 4"
                     />
@@ -1428,7 +1428,7 @@ export default function AdminDashboard() {
                       key={i}
                       x1={`${((i + 1) / 12) * 100}%`} y1="0"
                       x2={`${((i + 1) / 12) * 100}%`} y2="100%"
-                      stroke="#bfc4c9"
+                      stroke="#dde1e5"
                       strokeWidth="1"
                       strokeDasharray="4 4"
                     />
