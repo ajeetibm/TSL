@@ -2682,18 +2682,22 @@
 
 .admin-settings__billing-alert h2 {
   margin: 0;
-  color: #991b1b;
-  font-family: var(--font-display);
-  font-size: 18px;
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
   font-weight: 700;
-  line-height: 28px;
+  font-size: 18px;
+  line-height: 27px;
+  color: #82181A;
 }
 
 .admin-settings__billing-alert p {
   margin: 6px 0 12px;
-  color: #dc0000;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
   font-size: 14px;
   line-height: 20px;
+  color: #C10007;
 }
 
 .admin-settings__billing-alert button {
@@ -2701,7 +2705,7 @@
   min-height: 40px;
   border: 0;
   border-radius: 999px;
-  background: #ed0000;
+  background: #E7000B;
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
