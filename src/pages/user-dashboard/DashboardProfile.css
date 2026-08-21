@@ -512,21 +512,10 @@
 }
 
 .dashboard-profile__2fa-icon {
-  display: flex;
-  width: 64px;
-  height: 64px;
-  justify-content: center;
-  align-items: center;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  border-radius: 999px;
-  background: #0d1b2a;
-  color: #ffffff;
-}
-
-.dashboard-profile__2fa-icon svg {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
+  border-radius: 24px;
 }
 
 .dashboard-profile__2fa h3 {
@@ -708,34 +697,19 @@
 
 .dashboard-profile__session-item {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  background: #f7f8fa;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  height: 88px;
+  background: #F4F4F4;
+  border: none;
+  border-radius: 32px;
 }
 
 .dashboard-profile__session-item--current {
-  border-color: #c9a84c;
-  background: #fdfaf2;
-}
-
-.dashboard-profile__session-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #1e2434;
-  border-radius: 8px;
-  color: #fff;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.dashboard-profile__session-item--current .dashboard-profile__session-icon {
-  background: #c9a84c;
+  background: #F4F4F4;
 }
 
 .dashboard-profile__session-info {

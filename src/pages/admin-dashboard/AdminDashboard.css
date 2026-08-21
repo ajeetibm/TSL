@@ -2484,10 +2484,12 @@
   padding: 0 6px;
   background: transparent;
   color: #667085;
-  font-family: var(--font-display);
-  font-size: 16px;
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
   font-weight: 600;
+  font-size: 16px;
   line-height: 24px;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -2781,11 +2783,12 @@
 
 .admin-settings__billing-stat strong {
   display: block;
-  color: #0d1b2a;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 600;
   font-size: 24px;
-  font-weight: 700;
-  line-height: 34px;
+  line-height: 36px;
+  color: #0D1B2A;
 }
 
 .admin-settings__billing-stat p,
@@ -2949,8 +2952,12 @@
 }
 
 .admin-settings__invoice-table td:first-child {
-  color: #0d1b2a;
-  font-weight: 700;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #0D1B2A;
 }
 
 .admin-settings__plan-pill {
@@ -5408,34 +5415,28 @@
 
 .admin-profile__session-item {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  background: #f7f8fa;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  gap: 16px;
+  height: 88px;
+  background: #F4F4F4;
+  border: none;
+  border-radius: 32px;
 }
 
 .admin-profile__session-item--current {
-  border-color: #c9a84c;
-  background: #fdfaf2;
+  background: #F4F4F4;
 }
 
 .admin-profile__session-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: #1e2434;
-  border-radius: 8px;
-  color: #ffffff;
+  width: 40px;
+  height: 40px;
   flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.admin-profile__session-item--current .admin-profile__session-icon {
-  background: #c9a84c;
 }
 
 .admin-profile__session-info {

@@ -1,5 +1,5 @@
 import { BackButton } from '../../components/dashboard/BackButton'
-import { BriefcaseBusiness, Camera, CheckCircle2, Loader2, Mail, MapPin, Monitor, Phone, Smartphone, Trash2, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, Camera, CheckCircle2, Loader2, Mail, MapPin, Phone, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -631,11 +631,10 @@ export default function DashboardProfile() {
               <section className="dashboard-profile__card">
                 <div className="dashboard-profile__2fa">
                   <div className="dashboard-profile__2fa-content">
-                    <span className="dashboard-profile__2fa-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M16.6654 10.8333C16.6654 15 13.7487 17.0833 10.282 18.2916C10.1005 18.3531 9.90331 18.3502 9.7237 18.2833C6.2487 17.0833 3.33203 15 3.33203 10.8333V4.99997C3.33203 4.77895 3.41983 4.56699 3.57611 4.41071C3.73239 4.25443 3.94435 4.16663 4.16536 4.16663C5.83203 4.16663 7.91536 3.16663 9.36536 1.89997C9.54191 1.74913 9.76649 1.66626 9.9987 1.66626C10.2309 1.66626 10.4555 1.74913 10.632 1.89997C12.0904 3.17497 14.1654 4.16663 15.832 4.16663C16.053 4.16663 16.265 4.25443 16.4213 4.41071C16.5776 4.56699 16.6654 4.77895 16.6654 4.99997V10.8333Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </span>
+                    <svg className="dashboard-profile__2fa-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path d="M0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40C8.95431 40 0 31.0457 0 20Z" fill="#0D1B2A"/>
+                      <path d="M26.6654 20.8333C26.6654 25 23.7487 27.0833 20.282 28.2916C20.1005 28.3531 19.9033 28.3502 19.7237 28.2833C16.2487 27.0833 13.332 25 13.332 20.8333V15C13.332 14.779 13.4198 14.567 13.5761 14.4107C13.7324 14.2544 13.9444 14.1666 14.1654 14.1666C15.832 14.1666 17.9154 13.1666 19.3654 11.9C19.5419 11.7491 19.7665 11.6663 19.9987 11.6663C20.2309 11.6663 20.4555 11.7491 20.632 11.9C22.0904 13.175 24.1654 14.1666 25.832 14.1666C26.053 14.1666 26.265 14.2544 26.4213 14.4107C26.5776 14.567 26.6654 14.779 26.6654 15V20.8333Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
                     <div>
                       <h3>Two-Factor Authentication</h3>
                       <p>Add an extra layer of security to your account</p>
@@ -685,11 +684,6 @@ export default function DashboardProfile() {
                         key={session.id}
                         className={`dashboard-profile__session-item${session.isCurrent ? ' dashboard-profile__session-item--current' : ''}`}
                       >
-                        <span className="dashboard-profile__session-icon">
-                          {session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('android')
-                            ? <Smartphone size={18} />
-                            : <Monitor size={18} />}
-                        </span>
                         <div className="dashboard-profile__session-info">
                           <div className="dashboard-profile__session-device">
                             {session.device}
