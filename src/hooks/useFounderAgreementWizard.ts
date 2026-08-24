@@ -10,55 +10,80 @@ import { wizardService, type WizardDraft } from '../services/wizardService'
 /* ─── Sub-types ──────────────────────────────────────────── */
 export interface FAFounder {
   id: string
-  name: string
-  email: string
+  fullNames: string
+  idNumber: string
   role: string
-  equity: string   // percentage as string, e.g. "50"
+  commitment: 'Full time' | 'Part time' | 'Advisory' | ''
+  equityPct: string   // percentage as string, e.g. "50"
+  capital: string
+}
+
+export interface FAPriorIp {
+  id: string
+  founder: string
+  description: string
+  dateCreated: string
+  treatment: 'Assigned to the company' | 'Licensed to the company' | 'Excluded and retained' | ''
+}
+
+export interface FADigitalAsset {
+  id: string
+  asset: string
+  currentHolder: string
+  transferDate: string
 }
 
 export interface FASignatory {
   id: string
   name: string
-  title: string
+  capacity: 'Founder' | 'Company (where incorporated)' | ''
 }
 
 /* ─── Main data shape ────────────────────────────────────── */
 export interface FounderAgreementWizardData {
-  // Step 1 – Company Information
+  // Screen 1 – Company status
   isIncorporated: 'Yes' | 'No' | ''
-  companyName: string           // required when isIncorporated === 'Yes'
-  registrationNumber: string    // required when isIncorporated === 'Yes'
-  registeredAddress: string
+  companyName: string             // pre-filled when incorporated
+  intendedName: string            // required when not incorporated
+  targetIncorporation: string     // required when not incorporated
 
-  // Step 2 – Founders (dynamic list, minimum 2)
+  // Screen 2 – Founders & equity
   founders: FAFounder[]
 
-  // Step 3 – Governance & Decision Making
-  decisionMakingModel: string
-  reservedMatters: string[]     // dynamic list, minimum 1
-  boardApprovalRequirements: string
-  founderResponsibilities: string
+  // Screen 3 – Vesting
+  vestingApplies: 'Yes' | 'No' | ''
+  vestingMonths: string
+  cliffMonths: string
+  vestingFrequency: 'Monthly' | 'Quarterly' | ''
+  acceleration: string
+  goodLeaver: string[]
+  badLeaverEffect: string
 
-  // Step 4 – Vesting & Share Rules
-  vestingEnabled: 'Yes' | 'No' | ''
-  cliffPeriod: string           // required when vestingEnabled === 'Yes'
-  vestingPeriod: string         // required when vestingEnabled === 'Yes'
-  shareTransferRestrictions: string
-  buybackRights: string
-  founderExitRules: string
+  // Screen 4 – Decisions & roles
+  decisionModel: 'Unanimous for everything' | 'Majority with reserved matters unanimous' | 'Majority for everything' | ''
+  reservedMatters: string[]
+  debtThreshold: string
+  removalProcess: string
+  departureRole: string
 
-  // Step 5 – Intellectual Property
-  assignIpToCompany: 'Yes' | 'No' | ''
-  hasExistingIp: 'Yes' | 'No' | ''
-  existingIpDescription: string // required when hasExistingIp === 'Yes'
-  existingIpAssignment: string  // required when hasExistingIp === 'Yes'
+  // Screen 5 – Intellectual property
+  ipPreIncorporation: 'Yes' | 'No' | ''
+  priorIp: FAPriorIp[]
+  priorIpNil: boolean
+  publiclyFunded: 'Yes' | 'No' | ''
+  createdAtEmployer: 'Yes' | 'No' | ''
+  digitalAssets: FADigitalAsset[]
 
-  // Step 6 – Legal & Signing
-  confidentiality: string
-  disputeResolution: 'Mediation' | 'Arbitration' | 'Litigation' | ''
+  // Screen 6 – Protections & legal
+  confidentiality: 'Yes' | 'No' | ''
+  nonSolicit: 'Yes' | 'No' | ''
+  restraint: 'Yes' | 'No' | ''
+  restraintMonths: string
+  restraintArea: 'South Africa' | 'Named provinces' | 'Worldwide' | ''
+  deadlock: string
+  disputeForum: string
   governingLaw: string
-  jurisdiction: string
-  signatories: FASignatory[]    // dynamic list, minimum 1
+  signatories: FASignatory[]
 }
 
 export type FounderAgreementWizardStatus = 'idle' | 'inProgress' | 'completed'
@@ -74,7 +99,7 @@ export interface FounderAgreementWizardState {
 
 /* ─── Equity helpers ─────────────────────────────────────── */
 export function calcEquityTotal(founders: FAFounder[]): number {
-  return founders.reduce((sum, f) => sum + (parseFloat(f.equity) || 0), 0)
+  return founders.reduce((sum, f) => sum + (parseFloat(f.equityPct) || 0), 0)
 }
 
 export function equityValid(founders: FAFounder[]): boolean {
@@ -84,85 +109,102 @@ export function equityValid(founders: FAFounder[]): boolean {
 /* ─── Progress calculation ───────────────────────────────── */
 export function calcFounderAgreementProgress(data: FounderAgreementWizardData): number {
   const checks: boolean[] = [
-    // Step 1
+    // Screen 1
     data.isIncorporated !== '',
-    data.registeredAddress.trim() !== '',
-    data.isIncorporated !== 'Yes' || data.companyName.trim() !== '',
-    data.isIncorporated !== 'Yes' || data.registrationNumber.trim() !== '',
+    data.isIncorporated !== 'No' || data.intendedName.trim() !== '',
+    data.isIncorporated !== 'No' || data.targetIncorporation.trim() !== '',
 
-    // Step 2 — at least 1 founder with all fields filled, equity must total 100%
+    // Screen 2 — at least 1 founder with name + equity
     data.founders.length >= 1,
-    data.founders.every(f => f.name.trim() !== '' && f.email.trim() !== '' && f.role.trim() !== '' && f.equity.trim() !== ''),
+    data.founders.every(f => f.fullNames.trim() !== '' && f.equityPct.trim() !== ''),
     equityValid(data.founders),
 
-    // Step 3
-    data.decisionMakingModel.trim() !== '',
-    data.reservedMatters.some(r => r.trim() !== ''),
-    data.boardApprovalRequirements.trim() !== '',
-    data.founderResponsibilities.trim() !== '',
+    // Screen 3
+    data.vestingApplies !== '',
+    data.vestingApplies !== 'Yes' || data.vestingMonths.trim() !== '',
+    data.vestingApplies !== 'Yes' || data.cliffMonths.trim() !== '',
+    data.vestingApplies !== 'Yes' || data.vestingFrequency !== '',
 
-    // Step 4
-    data.vestingEnabled !== '',
-    data.vestingEnabled !== 'Yes' || data.cliffPeriod.trim() !== '',
-    data.vestingEnabled !== 'Yes' || data.vestingPeriod.trim() !== '',
-    data.shareTransferRestrictions.trim() !== '',
-    data.buybackRights.trim() !== '',
-    data.founderExitRules.trim() !== '',
+    // Screen 4
+    data.decisionModel !== '',
+    data.removalProcess.trim() !== '',
+    data.departureRole.trim() !== '',
 
-    // Step 5
-    data.assignIpToCompany !== '',
-    data.hasExistingIp !== '',
-    data.hasExistingIp !== 'Yes' || data.existingIpDescription.trim() !== '',
-    data.hasExistingIp !== 'Yes' || data.existingIpAssignment.trim() !== '',
+    // Screen 5
+    data.ipPreIncorporation !== '',
+    data.priorIpNil || data.priorIp.some(p => p.founder.trim() !== ''),
+    data.publiclyFunded !== '',
+    data.createdAtEmployer !== '',
 
-    // Step 6
-    data.confidentiality.trim() !== '',
-    data.disputeResolution !== '',
-    data.governingLaw.trim() !== '',
-    data.jurisdiction.trim() !== '',
+    // Screen 6
+    data.confidentiality !== '',
+    data.nonSolicit !== '',
+    data.restraint !== '',
+    data.restraint !== 'Yes' || data.restraintMonths.trim() !== '',
+    data.restraint !== 'Yes' || data.restraintArea !== '',
+    data.deadlock.trim() !== '',
+    data.disputeForum.trim() !== '',
     data.signatories.length >= 1,
-    data.signatories.every(s => s.name.trim() !== '' && s.title.trim() !== ''),
+    data.signatories.every(s => s.name.trim() !== ''),
   ]
 
   const filled = checks.filter(Boolean).length
   return Math.round((filled / checks.length) * 100)
 }
 
-export const FA_TOTAL_CHECKS = 27  // total items in the checks array above
+export const FA_TOTAL_CHECKS = 26  // total items in the checks array above
 
 /* ─── Defaults ──────────────────────────────────────────── */
-const makeFounder = (id: string): FAFounder => ({ id, name: '', email: '', role: '', equity: '' })
-const makeSignatory = (id: string): FASignatory => ({ id, name: '', title: '' })
+export const makeFounder = (id: string): FAFounder => ({
+  id, fullNames: '', idNumber: '', role: '', commitment: '', equityPct: '', capital: '',
+})
+export const makePriorIp = (id: string): FAPriorIp => ({
+  id, founder: '', description: '', dateCreated: '', treatment: '',
+})
+export const makeDigitalAsset = (id: string): FADigitalAsset => ({
+  id, asset: '', currentHolder: '', transferDate: '',
+})
+export const makeSignatory = (id: string): FASignatory => ({
+  id, name: '', capacity: '',
+})
 
 export const FA_EMPTY_DATA: FounderAgreementWizardData = {
-  isIncorporated: '',
-  companyName: '',
-  registrationNumber: '',
-  registeredAddress: '',
+  isIncorporated: 'Yes',
+  companyName: 'Acme Technologies (Pty) Ltd',
+  intendedName: '',
+  targetIncorporation: '',
 
   founders: [makeFounder('f1')],
 
-  decisionMakingModel: '',
-  reservedMatters: [''],
-  boardApprovalRequirements: '',
-  founderResponsibilities: '',
+  vestingApplies: 'Yes',
+  vestingMonths: '48',
+  cliffMonths: '12',
+  vestingFrequency: 'Monthly',
+  acceleration: '',
+  goodLeaver: [],
+  badLeaverEffect: '',
 
-  vestingEnabled: '',
-  cliffPeriod: '',
-  vestingPeriod: '',
-  shareTransferRestrictions: '',
-  buybackRights: '',
-  founderExitRules: '',
+  decisionModel: 'Majority with reserved matters unanimous',
+  reservedMatters: [],
+  debtThreshold: '',
+  removalProcess: 'By unanimous vote of the other founders',
+  departureRole: 'Resigns as director and employee',
 
-  assignIpToCompany: '',
-  hasExistingIp: '',
-  existingIpDescription: '',
-  existingIpAssignment: '',
+  ipPreIncorporation: 'Yes',
+  priorIp: [makePriorIp('ip1')],
+  priorIpNil: false,
+  publiclyFunded: 'No',
+  createdAtEmployer: 'No',
+  digitalAssets: [],
 
-  confidentiality: '',
-  disputeResolution: '',
-  governingLaw: 'South Africa',
-  jurisdiction: 'Johannesburg',
+  confidentiality: 'Yes',
+  nonSolicit: 'Yes',
+  restraint: 'Yes',
+  restraintMonths: '12',
+  restraintArea: 'South Africa',
+  deadlock: 'Mediation then arbitration',
+  disputeForum: 'Arbitration under AFSA rules',
+  governingLaw: 'South African law',
   signatories: [makeSignatory('s1')],
 }
 
@@ -175,16 +217,18 @@ const defaultState: FounderAgreementWizardState = {
 
 function draftToState(draft: WizardDraft<FounderAgreementWizardData>): FounderAgreementWizardState {
   const raw = draft.data as Partial<FounderAgreementWizardData>
-  // Ensure arrays always exist (guard against old serialized drafts)
   const data: FounderAgreementWizardData = {
     ...FA_EMPTY_DATA,
     ...raw,
     founders: Array.isArray(raw.founders) && raw.founders.length >= 1
       ? raw.founders
       : FA_EMPTY_DATA.founders,
-    reservedMatters: Array.isArray(raw.reservedMatters) && raw.reservedMatters.length >= 1
-      ? raw.reservedMatters
-      : FA_EMPTY_DATA.reservedMatters,
+    priorIp: Array.isArray(raw.priorIp) && raw.priorIp.length >= 1
+      ? raw.priorIp
+      : FA_EMPTY_DATA.priorIp,
+    digitalAssets: Array.isArray(raw.digitalAssets) ? raw.digitalAssets : [],
+    reservedMatters: Array.isArray(raw.reservedMatters) ? raw.reservedMatters : [],
+    goodLeaver: Array.isArray(raw.goodLeaver) ? raw.goodLeaver : [],
     signatories: Array.isArray(raw.signatories) && raw.signatories.length >= 1
       ? raw.signatories
       : FA_EMPTY_DATA.signatories,

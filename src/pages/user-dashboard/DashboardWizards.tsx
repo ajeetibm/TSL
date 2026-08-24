@@ -102,6 +102,14 @@ const wizardCards = [
     included: ['Exit clauses', 'Voting rights', 'Dividend policies'],
     icon: UsersRound,
   },
+  {
+    title: 'Founders Agreement and IP Assignment',
+    description: 'Establish co-founder roles, equity splits, vesting schedules, and assign all intellectual property to the company.',
+    time: '18-22 minutes',
+    audience: 'Startup co-founders',
+    included: ['Equity & vesting terms', 'IP assignment clauses', 'Founder exit provisions'],
+    icon: Briefcase,
+  },
 ]
 
 // UI labels are mapped to stable Document Catalogue identifiers. Unit weights
@@ -116,6 +124,7 @@ const blueprintIdByTitle: Record<string, string> = {
   'Employment Contract Pack': 'employment-pack',
   'Company Registration': 'company-registration',
   'Shareholders Agreement': 'shareholders-agreement',
+  'Founders Agreement and IP Assignment': 'founders-agreement-ip',
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
