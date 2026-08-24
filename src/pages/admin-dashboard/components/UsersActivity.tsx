@@ -6,7 +6,7 @@ import AdminEditModal from './AdminEditModal'
 import AdminRevokeDialog from './AdminRevokeDialog'
 import { useUserProfile } from '../../../context/UserProfileContext'
 import { adminApi } from '../../../services/tslApi'
-import { getAdmins } from '../services/adminManagementService'
+import { getAdmins, inviteAdmin } from '../services/adminManagementService'
 import type { AdminRecord } from '../types/adminManagement'
 import './UserDetailsModal.css'
 
@@ -528,21 +528,27 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
       <InviteSubAdminModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSendInvitation={(data) => {
-          const newAdmin: AdminRecord = {
-            id: `invite-${Date.now()}`,
-            name: data.fullName,
-            email: data.email,
-            role: 'Sub Admin',
-            status: 'Pending',
-            phone: '',
-            lastActive: '—',
-            invitedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-            secondaryAction: 'Cancel',
-          }
-          setAdmins((prev) => [newAdmin, ...prev])
-          setManagementTab('admins')
+        onSendInvitation={async (data) => {
           setIsInviteModalOpen(false)
+          const res = await inviteAdmin({ fullName: data.fullName, email: data.email, message: data.message })
+          if (res.success) {
+            const newAdmin: AdminRecord = {
+              id: `invite-${Date.now()}`,
+              name: data.fullName,
+              email: data.email,
+              role: 'Sub Admin',
+              status: 'Pending',
+              phone: '',
+              lastActive: '—',
+              invitedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+              secondaryAction: 'Cancel',
+            }
+            setAdmins((prev) => [newAdmin, ...prev])
+            setManagementTab('admins')
+            showToast(`Invitation sent to ${data.email}. ${data.fullName} will receive an email to join as Sub Admin.`, 'success')
+          } else {
+            showToast(res.message ?? 'Failed to send invitation.', 'error')
+          }
         }}
       />
 

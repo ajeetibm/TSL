@@ -9,7 +9,6 @@ import {
   Loader2,
   Mail,
   MapPin,
-  Monitor,
   Phone,
   ArrowLeft,
   ArrowRight,
@@ -23,7 +22,6 @@ import {
   Search,
   Settings,
   Shield,
-  Smartphone,
   Trash2,
   X,
   UserPlus,
@@ -51,6 +49,7 @@ import AddCounselModal from './components/AddCounselModal'
 import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import type { CounselMember } from './components/CounselManagement'
 import { initialCounselMembers } from './components/CounselManagement'
+import { inviteAdmin } from './services/adminManagementService'
 import {
   getRevenueAxisTicks,
   buildRevenueLinePoints,
@@ -316,6 +315,7 @@ export default function AdminDashboard() {
   const adminSessionMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteToast, setInviteToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
@@ -971,9 +971,13 @@ export default function AdminDashboard() {
 
                   <section className="admin-profile__card">
                     <div className="admin-profile__card-title">
-                      <span className="admin-profile__icon admin-profile__icon--dark">
-                        <CalendarDays size={20} />
-                      </span>
+                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40C8.95431 40 0 31.0457 0 20Z" fill="#0D1B2A"/>
+                        <path d="M16.668 11.667V15.0003" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M23.332 11.667V15.0003" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M25.8333 13.333H14.1667C13.2462 13.333 12.5 14.0792 12.5 14.9997V26.6663C12.5 27.5868 13.2462 28.333 14.1667 28.333H25.8333C26.7538 28.333 27.5 27.5868 27.5 26.6663V14.9997C27.5 14.0792 26.7538 13.333 25.8333 13.333Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12.5 18.333H27.5" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       <h2>Active Sessions</h2>
                     </div>
                     <p className="admin-profile__section-desc">Manage your active sessions across different devices</p>
@@ -999,11 +1003,6 @@ export default function AdminDashboard() {
                             key={session.id}
                             className={`admin-profile__session-item${session.isCurrent ? ' admin-profile__session-item--current' : ''}`}
                           >
-                            <span className="admin-profile__session-icon">
-                              {session.device.toLowerCase().includes('iphone') || session.device.toLowerCase().includes('android')
-                                ? <Smartphone size={18} />
-                                : <Monitor size={18} />}
-                            </span>
                             <div className="admin-profile__session-info">
                               <div className="admin-profile__session-device">
                                 {session.device}
@@ -1409,31 +1408,6 @@ export default function AdminDashboard() {
               </div>
 
               <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
-                {/* dashed grid overlay */}
-                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
-                  {/* horizontal dashed lines at each y-tick (71px intervals from bottom, excluding bottom border) */}
-                  {[71, 142, 213, 284].map((y) => (
-                    <line
-                      key={y}
-                      x1="0" y1={286 - y}
-                      x2="100%" y2={286 - y}
-                      stroke="#dde1e5"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                  {/* vertical dashed lines at each month column */}
-                  {Array.from({ length: 11 }, (_, i) => (
-                    <line
-                      key={i}
-                      x1={`${((i + 1) / 12) * 100}%`} y1="0"
-                      x2={`${((i + 1) / 12) * 100}%`} y2="100%"
-                      stroke="#dde1e5"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                </svg>
                 <svg className="admin-dashboard__chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                   <polyline points={revenueLinePoints} />
                 </svg>
@@ -1447,6 +1421,31 @@ export default function AdminDashboard() {
                     <b>{item.month}</b>
                   </div>
                 ))}
+                {/* dashed grid overlay — rendered last so it paints above bars */}
+                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
+                  {/* horizontal dashed lines at each y-tick */}
+                  {[71, 142, 213, 284].map((y) => (
+                    <line
+                      key={y}
+                      x1="0" y1={286 - y}
+                      x2="100%" y2={286 - y}
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                  {/* vertical dashed lines centered on each month column */}
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <line
+                      key={i}
+                      x1={`${((i + 0.5) / 12) * 100}%`} y1="0"
+                      x2={`${((i + 0.5) / 12) * 100}%`} y2="100%"
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                </svg>
               </div>
             </div>
 
@@ -1684,8 +1683,16 @@ export default function AdminDashboard() {
       <InviteSubAdminModal
         isOpen={isInviteModalOpen}
         onClose={() => setIsInviteModalOpen(false)}
-        onSendInvitation={(data) => {
-          console.log('Sending invitation:', data)
+        onSendInvitation={async (data) => {
+          setIsInviteModalOpen(false)
+          const res = await inviteAdmin({ fullName: data.fullName, email: data.email, message: data.message })
+          setInviteToast({
+            msg: res.success
+              ? `Invitation sent to ${data.email}. ${data.fullName} will receive an email to join as Sub Admin.`
+              : (res.message ?? 'Failed to send invitation.'),
+            type: res.success ? 'success' : 'error',
+          })
+          setTimeout(() => setInviteToast(null), 5000)
         }}
       />
 
@@ -1789,6 +1796,17 @@ export default function AdminDashboard() {
             </button>
           </div>
         </div>
+      </div>
+    )}
+
+    {/* ── Invite Sub Admin toast ── */}
+    {inviteToast && (
+      <div className={`adm-toast adm-toast--${inviteToast.type}`} role="status" aria-live="polite">
+        <span className="adm-toast__icon"><CheckCircle2 size={17} /></span>
+        <p className="adm-toast__msg">{inviteToast.msg}</p>
+        <button type="button" className="adm-toast__close" onClick={() => setInviteToast(null)} aria-label="Dismiss">
+          <X size={14} />
+        </button>
       </div>
     )}
     </>
