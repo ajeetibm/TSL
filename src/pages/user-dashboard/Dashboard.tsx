@@ -27,6 +27,7 @@ import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import type { FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import { mapPrivacyPolicyFields } from '../../services/privacyPolicyFieldMap'
+import { mapSlaFields } from '../../services/slaFieldMap'
 import { useUserProfile } from '../../context/UserProfileContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
@@ -1547,7 +1548,11 @@ export default function Dashboard() {
   const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
-  const { state: slaState, startWizard: startSLA, saveProgress: saveSLAProgress, completeWizard: completeSLA, resetWizard: resetSLA } = useSlaWizard()
+  const mapSlaApiFields = useCallback(
+    (data: SlaWizardData) => mapSlaFields(data) as unknown as Record<string, unknown>,
+    [],
+  )
+  const { state: slaState, startWizard: startSLA, saveProgress: saveSLAProgress, completeWizard: completeSLA, resetWizard: resetSLA } = useSlaWizard(mapSlaApiFields)
 
   // ── Billing upgrade flow for Free plan users ──────────────────────────────
   const [upgradePayError, setUpgradePayError] = useState<string | null>(null)

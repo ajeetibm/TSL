@@ -4,8 +4,9 @@
  * Persistence follows the same localStorage pattern as every other wizard hook.
  * Switch VITE_WIZARD_STORAGE=api to use the real backend.
  */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { wizardService, type WizardDraft } from '../services/wizardService'
+import { slaWizardApi } from '../services/tslApi'
 
 /* ─── Severity target row ────────────────────────────────── */
 export interface SeverityTarget {
@@ -327,7 +328,7 @@ function stateToDraft(state: SlaWizardState): WizardDraft<SlaWizardData> {
 }
 
 /* ─── Hook ──────────────────────────────────────────────── */
-export function useSlaWizard() {
+export function useSlaWizard(toApiFields?: (data: SlaWizardData) => Record<string, unknown>) {
   const [state, setState] = useState<SlaWizardState>(() => {
     const raw = localStorage.getItem(LOCAL_KEY)
     if (raw) {
@@ -346,10 +347,11 @@ export function useSlaWizard() {
     const flush = () => {
       const draft = stateToDraft(nextState)
       localStorage.setItem(LOCAL_KEY, JSON.stringify(draft))
+      if (wizardService.mode === 'api' && toApiFields) void slaWizardApi.saveDraft({ ...draft, data: toApiFields(nextState.data) })
     }
     if (immediate) { flush(); return }
     saveTimerRef.current = setTimeout(flush, 400)
-  }, [])
+  }, [toApiFields])
 
   const startWizard = useCallback(() => {
     setState((prev) => {
@@ -382,21 +384,17 @@ export function useSlaWizard() {
       const completedAt = new Date().toISOString()
       const next: SlaWizardState = { ...prev, status: 'completed', completedAt }
       persist(next, true)
+      if (wizardService.mode === 'api' && toApiFields) void slaWizardApi.complete(toApiFields(next.data))
       return next
     })
-  }, [persist])
+  }, [persist, toApiFields])
 
   const resetWizard = useCallback(() => {
     setState(defaultState)
     localStorage.removeItem(LOCAL_KEY)
   }, [])
 
-  useEffect(() => {
-    if (wizardService.mode !== 'api') return
-    wizardService.load<SlaWizardData>('sla').then((draft) => {
-      if (draft) setState(draftToState(draft))
-    })
-  }, [])
+  // API drafts are canonical Field maps; local storage supplies the editable UI draft.
 
   return { state, startWizard, saveProgress, completeWizard, resetWizard }
 }
