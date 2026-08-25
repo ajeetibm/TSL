@@ -1,9 +1,11 @@
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
+  Bell,
   Briefcase,
   CalendarDays,
   Camera,
+  CheckCircle2,
   LockKeyhole,
   Loader2,
   Mail,
@@ -21,6 +23,7 @@ import {
   Search,
   Settings,
   Shield,
+  Trash2,
   X,
   UserPlus,
   UserRound,
@@ -31,6 +34,8 @@ import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
+import type { ActiveSession } from '../../services/tslApi'
+import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import { useCounselRequests } from '../../context/CounselRequestContext'
 import {
   BillingInvoices,
@@ -301,10 +306,23 @@ export default function AdminDashboard() {
   const [adminPasswordSaving, setAdminPasswordSaving] = useState(false)
   const [adminPasswordMessage, setAdminPasswordMessage] = useState<string | null>(null)
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteToast, setInviteToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
+  const [bellOpen, setBellOpen] = useState(false)
+  const [bellTab, setBellTab] = useState<'all' | 'unread'>('all')
+  const bellRef = useRef<HTMLDivElement>(null)
+  const [showAdminPasswordSuccessModal, setShowAdminPasswordSuccessModal] = useState(false)
+  const [adminConfirmRevokeId, setAdminConfirmRevokeId] = useState<string | null>(null)
+  // ── Active Sessions ──────────────────────────────────────────────────────────
+  const [adminSessions, setAdminSessions] = useState<ActiveSession[]>([])
+  const [adminSessionsLoading, setAdminSessionsLoading] = useState(true)
+  const [adminRevokingId, setAdminRevokingId] = useState<string | null>(null)
+  const [adminSessionMessage, setAdminSessionMessage] = useState<string | null>(null)
+  const adminSessionMsgTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Admin profile preferences ─────────────────────────────────────────────
   type AdminPrefs = { workflowUpdates: boolean; weeklySummary: boolean; productUpdates: boolean }
@@ -391,6 +409,32 @@ export default function AdminDashboard() {
     return () => { cancelled = true }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    adminApi.getSessions().then((res) => {
+      if (cancelled) return
+      setAdminSessionsLoading(false)
+      if (res.success && res.data) setAdminSessions(res.data)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const handleAdminRevokeSession = async (sessionId: string) => {
+    if (adminRevokingId) return
+    setAdminRevokingId(sessionId)
+    setAdminSessionMessage(null)
+    const res = await adminApi.revokeSession(sessionId)
+    setAdminRevokingId(null)
+    if (!res.success) {
+      setAdminSessionMessage('⚠ ' + (res.message ?? 'Failed to revoke session.'))
+    } else {
+      if (res.data) setAdminSessions(res.data)
+      setAdminSessionMessage('Session revoked successfully.')
+    }
+    if (adminSessionMsgTimer.current) clearTimeout(adminSessionMsgTimer.current)
+    adminSessionMsgTimer.current = setTimeout(() => setAdminSessionMessage(null), 4000)
+  }
+
   const handlePrefSave = async () => {
     if (!isPrefDirty || prefSaving) return
     setPrefSaving(true)
@@ -439,11 +483,35 @@ export default function AdminDashboard() {
     })
   }, [dashboardData])
   const unreadRejectionNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'counsel_request_rejected' && !notification.read), [dashboardData])
+  const allBellNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((n) => n.type === 'login_alert' || n.type === 'new_user'), [dashboardData])
+  const unreadBellCount = useMemo(() => allBellNotifications.filter((n) => !n.read).length, [allBellNotifications])
+
   const dismissNotification = async (notificationId: string) => {
     const response = await adminApi.markNotificationRead(notificationId)
     if (!response.success) return setError(response.message ?? 'Unable to update notification.')
     setDashboardData((current) => current ? { ...current, notifications: (current.notifications ?? []).map((notification) => notification.notificationId === notificationId ? { ...notification, read: true } : notification) } : current)
   }
+
+  const markAllBellRead = async () => {
+    const unread = allBellNotifications.filter((n) => !n.read)
+    await Promise.all(unread.map((n) => adminApi.markNotificationRead(n.notificationId)))
+    setDashboardData((current) => current ? {
+      ...current,
+      notifications: (current.notifications ?? []).map((n) =>
+        (n.type === 'login_alert' || n.type === 'new_user') ? { ...n, read: true } : n
+      )
+    } : current)
+  }
+
+  // Close bell panel on outside click
+  useEffect(() => {
+    if (!bellOpen) return
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [bellOpen])
 
   const topWizards = (dashboardData?.topWizards ?? []).map((wizard, index) => ({
     ...wizard,
@@ -690,7 +758,7 @@ export default function AdminDashboard() {
             <UserRound size={17} />
             <span>Profile</span>
           </button>
-          <button type="button" className="admin-dashboard__nav-item" onClick={signOut}>
+          <button type="button" className="admin-dashboard__nav-item" onClick={() => setLogoutModalOpen(true)}>
             <LogOut size={17} />
             <span>Sign Out</span>
           </button>
@@ -702,6 +770,68 @@ export default function AdminDashboard() {
           <div className="admin-dashboard__header-text">
             <h1>{headerTitle}</h1>
             <p>{headerDescription}</p>
+          </div>
+
+          {/* ── Bell notification button ── */}
+          <div className="adm-bell" ref={bellRef}>
+            <button
+              type="button"
+              className="adm-bell__btn"
+              onClick={() => setBellOpen((o) => !o)}
+              aria-label={`Notifications${unreadBellCount > 0 ? `, ${unreadBellCount} unread` : ''}`}
+            >
+              <Bell size={22} />
+              {unreadBellCount > 0 && (
+                <span className="adm-bell__badge">{unreadBellCount > 99 ? '99+' : unreadBellCount}</span>
+              )}
+            </button>
+
+            {bellOpen && (
+              <div className="adm-bell__panel" role="dialog" aria-label="Notifications">
+                <div className="adm-bell__panel-header">
+                  <h3>Notifications</h3>
+                  <button type="button" className="adm-bell__mark-all" onClick={() => void markAllBellRead()}>
+                    <CheckCircle2 size={14} /> Mark all read
+                  </button>
+                </div>
+
+                <div className="adm-bell__tabs">
+                  <button type="button" className={`adm-bell__tab${bellTab === 'all' ? ' adm-bell__tab--active' : ''}`} onClick={() => setBellTab('all')}>All</button>
+                  <button type="button" className={`adm-bell__tab${bellTab === 'unread' ? ' adm-bell__tab--active' : ''}`} onClick={() => setBellTab('unread')}>
+                    Unread {unreadBellCount > 0 && `(${unreadBellCount})`}
+                  </button>
+                </div>
+
+                <div className="adm-bell__list">
+                  {(bellTab === 'unread' ? allBellNotifications.filter((n) => !n.read) : allBellNotifications).length === 0 ? (
+                    <p className="adm-bell__empty">No notifications</p>
+                  ) : (
+                    (bellTab === 'unread' ? allBellNotifications.filter((n) => !n.read) : allBellNotifications).map((n) => (
+                      <div key={n.notificationId} className={`adm-bell__item${n.read ? ' adm-bell__item--read' : ''}`}>
+                        <span className="adm-bell__item-icon">
+                          {n.type === 'new_user'
+                            ? <UserPlus size={18} />
+                            : <Shield size={18} />}
+                        </span>
+                        <div className="adm-bell__item-body">
+                          <p className="adm-bell__item-title">
+                            {n.subject}
+                            {!n.read && <span className="adm-bell__dot" />}
+                          </p>
+                          <p className="adm-bell__item-msg">{n.message}</p>
+                          <p className="adm-bell__item-time">{n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' · ' + new Date(n.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Just now'}</p>
+                        </div>
+                        {!n.read && (
+                          <button type="button" className="adm-bell__item-dismiss" onClick={() => void dismissNotification(n.notificationId)} aria-label="Mark as read">
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </header>
 
@@ -943,18 +1073,63 @@ export default function AdminDashboard() {
 
                   <section className="admin-profile__card">
                     <div className="admin-profile__card-title">
-                      <span className="admin-profile__icon admin-profile__icon--dark">
-                        <CalendarDays size={20} />
-                      </span>
+                      <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40C8.95431 40 0 31.0457 0 20Z" fill="#0D1B2A"/>
+                        <path d="M16.668 11.667V15.0003" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M23.332 11.667V15.0003" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M25.8333 13.333H14.1667C13.2462 13.333 12.5 14.0792 12.5 14.9997V26.6663C12.5 27.5868 13.2462 28.333 14.1667 28.333H25.8333C26.7538 28.333 27.5 27.5868 27.5 26.6663V14.9997C27.5 14.0792 26.7538 13.333 25.8333 13.333Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M12.5 18.333H27.5" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       <h2>Active Sessions</h2>
                     </div>
-                    <div className="admin-profile__session">
-                      <div>
-                        <strong>Current Session</strong>
-                        <p>Chrome on Windows - Johannesburg, South Africa</p>
+                    <p className="admin-profile__section-desc">Manage your active sessions across different devices</p>
+
+                    {adminSessionMessage && (
+                      <p
+                        className={`admin-profile__message ${adminSessionMessage.startsWith('⚠') ? 'admin-profile__message--error' : 'admin-profile__message--success'}`}
+                        role={adminSessionMessage.startsWith('⚠') ? 'alert' : 'status'}
+                      >
+                        {adminSessionMessage}
+                      </p>
+                    )}
+
+                    {adminSessionsLoading ? (
+                      <div className="admin-profile__sessions-loading">
+                        <Loader2 size={18} className="admin-settings__save-spinner" />
+                        <span>Loading sessions…</span>
                       </div>
-                      <span>Active</span>
-                    </div>
+                    ) : (
+                      <div className="admin-profile__sessions-list">
+                        {adminSessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className={`admin-profile__session-item${session.isCurrent ? ' admin-profile__session-item--current' : ''}`}
+                          >
+                            <div className="admin-profile__session-info">
+                              <div className="admin-profile__session-device">
+                                {session.device}
+                                {session.isCurrent && <span className="admin-profile__session-badge">Current</span>}
+                              </div>
+                              <div className="admin-profile__session-meta">{session.location} · {session.ip}</div>
+                              <div className="admin-profile__session-time">Last active: {new Date(session.lastActive).toLocaleString()}</div>
+                            </div>
+                            {!session.isCurrent && (
+                              <button
+                                type="button"
+                                className="admin-profile__session-revoke"
+                                onClick={() => setAdminConfirmRevokeId(session.id)}
+                                disabled={adminRevokingId === session.id}
+                                aria-label={`Revoke session on ${session.device}`}
+                              >
+                                {adminRevokingId === session.id
+                                  ? <Loader2 size={15} className="admin-settings__save-spinner" />
+                                  : <Trash2 size={15} />}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </section>
                 </div>
               )}
@@ -1194,7 +1369,7 @@ export default function AdminDashboard() {
             </span>
             <div>
               <strong>{(dashboardData?.kpis?.activeWizards ?? 1234).toLocaleString('en-ZA')}</strong>
-              <h2>Active Wizards</h2>
+              <h2>Active Blueprints</h2>
               <p>Trending upward</p>
             </div>
           </article>
@@ -1272,13 +1447,13 @@ export default function AdminDashboard() {
             )}
 
             <section className="admin-dashboard__top-wizards">
-              <h2>Top Performing Wizards</h2>
+              <h2>Top Performing Blueprints</h2>
               {(topWizards.length ? topWizards : [
                 { name: 'NDA Generator', completions: 1234, percent: 92 },
-                { name: 'Employment Contract', completions: 987, percent: 85 },
-                { name: 'Shareholder Agreement', completions: 756, percent: 88 },
-                { name: 'Director Appointment', completions: 543, percent: 79 },
-                { name: 'Company Registration', completions: 432, percent: 91 },
+                { name: 'Employment Offer Letter', completions: 987, percent: 85 },
+                { name: 'Privacy & Cookies Policy', completions: 756, percent: 88 },
+                { name: 'Founder Agreement', completions: 543, percent: 79 },
+                { name: 'Service Agreement', completions: 432, percent: 91 },
               ]).map((wizard) => (
                 <article className="admin-dashboard__wizard-metric" key={wizard.name}>
                   <div>
@@ -1308,9 +1483,25 @@ export default function AdminDashboard() {
 
             <div className="admin-dashboard__chart-wrap">
               <div className="admin-dashboard__chart-axis" aria-hidden="true">
-                {getRevenueAxisTicks(revenueAxis).map((value) => (
-                  <span key={value}>{formatRevenueAxisLabel(value, revenueAxis)}</span>
-                ))}
+                {getRevenueAxisTicks(revenueAxis).map((value) => {
+                  const label = formatRevenueAxisLabel(value, revenueAxis)
+                  const match = label.match(/^(R\d+)(k)$/)
+                  return (
+                    <span key={value} className="admin-dashboard__chart-axis-tick">
+                      {match ? (
+                        <>
+                          <span className="admin-dashboard__chart-axis-tick__top">
+                            <b>{match[1]}</b>
+                            <em />
+                          </span>
+                          <b className="admin-dashboard__chart-axis-tick__k">{match[2]}</b>
+                        </>
+                      ) : (
+                        <b>{label}</b>
+                      )}
+                    </span>
+                  )
+                })}
               </div>
 
               <div className="admin-dashboard__chart" aria-label="Monthly revenue trend">
@@ -1320,10 +1511,36 @@ export default function AdminDashboard() {
                 {revenueMonths.map((item) => (
                   <div className="admin-dashboard__bar-group" key={item.month}>
                     <span style={{ height: `${getRevenuePlotHeight(item.target, revenueAxis)}px` }} />
-                    <i style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }} />
+                    <i
+                      style={{ bottom: `${getRevenuePlotHeight(item.actual, revenueAxis)}px` }}
+                      data-tooltip={formatCurrency(item.actual)}
+                    />
                     <b>{item.month}</b>
                   </div>
                 ))}
+                {/* dashed grid overlay — rendered last so it paints above bars */}
+                <svg className="admin-dashboard__chart-grid" aria-hidden="true" preserveAspectRatio="none">
+                  {[71, 142, 213, 284].map((y) => (
+                    <line
+                      key={y}
+                      x1="0" y1={286 - y}
+                      x2="100%" y2={286 - y}
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <line
+                      key={i}
+                      x1={`${((i + 0.5) / 12) * 100}%`} y1="0"
+                      x2={`${((i + 0.5) / 12) * 100}%`} y2="100%"
+                      stroke="#dde1e5"
+                      strokeWidth="1"
+                      strokeDasharray="4 4"
+                    />
+                  ))}
+                </svg>
               </div>
             </div>
 
@@ -1554,6 +1771,55 @@ export default function AdminDashboard() {
                 </footer>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      <LogoutConfirmModal
+        isOpen={logoutModalOpen}
+        onClose={() => setLogoutModalOpen(false)}
+      />
+
+      {/* ── Confirm revoke session dialog ── */}
+      {adminConfirmRevokeId && (
+        <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-revoke-dialog-title">
+          <div className="admin-profile__dialog">
+            <h2 id="admin-revoke-dialog-title">Revoke Session</h2>
+            <p>Are you sure you want to revoke this session? The device will be signed out immediately.</p>
+            <div className="admin-profile__dialog-actions">
+              <button type="button" onClick={() => setAdminConfirmRevokeId(null)} disabled={adminRevokingId === adminConfirmRevokeId}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-profile__dialog-danger"
+                disabled={adminRevokingId === adminConfirmRevokeId}
+                onClick={() => {
+                  const id = adminConfirmRevokeId
+                  setAdminConfirmRevokeId(null)
+                  void handleAdminRevokeSession(id)
+                }}
+              >
+                {adminRevokingId === adminConfirmRevokeId
+                  ? <Loader2 size={15} className="admin-settings__save-spinner" />
+                  : 'Revoke'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Password changed success modal ── */}
+      {showAdminPasswordSuccessModal && (
+        <div className="admin-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="admin-pw-success-title">
+          <div className="admin-profile__dialog">
+            <h2 id="admin-pw-success-title">Password Updated</h2>
+            <p>Your password has been changed successfully.</p>
+            <div className="admin-profile__dialog-actions">
+              <button type="button" onClick={() => setShowAdminPasswordSuccessModal(false)}>
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

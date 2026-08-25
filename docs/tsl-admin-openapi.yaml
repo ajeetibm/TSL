@@ -1,0 +1,839 @@
+openapi: 3.0.3
+info:
+  title: The Startup Legal — Admin Portal API
+  version: 1.0.0
+  description: |
+    Client-shareable contract for the Admin Portal implemented by the TSL mock server.
+
+    Base URL in the supplied mock environment: `http://localhost:8080`.
+    All successful protected responses use `{ success: true, message?: string, data?: object }`.
+
+    UI/API mapping:
+    * Admin login: `POST /api/v1/auth/login` with `portal: admin`.
+    * Dashboard, Counsel Requests, Monthly Revenue Trend, and the bell feed: `GET /api/v1/admin/dashboard`.
+    * User & Activity: `GET /api/v1/admin/users`; update a user with `PUT /api/v1/admin/users/{userId}`.
+    * Add Counsel: `POST /api/v1/admin/counsel`; assign a dashboard counsel request with `POST /api/v1/admin/counsel-requests/{requestId}/assign`.
+    * Billing & Invoices: `GET /api/v1/admin/billing` and `POST /api/v1/admin/billing/export`.
+    * General Settings, Notifications, and Security: `/api/v1/admin/settings/*`.
+    * Profile Information, Security, and Preferences: `/api/v1/admin/profile`, `/api/v1/admin/change-password`,
+      `/api/v1/admin/security/sessions`, and `/api/v1/admin/profile/preferences`.
+
+    Bell notification rules:
+    * When `newUserAlerts` is true, a successful SME registration creates an unread `new_user` item in the
+      admin dashboard's `notifications` array.
+    * When `loginNotifications` is true, a successful admin login creates an unread `login_alert` item in the
+      same array. Read an item with `PATCH /api/v1/admin/notifications/{notificationId}/read`.
+servers:
+  - url: http://localhost:8080
+    description: Local TSL mock server
+tags:
+  - name: Authentication
+  - name: Dashboard
+  - name: Users & Activity
+  - name: Counsel
+  - name: Billing & Invoices
+  - name: Settings
+  - name: Profile
+  - name: Security
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: Sign in to the Admin Portal
+      description: "Pass `portal: admin` to obtain an admin JWT for all protected endpoints."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminLoginRequest'
+            example:
+              email: given@thestartuplegal.co.za
+              password: admin123
+              portal: admin
+      responses:
+        '200':
+          description: Authenticated admin and bearer token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/v1/admin/dashboard:
+    get:
+      tags: [Dashboard]
+      summary: Load dashboard, Counsel Requests, revenue chart, and bell notifications
+      description: This is the single API call used for the dashboard's counsel-request table, Monthly Revenue Trend chart, KPIs, and notification-bell items.
+      responses:
+        '200':
+          description: Dashboard data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminDashboardResponse'
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /api/v1/admin/users:
+    get:
+      tags: [Users & Activity]
+      summary: Fetch User & Activity data
+      description: Returns activity summary cards, SME user records, and pagination metadata.
+      responses:
+        '200':
+          description: User activity data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUsersResponse'
+
+  /api/v1/admin/users/{userId}:
+    put:
+      tags: [Users & Activity]
+      summary: Update an SME user from User & Activity
+      parameters:
+        - $ref: '#/components/parameters/UserId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Updated user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserResponse'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/counsel:
+    get:
+      tags: [Counsel]
+      summary: List counsel available for assignment
+      responses:
+        '200':
+          description: Counsel directory.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CounselListResponse'
+    post:
+      tags: [Counsel]
+      summary: Add counsel
+      description: Creates a counsel user and issues a temporary password in the mock response. A production API must never return the temporary password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddCounselRequest'
+            example:
+              fullName: Adv. Sipho Nkosi
+              email: s.nkosi@tsl.co.za
+              phone: '+27 11 234 5678'
+              specialty: Commercial & Contract Law
+              experience: 10 years exp
+              location: Johannesburg, Gauteng
+      responses:
+        '201':
+          description: Counsel user created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCounselResponse'
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/admin/counsel-requests/{requestId}/assign:
+    post:
+      tags: [Counsel]
+      summary: Assign a Counsel Request to counsel
+      parameters:
+        - $ref: '#/components/parameters/RequestId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignCounselRequest'
+            example: { counselEmail: s.nkosi@tsl.co.za }
+      responses:
+        '200':
+          description: Request assigned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssignCounselResponse'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/notifications/{notificationId}/read:
+    patch:
+      tags: [Dashboard]
+      summary: Mark one bell notification as read
+      parameters:
+        - $ref: '#/components/parameters/NotificationId'
+      responses:
+        '200':
+          description: Notification marked as read.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResponse'
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/v1/admin/billing:
+    get:
+      tags: [Billing & Invoices]
+      summary: Fetch Billing & Invoices KPIs and invoices
+      parameters:
+        - $ref: '#/components/parameters/Search'
+        - $ref: '#/components/parameters/Client'
+        - $ref: '#/components/parameters/Plan'
+        - $ref: '#/components/parameters/Month'
+      responses:
+        '200':
+          description: Filtered invoices plus KPI totals calculated from the full invoice set.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminBillingResponse'
+
+  /api/v1/admin/billing/export:
+    post:
+      tags: [Billing & Invoices]
+      summary: Start a Billing & Invoices export
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BillingExportRequest'
+      responses:
+        '200':
+          description: Export job queued. The mock server completes its short simulation before returning this response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingExportResponse'
+
+  /api/v1/admin/settings/general:
+    get:
+      tags: [Settings]
+      summary: Get General Settings
+      responses:
+        '200':
+          description: General settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GeneralSettingsResponse' }
+    put:
+      tags: [Settings]
+      summary: Save General Settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/GeneralSettings' }
+      responses:
+        '200':
+          description: Saved general settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GeneralSettingsResponse' }
+
+  /api/v1/admin/settings/notifications:
+    get:
+      tags: [Settings]
+      summary: Get notification settings
+      responses:
+        '200':
+          description: Notification settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationSettingsResponse' }
+    put:
+      tags: [Settings]
+      summary: Save notification settings
+      description: Set `newUserAlerts` to true to add new SME registrations to the admin bell feed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NotificationSettings' }
+      responses:
+        '200':
+          description: Saved notification settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationSettingsResponse' }
+
+  /api/v1/admin/settings/security:
+    get:
+      tags: [Settings]
+      summary: Get Security Settings
+      responses:
+        '200':
+          description: Security settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SecuritySettingsResponse' }
+    put:
+      tags: [Settings]
+      summary: Save Security Settings
+      description: Set `loginNotifications` to true to add successful admin logins to the bell feed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SecuritySettings' }
+      responses:
+        '200':
+          description: Saved security settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SecuritySettingsResponse' }
+
+  /api/v1/admin/settings/password-policy:
+    get:
+      tags: [Settings]
+      summary: Get password policy
+      responses:
+        '200':
+          description: Password policy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PasswordPolicyResponse' }
+    put:
+      tags: [Settings]
+      summary: Save password policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PasswordPolicy' }
+      responses:
+        '200':
+          description: Saved password policy.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PasswordPolicyResponse' }
+
+  /api/v1/admin/profile:
+    get:
+      tags: [Profile]
+      summary: Get Profile Information
+      responses:
+        '200':
+          description: Admin profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminProfileResponse' }
+    put:
+      tags: [Profile]
+      summary: Update Profile Information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminProfileUpdateRequest' }
+      responses:
+        '200':
+          description: Saved profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminProfileResponse' }
+
+  /api/v1/admin/change-password:
+    put:
+      tags: [Profile]
+      summary: Change the admin password from Profile Security
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ChangePasswordRequest' }
+      responses:
+        '200':
+          description: Password changed.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuccessResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+
+  /api/v1/admin/profile/preferences:
+    get:
+      tags: [Profile]
+      summary: Get Profile Preferences
+      responses:
+        '200':
+          description: Profile preferences.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfilePreferencesResponse' }
+    put:
+      tags: [Profile]
+      summary: Save Profile Preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfilePreferences' }
+      responses:
+        '200':
+          description: Saved profile preferences.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfilePreferencesResponse' }
+
+  /api/v1/admin/security/sessions:
+    get:
+      tags: [Security]
+      summary: List active admin sessions
+      responses:
+        '200':
+          description: Active sessions for the authenticated admin.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionsResponse' }
+
+  /api/v1/admin/security/sessions/{sessionId}:
+    delete:
+      tags: [Security]
+      summary: Revoke an active admin session
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session revoked and remaining sessions returned.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SessionsResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UserId: { name: userId, in: path, required: true, schema: { type: string }, example: sme_001 }
+    RequestId: { name: requestId, in: path, required: true, schema: { type: string }, example: req_001 }
+    NotificationId: { name: notificationId, in: path, required: true, schema: { type: string }, example: notif_user_001 }
+    SessionId: { name: sessionId, in: path, required: true, schema: { type: string }, example: sess_a1b2c3 }
+    Search: { name: search, in: query, schema: { type: string }, description: Matches invoice ID, client, or plan. }
+    Client: { name: client, in: query, schema: { type: string }, example: Acme Corp }
+    Plan: { name: plan, in: query, schema: { type: string, enum: [Launchpad, Operator, Boardroom] } }
+    Month: { name: month, in: query, schema: { type: string, enum: [Jan, Feb, Mar, Apr, May, Jun, Jul, Aug, Sep, Oct, Nov, Dec] } }
+  responses:
+    Unauthorized:
+      description: Missing, expired, or invalid bearer token.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    Forbidden:
+      description: The token does not belong to an admin user.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    ValidationError:
+      description: Invalid request body or business-rule validation failure.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+    NotFound:
+      description: Requested resource was not found.
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorResponse' } } }
+  schemas:
+    AdminLoginRequest:
+      type: object
+      required: [email, password, portal]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+        portal: { type: string, enum: [admin] }
+    LoginResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          required: [userId, email, token, portal]
+          properties:
+            userId: { type: string, example: adm_001 }
+            fullName: { type: string, example: Given Mokoena }
+            email: { type: string, format: email }
+            role: { type: string, example: admin }
+            portal: { type: string, enum: [admin] }
+            token: { type: string, description: 'Use as `Authorization: Bearer <token>`.' }
+            tokenExpiry: { type: string, format: date-time }
+    AdminDashboardResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            kpis:
+              type: object
+              properties:
+                totalUsers: { type: integer, example: 2847 }
+                totalUsersTrend: { type: string, example: '+12%' }
+                activeWizards: { type: integer, example: 1234 }
+                activeWizardsTrend: { type: string, example: '+8%' }
+                revenueMTD: { type: number, example: 48574 }
+                currency: { type: string, example: ZAR }
+                issuesCount: { type: integer, example: 26 }
+                criticalIssues: { type: integer, example: 3 }
+            topWizards:
+              type: array
+              items:
+                type: object
+                properties: { name: { type: string }, completions: { type: integer } }
+            recentCounselRequests:
+              type: array
+              description: Counsel Requests displayed on the dashboard.
+              items: { $ref: '#/components/schemas/CounselRequestSummary' }
+            notifications:
+              type: array
+              description: Items shown when the admin opens the notification bell.
+              items: { $ref: '#/components/schemas/AdminNotification' }
+            revenueChart: { $ref: '#/components/schemas/RevenueChart' }
+    CounselRequestSummary:
+      type: object
+      properties:
+        requestId: { type: string, example: req_001 }
+        subject: { type: string, example: Review shareholder agreement }
+        fromUser: { type: string, example: Alex Morgan }
+        receivedAt: { type: string, format: date-time }
+        status: { type: string, example: pending }
+        assignedCounselName: { type: string, nullable: true }
+        rejectionReason: { type: string, nullable: true }
+        rejectedAt: { type: string, format: date-time, nullable: true }
+    RevenueChart:
+      type: object
+      properties:
+        year: { type: integer, example: 2026 }
+        months:
+          type: array
+          items:
+            type: object
+            properties:
+              month: { type: string, example: Jan }
+              actual: { type: number, example: 38200 }
+              target: { type: number, example: 40000 }
+        summary:
+          type: object
+          properties:
+            totalRevenue: { type: number }
+            avgMonthly: { type: number }
+            bestMonth: { type: number }
+            growthRate: { type: string, example: '37.2%' }
+        axis:
+          type: object
+          properties:
+            yMax: { type: number, example: 60000 }
+            ticks: { type: array, items: { type: number } }
+            tickLabels: { type: array, items: { type: string } }
+            format: { type: string, example: ZAR }
+    AdminNotification:
+      type: object
+      properties:
+        notificationId: { type: string, example: notif_login_001 }
+        type: { type: string, enum: [new_user, login_alert, system, payment, issue] }
+        subject: { type: string, example: New Login Detected }
+        message: { type: string }
+        read: { type: boolean, example: false }
+        createdAt: { type: string, format: date-time }
+        readAt: { type: string, format: date-time, nullable: true }
+    AdminUsersResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            stats:
+              type: object
+              properties: { actionsToday: { type: integer }, activeNow: { type: integer }, workflowsStarted: { type: integer } }
+            users: { type: array, items: { $ref: '#/components/schemas/AdminUser' } }
+            pagination:
+              type: object
+              properties: { page: { type: integer }, perPage: { type: integer }, total: { type: integer }, totalPages: { type: integer } }
+    AdminUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties: { data: { $ref: '#/components/schemas/AdminUser' } }
+    AdminUser:
+      type: object
+      properties:
+        userId: { type: string }
+        fullName: { type: string }
+        email: { type: string, format: email }
+        companyName: { type: string }
+        contactPerson: { type: string }
+        phone: { type: string }
+        registrationNumber: { type: string }
+        physicalAddress: { type: string }
+        plan: { type: string, enum: [Launchpad, Operator, Boardroom] }
+        status: { type: string, example: Active }
+        joinedAt: { type: string, format: date }
+        updatedAt: { type: string, format: date-time }
+    UserUpdateRequest:
+      type: object
+      properties:
+        fullName: { type: string }
+        email: { type: string, format: email }
+        companyName: { type: string }
+        contactPerson: { type: string }
+        phone: { type: string }
+        registrationNumber: { type: string }
+        physicalAddress: { type: string }
+        plan: { type: string, enum: [Launchpad, Operator, Boardroom] }
+        status: { type: string, enum: [Active, Inactive, Suspended] }
+    CounselListResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            total: { type: integer }
+            counsel: { type: array, items: { $ref: '#/components/schemas/Counsel' } }
+    Counsel:
+      type: object
+      properties:
+        counselId: { type: string }
+        fullName: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        specialty: { type: string }
+        expertise: { type: string }
+        status: { type: string, example: Available }
+        availability: { type: string, example: Available }
+        experience: { type: string }
+        location: { type: string }
+    AddCounselRequest:
+      type: object
+      required: [fullName, email]
+      properties:
+        fullName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        specialty: { type: string }
+        expertise: { type: string }
+        experience: { type: string }
+        location: { type: string }
+    AddCounselResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            counselId: { type: string }
+            fullName: { type: string }
+            email: { type: string, format: email }
+            status: { type: string, example: active }
+            temporaryPassword: { type: string, description: Mock-only; remove from production responses. }
+            createdAt: { type: string, format: date-time }
+    AssignCounselRequest:
+      type: object
+      required: [counselEmail]
+      properties: { counselEmail: { type: string, format: email } }
+    AssignCounselResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            requestId: { type: string }
+            assignedCounselId: { type: string }
+            assignedCounselName: { type: string }
+            assignedCounselEmail: { type: string, format: email }
+            status: { type: string, example: in_progress }
+            assignedAt: { type: string, format: date-time }
+    NotificationResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { $ref: '#/components/schemas/AdminNotification' }
+    AdminBillingResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            kpis:
+              type: object
+              properties:
+                totalRevenue: { type: number }
+                outstandingAmount: { type: number }
+                outstandingCount: { type: integer }
+                failedAmount: { type: number }
+                failedCount: { type: integer }
+                currency: { type: string, example: ZAR }
+                period: { type: string, example: This month }
+            invoices: { type: array, items: { $ref: '#/components/schemas/Invoice' } }
+            filters:
+              type: object
+              properties: { clients: { type: array, items: { type: string } }, plans: { type: array, items: { type: string } }, months: { type: array, items: { type: string } } }
+            reconciliationAlert:
+              type: object
+              nullable: true
+              properties: { message: { type: string }, count: { type: integer } }
+    Invoice:
+      type: object
+      properties:
+        invoiceId: { type: string }
+        client: { type: string }
+        plan: { type: string }
+        paymentType: { type: string, enum: [subscription, one-time, top-up] }
+        amount: { type: number }
+        currency: { type: string, example: ZAR }
+        status: { type: string, enum: [paid, pending, failed] }
+        issueDate: { type: string, format: date }
+        dueDate: { type: string, format: date }
+        month: { type: string }
+        paidAt: { type: string, format: date, nullable: true }
+        reference: { type: string }
+        email: { type: string, format: email }
+    BillingExportRequest:
+      type: object
+      properties:
+        format: { type: string, enum: [pdf, csv], default: pdf }
+        filters: { type: object, additionalProperties: true }
+    BillingExportResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+        data:
+          type: object
+          properties:
+            jobId: { type: string }
+            status: { type: string, example: queued }
+            notificationEmail: { type: string, format: email }
+            format: { type: string, enum: [pdf, csv] }
+            estimatedCompletionSeconds: { type: integer, example: 30 }
+            _mockNote: { type: string, description: Present only in the mock implementation. }
+    GeneralSettings:
+      type: object
+      properties:
+        platformName: { type: string, example: The Startup Legal }
+        supportEmail: { type: string, format: email }
+        timezone: { type: string, example: UTC+02:00 (South Africa) }
+        language: { type: string, example: English }
+        dateFormat: { type: string, example: DD/MM/YYYY }
+    GeneralSettingsResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/GeneralSettings' } } } ]
+    NotificationSettings:
+      type: object
+      properties:
+        emailNotifications: { type: boolean }
+        newUserAlerts: { type: boolean, description: Enables bell notifications for new SME registrations. }
+        paymentAlerts: { type: boolean }
+        systemAlerts: { type: boolean }
+        issueNotifications: { type: boolean }
+        weeklyReports: { type: boolean }
+    NotificationSettingsResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/NotificationSettings' } } } ]
+    SecuritySettings:
+      type: object
+      properties:
+        twoFactorAuth: { type: boolean }
+        sessionTimeout: { type: string, example: 30 minutes }
+        loginNotifications: { type: boolean, description: Enables bell notifications for successful admin logins. }
+    SecuritySettingsResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/SecuritySettings' } } } ]
+    PasswordPolicy:
+      type: object
+      properties:
+        minLength: { type: integer, minimum: 1, example: 8 }
+        requireUppercase: { type: boolean }
+        requireLowercase: { type: boolean }
+        requireNumber: { type: boolean }
+        requireSpecial: { type: boolean }
+        expiration: { type: string, example: Never }
+        preventReuse: { type: string, example: '3' }
+        lockoutAttempts: { type: integer, minimum: 1 }
+        lockoutDuration: { type: integer, minimum: 1, description: Minutes. }
+    PasswordPolicyResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/PasswordPolicy' } } } ]
+    AdminProfile:
+      type: object
+      properties:
+        userId: { type: string }
+        fullName: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, example: admin }
+        portal: { type: string, example: admin }
+        phone: { type: string }
+        location: { type: string }
+        jobTitle: { type: string }
+        status: { type: string }
+        joinedAt: { type: string, format: date-time }
+        lastLogin: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    AdminProfileUpdateRequest:
+      type: object
+      properties:
+        firstName: { type: string }
+        lastName: { type: string }
+        email: { type: string, format: email }
+        phone: { type: string }
+        location: { type: string }
+        jobTitle: { type: string }
+    AdminProfileResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/AdminProfile' } } } ]
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword, confirmPassword]
+      properties:
+        currentPassword: { type: string, format: password }
+        newPassword: { type: string, format: password, minLength: 6 }
+        confirmPassword: { type: string, format: password }
+    ProfilePreferences:
+      type: object
+      properties:
+        workflowUpdates: { type: boolean }
+        weeklySummary: { type: boolean }
+        productUpdates: { type: boolean }
+    ProfilePreferencesResponse:
+      allOf: [ { $ref: '#/components/schemas/SuccessResponse' }, { type: object, properties: { data: { $ref: '#/components/schemas/ProfilePreferences' } } } ]
+    SessionsResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - type: object
+          properties: { data: { type: array, items: { $ref: '#/components/schemas/ActiveSession' } } }
+    ActiveSession:
+      type: object
+      properties:
+        sessionId: { type: string }
+        device: { type: string }
+        browser: { type: string }
+        os: { type: string }
+        ip: { type: string }
+        lastActive: { type: string, format: date-time }
+        isCurrent: { type: boolean }
+    SuccessResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        message: { type: string }
+    ErrorResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        message: { type: string }
+        error: { type: string }

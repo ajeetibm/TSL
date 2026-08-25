@@ -368,6 +368,8 @@ export const adminApi = {
   assignCounselRequest: (requestId: string, payload: JsonRecord) =>
     request(`/api/v1/admin/counsel-requests/${requestId}/assign`, 'POST', payload),
   markNotificationRead: (notificationId: string) => request(`/api/v1/admin/notifications/${notificationId}/read`, 'PATCH'),
+  getSessions: () => request<ActiveSession[]>('/api/v1/admin/security/sessions'),
+  revokeSession: (sessionId: string) => request<ActiveSession[]>(`/api/v1/admin/security/sessions/${encodeURIComponent(sessionId)}`, 'DELETE'),
   issues: () => request('/api/v1/admin/issues'),
   // Fetch failed payment transactions.
   // PRODUCTION: backend populates this from payment gateway webhooks / subscription failures.

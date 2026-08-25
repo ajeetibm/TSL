@@ -1,8 +1,6 @@
 import { Loader2, Lock, Shield } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { adminSettingsApi } from '../../../services/tslApi'
-import PasswordPolicyModal from './PasswordPolicyModal'
-import { DEFAULT_POLICY, type PasswordPolicy } from './passwordPolicyTypes'
 
 // ── Security toggle settings ────────────────────────────────────────────────
 type SecuritySettings = {
@@ -22,22 +20,11 @@ function isSecurityEqual(a: SecuritySettings, b: SecuritySettings) {
 
 // ── Component ────────────────────────────────────────────────────────────────
 export default function Security() {
-  // Security toggle state
   const [baseline, setBaseline]       = useState<SecuritySettings>(EMPTY_SECURITY)
   const [settings, setSettings]       = useState<SecuritySettings>(EMPTY_SECURITY)
   const [loadingData, setLoadingData] = useState(true)
   const [saving, setSaving]           = useState(false)
   const [message, setMessage]         = useState<string | null>(null)
-
-  // Password policy modal state
-  const [ppModalOpen, setPpModalOpen] = useState(false)
-  // policy holds the last successfully loaded/saved policy for the summary line.
-  // It is null until the first successful API fetch so we can show DEFAULT_POLICY
-  // as the in-modal starting point without flashing stale localStorage data.
-  const [policy, setPolicy]           = useState<PasswordPolicy>(DEFAULT_POLICY)
-  const [policyLoading, setPolicyLoading] = useState(false)
-  const [policyError, setPolicyError]     = useState<string | null>(null)
-
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Fetch security toggle settings on mount
@@ -85,41 +72,6 @@ export default function Security() {
     setBaseline(next)
     setSettings(next)
     showMessage(res.message ?? 'Security settings updated successfully.')
-  }
-
-  // Open password policy modal — fetch current policy from API first
-  const handleOpenPpModal = async () => {
-    setPolicyError(null)
-    setPolicyLoading(true)
-    setPpModalOpen(true)
-
-    const res = await adminSettingsApi.getPasswordPolicy()
-    setPolicyLoading(false)
-
-    if (!res.success || !res.data) {
-      // Keep the modal open so the user can retry or cancel; show the error inline
-      setPolicyError(res.message ?? 'Failed to load password policy. Please try again.')
-      return
-    }
-
-    // Merge API response over DEFAULT_POLICY so any missing keys stay valid
-    const loaded = { ...DEFAULT_POLICY, ...(res.data as Partial<PasswordPolicy>) } as PasswordPolicy
-    setPolicy(loaded)
-  }
-
-  // Called by PasswordPolicyModal when the user clicks Save Changes
-  const handlePolicySave = async (updated: PasswordPolicy): Promise<void> => {
-    const res = await adminSettingsApi.savePasswordPolicy(updated as unknown as Record<string, unknown>)
-
-    if (!res.success) {
-      // Re-throw so PasswordPolicyModal can surface the error without closing
-      throw new Error(res.message ?? 'Failed to save password policy.')
-    }
-
-    // Persist the confirmed-saved policy from the server response
-    const confirmed = { ...DEFAULT_POLICY, ...(res.data as Partial<PasswordPolicy> ?? {}) } as PasswordPolicy
-    setPolicy(confirmed)
-    showMessage(res.message ?? 'Password policy saved successfully.')
   }
 
   function showMessage(msg: string) {
@@ -180,24 +132,9 @@ export default function Security() {
             <span className="admin-settings__row-icon"><Lock size={22} /></span>
             <div>
               <h3>Password Policy</h3>
-              <p>
-                Set minimum password requirements
-                {policy.minLength !== DEFAULT_POLICY.minLength && (
-                  <> · Min {policy.minLength} chars</>
-                )}
-                {policy.expiration !== 'Never' && (
-                  <> · Expires every {policy.expiration} days</>
-                )}
-              </p>
+              <p>Set minimum password requirements</p>
             </div>
-            <button
-              type="button"
-              className="admin-settings__link"
-              onClick={handleOpenPpModal}
-              disabled={loadingData}
-            >
-              Configure
-            </button>
+            <span className="admin-settings__link admin-settings__link--disabled">Configure</span>
           </article>
         </div>
 
@@ -234,15 +171,6 @@ export default function Security() {
         </footer>
       </div>
 
-      {ppModalOpen && (
-        <PasswordPolicyModal
-          initial={policy}
-          loading={policyLoading}
-          loadError={policyError}
-          onSave={handlePolicySave}
-          onClose={() => { setPpModalOpen(false); setPolicyError(null) }}
-        />
-      )}
     </>
   )
 }
