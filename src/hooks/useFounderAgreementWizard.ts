@@ -170,7 +170,7 @@ export const makeSignatory = (id: string): FASignatory => ({
 
 export const FA_EMPTY_DATA: FounderAgreementWizardData = {
   isIncorporated: 'Yes',
-  companyName: 'Acme Technologies (Pty) Ltd',
+  companyName: '',
   intendedName: '',
   targetIncorporation: '',
 

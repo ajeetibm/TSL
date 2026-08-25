@@ -1,7 +1,8 @@
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Check, Loader2, Plus, Trash2, X,
+  AlertCircle, ArrowLeft, ArrowRight, Check, Loader2, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useUserProfile } from '../../context/UserProfileContext'
 import {
   calcEquityTotal,
   calcFounderAgreementProgress,
@@ -25,36 +26,39 @@ export type { FounderAgreementWizardData }
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6
 
-const STEPS: { label: string }[] = [
-  { label: 'Company status' },
-  { label: 'Founders & equity' },
-  { label: 'Vesting' },
-  { label: 'Decisions & roles' },
-  { label: 'Intellectual property' },
-  { label: 'Protections & legal' },
-]
+const STEPS = [
+  'Company status',
+  'Founders & equity',
+  'Vesting',
+  'Decisions & roles',
+  'Intellectual property',
+  'Protections & legal',
+] as const
 
 /* ─── Step bar ───────────────────────────────────────────── */
 function StepBar({ current }: { current: Step }) {
   return (
-    <div className="fa-modal__steps">
-      {STEPS.map((s, i) => {
+    <div className="nda-modal__steps fa-steps">
+      {STEPS.map((label, i) => {
         const num = (i + 1) as Step
         const done = num < current
         const active = num === current
         return (
-          <div key={s.label} className="fa-modal__step-item">
-            {i > 0 && <div className="fa-modal__step-connector" />}
-            <div className={[
-              'fa-modal__step',
-              active ? 'fa-modal__step--active' : '',
-              done ? 'fa-modal__step--done' : '',
+          <div key={label} className="nda-modal__step-item fa-step-item">
+            {i > 0 && <div className="fa-step-connector" />}
+            <span className={[
+              'nda-modal__step-dot',
+              active ? 'nda-modal__step-dot--active' : '',
+              done ? 'nda-modal__step-dot--done' : '',
             ].filter(Boolean).join(' ')}>
-              <div className="fa-modal__step-circle">
-                {done ? '✓' : num}
-              </div>
-              <span>{s.label}</span>
-            </div>
+              {done ? <Check size={13} strokeWidth={3} /> : num}
+            </span>
+            <span className={[
+              'nda-modal__step-label',
+              active || done ? 'nda-modal__step-label--visible' : '',
+            ].filter(Boolean).join(' ')}>
+              {label}
+            </span>
           </div>
         )
       })}
@@ -62,17 +66,20 @@ function StepBar({ current }: { current: Step }) {
   )
 }
 
-/* ─── Toggle group ───────────────────────────────────────── */
+/* ─── Toggle group (Yes / No) ────────────────────────────── */
 function ToggleGroup({ options, value, onChange }: {
   options: string[]; value: string; onChange: (v: string) => void
 }) {
   return (
-    <div className="fa-modal__toggle-group">
+    <div className="nda-modal__duration-grid">
       {options.map((opt) => (
         <button
           key={opt}
           type="button"
-          className={['fa-modal__toggle-btn', value === opt ? 'fa-modal__toggle-btn--selected' : ''].filter(Boolean).join(' ')}
+          className={[
+            'nda-modal__duration-btn',
+            value === opt ? 'nda-modal__duration-btn--active nda-modal__duration-btn--active-dark' : '',
+          ].filter(Boolean).join(' ')}
           onClick={() => onChange(opt)}
         >
           {opt}
@@ -86,16 +93,15 @@ function ToggleGroup({ options, value, onChange }: {
 function MultiChips({ options, value, onChange }: {
   options: string[]; value: string[]; onChange: (v: string[]) => void
 }) {
-  const toggle = (opt: string) => {
+  const toggle = (opt: string) =>
     onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt])
-  }
   return (
-    <div className="fa-modal__chips">
+    <div className="nda-modal__chips">
       {options.map((opt) => (
         <button
           key={opt}
           type="button"
-          className={['fa-modal__chip', value.includes(opt) ? 'fa-modal__chip--selected' : ''].filter(Boolean).join(' ')}
+          className={['nda-modal__chip', value.includes(opt) ? 'nda-modal__chip--selected' : ''].filter(Boolean).join(' ')}
           onClick={() => toggle(opt)}
         >
           {opt}
@@ -108,22 +114,22 @@ function MultiChips({ options, value, onChange }: {
 /* ─── Banner ─────────────────────────────────────────────── */
 function Banner({ type, title, message }: { type: 'warn' | 'block'; title: string; message: string }) {
   return (
-    <div className={['fa-modal__banner', type === 'warn' ? 'fa-modal__banner--warn' : 'fa-modal__banner--block'].join(' ')}>
-      <span className="fa-modal__banner-icon">{type === 'warn' ? '⚠️' : '⛔'}</span>
+    <div className={['nda-modal__banner', type === 'block' ? 'fa-banner--block' : ''].filter(Boolean).join(' ')}>
+      <span style={{ fontSize: 16, flexShrink: 0 }}>{type === 'warn' ? '⚠️' : '⛔'}</span>
       <div>
         <strong>{title}</strong>
-        {message}
+        <p>{message}</p>
       </div>
     </div>
   )
 }
 
-/* ─── Snapshot field (locked / pre-filled) ───────────────── */
+/* ─── Snapshot field (pre-filled from Company Snapshot) ─── */
 function SnapshotField({ value }: { value: string }) {
   return (
-    <div className="fa-modal__snapshot-field">
-      <span>{value}</span>
-      <span className="fa-modal__confirm-pill">Confirm</span>
+    <div className="nda-modal__snapshot-confirm">
+      <span>{value || 'Complete your Company Snapshot'}</span>
+      <span className="nda-modal__snapshot-btn" style={{ cursor: 'default', background: '#c79a3b' }}>CONFIRM</span>
     </div>
   )
 }
@@ -131,179 +137,215 @@ function SnapshotField({ value }: { value: string }) {
 /* ─── Locked field ───────────────────────────────────────── */
 function LockedField({ value }: { value: string }) {
   return (
-    <div className="fa-modal__locked-field">
+    <div className="fa-locked-field">
       <span>{value}</span>
-      <span className="fa-modal__locked-pill">Locked on</span>
+      <span className="fa-locked-pill">Locked on</span>
     </div>
   )
 }
 
-/* ─── Running total bar ──────────────────────────────────── */
+/* ─── Running equity total bar ───────────────────────────── */
 function EquityTotalBar({ founders }: { founders: FAFounder[] }) {
   const total = calcEquityTotal(founders)
   const ok = equityValid(founders)
   return (
-    <div className={['fa-modal__running-total', ok ? 'fa-modal__running-total--ok' : 'fa-modal__running-total--bad'].join(' ')}>
+    <div className={['fa-running-total', ok ? 'fa-running-total--ok' : 'fa-running-total--bad'].join(' ')}>
       <span>Running total of equity percentage</span>
-      <span className="fa-modal__running-total-value">{total}%</span>
+      <span className="fa-running-total__value">{total}%</span>
+    </div>
+  )
+}
+
+/* ─── Form field wrapper ─────────────────────────────────── */
+function Field({ label, required, optional, hint, hintAfter, error, children }: {
+  label: string; required?: boolean; optional?: boolean | string
+  hint?: string; hintAfter?: string; error?: string; children: React.ReactNode
+}) {
+  const optLabel = typeof optional === 'string' ? optional : optional ? '(optional)' : null
+  return (
+    <div className="nda-modal__form-group">
+      <label className="nda-modal__label">
+        {label}
+        {required && <span className="nda-modal__required"> *</span>}
+        {optLabel && <span className="nda-modal__optional"> {optLabel}</span>}
+      </label>
+      {hint && <p className="nda-modal__field-hint">{hint}</p>}
+      {children}
+      {hintAfter && <p className="nda-modal__field-hint">{hintAfter}</p>}
+      {error && <p className="nda-modal__field-error">{error}</p>}
     </div>
   )
 }
 
 /* ─── Repeating row: Founder ─────────────────────────────── */
-function FounderRow({
-  founder, index, canRemove, onChange, onRemove,
-}: {
+function FounderRow({ founder, index, canRemove, onChange, onRemove }: {
   founder: FAFounder; index: number; canRemove: boolean
   onChange: (f: FAFounder) => void; onRemove: () => void
 }) {
   const up = <K extends keyof FAFounder>(key: K, val: FAFounder[K]) => onChange({ ...founder, [key]: val })
   return (
-    <div className="fa-modal__repeat-row fa-modal__repeat-row--founders">
-      <div className="fa-modal__rr-field">
-        <label>Full names</label>
-        <input type="text" placeholder="e.g. Thandiwe Nkosi" value={founder.fullNames}
-          onChange={e => up('fullNames', e.target.value)} />
+    <div className="nda-modal__repeat-card fa-repeat-row--founders" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="nda-modal__repeat-grid nda-modal__repeat-grid--four">
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Full names</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. Thandiwe Nkosi"
+            value={founder.fullNames} onChange={e => up('fullNames', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Identity number</label>
+          <input className="nda-modal__input" type="text" placeholder="13-digit SA ID"
+            value={founder.idNumber} onChange={e => up('idNumber', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Role</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. Chief executive officer"
+            value={founder.role} onChange={e => up('role', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Time commitment</label>
+          <select className="nda-modal__input" value={founder.commitment}
+            onChange={e => up('commitment', e.target.value as FAFounder['commitment'])}>
+            <option value="">Select…</option>
+            <option>Full time</option>
+            <option>Part time</option>
+            <option>Advisory</option>
+          </select>
+        </div>
       </div>
-      <div className="fa-modal__rr-field">
-        <label>Identity number</label>
-        <input type="text" placeholder="13-digit SA ID" value={founder.idNumber}
-          onChange={e => up('idNumber', e.target.value)} />
+      <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr auto' }}>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Equity %</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. 40"
+            value={founder.equityPct} onChange={e => up('equityPct', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Capital contributed</label>
+          <input className="nda-modal__input" type="text" placeholder="Optional"
+            value={founder.capital} onChange={e => up('capital', e.target.value)} />
+        </div>
+        {canRemove && (
+          <button type="button" className="nda-modal__row-remove" aria-label={`Remove founder ${index + 1}`}
+            style={{ alignSelf: 'flex-end' }} onClick={onRemove}>
+            <X size={14} />
+          </button>
+        )}
       </div>
-      <div className="fa-modal__rr-field">
-        <label>Role</label>
-        <input type="text" placeholder="e.g. Chief executive officer" value={founder.role}
-          onChange={e => up('role', e.target.value)} />
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Time commitment</label>
-        <select value={founder.commitment} onChange={e => up('commitment', e.target.value as FAFounder['commitment'])}>
-          <option value="">Select…</option>
-          <option>Full time</option>
-          <option>Part time</option>
-          <option>Advisory</option>
-        </select>
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Equity %</label>
-        <input type="text" placeholder="e.g. 40" value={founder.equityPct}
-          onChange={e => up('equityPct', e.target.value)} />
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Capital contributed</label>
-        <input type="text" placeholder="Optional" value={founder.capital}
-          onChange={e => up('capital', e.target.value)} />
-      </div>
-      {canRemove && (
-        <button type="button" className="fa-modal__rr-remove" aria-label={`Remove founder ${index + 1}`}
-          onClick={onRemove}>✕</button>
-      )}
     </div>
   )
 }
 
 /* ─── Repeating row: Prior IP ────────────────────────────── */
-function PriorIpRow({
-  item, index, canRemove, onChange, onRemove,
-}: {
+function PriorIpRow({ item, index, canRemove, onChange, onRemove }: {
   item: FAPriorIp; index: number; canRemove: boolean
   onChange: (f: FAPriorIp) => void; onRemove: () => void
 }) {
   const up = <K extends keyof FAPriorIp>(key: K, val: FAPriorIp[K]) => onChange({ ...item, [key]: val })
   return (
-    <div className="fa-modal__repeat-row fa-modal__repeat-row--prior-ip">
-      <div className="fa-modal__rr-field">
-        <label>Founder</label>
-        <input type="text" placeholder="e.g. Thandiwe Nkosi" value={item.founder}
-          onChange={e => up('founder', e.target.value)} />
+    <div className="nda-modal__repeat-card">
+      <div className="nda-modal__repeat-grid nda-modal__repeat-grid--four">
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Founder</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. Thandiwe Nkosi"
+            value={item.founder} onChange={e => up('founder', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Description</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. Prototype pricing engine"
+            value={item.description} onChange={e => up('description', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Date created</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. March 2025"
+            value={item.dateCreated} onChange={e => up('dateCreated', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
+          <div>
+            <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Treatment</label>
+            <select className="nda-modal__input" value={item.treatment}
+              onChange={e => up('treatment', e.target.value as FAPriorIp['treatment'])}>
+              <option value="">Select…</option>
+              <option>Assigned to the company</option>
+              <option>Licensed to the company</option>
+              <option>Excluded and retained</option>
+            </select>
+          </div>
+          {canRemove && (
+            <button type="button" className="nda-modal__row-remove" aria-label={`Remove prior IP ${index + 1}`}
+              onClick={onRemove} style={{ marginBottom: 1 }}>
+              <X size={14} />
+            </button>
+          )}
+        </div>
       </div>
-      <div className="fa-modal__rr-field">
-        <label>Description</label>
-        <input type="text" placeholder="e.g. Prototype pricing engine" value={item.description}
-          onChange={e => up('description', e.target.value)} />
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Date created</label>
-        <input type="text" placeholder="e.g. March 2025" value={item.dateCreated}
-          onChange={e => up('dateCreated', e.target.value)} />
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Treatment</label>
-        <select value={item.treatment} onChange={e => up('treatment', e.target.value as FAPriorIp['treatment'])}>
-          <option value="">Select…</option>
-          <option>Assigned to the company</option>
-          <option>Licensed to the company</option>
-          <option>Excluded and retained</option>
-        </select>
-      </div>
-      {canRemove && (
-        <button type="button" className="fa-modal__rr-remove" aria-label={`Remove prior IP ${index + 1}`}
-          onClick={onRemove}>✕</button>
-      )}
     </div>
   )
 }
 
 /* ─── Repeating row: Digital asset ──────────────────────── */
-function DigitalAssetRow({
-  item, index, canRemove, onChange, onRemove,
-}: {
+function DigitalAssetRow({ item, index, canRemove, onChange, onRemove }: {
   item: FADigitalAsset; index: number; canRemove: boolean
   onChange: (f: FADigitalAsset) => void; onRemove: () => void
 }) {
   const up = <K extends keyof FADigitalAsset>(key: K, val: FADigitalAsset[K]) => onChange({ ...item, [key]: val })
   return (
-    <div className="fa-modal__repeat-row fa-modal__repeat-row--digital">
-      <div className="fa-modal__rr-field">
-        <label>Asset</label>
-        <input type="text" placeholder="e.g. @acmeapp handle" value={item.asset}
-          onChange={e => up('asset', e.target.value)} />
+    <div className="nda-modal__repeat-card">
+      <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr 1fr auto', alignItems: 'end' }}>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Asset</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. @acmeapp handle"
+            value={item.asset} onChange={e => up('asset', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Current holder</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. Founder name"
+            value={item.currentHolder} onChange={e => up('currentHolder', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Transfer date</label>
+          <input className="nda-modal__input" type="text" placeholder="e.g. On incorporation"
+            value={item.transferDate} onChange={e => up('transferDate', e.target.value)} />
+        </div>
+        {canRemove && (
+          <button type="button" className="nda-modal__row-remove" aria-label={`Remove digital asset ${index + 1}`}
+            style={{ marginBottom: 1 }} onClick={onRemove}>
+            <X size={14} />
+          </button>
+        )}
       </div>
-      <div className="fa-modal__rr-field">
-        <label>Current holder</label>
-        <input type="text" placeholder="e.g. Founder name" value={item.currentHolder}
-          onChange={e => up('currentHolder', e.target.value)} />
-      </div>
-      <div className="fa-modal__rr-field">
-        <label>Transfer date</label>
-        <input type="text" placeholder="e.g. On incorporation" value={item.transferDate}
-          onChange={e => up('transferDate', e.target.value)} />
-      </div>
-      {canRemove && (
-        <button type="button" className="fa-modal__rr-remove" aria-label={`Remove digital asset ${index + 1}`}
-          onClick={onRemove}>✕</button>
-      )}
     </div>
   )
 }
 
 /* ─── Repeating row: Signatory ───────────────────────────── */
-function SignatoryRow({
-  sig, index, canRemove, onChange, onRemove,
-}: {
+function SignatoryRow({ sig, index, canRemove, onChange, onRemove }: {
   sig: FASignatory; index: number; canRemove: boolean
   onChange: (f: FASignatory) => void; onRemove: () => void
 }) {
   const up = <K extends keyof FASignatory>(key: K, val: FASignatory[K]) => onChange({ ...sig, [key]: val })
   return (
-    <div className="fa-modal__repeat-row fa-modal__repeat-row--signatories">
-      <div className="fa-modal__rr-field">
-        <label>Name</label>
-        <input type="text" placeholder="Full name" value={sig.name}
-          onChange={e => up('name', e.target.value)} />
+    <div className="nda-modal__repeat-card">
+      <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr auto', alignItems: 'end' }}>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Name</label>
+          <input className="nda-modal__input" type="text" placeholder="Full name"
+            value={sig.name} onChange={e => up('name', e.target.value)} />
+        </div>
+        <div className="nda-modal__form-group">
+          <label className="nda-modal__label" style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }}>Signing as</label>
+          <select className="nda-modal__input" value={sig.capacity}
+            onChange={e => up('capacity', e.target.value as FASignatory['capacity'])}>
+            <option value="">Select…</option>
+            <option>Founder</option>
+            <option>Company (where incorporated)</option>
+          </select>
+        </div>
+        {canRemove && (
+          <button type="button" className="nda-modal__row-remove" aria-label={`Remove signatory ${index + 1}`}
+            style={{ marginBottom: 1 }} onClick={onRemove}>
+            <X size={14} />
+          </button>
+        )}
       </div>
-      <div className="fa-modal__rr-field">
-        <label>Signing as</label>
-        <select value={sig.capacity} onChange={e => up('capacity', e.target.value as FASignatory['capacity'])}>
-          <option value="">Select…</option>
-          <option>Founder</option>
-          <option>Company (where incorporated)</option>
-        </select>
-      </div>
-      {canRemove && (
-        <button type="button" className="fa-modal__rr-remove" aria-label={`Remove signatory ${index + 1}`}
-          onClick={onRemove}>✕</button>
-      )}
     </div>
   )
 }
@@ -311,29 +353,9 @@ function SignatoryRow({
 /* ─── Add row button ─────────────────────────────────────── */
 function AddRowBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button type="button" className="fa-modal__rr-add" onClick={onClick}>
-      <Plus size={13} /> {label}
+    <button type="button" className="nda-modal__add-row" onClick={onClick}>
+      {label}
     </button>
-  )
-}
-
-/* ─── Form field wrapper ─────────────────────────────────── */
-function Field({ label, required, optional, hint, hintAfter, error, children }: {
-  label: string; required?: boolean; optional?: boolean | string; hint?: string; hintAfter?: string; error?: string; children: React.ReactNode
-}) {
-  const optLabel = typeof optional === 'string' ? optional : optional ? '(optional)' : null
-  return (
-    <div className={['fa-modal__field', error ? 'fa-modal__field--invalid' : ''].filter(Boolean).join(' ')}>
-      <label className="fa-modal__label">
-        {label}
-        {required && <span className="fa-modal__req"> *</span>}
-        {optLabel && <span className="fa-modal__opt"> {optLabel}</span>}
-      </label>
-      {hint && <div className="fa-modal__hint">{hint}</div>}
-      {children}
-      {hintAfter && <div className="fa-modal__hint">{hintAfter}</div>}
-      {error && <div className="fa-modal__field-error">{error}</div>}
-    </div>
   )
 }
 
@@ -355,9 +377,17 @@ export default function FounderAgreementWizardModal({
   onStepChange,
   onRouteToCounsel,
 }: FounderAgreementWizardModalProps) {
+  const { profile } = useUserProfile()
+  const snapshotCompanyName = profile.entityType === 'Individual'
+    ? profile.individualFullNames.trim()
+    : profile.legalName.trim()
   const resolved = Math.min(Math.max(initialStep, 1), 6) as Step
   const [step, setStep] = useState<Step>(resolved)
-  const [data, setData] = useState<FounderAgreementWizardData>(initialData ?? FA_EMPTY_DATA)
+  const [data, setData] = useState<FounderAgreementWizardData>(() => ({
+    ...FA_EMPTY_DATA,
+    companyName: snapshotCompanyName || FA_EMPTY_DATA.companyName,
+    ...initialData,
+  }))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -373,9 +403,16 @@ export default function FounderAgreementWizardModal({
   useEffect(() => { stepRef.current = step }, [step])
   useEffect(() => { onStepChangeRef.current?.(stepRef.current, data) }, [data])
 
-  const set = <K extends keyof FounderAgreementWizardData>(key: K, val: FounderAgreementWizardData[K]) => {
+  useEffect(() => {
+    if (initialData?.companyName || !snapshotCompanyName) return
+    setData(prev => {
+      if (prev.companyName === snapshotCompanyName) return prev
+      return { ...prev, companyName: snapshotCompanyName }
+    })
+  }, [initialData?.companyName, snapshotCompanyName])
+
+  const set = <K extends keyof FounderAgreementWizardData>(key: K, val: FounderAgreementWizardData[K]) =>
     setData(prev => ({ ...prev, [key]: val }))
-  }
 
   /* ── Founder mutations ── */
   const updateFounder = (idx: number, f: FAFounder) =>
@@ -405,76 +442,32 @@ export default function FounderAgreementWizardModal({
   const removeSignatory = (idx: number) =>
     setData(prev => prev.signatories.length <= 1 ? prev : { ...prev, signatories: prev.signatories.filter((_, i) => i !== idx) })
 
-  /* ── Validation — mirrors HTML validateScreen() exactly ── */
+  /* ── Validation ── */
   const validate = (s: Step): boolean => {
     const e: Record<string, string> = {}
     let valid = true
 
-    // Screen 1: only validate when not yet incorporated
     if (s === 1 && data.isIncorporated === 'No') {
-      if (!data.intendedName.trim()) {
-        e.intendedName = 'Enter the intended company name.'
-        valid = false
-      }
-      if (!data.targetIncorporation.trim()) {
-        e.targetIncorporation = 'Enter a target incorporation date.'
-        valid = false
-      }
+      if (!data.intendedName.trim()) { e.intendedName = 'Enter the intended company name.'; valid = false }
+      if (!data.targetIncorporation.trim()) { e.targetIncorporation = 'Enter a target incorporation date.'; valid = false }
     }
-
-    // Screen 2: at least one founder with full_names filled; equity BLOCK
     if (s === 2) {
-      const foundersOk = data.founders.some(f => f.fullNames.trim())
-      if (!foundersOk) {
-        e.founders = 'Add at least one founder.'
-        valid = false
-      }
-      // BLOCK — cannot proceed past this screen until equity = 100%
-      if (!equityValid(data.founders)) {
-        e.equity = 'Equity must total exactly 100%.'
-        valid = false
-      }
+      if (!data.founders.some(f => f.fullNames.trim())) { e.founders = 'Add at least one founder.'; valid = false }
+      if (!equityValid(data.founders)) { e.equity = 'Equity must total exactly 100%.'; valid = false }
     }
-
-    // Screen 3: no validation — warn-only, user can always proceed
-
-    // Screen 4: only validate debt_threshold when that reserved matter is selected
-    if (s === 4) {
-      if (data.reservedMatters.includes('Take on debt above a threshold')) {
-        if (!data.debtThreshold.trim()) {
-          e.debtThreshold = 'Enter a debt threshold value.'
-          valid = false
-        }
-      }
+    if (s === 4 && data.reservedMatters.includes('Take on debt above a threshold')) {
+      if (!data.debtThreshold.trim()) { e.debtThreshold = 'Enter a debt threshold value.'; valid = false }
     }
-
-    // Screen 5: prior IP required (or nil ticked); publicly funded triggers counsel route
     if (s === 5) {
       const priorIpOk = data.priorIpNil || data.priorIp.some(p => p.founder.trim())
-      if (!priorIpOk) {
-        e.priorIp = 'Add at least one item, or tick "Nothing to declare".'
-        valid = false
-      }
-      // Publicly funded — close modal and route to Counsel (not a plain block)
-      if (data.publiclyFunded === 'Yes') {
-        valid = false // mark invalid so we don't advance — handled in next()
-      }
+      if (!priorIpOk) { e.priorIp = 'Add at least one item, or tick "Nothing to declare".'; valid = false }
+      if (data.publiclyFunded === 'Yes') valid = false
     }
-
-    // Screen 6: restraint months when restraint = Yes; at least one signatory name
     if (s === 6) {
-      if (data.restraint === 'Yes') {
-        const ok = data.restraintMonths && parseInt(data.restraintMonths) > 0
-        if (!ok) {
-          e.restraintMonths = 'Enter a valid restraint duration.'
-          valid = false
-        }
+      if (data.restraint === 'Yes' && !(data.restraintMonths && parseInt(data.restraintMonths) > 0)) {
+        e.restraintMonths = 'Enter a valid restraint duration.'; valid = false
       }
-      const sigOk = data.signatories.some(sig => sig.name.trim())
-      if (!sigOk) {
-        e.signatories = 'Add at least one signatory.'
-        valid = false
-      }
+      if (!data.signatories.some(sig => sig.name.trim())) { e.signatories = 'Add at least one signatory.'; valid = false }
     }
 
     setErrors(e)
@@ -484,29 +477,18 @@ export default function FounderAgreementWizardModal({
   /* ── Navigation ── */
   const next = () => {
     const valid = validate(step)
-    // Special case: publicly funded on screen 5 → close modal and route to Counsel
-    if (step === 5 && data.publiclyFunded === 'Yes') {
-      onClose()
-      onRouteToCounsel?.()
-      return
-    }
+    if (step === 5 && data.publiclyFunded === 'Yes') { onClose(); onRouteToCounsel?.(); return }
     if (!valid) return
     onStepChange?.(step, data)
     if (step < 6) setStep(s => (s + 1) as Step)
     else handleGenerate()
   }
-  const prev = () => {
-    if (step > 1) setStep(s => (s - 1) as Step)
-  }
+  const prev = () => { if (step > 1) setStep(s => (s - 1) as Step) }
 
   const handleGenerate = () => {
     if (!isComplete) return
     setIsGenerating(true)
-    setTimeout(() => {
-      setIsGenerating(false)
-      onComplete?.(data)
-      onClose()
-    }, 2000)
+    setTimeout(() => { setIsGenerating(false); onComplete?.(data); onClose() }, 2000)
   }
 
   /* ── Derived flags ── */
@@ -520,22 +502,22 @@ export default function FounderAgreementWizardModal({
   return (
     <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
       <div
-        className="nda-modal fa-modal"
+        className="nda-modal nda-modal--wide"
         role="dialog"
         aria-modal="true"
         aria-label="Founders Agreement and IP Assignment Wizard"
         onClick={e => e.stopPropagation()}
       >
         {/* ── Header ── */}
-        <header className="fa-modal__hero">
-          <div className="fa-modal__hero-top">
+        <header className="nda-modal__header">
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
             <div>
-              <h1>Founders Agreement and IP Assignment</h1>
-              <p className="fa-modal__hero-sub">
+              <h2>Founders Agreement and IP Assignment</h2>
+              <p className="nda-modal__header-subtitle">
                 Founders agreement with intellectual property assignment schedule · 4 run units · 6 screens, 37 fields
               </p>
             </div>
-            <button type="button" className="fa-modal__close-btn" aria-label="Close"
+            <button type="button" className="nda-modal__close" aria-label="Close"
               onClick={isGenerating ? undefined : onClose} disabled={isGenerating}>
               <X size={16} />
             </button>
@@ -547,400 +529,347 @@ export default function FounderAgreementWizardModal({
         {isGenerating && (
           <div className="nda-modal__generating-overlay" aria-live="polite" aria-busy="true">
             <Loader2 size={36} className="nda-modal__generating-spinner" />
-            <p>Generating Founders Agreement &amp; IP Assignment… Please wait.</p>
+            <p>Generating Founders Agreement &amp; IP Assignment…</p>
           </div>
         )}
 
         {/* ── Body ── */}
         {!isGenerating && (
-          <div className="fa-modal__body">
+          <div className="nda-modal__body">
+            <div className="nda-modal__step-content">
 
-            {/* ── Screen 1: Company status ── */}
-            {step === 1 && (
-              <div className="fa-modal__card">
-                <h2>Company status</h2>
-                <p className="fa-modal__card-note">
-                  Whether the company is already incorporated. Where it isn't yet, the agreement binds the founders
-                  personally and assigns to the company on incorporation.
-                </p>
+              {/* ── Screen 1: Company status ── */}
+              {step === 1 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Company status</h3>
+                  <p className="nda-modal__field-hint">
+                    Whether the company is already incorporated. Where it isn't yet, the agreement binds the founders
+                    personally and assigns to the company on incorporation.
+                  </p>
 
-                <div className="fa-modal__field-row">
                   <Field label="Company incorporated" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.isIncorporated}
                       onChange={v => set('isIncorporated', v as 'Yes' | 'No')} />
                   </Field>
-                </div>
 
-                {data.isIncorporated === 'Yes' && (
-                  <div className="fa-modal__field-row fa-modal__field-row--single">
-                    <Field label="Company" required hintAfter="Pre-filled from your Company Snapshot.">
+                  {data.isIncorporated === 'Yes' && (
+                    <Field label="Company" required>
                       <SnapshotField value={data.companyName} />
+                      <p className="nda-modal__field-hint" style={{ marginTop: 6 }}>
+                        Pre-filled from your Company Snapshot.
+                      </p>
                     </Field>
-                  </div>
-                )}
+                  )}
 
-                {data.isIncorporated === 'No' && (
-                  <div className="fa-modal__field-row">
-                    <Field label="Intended company name" required error={errors.intendedName}>
-                      <input type="text" className="fa-modal__input" placeholder="e.g. Acme Technologies"
-                        value={data.intendedName} onChange={e => set('intendedName', e.target.value)} />
-                    </Field>
-                    <Field label="Target incorporation date" required error={errors.targetIncorporation}>
-                      <input type="date" className="fa-modal__input"
-                        value={data.targetIncorporation} onChange={e => set('targetIncorporation', e.target.value)} />
-                    </Field>
-                  </div>
-                )}
-              </div>
-            )}
+                  {data.isIncorporated === 'No' && (
+                    <div className="nda-modal__two-col">
+                      <Field label="Intended company name" required error={errors.intendedName}>
+                        <input className={`nda-modal__input${errors.intendedName ? ' nda-modal__input--error' : ''}`}
+                          type="text" placeholder="e.g. Acme Technologies"
+                          value={data.intendedName} onChange={e => set('intendedName', e.target.value)} />
+                      </Field>
+                      <Field label="Target incorporation date" required error={errors.targetIncorporation}>
+                        <input className={`nda-modal__input${errors.targetIncorporation ? ' nda-modal__input--error' : ''}`}
+                          type="date"
+                          value={data.targetIncorporation} onChange={e => set('targetIncorporation', e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
+                </div>
+              )}
 
-            {/* ── Screen 2: Founders and equity ── */}
-            {step === 2 && (
-              <div className="fa-modal__card">
-                <h2>Founders and equity</h2>
-                <p className="fa-modal__card-note">
-                  Every founder, their role, time commitment and equity split. Equity must total 100% before you can continue.
-                </p>
+              {/* ── Screen 2: Founders and equity ── */}
+              {step === 2 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Founders and equity</h3>
+                  <p className="nda-modal__field-hint">
+                    Every founder, their role, time commitment and equity split. Equity must total 100% before you can continue.
+                  </p>
 
-                <EquityTotalBar founders={data.founders} />
+                  <EquityTotalBar founders={data.founders} />
 
-                {!equityOk && (
-                  <Banner
-                    type="block"
-                    title="Block — equity does not total 100%"
-                    message=" The equity percentages across all founders must add up to exactly 100% before this Blueprint can proceed. Adjust the rows below to clear this block."
-                  />
-                )}
-                {errors.equity && (
-                  <div className="fa-modal__field-error fa-modal__field-error--inline">{errors.equity}</div>
-                )}
+                  {!equityOk && (
+                    <Banner
+                      type="block"
+                      title="Block — equity does not total 100%"
+                      message="The equity percentages across all founders must add up to exactly 100% before this Blueprint can proceed. Adjust the rows below to clear this block."
+                    />
+                  )}
+                  {errors.equity && <p className="nda-modal__field-error">{errors.equity}</p>}
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Founders" required error={errors.founders}>
-                    <div className="fa-modal__repeat-table">
+                    <div className="nda-modal__repeat-list">
                       {data.founders.map((f, i) => (
-                        <FounderRow
-                          key={f.id}
-                          founder={f}
-                          index={i}
-                          canRemove={data.founders.length > 1}
-                          onChange={updated => updateFounder(i, updated)}
-                          onRemove={() => removeFounder(i)}
-                        />
+                        <FounderRow key={f.id} founder={f} index={i} canRemove={data.founders.length > 1}
+                          onChange={updated => updateFounder(i, updated)} onRemove={() => removeFounder(i)} />
                       ))}
                     </div>
                     <AddRowBtn label="+ Add another founder" onClick={addFounder} />
                   </Field>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* ── Screen 3: Vesting ── */}
-            {step === 3 && (
-              <div className="fa-modal__card">
-                <h2>Vesting</h2>
-                <p className="fa-modal__card-note">
-                  Whether founder equity vests over time rather than being held outright from day one.
-                </p>
+              {/* ── Screen 3: Vesting ── */}
+              {step === 3 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Vesting</h3>
+                  <p className="nda-modal__field-hint">
+                    Whether founder equity vests over time rather than being held outright from day one.
+                  </p>
 
-                <div className="fa-modal__field-row">
                   <Field label="Vesting applies" required
                     hintAfter="Most investors will expect this. Help text explains why.">
                     <ToggleGroup options={['Yes', 'No']} value={data.vestingApplies}
                       onChange={v => set('vestingApplies', v as 'Yes' | 'No')} />
                   </Field>
-                </div>
 
-                {data.vestingApplies === 'No' && (
-                  <Banner
-                    type="warn"
-                    title="Warn — vesting disabled"
-                    message=" Most investors will require vesting to be added later, and adding it after a raise is harder than agreeing it now. You can still proceed on your own instruction."
-                  />
-                )}
+                  {data.vestingApplies === 'No' && (
+                    <Banner
+                      type="warn"
+                      title="Warn — vesting disabled"
+                      message="Most investors will require vesting to be added later, and adding it after a raise is harder than agreeing it now. You can still proceed on your own instruction."
+                    />
+                  )}
 
-                {data.vestingApplies === 'Yes' && (
-                  <>
-                    <div className="fa-modal__field-row">
-                      <Field label="Total vesting period (months)" required>
-                        <input type="number" className="fa-modal__input" min={1}
-                          value={data.vestingMonths} onChange={e => set('vestingMonths', e.target.value)} />
-                      </Field>
-                      <Field label="Cliff (months)" required>
-                        <input type="number" className="fa-modal__input" min={0}
-                          value={data.cliffMonths} onChange={e => set('cliffMonths', e.target.value)} />
-                      </Field>
-                    </div>
-                    <div className="fa-modal__field-row">
-                      <Field label="Vesting frequency after the cliff" required>
-                        <select className="fa-modal__select" value={data.vestingFrequency}
-                          onChange={e => set('vestingFrequency', e.target.value as 'Monthly' | 'Quarterly')}>
-                          <option>Monthly</option>
-                          <option>Quarterly</option>
-                        </select>
-                      </Field>
-                      <Field label="Acceleration" optional>
-                        <select className="fa-modal__select" value={data.acceleration}
-                          onChange={e => set('acceleration', e.target.value)}>
-                          <option value="">None selected</option>
-                          <option>None</option>
-                          <option>On change of control</option>
-                          <option>On termination without cause</option>
-                          <option>Both</option>
-                        </select>
-                      </Field>
-                    </div>
-                    <div className="fa-modal__field-row fa-modal__field-row--single">
+                  {data.vestingApplies === 'Yes' && (
+                    <>
+                      <div className="nda-modal__two-col">
+                        <Field label="Total vesting period (months)" required>
+                          <input type="number" className="nda-modal__input" min={1}
+                            value={data.vestingMonths} onChange={e => set('vestingMonths', e.target.value)} />
+                        </Field>
+                        <Field label="Cliff (months)" required>
+                          <input type="number" className="nda-modal__input" min={0}
+                            value={data.cliffMonths} onChange={e => set('cliffMonths', e.target.value)} />
+                        </Field>
+                      </div>
+                      <div className="nda-modal__two-col">
+                        <Field label="Vesting frequency after the cliff" required>
+                          <select className="nda-modal__input" value={data.vestingFrequency}
+                            onChange={e => set('vestingFrequency', e.target.value as 'Monthly' | 'Quarterly')}>
+                            <option>Monthly</option>
+                            <option>Quarterly</option>
+                          </select>
+                        </Field>
+                        <Field label="Acceleration" optional>
+                          <select className="nda-modal__input" value={data.acceleration}
+                            onChange={e => set('acceleration', e.target.value)}>
+                            <option value="">None selected</option>
+                            <option>None</option>
+                            <option>On change of control</option>
+                            <option>On termination without cause</option>
+                            <option>Both</option>
+                          </select>
+                        </Field>
+                      </div>
                       <Field label="Good leaver definition" optional>
                         <MultiChips
                           options={['Death', 'Permanent disability', 'Removal without cause', 'Mutual agreement']}
-                          value={data.goodLeaver}
-                          onChange={v => set('goodLeaver', v)}
+                          value={data.goodLeaver} onChange={v => set('goodLeaver', v)}
                         />
                       </Field>
-                    </div>
-                    <div className="fa-modal__field-row fa-modal__field-row--single">
                       <Field label="Bad leaver consequence" optional>
-                        <select className="fa-modal__select" value={data.badLeaverEffect}
+                        <select className="nda-modal__input" value={data.badLeaverEffect}
                           onChange={e => set('badLeaverEffect', e.target.value)}>
                           <option value="">None selected</option>
                           <option>Unvested forfeited</option>
                           <option>Unvested forfeited and vested repurchased at the lower of cost and fair value</option>
                         </select>
                       </Field>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+                    </>
+                  )}
+                </div>
+              )}
 
-            {/* ── Screen 4: Decisions and roles ── */}
-            {step === 4 && (
-              <div className="fa-modal__card">
-                <h2>Decisions and roles</h2>
-                <p className="fa-modal__card-note">
-                  How decisions get made, which matters need everyone's sign-off, and what happens when a founder leaves.
-                </p>
+              {/* ── Screen 4: Decisions and roles ── */}
+              {step === 4 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Decisions and roles</h3>
+                  <p className="nda-modal__field-hint">
+                    How decisions get made, which matters need everyone's sign-off, and what happens when a founder leaves.
+                  </p>
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Decision model" required>
-                    <select className="fa-modal__select" value={data.decisionModel}
+                    <select className="nda-modal__input" value={data.decisionModel}
                       onChange={e => set('decisionModel', e.target.value as FounderAgreementWizardData['decisionModel'])}>
                       <option>Unanimous for everything</option>
                       <option>Majority with reserved matters unanimous</option>
                       <option>Majority for everything</option>
                     </select>
                   </Field>
-                </div>
 
-                {showReservedMatters && (
-                  <div className="fa-modal__field-row fa-modal__field-row--single">
+                  {showReservedMatters && (
                     <Field label="Reserved matters" optional="(needs unanimous approval)">
                       <MultiChips
                         options={[
-                          'Issue new shares',
-                          'Take on debt above a threshold',
-                          'Sell the business',
-                          'Change the business',
-                          'Appoint or remove a founder',
-                          'Approve the budget',
+                          'Issue new shares', 'Take on debt above a threshold', 'Sell the business',
+                          'Change the business', 'Appoint or remove a founder', 'Approve the budget',
                           'Bring in a co-founder',
                         ]}
-                        value={data.reservedMatters}
-                        onChange={v => set('reservedMatters', v)}
+                        value={data.reservedMatters} onChange={v => set('reservedMatters', v)}
                       />
                     </Field>
-                  </div>
-                )}
+                  )}
 
-                {showDebtThreshold && (
-                  <div className="fa-modal__field-row">
-                    <Field label="Debt threshold" required error={errors.debtThreshold}>
-                      <input type="text" className="fa-modal__input" placeholder="e.g. R250 000"
-                        value={data.debtThreshold} onChange={e => set('debtThreshold', e.target.value)} />
+                  {showDebtThreshold && (
+                    <div className="nda-modal__two-col">
+                      <Field label="Debt threshold" required error={errors.debtThreshold}>
+                        <input className={`nda-modal__input${errors.debtThreshold ? ' nda-modal__input--error' : ''}`}
+                          type="text" placeholder="e.g. R250 000"
+                          value={data.debtThreshold} onChange={e => set('debtThreshold', e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
+
+                  <div className="nda-modal__two-col">
+                    <Field label="Founder removal process" required>
+                      <select className="nda-modal__input" value={data.removalProcess}
+                        onChange={e => set('removalProcess', e.target.value)}>
+                        <option>By unanimous vote of the other founders</option>
+                        <option>By majority</option>
+                        <option>Only for cause</option>
+                      </select>
+                    </Field>
+                    <Field label="What happens to a departing founder's role" required>
+                      <select className="nda-modal__input" value={data.departureRole}
+                        onChange={e => set('departureRole', e.target.value)}>
+                        <option>Resigns as director and employee</option>
+                        <option>Retains a board seat while holding shares</option>
+                      </select>
                     </Field>
                   </div>
-                )}
-
-                <div className="fa-modal__field-row">
-                  <Field label="Founder removal process" required>
-                    <select className="fa-modal__select" value={data.removalProcess}
-                      onChange={e => set('removalProcess', e.target.value)}>
-                      <option>By unanimous vote of the other founders</option>
-                      <option>By majority</option>
-                      <option>Only for cause</option>
-                    </select>
-                  </Field>
-                  <Field label="What happens to a departing founder's role" required>
-                    <select className="fa-modal__select" value={data.departureRole}
-                      onChange={e => set('departureRole', e.target.value)}>
-                      <option>Resigns as director and employee</option>
-                      <option>Retains a board seat while holding shares</option>
-                    </select>
-                  </Field>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* ── Screen 5: Intellectual property ── */}
-            {step === 5 && (
-              <div className="fa-modal__card">
-                <h2>Intellectual property</h2>
-                <p className="fa-modal__card-note">
-                  What gets assigned to the company, what predates it, and whether anything about it needs Counsel's attention.
-                </p>
+              {/* ── Screen 5: Intellectual property ── */}
+              {step === 5 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Intellectual property</h3>
+                  <p className="nda-modal__field-hint">
+                    What gets assigned to the company, what predates it, and whether anything about it needs Counsel's attention.
+                  </p>
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Founders assign all work product to the company"
                     hintAfter="This is the core purpose of the agreement and cannot be disabled.">
                     <LockedField value="Yes — assignment applies" />
                   </Field>
-                </div>
 
-                <div className="fa-modal__field-row">
                   <Field label="Assignment covers work created before incorporation" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.ipPreIncorporation}
                       onChange={v => set('ipPreIncorporation', v as 'Yes' | 'No')} />
                   </Field>
-                </div>
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Pre-existing intellectual property" required
                     hint={'At least one row, or tick \u201cNothing to declare\u201d below.'}
                     error={errors.priorIp}>
-                    <div className={['fa-modal__repeat-table', data.priorIpNil ? 'fa-modal__repeat-table--disabled' : ''].filter(Boolean).join(' ')}>
+                    <div className={['nda-modal__repeat-list', data.priorIpNil ? 'fa-repeat--disabled' : ''].filter(Boolean).join(' ')}>
                       {data.priorIp.map((item, i) => (
-                        <PriorIpRow
-                          key={item.id}
-                          item={item}
-                          index={i}
-                          canRemove={data.priorIp.length > 1}
-                          onChange={updated => updatePriorIp(i, updated)}
-                          onRemove={() => removePriorIp(i)}
-                        />
+                        <PriorIpRow key={item.id} item={item} index={i} canRemove={data.priorIp.length > 1}
+                          onChange={updated => updatePriorIp(i, updated)} onRemove={() => removePriorIp(i)} />
                       ))}
                     </div>
                     <AddRowBtn label="+ Add pre-existing IP" onClick={addPriorIp} />
-                    <label className="fa-modal__nil-checkbox">
+                    <label className="fa-nil-checkbox">
                       <input type="checkbox" checked={data.priorIpNil}
                         onChange={e => set('priorIpNil', e.target.checked)} />
                       Nothing to declare
                     </label>
                   </Field>
-                </div>
 
-                <div className="fa-modal__field-row">
-                  <Field label="Any of it publicly funded" required
-                    hintAfter="Includes university or state grant funded work.">
-                    <ToggleGroup options={['Yes', 'No']} value={data.publiclyFunded}
-                      onChange={v => set('publiclyFunded', v as 'Yes' | 'No')} />
-                  </Field>
-                  <Field label="Any of it created while employed elsewhere" required>
-                    <ToggleGroup options={['Yes', 'No']} value={data.createdAtEmployer}
-                      onChange={v => set('createdAtEmployer', v as 'Yes' | 'No')} />
-                  </Field>
-                </div>
+                  <div className="nda-modal__two-col">
+                    <Field label="Any of it publicly funded" required
+                      hintAfter="Includes university or state grant funded work.">
+                      <ToggleGroup options={['Yes', 'No']} value={data.publiclyFunded}
+                        onChange={v => set('publiclyFunded', v as 'Yes' | 'No')} />
+                    </Field>
+                    <Field label="Any of it created while employed elsewhere" required>
+                      <ToggleGroup options={['Yes', 'No']} value={data.createdAtEmployer}
+                        onChange={v => set('createdAtEmployer', v as 'Yes' | 'No')} />
+                    </Field>
+                  </div>
 
-                {data.publiclyFunded === 'Yes' && (
-                  <Banner
-                    type="block"
-                    title="Block — publicly funded work, route to Counsel"
-                    message=" Where prior IP was publicly funded (including university or state grant funded work), the statutory licensing position cannot be contracted away on the platform. This Blueprint is blocked until it's resolved through Counsel."
-                  />
-                )}
+                  {data.publiclyFunded === 'Yes' && (
+                    <Banner
+                      type="block"
+                      title="Block — publicly funded work, route to Counsel"
+                      message="Where prior IP was publicly funded (including university or state grant funded work), the statutory licensing position cannot be contracted away on the platform. This Blueprint is blocked until it's resolved through Counsel."
+                    />
+                  )}
 
-                {data.createdAtEmployer === 'Yes' && (
-                  <Banner
-                    type="warn"
-                    title="Counsel prompt — prior employer claim"
-                    message=" Work created while employed elsewhere can carry a competing ownership claim from that employer. This is flagged for a Counsel prompt before generation — it does not block you from continuing."
-                  />
-                )}
+                  {data.createdAtEmployer === 'Yes' && (
+                    <Banner
+                      type="warn"
+                      title="Counsel prompt — prior employer claim"
+                      message="Work created while employed elsewhere can carry a competing ownership claim from that employer. This is flagged for a Counsel prompt before generation — it does not block you from continuing."
+                    />
+                  )}
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Domains, handles and accounts transferred" optional>
-                    <div className="fa-modal__repeat-table">
+                    <div className="nda-modal__repeat-list">
                       {data.digitalAssets.map((item, i) => (
-                        <DigitalAssetRow
-                          key={item.id}
-                          item={item}
-                          index={i}
-                          canRemove={true}
-                          onChange={updated => updateDigitalAsset(i, updated)}
-                          onRemove={() => removeDigitalAsset(i)}
-                        />
+                        <DigitalAssetRow key={item.id} item={item} index={i} canRemove={true}
+                          onChange={updated => updateDigitalAsset(i, updated)} onRemove={() => removeDigitalAsset(i)} />
                       ))}
                     </div>
                     <AddRowBtn label="+ Add a digital asset" onClick={addDigitalAsset} />
                   </Field>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* ── Screen 6: Protections and legal ── */}
-            {step === 6 && (
-              <div className="fa-modal__card">
-                <h2>Protections and legal</h2>
-                <p className="fa-modal__card-note">
-                  Confidentiality, restraint of trade, how deadlocks get resolved, and where disputes are heard.
-                </p>
+              {/* ── Screen 6: Protections and legal ── */}
+              {step === 6 && (
+                <div className="nda-modal__party-block">
+                  <h3 className="nda-modal__party-title">Protections and legal</h3>
+                  <p className="nda-modal__field-hint">
+                    Confidentiality, restraint of trade, how deadlocks get resolved, and where disputes are heard.
+                  </p>
 
-                <div className="fa-modal__field-row">
-                  <Field label="Confidentiality" required>
-                    <ToggleGroup options={['Yes', 'No']} value={data.confidentiality}
-                      onChange={v => set('confidentiality', v as 'Yes' | 'No')} />
-                  </Field>
-                  <Field label="Non-solicitation of staff and customers" required>
-                    <ToggleGroup options={['Yes', 'No']} value={data.nonSolicit}
-                      onChange={v => set('nonSolicit', v as 'Yes' | 'No')} />
-                  </Field>
-                </div>
+                  <div className="nda-modal__two-col">
+                    <Field label="Confidentiality" required>
+                      <ToggleGroup options={['Yes', 'No']} value={data.confidentiality}
+                        onChange={v => set('confidentiality', v as 'Yes' | 'No')} />
+                    </Field>
+                    <Field label="Non-solicitation of staff and customers" required>
+                      <ToggleGroup options={['Yes', 'No']} value={data.nonSolicit}
+                        onChange={v => set('nonSolicit', v as 'Yes' | 'No')} />
+                    </Field>
+                  </div>
 
-                <div className="fa-modal__field-row">
                   <Field label="Restraint of trade" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.restraint}
                       onChange={v => set('restraint', v as 'Yes' | 'No')} />
                   </Field>
-                </div>
 
-                {showRestraintFields && (
-                  <div className="fa-modal__field-row">
-                    <Field label="Restraint duration (months)" required
-                      hintAfter="Warn where set above 24 months."
-                      error={errors.restraintMonths}>
-                      <input type="number" className="fa-modal__input" min={1}
-                        value={data.restraintMonths} onChange={e => set('restraintMonths', e.target.value)} />
-                    </Field>
-                    <Field label="Restraint area" required>
-                      <select className="fa-modal__select" value={data.restraintArea}
-                        onChange={e => set('restraintArea', e.target.value as FounderAgreementWizardData['restraintArea'])}>
-                        <option>South Africa</option>
-                        <option>Named provinces</option>
-                        <option>Worldwide</option>
-                      </select>
-                    </Field>
-                  </div>
-                )}
+                  {showRestraintFields && (
+                    <div className="nda-modal__two-col">
+                      <Field label="Restraint duration (months)" required
+                        hintAfter="Warn where set above 24 months."
+                        error={errors.restraintMonths}>
+                        <input type="number" className={`nda-modal__input${errors.restraintMonths ? ' nda-modal__input--error' : ''}`}
+                          min={1} value={data.restraintMonths} onChange={e => set('restraintMonths', e.target.value)} />
+                      </Field>
+                      <Field label="Restraint area" required>
+                        <select className="nda-modal__input" value={data.restraintArea}
+                          onChange={e => set('restraintArea', e.target.value as FounderAgreementWizardData['restraintArea'])}>
+                          <option>South Africa</option>
+                          <option>Named provinces</option>
+                          <option>Worldwide</option>
+                        </select>
+                      </Field>
+                    </div>
+                  )}
 
-                {showRestraintMonthsWarn && (
-                  <Banner
-                    type="warn"
-                    title="Warn — restraint above 24 months"
-                    message=" Restraints running longer than 24 months are harder to enforce. You can still proceed on your own instruction."
-                  />
-                )}
+                  {showRestraintMonthsWarn && (
+                    <Banner type="warn" title="Warn — restraint above 24 months"
+                      message="Restraints running longer than 24 months are harder to enforce. You can still proceed on your own instruction." />
+                  )}
+                  {showRestraintAreaWarn && (
+                    <Banner type="warn" title="Warn — worldwide restraint"
+                      message="A worldwide restraint is a broad grant and is scrutinised more closely on enforcement. You can still proceed on your own instruction." />
+                  )}
 
-                {showRestraintAreaWarn && (
-                  <Banner
-                    type="warn"
-                    title="Warn — worldwide restraint"
-                    message=" A worldwide restraint is a broad grant and is scrutinised more closely on enforcement. You can still proceed on your own instruction."
-                  />
-                )}
-
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Deadlock mechanism" required>
-                    <select className="fa-modal__select" value={data.deadlock}
+                    <select className="nda-modal__input" value={data.deadlock}
                       onChange={e => set('deadlock', e.target.value)}>
                       <option>Mediation then arbitration</option>
                       <option>Casting vote to a named founder</option>
@@ -948,64 +877,52 @@ export default function FounderAgreementWizardModal({
                       <option>Sale of the business</option>
                     </select>
                   </Field>
-                </div>
 
-                <div className="fa-modal__field-row">
-                  <Field label="Dispute resolution" required>
-                    <select className="fa-modal__select" value={data.disputeForum}
-                      onChange={e => set('disputeForum', e.target.value)}>
-                      <option>Arbitration under AFSA rules</option>
-                      <option>South African courts</option>
-                    </select>
-                  </Field>
-                  <Field label="Governing law" required>
-                    <select className="fa-modal__select" value={data.governingLaw}
-                      onChange={e => set('governingLaw', e.target.value)}>
-                      <option>South African law</option>
-                    </select>
-                  </Field>
-                </div>
+                  <div className="nda-modal__two-col">
+                    <Field label="Dispute resolution" required>
+                      <select className="nda-modal__input" value={data.disputeForum}
+                        onChange={e => set('disputeForum', e.target.value)}>
+                        <option>Arbitration under AFSA rules</option>
+                        <option>South African courts</option>
+                      </select>
+                    </Field>
+                    <Field label="Governing law" required>
+                      <select className="nda-modal__input" value={data.governingLaw}
+                        onChange={e => set('governingLaw', e.target.value)}>
+                        <option>South African law</option>
+                      </select>
+                    </Field>
+                  </div>
 
-                <div className="fa-modal__field-row fa-modal__field-row--single">
                   <Field label="Signatories" required
                     hint="Every founder signs. The company signs too, where incorporated."
                     error={errors.signatories}>
-                    <div className="fa-modal__repeat-table">
+                    <div className="nda-modal__repeat-list">
                       {data.signatories.map((sig, i) => (
-                        <SignatoryRow
-                          key={sig.id}
-                          sig={sig}
-                          index={i}
-                          canRemove={data.signatories.length > 1}
-                          onChange={updated => updateSignatory(i, updated)}
-                          onRemove={() => removeSignatory(i)}
-                        />
+                        <SignatoryRow key={sig.id} sig={sig} index={i} canRemove={data.signatories.length > 1}
+                          onChange={updated => updateSignatory(i, updated)} onRemove={() => removeSignatory(i)} />
                       ))}
                     </div>
                     <AddRowBtn label="+ Add a signatory" onClick={addSignatory} />
                   </Field>
                 </div>
-              </div>
-            )}
+              )}
+
+            </div>
           </div>
         )}
 
         {/* ── Footer ── */}
         {!isGenerating && (
-          <footer className="fa-modal__footer">
-            <button
-              type="button"
-              className="fa-modal__btn fa-modal__btn--secondary"
-              onClick={prev}
-              disabled={step === 1}
-            >
-              <ArrowLeft size={15} />
-              Previous
+          <footer className="nda-modal__footer">
+            <button type="button" className="nda-modal__btn nda-modal__btn--secondary"
+              onClick={prev} disabled={step === 1}>
+              <ArrowLeft size={15} /> Previous
             </button>
 
-            <span className="fa-modal__step-label">
+            <span className="nda-modal__step-counter">
               {step === 6 && !isComplete ? (
-                <span className="fa-modal__incomplete-warning">
+                <span className="nda-modal__incomplete-warning">
                   <AlertCircle size={14} />
                   {missingCount > 0
                     ? `${missingCount} item${missingCount !== 1 ? 's' : ''} incomplete`
@@ -1019,29 +936,20 @@ export default function FounderAgreementWizardModal({
             <button
               type="button"
               className={[
-                'fa-modal__btn',
-                step === 6 ? 'fa-modal__btn--generate'
-                  : step === 5 && data.publiclyFunded === 'Yes' ? 'fa-modal__btn--route-counsel'
-                  : 'fa-modal__btn--primary',
+                'nda-modal__btn',
+                step === 6 ? 'nda-modal__btn--generate'
+                  : step === 5 && data.publiclyFunded === 'Yes' ? 'fa-btn--counsel'
+                  : 'nda-modal__btn--primary',
               ].join(' ')}
               onClick={next}
               disabled={step === 6 && !isComplete}
-              title={step === 6 && !isComplete ? 'Please complete all required fields and ensure equity totals 100%' : undefined}
             >
               {step === 6 ? (
-                <>
-                  <Check size={15} />
-                  Generate Agreement
-                </>
+                <><Check size={15} /> Generate Agreement</>
               ) : step === 5 && data.publiclyFunded === 'Yes' ? (
-                <>
-                  ⛔ Route to Counsel
-                </>
+                <>⛔ Route to Counsel</>
               ) : (
-                <>
-                  Next Step
-                  <ArrowRight size={15} />
-                </>
+                <>Next Step <ArrowRight size={15} /></>
               )}
             </button>
           </footer>
