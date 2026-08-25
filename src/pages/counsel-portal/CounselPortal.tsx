@@ -51,6 +51,7 @@ type CounselRequest = DashboardRequest & {
   attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
   counselResponse?: string | null
   supportingDocuments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
+  reviewGate?: string | null
 }
 
 type EarningsMonth = {
@@ -500,6 +501,7 @@ function RequestDetailsModal({
   const goBack = () => { setView('overview'); setError('') }
 
   const isActionable = request.status !== 'completed' && request.status !== 'rejected'
+  const isPublicFundingReview = request.reviewGate === 'founders_public_funding'
 
   return <div className="counsel-request-modal__backdrop" role="presentation" onMouseDown={onClose}>
     <section className="counsel-request-modal" role="dialog" aria-modal="true" aria-labelledby="counsel-request-modal-title" onMouseDown={(event) => event.stopPropagation()}>
@@ -542,7 +544,7 @@ function RequestDetailsModal({
                 onClick={() => setView('accept')}
               >
                 <CheckCircle2 size={18} />
-                Accept &amp; start review
+                {isPublicFundingReview ? 'Review public-funding gate' : 'Accept & start review'}
               </button>
               <button
                 type="button"
@@ -572,7 +574,7 @@ function RequestDetailsModal({
             <button type="button" className="counsel-request-modal__back" onClick={goBack}>
               <ArrowLeft size={16} /> Back to request
             </button>
-            <span className="counsel-request-modal__subpage-title"><CheckCircle2 size={15} /> Accept &amp; start review</span>
+            <span className="counsel-request-modal__subpage-title"><CheckCircle2 size={15} /> {isPublicFundingReview ? 'Approve and release generation' : 'Accept & start review'}</span>
           </div>
           <section className="counsel-request-modal__response">
             <h3>Counsel response</h3>
@@ -603,7 +605,7 @@ function RequestDetailsModal({
             </div>
 
             <button type="button" className="counsel-request-modal__done" onClick={finish}>
-              Mark as Done
+              {isPublicFundingReview ? 'Approve & Release Generation' : 'Mark as Done'}
             </button>
 
             {error ? <p className="counsel-request-modal__error">{error}</p> : null}

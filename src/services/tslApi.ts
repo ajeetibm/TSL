@@ -224,6 +224,8 @@ export const wizardApi = {
 export const counselApi = {
   credits: () => request<CounselCredits>('/api/v1/sme/counsel/credits'),
   createRequest: (payload: JsonRecord) => request('/api/v1/sme/counsel/requests', 'POST', payload),
+  createPublicFundingReview: (payload: JsonRecord) => request<{ requestId: string; status: 'pending' | 'approved' }>('/api/v1/sme/counsel/public-funding-review', 'POST', payload),
+  publicFundingReviewStatus: (requestId: string) => request<{ status: 'pending' | 'approved' }>(`/api/v1/sme/counsel/public-funding-review/${encodeURIComponent(requestId)}`),
   requests: () => request<CounselRequest[]>('/api/v1/sme/counsel/requests'),
   topUpCredits: (payload: JsonRecord) => request<CounselCredits>('/api/v1/sme/counsel/topup', 'POST', payload),
 }

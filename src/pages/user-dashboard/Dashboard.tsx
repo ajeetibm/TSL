@@ -24,7 +24,7 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
-import { paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
 import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx } from '../../services/docxBuilders'
@@ -1631,7 +1631,6 @@ export default function Dashboard() {
   const [isPPModalOpen, setIsPPModalOpen] = useState(false)
   const [isFAModalOpen, setIsFAModalOpen] = useState(false)
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
-  const [showCounselRouted, setShowCounselRouted] = useState(false)
   const [isSLAModalOpen, setIsSLAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
@@ -2056,6 +2055,25 @@ export default function Dashboard() {
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
+  const routeFounderPublicFundingToCounsel = useCallback(async (data: FounderAgreementWizardData) => {
+    const response = await counselApi.createPublicFundingReview({
+      subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
+      company: data.companyName || data.intendedName || 'Founder company',
+      wizardData: data as unknown as Record<string, unknown>,
+    })
+    if (!response.success || !response.data) {
+      showNdaToast(response.message || 'Unable to submit this review to admin.')
+      return null
+    }
+    showNdaToast('Your publicly funded IP review has been sent to admin for counsel assignment.')
+    return response.data
+  }, [])
+
+  const refreshFounderPublicFundingReview = useCallback(async (requestId: string) => {
+    const response = await counselApi.publicFundingReviewStatus(requestId)
+    return response.success && response.data ? response.data.status : null
+  }, [])
+
   const handleSAComplete = (data: ServiceAgreementWizardData) => {
     const completedAt = new Date().toISOString()
     saveSAProgress(8, data)
@@ -2426,7 +2444,8 @@ export default function Dashboard() {
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
             onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
-            onRouteToCounsel={() => { setIsFAModalOpen(false); setShowCounselRouted(true) }}
+            onRouteToCounsel={routeFounderPublicFundingToCounsel}
+            onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
           />
         )}
 
@@ -2915,10 +2934,10 @@ export default function Dashboard() {
                         <p>Completed {displayDate}</p>
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('founders-agreement-ip', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('founder-agreement', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('founders-agreement-ip', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => void buildFounderAgreementEvidencePack(faData, completedAt, id).then((pack) => triggerDownload(pack, 'Founders-Agreement-Evidence-Pack.txt'))}>
@@ -3052,7 +3071,8 @@ export default function Dashboard() {
           initialData={faState.status === 'completed' ? undefined : faState.data}
           onStepChange={(step, data) => saveFAProgress(step, data)}
           onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false) }}
-          onRouteToCounsel={() => { setIsFAModalOpen(false); setShowCounselRouted(true) }}
+          onRouteToCounsel={routeFounderPublicFundingToCounsel}
+          onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
         />
       )}
 
@@ -3083,47 +3103,6 @@ export default function Dashboard() {
         />
       )}
 
-      {showCounselRouted && (
-        <div className="nda-modal__backdrop" role="presentation" onClick={() => setShowCounselRouted(false)}>
-          <div
-            className="nda-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Routed to Counsel"
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: 480 }}
-          >
-            <header className="nda-modal__header" style={{ background: 'linear-gradient(160deg,#0d1b2a 0%,#132a3f 100%)', padding: '24px 28px' }}>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: 18 }}>Founders Agreement and IP Assignment</h2>
-              <button type="button" className="nda-modal__close" aria-label="Close" onClick={() => setShowCounselRouted(false)}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-              </button>
-            </header>
-            <div className="nda-modal__body" style={{ padding: '32px 28px 24px', textAlign: 'center' }}>
-              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#fdecea', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px', fontSize: 24 }}>
-                ⛔
-              </div>
-              <h3 style={{ margin: '0 0 12px', fontSize: 17, fontWeight: 700, color: '#0d1b2a' }}>Routed to Counsel</h3>
-              <p style={{ margin: '0 0 8px', fontSize: 14, color: '#444', lineHeight: 1.6 }}>
-                This Blueprint has been routed to <strong>Counsel</strong> because prior intellectual property was identified as publicly funded.
-              </p>
-              <p style={{ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.5 }}>
-                Where prior IP was publicly funded (including university or state grant funded work), the statutory licensing position cannot be contracted away on the platform. A Counsel member will follow up with you to resolve this before the agreement can be generated.
-              </p>
-            </div>
-            <footer className="nda-modal__footer" style={{ justifyContent: 'center', padding: '16px 28px 24px' }}>
-              <button
-                type="button"
-                className="nda-modal__btn nda-modal__btn--generate"
-                onClick={() => setShowCounselRouted(false)}
-                style={{ minWidth: 140 }}
-              >
-                Got it
-              </button>
-            </footer>
-          </div>
-        </div>
-      )}
     </DashboardShell>
   )
 }
