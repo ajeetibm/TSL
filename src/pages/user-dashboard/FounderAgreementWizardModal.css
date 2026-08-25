@@ -4,29 +4,57 @@
    Founders Agreement wizard.
    ──────────────────────────────────────────────────────────── */
 
-/* ── Wider shell (6 steps need the room) ─────────────────── */
+/* ── Wider shell (7 steps need the room) ─────────────────── */
 .nda-modal--wide {
   max-width: 960px;
 }
 
-/* ── Step bar: connector lines between dots ───────────────── */
+/* ── Step bar: 7-step compact layout ─────────────────────── */
 .fa-steps {
   gap: 0;
   align-items: center;
 }
 
+/* Each step item: dot + label, shrinkable */
 .fa-step-item {
   display: flex;
   align-items: center;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 12px 4px 12px 0;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Override the base step-item padding so our gap rule wins */
+.nda-modal__steps.fa-steps .nda-modal__step-item {
+  padding: 12px 4px 12px 0;
+  gap: 6px;
+}
+
+/* Shrink dots slightly */
+.nda-modal__steps.fa-steps .nda-modal__step-dot {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* Smaller step labels, allow truncation */
+.nda-modal__steps.fa-steps .nda-modal__step-label {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   min-width: 0;
 }
 
+/* Connector line between steps */
 .fa-step-connector {
-  flex: 1;
+  flex: 1 1 0;
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
-  min-width: 8px;
+  min-width: 6px;
+  max-width: 24px;
 }
 
 /* ── Locked field (IP assignment — cannot be disabled) ────── */
@@ -117,6 +145,49 @@
 
 .fa-btn--counsel:hover {
   background: #ffe4e6;
+}
+
+/* ── Counsel-sent toast ───────────────────────────────────── */
+.fa-counsel-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 24px;
+  padding: 12px 14px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: #166534;
+  animation: fa-toast-in 0.25s ease;
+}
+
+.fa-counsel-toast__icon {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.fa-counsel-toast__close {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #166534;
+  padding: 2px;
+  line-height: 1;
+  border-radius: 4px;
+  opacity: 0.7;
+}
+
+.fa-counsel-toast__close:hover {
+  opacity: 1;
+  background: #bbf7d0;
+}
+
+@keyframes fa-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ── Responsive ───────────────────────────────────────────── */

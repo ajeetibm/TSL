@@ -427,6 +427,7 @@ export default function FounderAgreementWizardModal({
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isGenerating, setIsGenerating] = useState(false)
   const [isRoutingToCounsel, setIsRoutingToCounsel] = useState(false)
+  const [counselToast, setCounselToast] = useState(false)
 
   const progress = calcFounderAgreementProgress(data)
   const isComplete = progress === 100 && equityValid(data.founders)
@@ -561,6 +562,8 @@ export default function FounderAgreementWizardModal({
         publicFundingReviewRequestId: review.requestId,
         publicFundingReviewStatus: review.status,
       }))
+      setCounselToast(true)
+      setTimeout(() => setCounselToast(false), 4000)
     }
     setIsRoutingToCounsel(false)
   }
@@ -598,6 +601,22 @@ export default function FounderAgreementWizardModal({
           </div>
           <StepBar current={step} />
         </header>
+
+        {/* ── Counsel sent toast ── */}
+        {counselToast && (
+          <div className="fa-counsel-toast" role="status" aria-live="polite">
+            <Check size={15} className="fa-counsel-toast__icon" />
+            <span>Request sent to Counsel — you'll be notified once reviewed.</span>
+            <button
+              type="button"
+              className="fa-counsel-toast__close"
+              aria-label="Dismiss"
+              onClick={() => setCounselToast(false)}
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
 
         {/* ── Generating overlay ── */}
         {isGenerating && (
