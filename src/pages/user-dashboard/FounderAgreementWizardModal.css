@@ -1,635 +1,130 @@
 /* ────────────────────────────────────────────────────────────
    FounderAgreementWizardModal.css
-   Styles scoped to .fa-modal — supplements NdaWizardModal.css
+   Thin overrides on top of NdaWizardModal.css for the 6-step
+   Founders Agreement wizard.
    ──────────────────────────────────────────────────────────── */
 
-/* ── Hero header ─────────────────────────────────────────── */
-.fa-modal {
+/* ── Wider shell (6 steps need the room) ─────────────────── */
+.nda-modal--wide {
   max-width: 960px;
-  width: 100%;
 }
 
-.fa-modal__hero {
-  background: linear-gradient(160deg, #0d1b2a 0%, #132a3f 100%);
-  padding: 28px 40px 24px 40px;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.fa-modal__hero-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.fa-modal__hero-top h1 {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  color: #fff;
-}
-
-.fa-modal__hero-sub {
-  margin: 4px 0 0;
-  font-size: 12.5px;
-  color: #a9b7c6;
-  font-weight: 400;
-}
-
-.fa-modal__close-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.06);
-  color: #fff;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.fa-modal__close-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* ── Step bar ─────────────────────────────────────────────── */
-.fa-modal__steps {
-  display: flex;
-  align-items: center;
+/* ── Step bar: connector lines between dots ───────────────── */
+.fa-steps {
   gap: 0;
-  margin-top: 24px;
-  flex-wrap: wrap;
-  row-gap: 8px;
+  align-items: center;
 }
 
-.fa-modal__step-item {
+.fa-step-item {
   display: flex;
   align-items: center;
   flex: 1;
   min-width: 0;
 }
 
-.fa-modal__step-connector {
+.fa-step-connector {
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
   min-width: 8px;
 }
 
-.fa-modal__step {
+/* ── Locked field (IP assignment — cannot be disabled) ────── */
+.fa-locked-field {
   display: flex;
   align-items: center;
-  gap: 7px;
-  color: #7f8fa0;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
+  justify-content: space-between;
+  border: 1px solid #bbddd0;
+  background: #f0faf6;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: #0d1b2a;
 }
 
-.fa-modal__step--active {
-  color: #fff;
-}
-
-.fa-modal__step--done {
-  color: #cfe9dc;
-}
-
-.fa-modal__step-circle {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.fa-locked-pill {
   flex-shrink: 0;
-}
-
-.fa-modal__step--active .fa-modal__step-circle {
-  background: #c79a3b;
-  border-color: #c79a3b;
-  color: #0d1b2a;
-}
-
-.fa-modal__step--done .fa-modal__step-circle {
-  background: #2f9e63;
-  border-color: #2f9e63;
-  color: #fff;
-}
-
-/* ── Body ─────────────────────────────────────────────────── */
-.fa-modal__body {
-  overflow-y: auto;
-  flex: 1;
-  padding: 28px 40px 12px 40px;
-  background: #fff;
-}
-
-/* ── Card ─────────────────────────────────────────────────── */
-.fa-modal__card {
-  background: #f4f5f7;
-  border: 1px solid #e2e4e9;
-  border-radius: 14px;
-  padding: 24px 24px 8px 24px;
-}
-
-.fa-modal__card h2 {
-  margin: 0 0 4px;
-  font-size: 17px;
-  font-weight: 700;
-  color: #0d1b2a;
-}
-
-.fa-modal__card-note {
-  margin: 0 0 18px;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-/* ── Field rows ───────────────────────────────────────────── */
-.fa-modal__field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 18px;
-}
-
-.fa-modal__field-row--single {
-  grid-template-columns: 1fr;
-}
-
-/* ── Individual field ─────────────────────────────────────── */
-.fa-modal__field {
-  display: flex;
-  flex-direction: column;
-}
-
-.fa-modal__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1b2430;
-  margin-bottom: 6px;
-}
-
-.fa-modal__req {
-  color: #c0392b;
-}
-
-.fa-modal__opt {
-  font-weight: 400;
-  color: #6b7280;
-  font-size: 12px;
-}
-
-.fa-modal__hint {
-  font-size: 11.5px;
-  color: #6b7280;
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.fa-modal__field-error {
-  color: #c0392b;
-  font-size: 11.5px;
-  margin-top: 4px;
-}
-
-.fa-modal__field-error--inline {
-  margin-bottom: 10px;
-}
-
-.fa-modal__field--invalid .fa-modal__input,
-.fa-modal__field--invalid .fa-modal__select,
-.fa-modal__field--invalid textarea {
-  border-color: #c0392b;
-}
-
-/* ── Inputs ───────────────────────────────────────────────── */
-.fa-modal__input,
-.fa-modal__select {
-  border: 1px solid #d5d9e0;
-  border-radius: 10px;
-  padding: 11px 13px;
-  font-size: 14px;
-  font-family: inherit;
-  color: #1b2430;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.15s;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.fa-modal__input:focus,
-.fa-modal__select:focus {
-  border-color: #c79a3b;
-  box-shadow: 0 0 0 3px rgba(199, 154, 59, 0.15);
-}
-
-/* ── Snapshot / locked field ──────────────────────────────── */
-.fa-modal__snapshot-field {
-  border: 1px dashed #c3cad6;
-  background: #eef1f5;
-  border-radius: 10px;
-  padding: 11px 13px;
-  font-size: 14px;
-  color: #1b2430;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.fa-modal__confirm-pill {
-  font-size: 10.5px;
-  font-weight: 700;
-  color: #0d1b2a;
-  background: #e0b968;
-  padding: 3px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.fa-modal__locked-field {
-  border: 1px solid #cfe9dc;
-  background: #f1faf5;
-  border-radius: 10px;
-  padding: 11px 13px;
-  font-size: 14px;
-  color: #1b2430;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.fa-modal__locked-pill {
   font-size: 10.5px;
   font-weight: 700;
   color: #1c6b45;
-  background: #cfe9dc;
-  padding: 3px 8px;
+  background: #bbddd0;
+  padding: 3px 10px;
   border-radius: 20px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
-/* ── Toggle group ─────────────────────────────────────────── */
-.fa-modal__toggle-group {
-  display: flex;
-  gap: 8px;
-}
-
-.fa-modal__toggle-btn {
-  border: 1px solid #d5d9e0;
-  background: #fff;
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #1b2430;
-  font-family: inherit;
-  transition: all 0.15s;
-}
-
-.fa-modal__toggle-btn--selected {
-  background: #0d1b2a;
-  border-color: #0d1b2a;
-  color: #fff;
-}
-
-/* ── Multiselect chips ────────────────────────────────────── */
-.fa-modal__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.fa-modal__chip {
-  border: 1px solid #d5d9e0;
-  background: #fff;
-  border-radius: 20px;
-  padding: 8px 14px;
-  font-size: 13px;
-  cursor: pointer;
-  color: #1b2430;
-  font-family: inherit;
-  transition: all 0.15s;
-}
-
-.fa-modal__chip--selected {
-  background: #0d1b2a;
-  border-color: #0d1b2a;
-  color: #fff;
-  font-weight: 600;
-}
-
-/* ── Banners ──────────────────────────────────────────────── */
-.fa-modal__banner {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  border-radius: 12px;
-  padding: 14px 16px;
-  margin-bottom: 18px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.fa-modal__banner--warn {
-  background: #fbf3e2;
-  border: 1px solid #e8cf98;
-  color: #7a5a12;
-}
-
-.fa-modal__banner--block {
-  background: #fdecea;
-  border: 1px solid #f3b7b0;
-  color: #7d2318;
-}
-
-.fa-modal__banner-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.fa-modal__banner strong {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 13px;
-}
-
-/* ── Running total ────────────────────────────────────────── */
-.fa-modal__running-total {
+/* ── Running equity total bar ─────────────────────────────── */
+.fa-running-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border: 1px solid #e2e4e9;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
   border-radius: 10px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
+  color: #0d1b2a;
 }
 
-.fa-modal__running-total-value {
+.fa-running-total__value {
   font-size: 15px;
+  font-weight: 700;
   color: #0d1b2a;
 }
 
-.fa-modal__running-total--ok .fa-modal__running-total-value {
-  color: #2f9e63;
+.fa-running-total--ok .fa-running-total__value  { color: #16a34a; }
+.fa-running-total--bad .fa-running-total__value { color: #dc2626; }
+
+/* ── Block banner (red variant) ───────────────────────────── */
+.fa-banner--block {
+  background: #fff1f2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
 }
 
-.fa-modal__running-total--bad .fa-modal__running-total-value {
-  color: #c0392b;
-}
-
-/* ── Repeating table ──────────────────────────────────────── */
-.fa-modal__repeat-table {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 6px;
-}
-
-.fa-modal__repeat-table--disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-
-.fa-modal__repeat-row {
-  display: grid;
-  gap: 10px;
-  align-items: end;
-  background: #fff;
-  border: 1px solid #e2e4e9;
-  border-radius: 10px;
-  padding: 12px;
-}
-
-.fa-modal__repeat-row--founders {
-  grid-template-columns: repeat(6, 1fr) auto;
-}
-
-.fa-modal__repeat-row--prior-ip {
-  grid-template-columns: repeat(4, 1fr) auto;
-}
-
-.fa-modal__repeat-row--digital {
-  grid-template-columns: repeat(3, 1fr) auto;
-}
-
-.fa-modal__repeat-row--signatories {
-  grid-template-columns: repeat(2, 1fr) auto;
-}
-
-.fa-modal__rr-field {
-  display: flex;
-  flex-direction: column;
-}
-
-.fa-modal__rr-field label {
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.fa-modal__rr-field input,
-.fa-modal__rr-field select {
-  border: 1px solid #d5d9e0;
-  border-radius: 8px;
-  padding: 9px 10px;
-  font-size: 13px;
-  font-family: inherit;
-  color: #1b2430;
-  background: #fff;
-  outline: none;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.fa-modal__rr-field input:focus,
-.fa-modal__rr-field select:focus {
-  border-color: #c79a3b;
-  box-shadow: 0 0 0 2px rgba(199, 154, 59, 0.15);
-}
-
-.fa-modal__rr-remove {
-  background: #fdecea;
-  color: #c0392b;
-  border: 1px solid #f3b7b0;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
-  cursor: pointer;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-family: inherit;
-  align-self: end;
-}
-
-/* ── Add row button ───────────────────────────────────────── */
-.fa-modal__rr-add {
-  align-self: flex-start;
-  background: #fff;
-  border: 1px dashed #c3cad6;
-  color: #0d1b2a;
-  font-weight: 600;
-  font-size: 12.5px;
-  border-radius: 10px;
-  padding: 9px 16px;
-  cursor: pointer;
-  margin-bottom: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-
-.fa-modal__rr-add:hover {
-  background: #f4f5f7;
-}
-
-/* ── Nothing to declare checkbox ─────────────────────────── */
-.fa-modal__nil-checkbox {
+/* ── "Nothing to declare" nil checkbox ───────────────────── */
+.fa-nil-checkbox {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #1b2430;
+  color: #0d1b2a;
   cursor: pointer;
   margin-top: 2px;
 }
 
-.fa-modal__nil-checkbox input {
+.fa-nil-checkbox input[type="checkbox"] {
   width: auto;
   margin: 0;
   cursor: pointer;
 }
 
-/* ── Footer ───────────────────────────────────────────────── */
-.fa-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 40px 28px 40px;
-  border-top: 1px solid #e2e4e9;
-  background: #fbfbfc;
-  flex-shrink: 0;
-}
-
-.fa-modal__step-label {
-  font-size: 13px;
-  color: #6b7280;
-  font-weight: 500;
-}
-
-.fa-modal__incomplete-warning {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #c0392b;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.fa-modal__btn {
-  border: none;
-  border-radius: 24px;
-  padding: 12px 22px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: inherit;
-}
-
-.fa-modal__btn--secondary {
-  background: #fff;
-  border: 1px solid #d5d9e0;
-  color: #1b2430;
-}
-
-.fa-modal__btn--secondary:disabled {
+/* ── Disabled repeat table (prior IP when nil ticked) ─────── */
+.fa-repeat--disabled {
   opacity: 0.4;
-  cursor: not-allowed;
+  pointer-events: none;
 }
 
-.fa-modal__btn--primary {
-  background: #c79a3b;
-  color: #0d1b2a;
+/* ── Route-to-Counsel button ──────────────────────────────── */
+.fa-btn--counsel {
+  background: #fff1f2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
 }
 
-.fa-modal__btn--primary:hover {
-  background: #e0b968;
-}
-
-.fa-modal__btn--generate {
-  background: #c79a3b;
-  color: #0d1b2a;
-}
-
-.fa-modal__btn--generate:hover {
-  background: #e0b968;
-}
-
-.fa-modal__btn--generate:disabled {
-  background: #e5d3ac;
-  color: #a08a5c;
-  cursor: not-allowed;
-}
-
-.fa-modal__btn--route-counsel {
-  background: #fdecea;
-  border: 1px solid #f3b7b0;
-  color: #7d2318;
-}
-
-.fa-modal__btn--route-counsel:hover {
-  background: #fbd5d1;
+.fa-btn--counsel:hover {
+  background: #ffe4e6;
 }
 
 /* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 700px) {
-  .fa-modal__hero,
-  .fa-modal__body,
-  .fa-modal__footer {
-    padding-left: 20px;
-    padding-right: 20px;
+  .fa-step-item {
+    flex: 0 0 auto;
   }
-
-  .fa-modal__field-row {
-    grid-template-columns: 1fr;
-  }
-
-  .fa-modal__steps {
-    flex-wrap: wrap;
-  }
-
-  .fa-modal__repeat-row--founders,
-  .fa-modal__repeat-row--prior-ip,
-  .fa-modal__repeat-row--digital,
-  .fa-modal__repeat-row--signatories {
-    grid-template-columns: 1fr;
+  .fa-step-connector {
+    min-width: 12px;
   }
 }

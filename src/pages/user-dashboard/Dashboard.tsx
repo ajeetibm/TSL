@@ -1739,7 +1739,7 @@ export default function Dashboard() {
     } else if (title === 'Privacy & Cookies Policy') {
       if (ppState.status === 'completed') resetPP()
       startPP(); setIsPPModalOpen(true)
-    } else if (title === 'Founder Agreement' || title === 'Founders Agreement and IP Assignment') {
+    } else if (title === 'Founder Agreement' || title === 'Founders Agreement and IP Assignment' || title === 'Founders agreement and IP assignment') {
       if (faState.status === 'completed') resetFA()
       startFA(); setIsFAModalOpen(true)
     } else if (title === 'Service Agreement') {
