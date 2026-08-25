@@ -3,6 +3,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useUserProfile } from '../../context/UserProfileContext'
+import { mapFounderAgreementFields, type FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import {
   calcEquityTotal,
   calcFounderAgreementProgress,
@@ -393,7 +394,7 @@ interface FounderAgreementWizardModalProps {
   initialStep?: number
   initialData?: FounderAgreementWizardData
   onStepChange?: (step: number, data: FounderAgreementWizardData) => void
-  onRouteToCounsel?: (data: FounderAgreementWizardData) => Promise<{ requestId: string; status: 'pending' | 'approved' } | null>
+  onRouteToCounsel?: (fields: FounderAgreementFieldMap) => Promise<{ requestId: string; status: 'pending' | 'approved' } | null>
   onRefreshPublicFundingReview?: (requestId: string) => Promise<'pending' | 'approved' | null>
 }
 
@@ -555,7 +556,7 @@ export default function FounderAgreementWizardModal({
   const routeToCounsel = async () => {
     if (!onRouteToCounsel || isRoutingToCounsel) return
     setIsRoutingToCounsel(true)
-    const review = await onRouteToCounsel(data)
+    const review = await onRouteToCounsel(mapFounderAgreementFields(data, profile))
     if (review) {
       setData((previous) => ({
         ...previous,

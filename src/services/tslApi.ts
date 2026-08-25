@@ -221,6 +221,14 @@ export const wizardApi = {
   list: () => request<WizardItem[]>('/api/v1/wizards', 'GET', undefined, false),
 }
 
+/** Privacy drafts use the Blueprint's canonical snake_case field map. */
+export const privacyPolicyWizardApi = {
+  saveDraft: (draft: JsonRecord) =>
+    request('/api/v1/sme/wizards/privacy-policy/draft', 'PUT', draft),
+  complete: (data: JsonRecord) =>
+    request<{ completedAt: string }>('/api/v1/sme/wizards/privacy-policy/complete', 'POST', { data }),
+}
+
 export const counselApi = {
   credits: () => request<CounselCredits>('/api/v1/sme/counsel/credits'),
   createRequest: (payload: JsonRecord) => request('/api/v1/sme/counsel/requests', 'POST', payload),

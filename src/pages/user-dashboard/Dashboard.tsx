@@ -25,6 +25,9 @@ import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import type { FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
+import { mapPrivacyPolicyFields } from '../../services/privacyPolicyFieldMap'
+import { useUserProfile } from '../../context/UserProfileContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
 import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx } from '../../services/docxBuilders'
@@ -1531,12 +1534,17 @@ function buildSlaEvidencePack(d: SlaWizardData, completedAt: string | null): Blo
 export default function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { profile } = useUserProfile()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { state: ndaState, startWizard, saveProgress, completeWizard, resetWizard: resetNda } = useNdaWizard()
   const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp, resetWizard: resetEmp } = useEmploymentWizard()
-  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard()
+  const mapPrivacyFields = useCallback(
+    (data: PrivacyPolicyWizardData) => mapPrivacyPolicyFields(data, profile) as unknown as Record<string, unknown>,
+    [profile],
+  )
+  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
   const { state: slaState, startWizard: startSLA, saveProgress: saveSLAProgress, completeWizard: completeSLA, resetWizard: resetSLA } = useSlaWizard()
@@ -2055,11 +2063,11 @@ export default function Dashboard() {
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
-  const routeFounderPublicFundingToCounsel = useCallback(async (data: FounderAgreementWizardData) => {
+  const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap) => {
     const response = await counselApi.createPublicFundingReview({
       subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
-      company: data.companyName || data.intendedName || 'Founder company',
-      wizardData: data as unknown as Record<string, unknown>,
+      company: fields.intended_name || 'Founder company',
+      wizard_data: fields as unknown as Record<string, unknown>,
     })
     if (!response.success || !response.data) {
       showNdaToast(response.message || 'Unable to submit this review to admin.')
