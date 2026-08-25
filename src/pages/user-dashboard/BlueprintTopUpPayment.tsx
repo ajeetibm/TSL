@@ -162,17 +162,24 @@ export default function BlueprintTopUpPayment() {
     <DashboardShell activeSection="Blueprints">
       <main className="btu-page">
 
-        {/* Back button — outside the card */}
-        <button
-          type="button"
-          className="btu-back"
-          onClick={() => navigate('/dashboard')}
-        >
-          <ArrowLeft size={16} />
-          Back to Dashboard
-        </button>
+        {/* ── Page header with back button ── */}
+        <header className="btu-header">
+          <button
+            type="button"
+            className="btu-header__back-btn"
+            aria-label="Back to Dashboard"
+            onClick={() => navigate('/dashboard')}
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div>
+            <h1 className="btu-header__title">Purchase Blueprint Credits</h1>
+            <p className="btu-header__sub">Top up your Blueprint Units to continue</p>
+          </div>
+        </header>
 
         {/* ── Outer single card ── */}
+        <div className="btu-card-wrap">
         <div className="btu-card">
 
           {/* ── Top section: two columns ── */}
@@ -295,6 +302,7 @@ export default function BlueprintTopUpPayment() {
             </p>
           </div>
 
+        </div>
         </div>
       </main>
     </DashboardShell>

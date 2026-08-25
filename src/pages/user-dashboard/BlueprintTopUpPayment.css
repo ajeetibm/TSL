@@ -2,31 +2,76 @@
 .btu-page {
   min-height: 100vh;
   background: #f4f4f4;
-  padding: 32px;
+  padding: 0 0 40px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 0;
   max-width: 900px;
 }
 
-/* ── Back button ─────────────────────────────────────────────────── */
-.btu-back {
-  display: inline-flex;
+/* ── Page header ─────────────────────────────────────────────────── */
+.btu-header {
+  position: relative;
+  min-height: 110px;
+  display: flex;
   align-items: center;
-  gap: 8px;
-  border: 0;
-  background: transparent;
-  color: #6d6d6d;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  transition: color 0.15s ease;
+  gap: 20px;
+  border-bottom: 1px solid #e5e5e5;
+  padding: 16px 32px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-.btu-back:hover {
+/* Circular back button — matches counsel portal header style */
+.btu-header__back-btn {
+  position: absolute;
+  left: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background: #d3a038;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.btu-header__back-btn:hover {
+  background: #b8892e;
+}
+
+.btu-header__back-btn:focus-visible {
+  outline: 2px solid #d3a038;
+  outline-offset: 2px;
+}
+
+.btu-header__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.3;
   color: #0b1c2f;
+}
+
+.btu-header__sub {
+  margin: 4px 0 0;
+  color: #666666;
+  font-size: 15px;
+}
+
+/* ── Card wrapper — provides side padding below the header ──────── */
+.btu-card-wrap {
+  padding: 28px 32px 0;
 }
 
 /* ── Outer card ──────────────────────────────────────────────────── */
@@ -317,7 +362,20 @@
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 720px) {
   .btu-page {
-    padding: 20px 16px 40px;
+    padding: 0 0 40px;
+  }
+
+  .btu-header {
+    padding: 16px 20px 16px 28px;
+    min-height: 90px;
+  }
+
+  .btu-header__title {
+    font-size: 20px;
+  }
+
+  .btu-card-wrap {
+    padding: 20px 16px 0;
   }
 
   .btu-body {

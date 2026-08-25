@@ -727,6 +727,236 @@
   to   { transform: rotate(360deg); }
 }
 
+/* ── Privacy policy modal overrides ───────────────────── */
+.nda-modal--wide {
+  max-width: 960px;
+}
+
+.nda-modal__body--alt {
+  background: #ffffff;
+}
+
+.nda-modal__step-content--policy {
+  background: #ffffff;
+  padding: 32px 40px 8px;
+  gap: 20px;
+}
+
+.nda-modal__panel {
+  background: #f4f5f7;
+  border: 1px solid #e2e4e9;
+  border-radius: 18px;
+  padding: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.nda-modal__panel h3 {
+  margin: 0;
+  color: #0d1b2a;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.nda-modal__panel > p {
+  margin: -8px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.nda-modal__snapshot-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 1px dashed #c3cad6;
+  border-radius: 12px;
+  background: #eef1f5;
+  padding: 14px 16px;
+  color: #1b2430;
+  font-size: 14px;
+}
+
+.nda-modal__confirm-pill {
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: #e0b968;
+  color: #0d1b2a;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.nda-modal__confirm-pill--done {
+  background: #c79a3b;
+  color: #ffffff;
+}
+
+.nda-modal__toggle-row {
+  display: flex;
+  gap: 12px;
+}
+
+.nda-modal__toggle {
+  min-width: 96px;
+  border: 1px solid #d5d9e0;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 12px 18px;
+  color: #1b2430;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nda-modal__toggle--selected {
+  border-color: #0d1b2a;
+  background: #0d1b2a;
+  color: #ffffff;
+}
+
+.nda-modal__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nda-modal__chip {
+  border: 1px solid #c8ced8;
+  border-radius: 999px;
+  background: #ffffff;
+  padding: 12px 20px;
+  color: #1b2430;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.nda-modal__chip--selected {
+  border-color: #0d1b2a;
+  background: #0d1b2a;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.nda-modal__select {
+  width: 100%;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 12px 14px;
+  color: #0d1b2a;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.nda-modal__repeat-list {
+  display: grid;
+  gap: 10px;
+}
+
+.nda-modal__repeat-row {
+  display: grid;
+  align-items: center;
+  gap: 10px;
+}
+
+.nda-modal__repeat-row--single {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.nda-modal__repeat-card {
+  position: relative;
+  border: 1px solid #dfe3e8;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px 56px 16px 16px;
+}
+
+.nda-modal__repeat-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.nda-modal__repeat-grid--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nda-modal__repeat-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.nda-modal__repeat-full {
+  margin-top: 12px;
+}
+
+.nda-modal__row-remove {
+  border: 1px solid #f3b7b0;
+  border-radius: 10px;
+  background: #fff5f5;
+  color: #c0392b;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.nda-modal__row-remove--card {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.nda-modal__add-row {
+  justify-self: start;
+  border: 1px dashed #c3cad6;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 11px 18px;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nda-modal__banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.nda-modal__banner--warn {
+  border: 1px solid #e8cf98;
+  background: #fbf3e2;
+  color: #7a5a12;
+}
+
+.nda-modal__banner strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.nda-modal__banner p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.nda-modal__two-col--wide-gap {
+  gap: 28px;
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 @media (max-width: 600px) {
   .nda-modal__header {

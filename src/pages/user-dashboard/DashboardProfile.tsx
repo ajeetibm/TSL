@@ -37,6 +37,7 @@ export default function DashboardProfile() {
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
   const [avatarPreview, setAvatarPreview] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const entityTypeRef = useRef<HTMLDivElement>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -236,9 +237,11 @@ export default function DashboardProfile() {
     setShowPasswordSuccessModal(true)
   }
 
-  const handleSave = async () => {
+  const handleSave = async (event?: FormEvent) => {
+    event?.preventDefault()
     if (!formData.entityType) {
       setSaveError('Select the legal entity type for this Company Snapshot.')
+      entityTypeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     if (formData.entityType === 'Individual' && formData.idNumber && !isValidSaId(formData.idNumber)) {
@@ -320,7 +323,7 @@ export default function DashboardProfile() {
 
         <section className="dashboard-profile__content">
           {activeTab === 'information' && (
-            <form className="dashboard-profile__card">
+            <form className="dashboard-profile__card" onSubmit={handleSave}>
               <div className="dashboard-profile__summary">
                 <div className="dashboard-profile__avatar">
                   {avatarSrc ? (
@@ -372,23 +375,30 @@ export default function DashboardProfile() {
               </div>
 
               <div className="dashboard-profile__fields">
-                <label className="dashboard-profile__field dashboard-profile__field--wide">
-                  <span>Legal entity type</span>
-                  <div className="dashboard-profile__input-wrap">
-                    <BriefcaseBusiness size={18} />
-                    <select
-                      value={formData.entityType}
-                      onChange={(e) => handleInputChange('entityType', e.target.value)}
-                    >
-                      <option value="">Select entity type</option>
-                      <option value="Company">Company</option>
-                      <option value="Close corporation">Close corporation</option>
-                      <option value="Trust">Trust</option>
-                      <option value="Partnership">Partnership</option>
-                      <option value="Individual">Individual</option>
-                    </select>
-                  </div>
-                </label>
+                <div ref={entityTypeRef} className="dashboard-profile__field dashboard-profile__field--wide">
+                  <label className="dashboard-profile__field-label">
+                    <span>Legal entity type</span>
+                    <div className={`dashboard-profile__input-wrap${saveError && !formData.entityType ? ' dashboard-profile__input-wrap--error' : ''}`}>
+                      <BriefcaseBusiness size={18} />
+                      <select
+                        value={formData.entityType}
+                        onChange={(e) => handleInputChange('entityType', e.target.value)}
+                      >
+                        <option value="">Select entity type</option>
+                        <option value="Company">Company</option>
+                        <option value="Close corporation">Close corporation</option>
+                        <option value="Trust">Trust</option>
+                        <option value="Partnership">Partnership</option>
+                        <option value="Individual">Individual</option>
+                      </select>
+                    </div>
+                  </label>
+                  {saveError && !formData.entityType && (
+                    <p className="dashboard-profile__field-error" role="alert">
+                      {saveError}
+                    </p>
+                  )}
+                </div>
 
                 {formData.entityType === 'Individual' ? (
                   <>
@@ -543,7 +553,7 @@ export default function DashboardProfile() {
                 </label>
               </div>
 
-              {saveError && (
+              {saveError && !!formData.entityType && (
                 <p className="dashboard-profile__save-message dashboard-profile__save-message--error" role="alert">
                   {saveError}
                 </p>
@@ -557,7 +567,7 @@ export default function DashboardProfile() {
                 <button type="button" onClick={handleCancel} disabled={isSaving}>
                   Cancel
                 </button>
-                <button type="submit" onClick={handleSave} disabled={isSaving}>
+                <button type="submit" disabled={isSaving}>
                   {isSaving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>

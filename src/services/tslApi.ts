@@ -157,6 +157,7 @@ export const authApi = {
   resetPassword: (payload: ResetPasswordPayload) => request('/api/v1/auth/reset-password', 'POST', payload, false),
   google: (payload: GoogleAuthPayload) => request<AuthUser>('/api/v1/auth/google', 'POST', payload, false),
   changePassword: (payload: JsonRecord) => request('/api/v1/auth/change-password', 'PUT', payload),
+  exchangePortalHandoff: (code: string) => request<AuthUser>(`/api/v1/auth/portal-handoff`, 'POST', { code }, false),
 }
 
 import type {

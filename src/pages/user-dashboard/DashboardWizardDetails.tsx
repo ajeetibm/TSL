@@ -62,6 +62,7 @@ type PaymentMessage = {
 type PaymentMethod = 'Bank Transfers' | 'Credit/Debit Cards' | 'E-wallets' | 'PayPal' | 'Scan to Pay'
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
+const blueprintQuantitiesStorageKey = 'tsl-blueprint-quantities'
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 const paymentMethods: Array<{ title: PaymentMethod; icon: LucideIcon | null; className: string }> = [
@@ -516,6 +517,8 @@ export default function DashboardWizardDetails() {
     }
     setWizardAccess(response.data)
     localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
+    localStorage.removeItem(selectedWizardStorageKey)
+    localStorage.removeItem(blueprintQuantitiesStorageKey)
     localStorage.setItem('tsl-dashboard-view-mode', 'returning')
     // Pass the count (for the toast) and the exact list (for the New-tab queue bump)
     navigate('/dashboard', { state: { addedCount: totalWizards, addedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })) } })
@@ -767,14 +770,20 @@ export default function DashboardWizardDetails() {
     return (
       <DashboardShell activeSection="Blueprints">
         <main className="dashboard-wizard-details dashboard-wizard-details--payment">
-          <button
-            type="button"
-            className="dashboard-wizard-details__back"
-            onClick={() => setIsPaymentView(false)}
-          >
-            <ArrowLeft size={18} />
-            Back to Wizard Overview
-          </button>
+          <header className="dashboard-wizard-details__payment-header">
+            <button
+              type="button"
+              className="dashboard-wizard-details__payment-back-btn"
+              aria-label="Back to Wizard Overview"
+              onClick={() => setIsPaymentView(false)}
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <h2 className="dashboard-wizard-details__payment-header-title">Payment</h2>
+              <p className="dashboard-wizard-details__payment-header-sub">Select a payment method to continue</p>
+            </div>
+          </header>
 
           <section className="dashboard-wizard-details__payment-screen">
             <div className="dashboard-wizard-details__payment-dots" aria-hidden="true" />

@@ -7,95 +7,228 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { wizardService, type WizardDraft } from '../services/wizardService'
 
-/* ─── Types ─────────────────────────────────────────────── */
+export interface PrivacyPurposeRow {
+  purpose: string
+  categories: string
+  basis: '' | 'Consent' | 'Necessary for a contract' | 'Legal obligation' | 'Legitimate interest' | 'Public law duty'
+  liStatement: string
+}
+
+export interface PrivacyRetentionRow {
+  category: string
+  period: string
+  reason: string
+}
+
+export interface PrivacyThirdPartyRow {
+  name: string
+  purpose: string
+  country: string
+}
+
+export interface PrivacyCookieRow {
+  name: string
+  purpose: string
+  duration: string
+  necessary: 'Yes' | 'No'
+}
+
 export interface PrivacyPolicyWizardData {
-  // Step 1 – Business Information
-  companyName: string
-  website: string
-  businessEmail: string
-  physicalAddress: string
-  contactNumber: string
-
-  // Step 2 – Information Collected (checkboxes)
-  collectsPersonalInfo: boolean
-  collectsContactDetails: boolean
-  collectsPaymentInfo: boolean
-  collectsTechnicalInfo: boolean
-  collectsCookies: boolean
-
-  // Step 3 – Purpose of Collection (checkboxes)
-  purposeServiceDelivery: boolean
-  purposeMarketing: boolean
-  purposeAnalytics: boolean
-  purposeCustomerSupport: boolean
-  purposeLegalCompliance: boolean
-
-  // Step 4 – Data Sharing (checkboxes)
-  sharesThirdPartyProviders: boolean
-  sharesPaymentGateways: boolean
-  sharesMarketingPlatforms: boolean
-  sharesGovernmentAuthorities: boolean
-
-  // Step 5 – User Rights (checkboxes)
-  rightAccess: boolean
-  rightCorrection: boolean
-  rightDeletion: boolean
-  rightObjection: boolean
-  rightDataPortability: boolean
-
-  // Step 6 – Security & Retention
-  dataStorage: string
-  retentionPeriod: string
-  securityMeasures: string
+  responsibleParty: string
+  responsiblePartyConfirmed: boolean
+  officerFullNames: string
+  officerIdNumber: string
+  officerEmail: string
+  privacyEmail: string
+  domains: string[]
+  piCategories: string[]
+  specialPi: string[]
+  specialPiBasis: '' | 'Explicit consent of the data subject' | 'Required to establish, exercise or defend a legal claim' | 'Required by law' | 'Historical, statistical or research purposes' | 'Information deliberately made public by the data subject'
+  childrenData: boolean
+  childrenConsent: string
+  purposes: PrivacyPurposeRow[]
+  retention: PrivacyRetentionRow[]
+  thirdParties: PrivacyThirdPartyRow[]
+  crossBorder: boolean
+  crossBorderCountries: string[]
+  transferBasis: '' | 'Data subject consent' | 'Necessary for the contract' | 'Binding agreement with the recipient'
+  directMarketing: boolean
+  cookies: PrivacyCookieRow[]
+  cookieConsent: 'Banner with granular choice' | 'Banner with accept or reject only'
+  analyticsProvider: string
+  dsrChannel: string
+  dsrDays: string
+  securitySummary: string[]
+  effectiveDate: string
+  automatedDecisions: boolean
 }
 
 export type PrivacyPolicyWizardStatus = 'idle' | 'inProgress' | 'completed'
 
 export interface PrivacyPolicyWizardState {
   status: PrivacyPolicyWizardStatus
-  /** Last fully-completed step (0 = nothing done) */
   step: number
-  /** Progress 0-100 based on required fields filled */
   progress: number
   data: PrivacyPolicyWizardData
   startedAt: string | null
   completedAt: string | null
 }
 
-/* ─── Required fields ─────────────────────────────────── */
-const REQUIRED_FIELDS: (keyof PrivacyPolicyWizardData)[] = [
-  'companyName', 'website', 'businessEmail', 'physicalAddress', 'contactNumber',
-  'dataStorage', 'retentionPeriod', 'securityMeasures',
-]
+export const PRIVACY_CATEGORY_OPTIONS = [
+  'Identity',
+  'Contact',
+  'Financial and payment',
+  'Device and usage',
+  'Location',
+  'Employment',
+  'Marketing preferences',
+] as const
 
-export const PP_TOTAL_REQUIRED = REQUIRED_FIELDS.length // 8
+export const PRIVACY_SPECIAL_PI_OPTIONS = [
+  'Health',
+  'Biometric',
+  'Race or ethnic origin',
+  'Religious belief',
+  'Trade union membership',
+  'Criminal behaviour',
+] as const
 
-/** Returns 0-100 based on how many required fields contain a non-empty value */
+export const PRIVACY_SECURITY_OPTIONS = [
+  'Encryption in transit',
+  'Encryption at rest',
+  'Access control',
+  'Staff training',
+  'Backups',
+  'Vendor due diligence',
+] as const
+
+export const PRIVACY_BASIS_OPTIONS = [
+  'Consent',
+  'Necessary for a contract',
+  'Legal obligation',
+  'Legitimate interest',
+  'Public law duty',
+] as const
+
+export const PRIVACY_SPECIAL_PI_BASIS_OPTIONS = [
+  'Explicit consent of the data subject',
+  'Required to establish, exercise or defend a legal claim',
+  'Required by law',
+  'Historical, statistical or research purposes',
+  'Information deliberately made public by the data subject',
+] as const
+
+export const PRIVACY_TRANSFER_BASIS_OPTIONS = [
+  'Data subject consent',
+  'Necessary for the contract',
+  'Binding agreement with the recipient',
+] as const
+
+export function createEmptyPurpose(): PrivacyPurposeRow {
+  return { purpose: '', categories: '', basis: '', liStatement: '' }
+}
+
+export function createEmptyRetention(): PrivacyRetentionRow {
+  return { category: '', period: '', reason: '' }
+}
+
+export function createEmptyThirdParty(): PrivacyThirdPartyRow {
+  return { name: '', purpose: '', country: '' }
+}
+
+export function createEmptyCookie(): PrivacyCookieRow {
+  return { name: '', purpose: '', duration: '', necessary: 'No' }
+}
+
+function hasText(value: string) {
+  return value.trim().length > 0
+}
+
+function hasFilledPurpose(row: PrivacyPurposeRow) {
+  return hasText(row.purpose) && hasText(row.categories) && hasText(row.basis) && (row.basis !== 'Legitimate interest' || hasText(row.liStatement))
+}
+
+function hasFilledRetention(row: PrivacyRetentionRow) {
+  return hasText(row.category) && hasText(row.period) && hasText(row.reason)
+}
+
+function hasFilledThirdParty(row: PrivacyThirdPartyRow) {
+  return hasText(row.name) && hasText(row.purpose) && hasText(row.country)
+}
+
+function hasFilledCookie(row: PrivacyCookieRow) {
+  return hasText(row.name) && hasText(row.purpose) && hasText(row.duration) && hasText(row.necessary)
+}
+
 export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData): number {
-  const filled = REQUIRED_FIELDS.filter((key) => {
-    const val = data[key]
-    return typeof val === 'boolean' ? true : typeof val === 'string' && val.trim() !== ''
-  }).length
-  return Math.round((filled / PP_TOTAL_REQUIRED) * 100)
+  let total = 17
+  let filled = 0
+
+  if (data.responsiblePartyConfirmed) filled += 1
+  if (hasText(data.officerFullNames)) filled += 1
+  if (hasText(data.officerIdNumber)) filled += 1
+  if (hasText(data.officerEmail)) filled += 1
+  if (hasText(data.privacyEmail)) filled += 1
+  if (data.domains.some(hasText)) filled += 1
+  if (data.piCategories.length > 0) filled += 1
+  if (!data.specialPi.length || hasText(data.specialPiBasis)) filled += 1
+  if (!data.childrenData || hasText(data.childrenConsent)) filled += 1
+  if (data.purposes.some(hasFilledPurpose)) filled += 1
+  if (data.retention.some(hasFilledRetention)) filled += 1
+  if (data.thirdParties.some(hasFilledThirdParty)) filled += 1
+  if (!data.crossBorder || (data.crossBorderCountries.length > 0 && hasText(data.transferBasis))) filled += 1
+  if (data.cookies.some(hasFilledCookie)) filled += 1
+  if (hasText(data.cookieConsent)) filled += 1
+  if (hasText(data.dsrChannel)) filled += 1
+  if (data.securitySummary.length > 0) filled += 1
+  if (hasText(data.effectiveDate)) filled += 1
+
+  if (data.specialPi.length > 0) total += 1
+  if (data.childrenData) total += 1
+  if (data.crossBorder) total += 1
+
+  return Math.round((filled / total) * 100)
 }
 
-/* ─── Defaults ──────────────────────────────────────────── */
 export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
-  companyName: '', website: '', businessEmail: '', physicalAddress: '', contactNumber: '',
-  collectsPersonalInfo: true, collectsContactDetails: true, collectsPaymentInfo: false,
-  collectsTechnicalInfo: true, collectsCookies: true,
-  purposeServiceDelivery: true, purposeMarketing: false, purposeAnalytics: true,
-  purposeCustomerSupport: true, purposeLegalCompliance: true,
-  sharesThirdPartyProviders: false, sharesPaymentGateways: false,
-  sharesMarketingPlatforms: false, sharesGovernmentAuthorities: false,
-  rightAccess: true, rightCorrection: true, rightDeletion: true,
-  rightObjection: true, rightDataPortability: true,
-  dataStorage: '', retentionPeriod: '', securityMeasures: '',
+  responsibleParty: 'The Startup Legal (Pty) Ltd',
+  responsiblePartyConfirmed: false,
+  officerFullNames: '',
+  officerIdNumber: '',
+  officerEmail: '',
+  privacyEmail: '',
+  domains: [''],
+  piCategories: [],
+  specialPi: [],
+  specialPiBasis: '',
+  childrenData: false,
+  childrenConsent: '',
+  purposes: [createEmptyPurpose()],
+  retention: [createEmptyRetention()],
+  thirdParties: [createEmptyThirdParty()],
+  crossBorder: false,
+  crossBorderCountries: [],
+  transferBasis: '',
+  directMarketing: false,
+  cookies: [createEmptyCookie()],
+  cookieConsent: 'Banner with granular choice',
+  analyticsProvider: '',
+  dsrChannel: '',
+  dsrDays: '30',
+  securitySummary: [],
+  effectiveDate: '',
+  automatedDecisions: false,
 }
+
+export const PP_TOTAL_REQUIRED = 17
 
 const defaultState: PrivacyPolicyWizardState = {
-  status: 'idle', step: 0, progress: 0,
-  data: PP_EMPTY_DATA, startedAt: null, completedAt: null,
+  status: 'idle',
+  step: 0,
+  progress: 0,
+  data: PP_EMPTY_DATA,
+  startedAt: null,
+  completedAt: null,
 }
 
 const LOCAL_KEY = 'tsl-privacy-policy-wizard-state'
@@ -125,7 +258,6 @@ function stateToDraft(state: PrivacyPolicyWizardState): WizardDraft<PrivacyPolic
   }
 }
 
-/* ─── Hook ──────────────────────────────────────────────── */
 export function usePrivacyPolicyWizard() {
   const [state, setState] = useState<PrivacyPolicyWizardState>(() => {
     const raw = localStorage.getItem(LOCAL_KEY)
@@ -144,7 +276,6 @@ export function usePrivacyPolicyWizard() {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     const flush = () => {
       const draft = stateToDraft(nextState)
-      // Always mirror to localStorage directly (wizardService also does this, but we use a custom key)
       localStorage.setItem(LOCAL_KEY, JSON.stringify(draft))
     }
     if (immediate) { flush(); return }
@@ -191,7 +322,6 @@ export function usePrivacyPolicyWizard() {
     localStorage.removeItem(LOCAL_KEY)
   }, [])
 
-  // On mount, if API mode, try to sync from server
   useEffect(() => {
     if (wizardService.mode !== 'api') return
     wizardService.load<PrivacyPolicyWizardData>('privacy-policy').then((draft) => {

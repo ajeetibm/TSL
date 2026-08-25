@@ -303,6 +303,34 @@
   font-weight: 400;
 }
 
+/* ── Entity type field-label (nested label inside the div wrapper) ── */
+.dashboard-profile__field-label {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-profile__field-label > span {
+  color: #0d1b2a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+/* ── Error border on the input-wrap ─────────────────────────────── */
+.dashboard-profile__input-wrap--error {
+  border-color: #dc2626;
+}
+
+/* ── Inline field error message ─────────────────────────────────── */
+.dashboard-profile__field-error {
+  margin: 4px 0 0;
+  padding: 0 4px;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
 .dashboard-profile__snapshot-heading {
   grid-column: 1 / -1;
   margin-top: 8px;

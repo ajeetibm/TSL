@@ -43,7 +43,7 @@
 import { request } from './tslApi'
 
 /* ─── Wizard type identifiers ───────────────────────────── */
-export type WizardType = 'nda' | 'employment' | 'privacy-policy' | 'founder-agreement' | 'service-agreement'
+export type WizardType = 'nda' | 'employment' | 'privacy-policy' | 'founder-agreement' | 'service-agreement' | 'sla'
 
 /* ─── Shape stored / returned for each wizard ───────────── */
 export interface WizardDraft<TData = unknown> {
@@ -66,6 +66,7 @@ const LOCAL_KEYS: Record<WizardType, string> = {
   'privacy-policy': 'tsl-privacy-policy-wizard-state',
   'founder-agreement': 'tsl-founder-agreement-wizard-state',
   'service-agreement': 'tsl-service-agreement-wizard-state',
+  sla: 'tsl-sla-wizard-state',
 }
 
 /* ════════════════════════════════════════════════════════════

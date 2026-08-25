@@ -34,6 +34,7 @@ const wizardCards = [
     included: ['SA-specific legal drafting', 'E-signature ready', 'Plain-language preview'],
     icon: Shield,
     popular: true,
+    fallbackWeight: 1,
   },
   {
     title: 'Board Resolution',
@@ -42,6 +43,7 @@ const wizardCards = [
     audience: 'Registered companies (Pty Ltd)',
     included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
     icon: Briefcase,
+    fallbackWeight: 1,
   },
   {
     title: 'Employment Offer Letter',
@@ -51,6 +53,7 @@ const wizardCards = [
     included: ['BCEA compliance checks', 'Clause options & risk indicators', 'Built-in negotiation'],
     icon: UsersRound,
     popular: true,
+    fallbackWeight: 2,
   },
   {
     title: 'Privacy & Cookies Policy',
@@ -60,6 +63,17 @@ const wizardCards = [
     included: ['100% POPIA compliant', 'Cookie consent clauses', 'Website ready'],
     icon: Shield,
     popular: true,
+    fallbackWeight: 2,
+  },
+  {
+    title: 'Service Level Agreement (SLA)',
+    description: 'Set measurable service commitments — uptime, support, incident response, backups, security, and service credits — with a modular Blueprint.',
+    time: '10-15 minutes',
+    audience: 'Businesses providing managed or cloud services',
+    included: ['Uptime & availability targets', 'Incident response & escalation', 'Service credits & remedies'],
+    icon: FileText,
+    popular: true,
+    fallbackWeight: 3,
   },
   {
     title: 'Memorandum of Agreement (MOA)',
@@ -68,6 +82,7 @@ const wizardCards = [
     audience: 'Businesses entering partnerships or collaborations',
     included: ['SA-specific drafting', 'Scope & obligations', 'Dispute resolution'],
     icon: FileText,
+    fallbackWeight: 2,
   },
   {
     title: 'Software Development Agreement',
@@ -77,6 +92,7 @@ const wizardCards = [
     included: ['IP & ownership clauses', 'Milestone & payment terms', 'Warranty & liability'],
     icon: Code2,
     popular: true,
+    fallbackWeight: 3,
   },
   {
     title: 'Employment Contract Pack',
@@ -85,6 +101,7 @@ const wizardCards = [
     audience: 'Companies formalising employment relationships',
     included: ['BCEA compliance', 'Leave & benefits', 'Termination clauses'],
     icon: UsersRound,
+    fallbackWeight: 3,
   },
   {
     title: 'Company Registration',
@@ -93,6 +110,7 @@ const wizardCards = [
     audience: 'First-time business owners',
     included: ['MOI templates', 'Share register', 'Director appointments'],
     icon: Building2,
+    fallbackWeight: 4,
   },
   {
     title: 'Shareholders Agreement',
@@ -101,6 +119,7 @@ const wizardCards = [
     audience: 'Companies with multiple shareholders',
     included: ['Exit clauses', 'Voting rights', 'Dividend policies'],
     icon: UsersRound,
+    fallbackWeight: 6,
   },
   {
     title: 'Founders Agreement and IP Assignment',
@@ -119,6 +138,7 @@ const blueprintIdByTitle: Record<string, string> = {
   'Board Resolution': 'board-resolution',
   'Employment Offer Letter': 'employment-offer-letter',
   'Privacy & Cookies Policy': 'privacy-policy',
+  'Service Level Agreement (SLA)': 'service-level-agreement',
   'Memorandum of Agreement (MOA)': 'moa',
   'Software Development Agreement': 'software-development-agreement',
   'Employment Contract Pack': 'employment-pack',
@@ -249,14 +269,12 @@ export default function DashboardWizards() {
         </header>
 
         <section className="dashboard-wizards__grid" aria-label="Available legal wizards">
-          {wizardCards.map(({ title, description, time, audience, included, icon: Icon, popular }) => {
+          {wizardCards.map(({ title, description, time, audience, included, icon: Icon, popular, fallbackWeight }) => {
             const quantity = quantities[title] ?? 0
             const isSelected = quantity > 0
             const blueprint = catalogue.find((item) => item.blueprintId === blueprintIdByTitle[title])
-            const unitWeight = blueprint?.blueprintUnitWeight
-            const costLabel = unitWeight === undefined
-              ? 'Loading…'
-              : `${unitWeight} ${unitWeight === 1 ? 'Credit' : 'Credits'}`
+            const unitWeight = blueprint?.blueprintUnitWeight ?? fallbackWeight
+            const costLabel = `${unitWeight} ${unitWeight === 1 ? 'Credit' : 'Credits'}`
 
             return (
               <article
