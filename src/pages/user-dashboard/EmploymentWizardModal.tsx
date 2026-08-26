@@ -100,11 +100,43 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     setData((current) => ({ ...current, employer_name: snapshotEmployerName }))
   }, [data.company_id, initialData?.employer_name, snapshotEmployerName])
 
+  const validateField = (key: string, value: string) => {
+    setErrors((prev) => {
+      const next = { ...prev }
+      if (key === 'candidate.full_names') {
+        if (!value.trim()) {
+          next['candidate.full_names'] = "Enter the candidate's full names."
+        } else if (!/^[A-Za-z\s'-]+$/.test(value.trim())) {
+          next['candidate.full_names'] = 'Full names must contain alphabetic characters only.'
+        } else {
+          delete next['candidate.full_names']
+        }
+      } else if (key === 'candidate.email') {
+        if (!value.trim()) {
+          next['candidate.email'] = "Enter the candidate's email address."
+        } else if (!/^\S+@\S+\.\S+$/.test(value.trim())) {
+          next['candidate.email'] = 'Enter a valid email address.'
+        } else {
+          delete next['candidate.email']
+        }
+      } else if (key === 'reports_to') {
+        if (!value.trim()) {
+          next['reports_to'] = 'Reports to is required.'
+        } else {
+          delete next['reports_to']
+        }
+      } else {
+        delete next[key]
+      }
+      return next
+    })
+  }
+
   const set = <K extends keyof EmploymentWizardData>(key: K, value: EmploymentWizardData[K]) => {
     const next = { ...data, [key]: value }
     setData(next)
     onStepChange?.(step, next)
-    if (errors[key as string]) setErrors((prev) => { const e = { ...prev }; delete e[key as string]; return e })
+    validateField(key as string, value as string)
   }
   const toggle = (key: 'benefits' | 'conditions', value: string) => {
     const selected = data[key].includes(value) ? data[key].filter((entry) => entry !== value) : [...data[key], value]
@@ -210,10 +242,10 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
 
               <div className="nda-modal__two-col">
                 <Field label="Candidate name" required error={e['candidate.full_names']}>
-                  <input className={`nda-modal__input${e['candidate.full_names'] ? ' nda-modal__input--error' : ''}`} placeholder="Enter candidate's full names" maxLength={100} value={data['candidate.full_names']} onChange={(event) => set('candidate.full_names', event.target.value)} />
+                  <input className={`nda-modal__input${e['candidate.full_names'] ? ' nda-modal__input--error' : ''}`} placeholder="Enter candidate's full names" maxLength={100} value={data['candidate.full_names']} onChange={(event) => set('candidate.full_names', event.target.value)} onBlur={(event) => validateField('candidate.full_names', event.target.value)} />
                 </Field>
                 <Field label="Candidate email" required error={e['candidate.email']}>
-                  <input className={`nda-modal__input${e['candidate.email'] ? ' nda-modal__input--error' : ''}`} placeholder="candidate@email.com" type="email" value={data['candidate.email']} onChange={(event) => set('candidate.email', event.target.value)} />
+                  <input className={`nda-modal__input${e['candidate.email'] ? ' nda-modal__input--error' : ''}`} placeholder="candidate@email.com" type="email" value={data['candidate.email']} onChange={(event) => set('candidate.email', event.target.value)} onBlur={(event) => validateField('candidate.email', event.target.value)} />
                 </Field>
               </div>
 
@@ -222,7 +254,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                   <input className={`nda-modal__input${e['job_title'] ? ' nda-modal__input--error' : ''}`} maxLength={100} value={data.job_title} onChange={(event) => set('job_title', event.target.value)} />
                 </Field>
                 <Field label="Reports to" required error={e['reports_to']}>
-                  <input className={`nda-modal__input${e['reports_to'] ? ' nda-modal__input--error' : ''}`} maxLength={100} value={data.reports_to} onChange={(event) => set('reports_to', event.target.value)} />
+                  <input className={`nda-modal__input${e['reports_to'] ? ' nda-modal__input--error' : ''}`} maxLength={100} value={data.reports_to} onChange={(event) => set('reports_to', event.target.value)} onBlur={(event) => validateField('reports_to', event.target.value)} />
                 </Field>
               </div>
 
