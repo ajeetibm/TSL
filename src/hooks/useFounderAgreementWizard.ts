@@ -111,53 +111,70 @@ export function equityValid(founders: FAFounder[]): boolean {
 }
 
 /* ─── Progress calculation ───────────────────────────────── */
-export function calcFounderAgreementProgress(data: FounderAgreementWizardData): number {
-  const checks: boolean[] = [
+export function calcFounderAgreementProgress(data: FounderAgreementWizardData, reachedStep = 6): number {
+  // Defaults on later screens must not inflate the in-progress percentage.
+  // Only fields on screens the founder has reached are included as complete.
+  const checksByScreen: boolean[][] = [
     // Screen 1
-    data.isIncorporated !== '',
-    data.isIncorporated !== 'Yes' || data.companyConfirmed,
-    data.isIncorporated !== 'No' || data.intendedName.trim() !== '',
-    data.isIncorporated !== 'No' || data.targetIncorporation.trim() !== '',
+    [
+      data.isIncorporated !== '',
+      data.isIncorporated === 'No' || (data.isIncorporated === 'Yes' && data.companyConfirmed),
+      data.isIncorporated === 'Yes' || (data.isIncorporated === 'No' && data.intendedName.trim() !== ''),
+      data.isIncorporated === 'Yes' || (data.isIncorporated === 'No' && data.targetIncorporation.trim() !== ''),
+    ],
 
-    // Screen 2 — at least 1 founder with name + equity
-    data.founders.length >= 1,
-    data.founders.every(f => f.fullNames.trim() !== '' && f.equityPct.trim() !== ''),
-    equityValid(data.founders),
+    // Screen 2 — every founder must have name, idNumber (13 digits), role, valid equity
+    [
+      data.founders.length >= 1,
+      data.founders.every(f => f.fullNames.trim() !== '' && !/\d/.test(f.fullNames)),
+      data.founders.every(f => /^\d{13}$/.test(f.idNumber.trim())),
+      data.founders.every(f => f.role.trim() !== '' && !/\d/.test(f.role)),
+      data.founders.every(f => { const p = parseFloat(f.equityPct); return !isNaN(p) && p > 0 && p <= 100 }),
+      equityValid(data.founders),
+    ],
 
     // Screen 3
-    data.vestingApplies !== '',
-    data.vestingApplies !== 'Yes' || data.vestingMonths.trim() !== '',
-    data.vestingApplies !== 'Yes' || data.cliffMonths.trim() !== '',
-    data.vestingApplies !== 'Yes' || data.vestingFrequency !== '',
+    [
+      data.vestingApplies !== '',
+      data.vestingApplies === 'No' || (data.vestingApplies === 'Yes' && data.vestingMonths.trim() !== ''),
+      data.vestingApplies === 'No' || (data.vestingApplies === 'Yes' && data.cliffMonths.trim() !== ''),
+      data.vestingApplies === 'No' || (data.vestingApplies === 'Yes' && data.vestingFrequency !== ''),
+    ],
 
     // Screen 4
-    data.decisionModel !== '',
-    data.removalProcess.trim() !== '',
-    data.departureRole.trim() !== '',
+    [data.decisionModel !== '', data.removalProcess.trim() !== '', data.departureRole.trim() !== ''],
 
     // Screen 5
-    data.ipPreIncorporation !== '',
-    data.priorIpNil || data.priorIp.some(p => p.founder.trim() !== ''),
-    data.publiclyFunded !== '',
-    data.createdAtEmployer !== '',
+    [
+      data.ipPreIncorporation !== '',
+      data.priorIpNil || data.priorIp.every(p => p.founder.trim() !== '' && p.description.trim() !== '' && p.dateCreated.trim() !== ''),
+      data.publiclyFunded !== '',
+      data.createdAtEmployer !== '',
+    ],
 
     // Screen 6
-    data.confidentiality !== '',
-    data.nonSolicit !== '',
-    data.restraint !== '',
-    data.restraint !== 'Yes' || data.restraintMonths.trim() !== '',
-    data.restraint !== 'Yes' || data.restraintArea !== '',
-    data.deadlock.trim() !== '',
-    data.disputeForum.trim() !== '',
-    data.signatories.length >= 1,
-    data.signatories.every(s => s.name.trim() !== ''),
+    [
+      data.confidentiality !== '',
+      data.nonSolicit !== '',
+      data.restraint !== '',
+      data.restraint === 'No' || (data.restraint === 'Yes' && data.restraintMonths.trim() !== ''),
+      data.restraint === 'No' || (data.restraint === 'Yes' && data.restraintArea !== ''),
+      data.deadlock.trim() !== '',
+      data.disputeForum.trim() !== '',
+      data.signatories.length >= 1,
+      data.signatories.every(s => s.name.trim() !== '' && !/\d/.test(s.name) && s.capacity.trim() !== ''),
+    ],
   ]
 
+  const visibleScreens = Math.min(Math.max(reachedStep, 0), checksByScreen.length)
+  const checks = checksByScreen.flatMap((screenChecks, index) =>
+    index < visibleScreens ? screenChecks : screenChecks.map(() => false),
+  )
   const filled = checks.filter(Boolean).length
   return Math.round((filled / checks.length) * 100)
 }
 
-export const FA_TOTAL_CHECKS = 27  // total items in the checks array above
+export const FA_TOTAL_CHECKS = 30  // total items in the checks array above
 
 /* ─── Defaults ──────────────────────────────────────────── */
 export const makeFounder = (id: string): FAFounder => ({
@@ -246,7 +263,7 @@ function draftToState(draft: WizardDraft<FounderAgreementWizardData>): FounderAg
   return {
     status,
     step: draft.step,
-    progress: calcFounderAgreementProgress(data),
+    progress: calcFounderAgreementProgress(data, draft.step),
     data,
     startedAt: draft.startedAt,
     completedAt: draft.completedAt,
@@ -309,7 +326,7 @@ export function useFounderAgreementWizard() {
         ...prev,
         step,
         data,
-        progress: calcFounderAgreementProgress(data),
+        progress: calcFounderAgreementProgress(data, step),
       }
       persist(next, immediate)
       return next
@@ -319,7 +336,12 @@ export function useFounderAgreementWizard() {
   const completeWizard = useCallback(async () => {
     setState((prev) => {
       const completedAt = new Date().toISOString()
-      const next: FounderAgreementWizardState = { ...prev, status: 'completed', completedAt }
+      const next: FounderAgreementWizardState = {
+        ...prev,
+        status: 'completed',
+        progress: calcFounderAgreementProgress(prev.data, 6),
+        completedAt,
+      }
       persist(next, true)
       return next
     })

@@ -482,7 +482,7 @@ function AddRowBtn({ label, onClick }: { label: string; onClick: () => void }) {
 
 /* ─── Modal props ────────────────────────────────────────── */
 interface FounderAgreementWizardModalProps {
-  onClose: () => void
+  onClose: (step?: number, data?: FounderAgreementWizardData) => void
   onComplete?: (data: FounderAgreementWizardData) => void
   initialStep?: number
   initialData?: FounderAgreementWizardData
@@ -527,7 +527,7 @@ export default function FounderAgreementWizardModal({
   const [isRoutingToCounsel, setIsRoutingToCounsel] = useState(false)
   const [counselToast, setCounselToast] = useState(false)
 
-  const progress = calcFounderAgreementProgress(data)
+  const progress = calcFounderAgreementProgress(data, Math.min(step, 6))
   const isComplete = progress === 100 && equityValid(data.founders)
   const totalChecks = FA_TOTAL_CHECKS
   const doneChecks = Math.round((progress / 100) * totalChecks)
@@ -535,9 +535,9 @@ export default function FounderAgreementWizardModal({
 
   const onStepChangeRef = useRef(onStepChange)
   useEffect(() => { onStepChangeRef.current = onStepChange }, [onStepChange])
-  const stepRef = useRef(step)
-  useEffect(() => { stepRef.current = step }, [step])
-  useEffect(() => { onStepChangeRef.current?.(stepRef.current, data) }, [data])
+  useEffect(() => {
+    onStepChangeRef.current?.(step, data)
+  }, [data, step])
   const isPublicFundingBlocked = data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved'
   const goTo = (target: Step) => {
     setErrors({})
@@ -713,7 +713,7 @@ export default function FounderAgreementWizardModal({
   const showRestraintAreaWarn = data.restraint === 'Yes' && data.restraintArea === 'Worldwide'
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : () => onClose(step, data)}>
       <div
         className="nda-modal nda-modal--wide"
         role="dialog"
@@ -731,7 +731,7 @@ export default function FounderAgreementWizardModal({
               </p>
             </div>
             <button type="button" className="nda-modal__close" aria-label="Close"
-              onClick={isGenerating ? undefined : onClose} disabled={isGenerating}>
+              onClick={isGenerating ? undefined : () => onClose(step, data)} disabled={isGenerating}>
               <X size={16} />
             </button>
           </div>

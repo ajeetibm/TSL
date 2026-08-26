@@ -2452,8 +2452,8 @@ export default function Dashboard() {
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={() => { setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
+            onClose={(step, data) => { if (step && data) saveFAProgress(step, data, true); setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            initialStep={faState.status === 'completed' ? 1 : (faState.step || 1)}
             initialData={faState.status === 'completed' ? undefined : faState.data}
             onStepChange={(step, data) => saveFAProgress(step, data)}
             onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
@@ -3079,8 +3079,8 @@ export default function Dashboard() {
 
       {isFAModalOpen && (
         <FounderAgreementWizardModal
-          onClose={() => setIsFAModalOpen(false)}
-          initialStep={faState.status === 'completed' ? 1 : faState.step + 1}
+          onClose={(step, data) => { if (step && data) saveFAProgress(step, data, true); setIsFAModalOpen(false) }}
+          initialStep={faState.status === 'completed' ? 1 : (faState.step || 1)}
           initialData={faState.status === 'completed' ? undefined : faState.data}
           onStepChange={(step, data) => saveFAProgress(step, data)}
           onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false) }}
