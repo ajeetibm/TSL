@@ -2084,7 +2084,7 @@ export default function Dashboard() {
 
   const refreshFounderPublicFundingReview = useCallback(async (requestId: string) => {
     const response = await counselApi.publicFundingReviewStatus(requestId)
-    return response.success && response.data ? response.data.status : null
+    return response.success && response.data ? response.data : null
   }, [])
 
   const handleSAComplete = (data: ServiceAgreementWizardData) => {

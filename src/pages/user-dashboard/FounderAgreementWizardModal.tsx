@@ -394,8 +394,8 @@ interface FounderAgreementWizardModalProps {
   initialStep?: number
   initialData?: FounderAgreementWizardData
   onStepChange?: (step: number, data: FounderAgreementWizardData) => void
-  onRouteToCounsel?: (fields: FounderAgreementFieldMap) => Promise<{ requestId: string; status: 'pending' | 'approved' } | null>
-  onRefreshPublicFundingReview?: (requestId: string) => Promise<'pending' | 'approved' | null>
+  onRouteToCounsel?: (fields: FounderAgreementFieldMap) => Promise<{ requestId: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
+  onRefreshPublicFundingReview?: (requestId: string) => Promise<{ status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
 }
 
 const fmt = (v: string | undefined | null) => v?.trim() || '—'
@@ -418,7 +418,11 @@ export default function FounderAgreementWizardModal({
   const snapshotCompanyName = profile.entityType === 'Individual'
     ? profile.individualFullNames.trim()
     : profile.legalName.trim()
-  const resolved = Math.min(Math.max(initialStep, 1), 7) as Step
+  // A publicly funded IP declaration is a hard gate.  The Dashboard normally
+  // resumes at saved step + 1, so force every pending/rejected review back to
+  // Screen 5 instead of allowing a resume directly on Screen 6 or the preview.
+  const hasBlockedPublicFundingReview = initialData?.publiclyFunded === 'Yes' && initialData.publicFundingReviewStatus !== 'approved'
+  const resolved = (hasBlockedPublicFundingReview ? 5 : Math.min(Math.max(initialStep, 1), 7)) as Step
   const [step, setStep] = useState<Step>(resolved)
   const [data, setData] = useState<FounderAgreementWizardData>(() => ({
     ...FA_EMPTY_DATA,
@@ -441,16 +445,21 @@ export default function FounderAgreementWizardModal({
   const stepRef = useRef(step)
   useEffect(() => { stepRef.current = step }, [step])
   useEffect(() => { onStepChangeRef.current?.(stepRef.current, data) }, [data])
+  const isPublicFundingBlocked = data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved'
   const goTo = (target: Step) => {
     setErrors({})
-    setStep(target)
+    setStep(isPublicFundingBlocked && target > 5 ? 5 : target)
   }
 
   useEffect(() => {
     if (data.publiclyFunded !== 'Yes' || data.publicFundingReviewStatus !== 'pending' || !data.publicFundingReviewRequestId || !onRefreshPublicFundingReview) return
     let active = true
-    const refresh = () => onRefreshPublicFundingReview(data.publicFundingReviewRequestId!).then((status) => {
-      if (active && status === 'approved') setData((previous) => ({ ...previous, publicFundingReviewStatus: 'approved' }))
+    const refresh = () => onRefreshPublicFundingReview(data.publicFundingReviewRequestId!).then((review) => {
+      if (active && review) setData((previous) => ({
+        ...previous,
+        publicFundingReviewStatus: review.status,
+        publicFundingReviewReason: review.rejectionReason ?? null,
+      }))
     })
     void refresh()
     const intervalId = window.setInterval(() => { void refresh() }, 15_000)
@@ -531,7 +540,12 @@ export default function FounderAgreementWizardModal({
   const next = () => {
     const valid = validate(step)
     if (!valid) return
-    if (step === 5 && data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved') { void routeToCounsel(); return }
+    if (step === 5 && data.publiclyFunded === 'Yes') {
+      if (data.publicFundingReviewStatus === 'approved') { onStepChange?.(step, data); setStep(7); return }
+      if (data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') return
+      void routeToCounsel()
+      return
+    }
     onStepChange?.(step, data)
     if (step === 5) { setStep(7); return }
     if (step === 7) {
@@ -548,7 +562,7 @@ export default function FounderAgreementWizardModal({
   }
 
   const handleGenerate = () => {
-    if (!isComplete) return
+    if (!isComplete || (data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved')) return
     setIsGenerating(true)
     setTimeout(() => { setIsGenerating(false); onComplete?.(data); onClose() }, 2000)
   }
@@ -562,6 +576,7 @@ export default function FounderAgreementWizardModal({
         ...previous,
         publicFundingReviewRequestId: review.requestId,
         publicFundingReviewStatus: review.status,
+        publicFundingReviewReason: review.rejectionReason ?? null,
       }))
       setCounselToast(true)
       setTimeout(() => setCounselToast(false), 4000)
@@ -879,6 +894,7 @@ export default function FounderAgreementWizardModal({
                           publiclyFunded: v as 'Yes' | 'No',
                           publicFundingReviewStatus: v === 'Yes' ? previous.publicFundingReviewStatus : 'not_required',
                           publicFundingReviewRequestId: v === 'Yes' ? previous.publicFundingReviewRequestId : null,
+                          publicFundingReviewReason: v === 'Yes' ? previous.publicFundingReviewReason : null,
                         }))} />
                     </Field>
                     <Field label="Any of it created while employed elsewhere" required>
@@ -887,7 +903,15 @@ export default function FounderAgreementWizardModal({
                     </Field>
                   </div>
 
-                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' && (
+                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus === 'rejected' && (
+                    <Banner
+                      type="block"
+                      title="Counsel rejected this public-funding review"
+                      message={`Counsel rejected the request, so you cannot proceed with document generation.${data.publicFundingReviewReason ? ` Reason: ${data.publicFundingReviewReason}` : ''}`}
+                    />
+                  )}
+
+                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' && data.publicFundingReviewStatus !== 'rejected' && (
                     <Banner
                       type="block"
                       title="Block — publicly funded work, route to Counsel"
@@ -1131,12 +1155,12 @@ export default function FounderAgreementWizardModal({
                   : 'nda-modal__btn--primary',
               ].join(' ')}
               onClick={next}
-              disabled={(step === 7 && !isComplete) || (step === 5 && data.publiclyFunded === 'Yes' && (isRoutingToCounsel || data.publicFundingReviewStatus === 'pending'))}
+              disabled={(step === 7 && !isComplete) || (step === 5 && data.publiclyFunded === 'Yes' && (isRoutingToCounsel || data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected'))}
             >
               {step === 7 ? (
                 <><Check size={15} /> Generate Agreement</>
               ) : step === 5 && data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' ? (
-                 <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : '⛔'} {data.publicFundingReviewStatus === 'pending' ? 'Awaiting Counsel Approval' : 'Route to Counsel'}</>
+                 <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : '⛔'} {data.publicFundingReviewStatus === 'pending' ? 'Awaiting Counsel Approval' : data.publicFundingReviewStatus === 'rejected' ? 'Counsel Rejected — Generation Blocked' : 'Route to Counsel'}</>
               ) : step === 5 ? (
                 <><Eye size={15} /> Preview</>
               ) : (

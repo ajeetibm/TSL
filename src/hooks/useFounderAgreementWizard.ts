@@ -71,8 +71,9 @@ export interface FounderAgreementWizardData {
   priorIp: FAPriorIp[]
   priorIpNil: boolean
   publiclyFunded: 'Yes' | 'No' | ''
-  publicFundingReviewStatus: 'not_required' | 'pending' | 'approved'
+  publicFundingReviewStatus: 'not_required' | 'pending' | 'approved' | 'rejected'
   publicFundingReviewRequestId: string | null
+  publicFundingReviewReason: string | null
   createdAtEmployer: 'Yes' | 'No' | ''
   digitalAssets: FADigitalAsset[]
 
@@ -198,6 +199,7 @@ export const FA_EMPTY_DATA: FounderAgreementWizardData = {
   publiclyFunded: 'No',
   publicFundingReviewStatus: 'not_required',
   publicFundingReviewRequestId: null,
+  publicFundingReviewReason: null,
   createdAtEmployer: 'No',
   digitalAssets: [],
 

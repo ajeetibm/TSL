@@ -138,13 +138,14 @@
 
 /* ── Route-to-Counsel button ──────────────────────────────── */
 .fa-btn--counsel {
-  background: #fff1f2;
-  border: 1px solid #fca5a5;
-  color: #7f1d1d;
+  background: var(--color-gold, #D4A437);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(212, 164, 55, 0.35);
 }
 
 .fa-btn--counsel:hover {
-  background: #ffe4e6;
+  background: var(--color-gold-light, #E3C36F);
 }
 
 /* ── Counsel-sent toast ───────────────────────────────────── */
