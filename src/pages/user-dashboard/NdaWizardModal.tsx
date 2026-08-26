@@ -620,18 +620,30 @@ export default function NdaWizardModal({
   const progress = calcNdaProgress(data)
   const isComplete = progress === 100
 
+  /* ── Runtime validate helper — runs on every field change ── */
+  const runValidate = (updated: NdaWizardData) => {
+    const stepErrors = validateStep(step, updated)
+    // Only surface errors for fields the user has already touched (i.e. that
+    // existed in the previous errors map) plus any new ones just introduced.
+    setErrors((prev) => {
+      const next: Errors = {}
+      // Keep previously shown errors, updated to reflect new value
+      Object.keys(prev).forEach((k) => { if (stepErrors[k]) next[k] = stepErrors[k] })
+      return next
+    })
+  }
+
   /* ── Helpers ── */
   const setTop = <K extends keyof NdaWizardData>(key: K, val: NdaWizardData[K]) => {
     const updated = { ...data, [key]: val }
     setData(updated)
-    if (errors[key as string]) setErrors((prev) => { const n = { ...prev }; delete n[key as string]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
   const setPartyA = (field: keyof NdaParty, val: string) => {
     let party: NdaParty
     if (field === 'entity_type') {
-      // Switching to Company: re-apply the snapshot if available.
       party = val === 'Company' && snapshotHasData(profile)
         ? snapshotToParty(profile)
         : emptyParty(val as NdaEntityType)
@@ -640,16 +652,14 @@ export default function NdaWizardModal({
     }
     const updated = { ...data, party_a: party }
     setData(updated)
-    const errKey = `party_a.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
   const setPartyAAddr = (field: keyof NdaAddress, val: string) => {
     const updated = { ...data, party_a: { ...data.party_a, address: { ...data.party_a.address, [field]: val } } }
     setData(updated)
-    const errKey = `party_a.address.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
@@ -660,32 +670,28 @@ export default function NdaWizardModal({
       : { ...data.party_b, [field]: val }
     const updated = { ...data, party_b: party }
     setData(updated)
-    const errKey = `party_b.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
   const setPartyBAddr = (field: keyof NdaAddress, val: string) => {
     const updated = { ...data, party_b: { ...data.party_b, address: { ...data.party_b.address, [field]: val } } }
     setData(updated)
-    const errKey = `party_b.address.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
   const setDomiciliumA = (field: keyof NdaAddress, val: string) => {
     const updated = { ...data, domicilium_a: { ...data.domicilium_a, [field]: val } }
     setData(updated)
-    const errKey = `domicilium_a.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
   const setDomiciliumB = (field: keyof NdaAddress, val: string) => {
     const updated = { ...data, domicilium_b: { ...data.domicilium_b, [field]: val } }
     setData(updated)
-    const errKey = `domicilium_b.${field}`
-    if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
+    runValidate(updated)
     onStepChange?.(step, updated)
   }
 
