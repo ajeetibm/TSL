@@ -127,13 +127,13 @@ export default function UserDetailsModal({ isOpen, onClose, user, onSaved, onToa
           <div className="user-details-modal__row">
             <div className="user-details-modal__field">
               <label htmlFor="udm-plan">Plan</label>
-              <select id="udm-plan" value={form.plan} onChange={(e) => set('plan', e.target.value)}>
+              <select id="udm-plan" value={form.plan} disabled onChange={(e) => set('plan', e.target.value)}>
                 {PLANS.map((p) => <option key={p}>{p}</option>)}
               </select>
             </div>
             <div className="user-details-modal__field">
               <label htmlFor="udm-status">Status</label>
-              <select id="udm-status" value={form.status} onChange={(e) => set('status', e.target.value)}>
+              <select id="udm-status" value={form.status} disabled onChange={(e) => set('status', e.target.value)}>
                 {STATUSES.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>

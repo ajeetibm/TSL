@@ -427,16 +427,14 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
             <table className="admin-users__table">
               <thead>
                 <tr>
-                  <th aria-label="Select all"><span className="admin-users__checkbox" /></th>
                   <th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Join Date</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No users found matching your filters</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No users found matching your filters</td></tr>
                 ) : filteredUsers.map((user) => (
                   <tr key={user.email}>
-                    <td><span className="admin-users__checkbox" /></td>
                     <td><strong>{user.name}</strong></td>
                     <td>{user.email}</td>
                     <td><span className="admin-users__pill admin-users__pill--plan">{user.plan}</span></td>
@@ -455,16 +453,14 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
             <table className="admin-users__table admin-users__table--admins">
               <thead>
                 <tr>
-                  <th aria-label="Select all"><span className="admin-users__checkbox" /></th>
                   <th>Name</th><th>Email</th><th>Status</th><th>Last Active</th><th>Invited Date</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredAdmins.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No admins found matching your filters</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No admins found matching your filters</td></tr>
                 ) : filteredAdmins.map((admin) => (
                   <tr key={admin.id}>
-                    <td><span className="admin-users__checkbox" /></td>
                     <td><strong>{admin.name}</strong></td>
                     <td>{admin.email}</td>
                     <td>

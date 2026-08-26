@@ -1246,9 +1246,9 @@
 
 .admin-users__table th:first-child,
 .admin-users__table td:first-child {
-  width: 64px;
+  min-width: 160px;
   padding-left: 23px;
-  padding-right: 0;
+  padding-right: 24px;
 }
 
 .admin-users__table tr:last-child td {

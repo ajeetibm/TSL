@@ -119,6 +119,15 @@
   cursor: pointer;
 }
 
+.user-details-modal__field select:disabled {
+  background-color: #f4f4f4;
+  color: #6b7280;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+  background-image: none;
+  opacity: 1;
+}
+
 .user-details-modal__field input:focus,
 .user-details-modal__field select:focus {
   outline: none;
