@@ -1203,7 +1203,7 @@ export default function AdminDashboard() {
                           const assignedBy = (request as Record<string, unknown>).assignedCounselName as string | undefined
                           const email = (request as Record<string, unknown>).fromUserEmail as string | undefined
                           return (
-                            <article className="ar-card" key={request.requestId}>
+                            <article className={`ar-card${normStatus === 'rejected reassignment needed' ? ' ar-card--rejected' : ''}`} key={request.requestId}>
                               {/* Col 1 row 1: title */}
                               <div className="ar-card__top">
                                 <h3 className="ar-card__title">{request.subject || 'Contract Review for SaaS Agreement'}</h3>
@@ -1232,7 +1232,6 @@ export default function AdminDashboard() {
                                   </button>
                                 )}
                               </div>
-                              {normStatus === 'rejected reassignment needed' && request.rejectionReason && <div className="ar-card__rejection-reason">Decline reason: {request.rejectionReason}</div>}
                               {/* Col 1 row 2: user */}
                               <div className="ar-card__bottom">
                                 <div className="ar-card__user">
@@ -1242,6 +1241,7 @@ export default function AdminDashboard() {
                                     <span className="ar-card__user-email">{email ?? `${(request.fromUser || 'user').toLowerCase().replace(/\s+/g, '.')}@company.com`}</span>
                                   </div>
                                 </div>
+                                {normStatus === 'rejected reassignment needed' && request.rejectionReason && <div className="ar-card__rejection-reason">Decline reason: {request.rejectionReason}</div>}
                               </div>
                             </article>
                           )

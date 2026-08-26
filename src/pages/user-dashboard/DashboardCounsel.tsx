@@ -626,6 +626,7 @@ export default function DashboardCounsel() {
                 {history.filter((request) => request.status.toLowerCase() !== 'rejected').map((request) => {
                   const statusKey = request.status.toLowerCase()
                   const isCompleted = statusKey === 'completed'
+                  const isRejected = statusKey.includes('rejected')
                   const StatusIcon = isCompleted ? CheckCircle2 : CircleDot
 
                   return (
@@ -643,6 +644,8 @@ export default function DashboardCounsel() {
                         className={
                           isCompleted
                             ? 'dashboard-counsel__status dashboard-counsel__status--completed'
+                            : isRejected
+                            ? 'dashboard-counsel__status dashboard-counsel__status--rejected'
                             : 'dashboard-counsel__status dashboard-counsel__status--progress'
                         }
                       >

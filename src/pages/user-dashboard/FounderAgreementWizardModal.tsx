@@ -452,7 +452,7 @@ export default function FounderAgreementWizardModal({
   }
 
   useEffect(() => {
-    if (data.publiclyFunded !== 'Yes' || data.publicFundingReviewStatus !== 'pending' || !data.publicFundingReviewRequestId || !onRefreshPublicFundingReview) return
+    if (data.publiclyFunded !== 'Yes' || !['pending', 'rejected'].includes(data.publicFundingReviewStatus) || !data.publicFundingReviewRequestId || !onRefreshPublicFundingReview) return
     let active = true
     const refresh = () => onRefreshPublicFundingReview(data.publicFundingReviewRequestId!).then((review) => {
       if (active && review) setData((previous) => ({
