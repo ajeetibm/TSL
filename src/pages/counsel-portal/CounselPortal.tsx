@@ -2,7 +2,6 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
   ArrowLeft,
-  BadgeDollarSign,
   CalendarDays,
   CheckCircle2,
   CircleCheck,
@@ -668,7 +667,7 @@ function DashboardView({
         <KpiCard icon={<FileText size={20} />} value={kpis.totalRequests ?? 39} label="Total Requests" caption="All time requests" />
         <KpiCard icon={<CircleCheckBig size={20} />} value={kpis.completed ?? 32} label="Completed" caption={`${kpis.completedRate ?? '68%'} completion rate`} />
         <KpiCard icon={<CircleX size={20} />} value={kpis.rejected ?? 7} label="Rejected" caption={`${kpis.rejectedRate ?? '15%'} rejection rate`} />
-        <KpiCard dark icon={<BadgeDollarSign size={20} />} value={formatMoney(kpis.totalEarnings ?? 28450)} label="Total Earnings" caption="Revenue generated" />
+        <KpiCard dark icon={<svg width="36" height="36" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26 14.334V37.6673" stroke="#C79A3B" strokeWidth="2.33333" strokeLinecap="round" strokeLinejoin="round"/><path d="M31.8333 17.834H23.0833C22.0004 17.834 20.9618 18.2642 20.196 19.03C19.4302 19.7957 19 20.8344 19 21.9173C19 23.0003 19.4302 24.0389 20.196 24.8047C20.9618 25.5704 22.0004 26.0007 23.0833 26.0007H28.9167C29.9996 26.0007 31.0382 26.4309 31.804 27.1966C32.5698 27.9624 33 29.001 33 30.084C33 31.167 32.5698 32.2056 31.804 32.9713C31.0382 33.7371 29.9996 34.1673 28.9167 34.1673H19" stroke="#C79A3B" strokeWidth="2.33333" strokeLinecap="round" strokeLinejoin="round"/></svg>} value={formatMoney(kpis.totalEarnings ?? 28450)} label="Total Earnings" caption="Revenue generated" />
       </section>
 
       <div className="counsel-dashboard__grid">

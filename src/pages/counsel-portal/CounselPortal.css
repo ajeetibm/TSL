@@ -355,7 +355,7 @@
 
 .counsel-dashboard__section-heading {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 18px;
   min-height: 52px;
@@ -381,6 +381,8 @@
   color: #c79a3b;
   font-size: 14px;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .counsel-dashboard__request-cards {
