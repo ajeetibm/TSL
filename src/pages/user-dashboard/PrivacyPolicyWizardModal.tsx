@@ -442,6 +442,14 @@ export default function PrivacyPolicyWizardModal({
         } else {
           delete next.officerEmail
         }
+      } else if (key === 'dsrChannel') {
+        if (!value.trim()) {
+          next.dsrChannel = 'Enter a valid email address.'
+        } else if (!EMAIL_RE.test(value.trim())) {
+          next.dsrChannel = 'Enter a valid email address.'
+        } else {
+          delete next.dsrChannel
+        }
       } else if (key === 'domains') {
         if (!value.trim()) {
           next.domains = 'Add at least one domain or application.'
@@ -787,7 +795,7 @@ export default function PrivacyPolicyWizardModal({
                     <p>How data subjects reach you, your security posture, and the effective date.</p>
                     <div className="nda-modal__two-col">
                       <FormGroup label="Data subject request channel" required error={errors.dsrChannel}>
-                        <TextInput value={data.dsrChannel} onChange={(value) => set('dsrChannel', value)} placeholder="requests@company.co.za" type="email" error={Boolean(errors.dsrChannel)} />
+                        <TextInput value={data.dsrChannel} onChange={(value) => set('dsrChannel', value)} onBlur={(value) => validateField('dsrChannel', value)} placeholder="requests@company.co.za" type="email" error={Boolean(errors.dsrChannel)} />
                       </FormGroup>
                       <FormGroup label="Response commitment" required hint="Days. Default 30." error={errors.dsrDays}>
                         <TextInput value={data.dsrDays} onChange={(value) => set('dsrDays', value.replace(/\D/g, ''))} placeholder="30" type="number" error={Boolean(errors.dsrDays)} />
