@@ -2432,8 +2432,8 @@ export default function Dashboard() {
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={() => { setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
+            onClose={(step, data) => { if (step && data) saveEmpProgress(step, data, true); setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            initialStep={empState.status === 'completed' ? 1 : (empState.step || 1)}
             initialData={empState.status === 'completed' ? undefined : empState.data}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
             onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
@@ -3059,8 +3059,8 @@ export default function Dashboard() {
 
       {isEmpModalOpen && (
         <EmploymentWizardModal
-          onClose={() => setIsEmpModalOpen(false)}
-          initialStep={empState.status === 'completed' ? 1 : empState.step + 1}
+          onClose={(step, data) => { if (step && data) saveEmpProgress(step, data, true); setIsEmpModalOpen(false) }}
+          initialStep={empState.status === 'completed' ? 1 : (empState.step || 1)}
           initialData={empState.status === 'completed' ? undefined : empState.data}
           onStepChange={(step, data) => saveEmpProgress(step, data)}
           onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false) }}

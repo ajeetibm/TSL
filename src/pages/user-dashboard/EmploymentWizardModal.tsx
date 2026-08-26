@@ -16,7 +16,7 @@ const CONDITIONS = [
 const BENEFITS = ['Medical aid', 'Retirement fund', 'Group life', 'Travel allowance', 'Cell phone allowance']
 
 interface Props {
-  onClose: () => void
+  onClose: (step?: number, data?: EmploymentWizardData) => void
   onComplete?: (data: EmploymentWizardData) => void
   initialStep?: number
   initialData?: EmploymentWizardData
@@ -202,12 +202,12 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     amount ? `R ${Number(amount).toLocaleString('en-ZA')} ${period.toLowerCase()}` : '—'
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : () => onClose(step, data)}>
       <div className="nda-modal" role="dialog" aria-modal="true" aria-label="Employment Offer Letter Blueprint" onClick={(event) => event.stopPropagation()}>
         <header className="nda-modal__header">
           <h2>Employment Offer Letter</h2>
           <p className="nda-modal__header-subtitle">Conditional offer letter · 2 run units · Precedes the employment contract</p>
-          <button type="button" className="nda-modal__close" aria-label="Close" onClick={onClose}><X size={18} /></button>
+          <button type="button" className="nda-modal__close" aria-label="Close" onClick={() => onClose(step, data)}><X size={18} /></button>
           <StepBar step={step} />
         </header>
 
