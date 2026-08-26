@@ -153,11 +153,15 @@ function Banner({ type, title, message }: { type: 'warn' | 'block'; title: strin
 }
 
 /* ─── Snapshot field (pre-filled from Company Snapshot) ─── */
-function SnapshotField({ value }: { value: string }) {
+function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
   return (
-    <div className="nda-modal__snapshot-confirm">
+    <div className={`nda-modal__snapshot-confirm${confirmed ? ' nda-modal__snapshot-confirm--confirmed' : ''}`}>
       <span>{value || 'Complete your Company Snapshot'}</span>
-      <span className="nda-modal__snapshot-btn" style={{ cursor: 'default', background: '#c79a3b' }}>CONFIRM</span>
+      {confirmed ? (
+        <span className="nda-modal__snapshot-btn nda-modal__snapshot-btn--confirmed" style={{ cursor: 'default', fontWeight: 400 }}>✓ Confirmed</span>
+      ) : (
+        <button type="button" className="nda-modal__snapshot-btn" onClick={onConfirm}>CONFIRM</button>
+      )}
     </div>
   )
 }
@@ -510,9 +514,12 @@ export default function FounderAgreementWizardModal({
     const e: Record<string, string> = {}
     let valid = true
 
-    if (s === 1 && data.isIncorporated === 'No') {
-      if (!data.intendedName.trim()) { e.intendedName = 'Enter the intended company name.'; valid = false }
-      if (!data.targetIncorporation.trim()) { e.targetIncorporation = 'Enter a target incorporation date.'; valid = false }
+    if (s === 1) {
+      if (data.isIncorporated === 'Yes' && !data.companyConfirmed) { e.companyConfirmed = 'Please confirm your company name.'; valid = false }
+      if (data.isIncorporated === 'No') {
+        if (!data.intendedName.trim()) { e.intendedName = 'Enter the intended company name.'; valid = false }
+        if (!data.targetIncorporation.trim()) { e.targetIncorporation = 'Enter a target incorporation date.'; valid = false }
+      }
     }
     if (s === 2) {
       if (!data.founders.some(f => f.fullNames.trim())) { e.founders = 'Add at least one founder.'; valid = false }
@@ -662,8 +669,12 @@ export default function FounderAgreementWizardModal({
                   </Field>
 
                   {data.isIncorporated === 'Yes' && (
-                    <Field label="Company" required>
-                      <SnapshotField value={data.companyName} />
+                    <Field label="Company" required error={errors.companyConfirmed}>
+                      <SnapshotField
+                        value={data.companyName}
+                        confirmed={data.companyConfirmed}
+                        onConfirm={() => set('companyConfirmed', true)}
+                      />
                       <p className="nda-modal__field-hint" style={{ marginTop: 6 }}>
                         Pre-filled from your Company Snapshot.
                       </p>

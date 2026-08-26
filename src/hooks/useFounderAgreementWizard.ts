@@ -44,6 +44,7 @@ export interface FounderAgreementWizardData {
   // Screen 1 – Company status
   isIncorporated: 'Yes' | 'No' | ''
   companyName: string             // pre-filled when incorporated
+  companyConfirmed: boolean       // user must confirm the pre-filled company
   intendedName: string            // required when not incorporated
   targetIncorporation: string     // required when not incorporated
 
@@ -114,6 +115,7 @@ export function calcFounderAgreementProgress(data: FounderAgreementWizardData): 
   const checks: boolean[] = [
     // Screen 1
     data.isIncorporated !== '',
+    data.isIncorporated !== 'Yes' || data.companyConfirmed,
     data.isIncorporated !== 'No' || data.intendedName.trim() !== '',
     data.isIncorporated !== 'No' || data.targetIncorporation.trim() !== '',
 
@@ -155,7 +157,7 @@ export function calcFounderAgreementProgress(data: FounderAgreementWizardData): 
   return Math.round((filled / checks.length) * 100)
 }
 
-export const FA_TOTAL_CHECKS = 26  // total items in the checks array above
+export const FA_TOTAL_CHECKS = 27  // total items in the checks array above
 
 /* ─── Defaults ──────────────────────────────────────────── */
 export const makeFounder = (id: string): FAFounder => ({
@@ -174,6 +176,7 @@ export const makeSignatory = (id: string): FASignatory => ({
 export const FA_EMPTY_DATA: FounderAgreementWizardData = {
   isIncorporated: 'Yes',
   companyName: '',
+  companyConfirmed: false,
   intendedName: '',
   targetIncorporation: '',
 
