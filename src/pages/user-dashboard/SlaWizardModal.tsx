@@ -44,14 +44,15 @@ function FormGroup({ label, required, hint, error, children }: {
   )
 }
 
-function TextInput({ id, value, onChange, placeholder, type = 'text', min, max, step }: {
-  id?: string; value: string; onChange: (v: string) => void
-  placeholder?: string; type?: string; min?: string; max?: string; step?: string
+function TextInput({ id, value, onChange, onBlur, placeholder, type = 'text', min, max, step, error }: {
+  id?: string; value: string; onChange: (v: string) => void; onBlur?: (v: string) => void
+  placeholder?: string; type?: string; min?: string; max?: string; step?: string; error?: boolean
 }) {
   return (
-    <input id={id} type={type} className="nda-modal__input" value={value}
+    <input id={id} type={type} className={`nda-modal__input${error ? ' nda-modal__input--error' : ''}`} value={value}
       placeholder={placeholder} min={min} max={max} step={step}
-      onChange={(e) => onChange(e.target.value)} />
+      onChange={(e) => onChange(e.target.value)}
+      onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined} />
   )
 }
 
@@ -288,6 +289,7 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
     // Customer name — stored in customer.legalName (or fallback fullNames for individuals)
     const custName = data.customer?.legalName?.trim() || data.customer?.fullNames?.trim()
     if (!custName) e['customer.legalName'] = "Enter the customer's name."
+    else if (!/^[A-Za-z\s'.,&()-]+$/.test(custName)) e['customer.legalName'] = 'Customer name must contain alphabetic characters only.'
     if (!data.serviceDescription.trim()) e['serviceDescription'] = 'This field is required.'
     if (!data.startDate.trim()) e['startDate'] = 'This field is required.'
     if (data.termType === 'Fixed end date' && !data.endDate.trim()) e['endDate'] = 'Select an end date.'
@@ -341,7 +343,7 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
 
 /* ─── Modal props ───────────────────────────────────────────── */
 export interface SlaWizardModalProps {
-  onClose: () => void
+  onClose: (step?: number, data?: SlaWizardData) => void
   onComplete?: (data: SlaWizardData) => void
   initialStep?: number
   initialData?: SlaWizardData
@@ -419,6 +421,21 @@ export default function SlaWizardModal({
     if (errors[errKey]) setErrors((prev) => { const n = { ...prev }; delete n[errKey]; return n })
   }
 
+  const validateCustomer = (val: string) => {
+    setErrors((prev) => {
+      const next = { ...prev }
+      if (!val.trim()) {
+        next['customer.legalName'] = "Enter the customer's name."
+      } else if (!/^[A-Za-z\s'.,&()-]+$/.test(val.trim())) {
+        next['customer.legalName'] = 'Customer name must contain alphabetic characters only.'
+      } else {
+        delete next['customer.legalName']
+        delete next['customer.fullNames']
+      }
+      return next
+    })
+  }
+
   /* Navigation */
   const next = () => {
     const screenErrors = validateScreen(currentKey, data)
@@ -448,10 +465,46 @@ export default function SlaWizardModal({
   const updateSeverity = (i: number, f: keyof SeverityTarget, v: string) =>
     set('severityTargets', data.severityTargets.map((r, idx) => idx === i ? { ...r, [f]: v } : r))
 
-  const updateEscalation = (i: number, f: keyof EscalationContact, v: string) =>
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const PHONE_RE = /^[0-9\s+()./-]+$/
+
+  const validateEscalationField = (i: number, f: keyof EscalationContact, v: string) => {
+    setErrors((prev) => {
+      const next = { ...prev }
+      const key = `escalation_${i}_${f}`
+      if (f === 'name') {
+        if (!v.trim()) next[key] = 'Name is required.'
+        else if (!/^[A-Za-z\s'-]+$/.test(v.trim())) next[key] = 'Name must contain alphabetic characters only.'
+        else delete next[key]
+      } else if (f === 'role') {
+        if (!v.trim()) next[key] = 'Role is required.'
+        else delete next[key]
+      } else if (f === 'email') {
+        if (!v.trim()) next[key] = 'Email is required.'
+        else if (!EMAIL_RE.test(v.trim())) next[key] = 'Enter a valid email address.'
+        else delete next[key]
+      } else if (f === 'telephone') {
+        if (!v.trim()) next[key] = 'Telephone is required.'
+        else if (!PHONE_RE.test(v.trim())) next[key] = 'Enter a valid telephone number.'
+        else delete next[key]
+      }
+      return next
+    })
+  }
+
+  const updateEscalation = (i: number, f: keyof EscalationContact, v: string) => {
     set('escalationContacts', data.escalationContacts.map((r, idx) => idx === i ? { ...r, [f]: v } : r))
+    validateEscalationField(i, f, v)
+  }
   const addEscalation = () => set('escalationContacts', [...data.escalationContacts, { name: '', role: '', email: '', telephone: '' }])
-  const removeEscalation = (i: number) => set('escalationContacts', data.escalationContacts.filter((_, idx) => idx !== i))
+  const removeEscalation = (i: number) => {
+    set('escalationContacts', data.escalationContacts.filter((_, idx) => idx !== i))
+    setErrors((prev) => {
+      const next = { ...prev }
+      Object.keys(next).forEach((k) => { if (k.startsWith(`escalation_${i}_`)) delete next[k] })
+      return next
+    })
+  }
 
   const updateCreditTier = (i: number, f: keyof CreditTier, v: string) =>
     set('creditTiers', data.creditTiers.map((r, idx) => idx === i ? { ...r, [f]: v } : r))
@@ -473,7 +526,7 @@ export default function SlaWizardModal({
   const noCreditTier = creditsEnabled && data.creditTiers.length === 0
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : () => onClose(screens.indexOf(currentKey) + 1, data)}>
       <div className="nda-modal" role="dialog" aria-modal="true"
         aria-label="Service Level Agreement (SLA) Wizard"
         onClick={(e) => e.stopPropagation()}>
@@ -482,7 +535,7 @@ export default function SlaWizardModal({
         <header className="nda-modal__header">
           <h2>Service Level Agreement (SLA)</h2>
           <button type="button" className="nda-modal__close" aria-label="Close"
-            onClick={isGenerating ? undefined : onClose} disabled={isGenerating}>
+            onClick={isGenerating ? undefined : () => onClose(screens.indexOf(currentKey) + 1, data)} disabled={isGenerating}>
             <X size={18} />
           </button>
           <StepBar screens={currentScreens} current={currentKey} isPreview={isPreview} />
@@ -526,13 +579,16 @@ export default function SlaWizardModal({
                         Customer<span className="nda-modal__required"> *</span>
                       </label>
                       <TextInput
-                        value={data.customer.legalName || data.customer.fullNames}
-                        onChange={(v) => {
-                          setParty('customer', 'legalName', v)
-                          setData((prev) => ({ ...prev, customerName: v }))
-                        }}
-                        placeholder="Registered name of the customer"
-                      />
+                          value={data.customer.legalName || data.customer.fullNames}
+                          onChange={(v) => {
+                            setParty('customer', 'legalName', v)
+                            setData((prev) => ({ ...prev, customerName: v }))
+                            validateCustomer(v)
+                          }}
+                          onBlur={(v) => validateCustomer(v)}
+                          placeholder="Registered name of the customer"
+                          error={Boolean(errors['customer.legalName'] || errors['customer.fullNames'])}
+                        />
                       {(errors['customer.legalName'] || errors['customer.fullNames'])
                         ? <p className="nda-modal__field-error">{errors['customer.legalName'] || errors['customer.fullNames']}</p>
                         : <p className="nda-modal__field-hint">Registration number is optional for this Blueprint. Captured via the shared party block.</p>
@@ -770,14 +826,45 @@ export default function SlaWizardModal({
                     </div>
                   )}
                   {data.escalationContacts.map((c, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 1fr 34px', gap: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 14px', marginBottom: 10, alignItems: 'center' }}>
-                      <input className="nda-modal__input" placeholder="Name" value={c.name} onChange={(e) => updateEscalation(i, 'name', e.target.value)} style={{ borderRadius: 10 }} />
-                      <input className="nda-modal__input" placeholder="Role" value={c.role} onChange={(e) => updateEscalation(i, 'role', e.target.value)} style={{ borderRadius: 10 }} />
-                      <input className="nda-modal__input" placeholder="Email" type="email" value={c.email} onChange={(e) => updateEscalation(i, 'email', e.target.value)} style={{ borderRadius: 10 }} />
-                      <input className="nda-modal__input" placeholder="Telephone" value={c.telephone} onChange={(e) => updateEscalation(i, 'telephone', e.target.value)} style={{ borderRadius: 10 }} />
-                      <button type="button" onClick={() => removeEscalation(i)}
-                        style={{ background: '#fdecea', color: '#c0392b', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: 15, fontWeight: 700, lineHeight: 1 }}
-                        aria-label="Remove">×</button>
+                    <div key={i} style={{ marginBottom: 10 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 1fr 34px', gap: 10, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '12px 14px', alignItems: 'center' }}>
+                        <input
+                          className={`nda-modal__input${errors[`escalation_${i}_name`] ? ' nda-modal__input--error' : ''}`}
+                          placeholder="Name" value={c.name}
+                          onChange={(e) => updateEscalation(i, 'name', e.target.value)}
+                          onBlur={(e) => validateEscalationField(i, 'name', e.target.value)}
+                          style={{ borderRadius: 10 }} />
+                        <input
+                          className={`nda-modal__input${errors[`escalation_${i}_role`] ? ' nda-modal__input--error' : ''}`}
+                          placeholder="Role" value={c.role}
+                          onChange={(e) => updateEscalation(i, 'role', e.target.value)}
+                          onBlur={(e) => validateEscalationField(i, 'role', e.target.value)}
+                          style={{ borderRadius: 10 }} />
+                        <input
+                          className={`nda-modal__input${errors[`escalation_${i}_email`] ? ' nda-modal__input--error' : ''}`}
+                          placeholder="Email" type="email" value={c.email}
+                          onChange={(e) => updateEscalation(i, 'email', e.target.value)}
+                          onBlur={(e) => validateEscalationField(i, 'email', e.target.value)}
+                          style={{ borderRadius: 10 }} />
+                        <input
+                          className={`nda-modal__input${errors[`escalation_${i}_telephone`] ? ' nda-modal__input--error' : ''}`}
+                          placeholder="Telephone" value={c.telephone}
+                          onChange={(e) => updateEscalation(i, 'telephone', e.target.value)}
+                          onBlur={(e) => validateEscalationField(i, 'telephone', e.target.value)}
+                          style={{ borderRadius: 10 }} />
+                        <button type="button" onClick={() => removeEscalation(i)}
+                          style={{ background: '#fdecea', color: '#c0392b', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: 'pointer', fontSize: 15, fontWeight: 700, lineHeight: 1 }}
+                          aria-label="Remove">×</button>
+                      </div>
+                      {(errors[`escalation_${i}_name`] || errors[`escalation_${i}_role`] || errors[`escalation_${i}_email`] || errors[`escalation_${i}_telephone`]) && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.2fr 1fr 34px', gap: 10, padding: '4px 2px 0' }}>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`escalation_${i}_name`] || ''}</p>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`escalation_${i}_role`] || ''}</p>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`escalation_${i}_email`] || ''}</p>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`escalation_${i}_telephone`] || ''}</p>
+                          <span />
+                        </div>
+                      )}
                     </div>
                   ))}
                   {/* dashed full-width add button */}

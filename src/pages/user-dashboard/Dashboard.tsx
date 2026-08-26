@@ -2474,8 +2474,8 @@ export default function Dashboard() {
 
         {isSLAModalOpen && (
           <SlaWizardModal
-            onClose={() => { setIsSLAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={slaState.status === 'completed' ? 1 : slaState.step + 1}
+            onClose={(step, data) => { if (step && data) saveSLAProgress(step, data, true); setIsSLAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            initialStep={slaState.status === 'completed' ? 1 : (slaState.step || 1)}
             initialData={slaState.status === 'completed' ? undefined : slaState.data}
             onStepChange={(step, data) => saveSLAProgress(step, data)}
             onComplete={(data) => { handleSLAComplete(data); setIsSLAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
@@ -3101,8 +3101,8 @@ export default function Dashboard() {
 
       {isSLAModalOpen && (
         <SlaWizardModal
-          onClose={() => setIsSLAModalOpen(false)}
-          initialStep={slaState.status === 'completed' ? 1 : slaState.step + 1}
+          onClose={(step, data) => { if (step && data) saveSLAProgress(step, data, true); setIsSLAModalOpen(false) }}
+          initialStep={slaState.status === 'completed' ? 1 : (slaState.step || 1)}
           initialData={slaState.status === 'completed' ? undefined : slaState.data}
           onStepChange={(step, data) => saveSLAProgress(step, data)}
           onComplete={(data) => { handleSLAComplete(data); setIsSLAModalOpen(false) }}
