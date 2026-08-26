@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi } from '../../services/tslApi'
 import type { ActiveSession } from '../../services/tslApi'
@@ -266,7 +266,6 @@ function formatTimeAgo(value?: string) {
 
 export default function AdminDashboard() {
   const { getAttachments } = useCounselRequests()
-  const navigate = useNavigate()
   const [dashboardData, setDashboardData] = useState<AdminDashboardData | null>(null)
   const [error, setError] = useState('')
   const [activeRequest, setActiveRequest] = useState<AdminCounselRequest | null>(null)
