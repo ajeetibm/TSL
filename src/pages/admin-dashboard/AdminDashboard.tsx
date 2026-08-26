@@ -33,7 +33,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
-import { adminApi, clearAuthSession } from '../../services/tslApi'
+import { adminApi } from '../../services/tslApi'
 import type { ActiveSession } from '../../services/tslApi'
 import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import { useCounselRequests } from '../../context/CounselRequestContext'
@@ -308,7 +308,6 @@ export default function AdminDashboard() {
   const [adminPasswordError, setAdminPasswordError] = useState<string | null>(null)
   const [logoutModalOpen, setLogoutModalOpen] = useState(false)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
-  const [inviteToast, setInviteToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
@@ -518,11 +517,6 @@ export default function AdminDashboard() {
     percent: [92, 85, 88, 79, 91][index] ?? 82,
   }))
   const revenueLinePoints = buildRevenueLinePoints(revenueMonths, revenueAxis)
-
-  const signOut = () => {
-    clearAuthSession()
-    navigate('/')
-  }
 
   const openPreviewModal = (request: AdminCounselRequest) => {
     setActiveRequest(request)
