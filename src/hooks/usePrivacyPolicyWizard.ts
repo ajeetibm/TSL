@@ -162,7 +162,7 @@ function hasFilledCookie(row: PrivacyCookieRow) {
 }
 
 export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData): number {
-  let total = 17
+  let total = 18
   let filled = 0
 
   if (data.responsiblePartyConfirmed) filled += 1
@@ -192,7 +192,7 @@ export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData): number
 }
 
 export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
-  responsibleParty: 'The Startup Legal (Pty) Ltd',
+  responsibleParty: '',
   responsiblePartyConfirmed: false,
   officerFullNames: '',
   officerIdNumber: '',
@@ -221,7 +221,7 @@ export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
   automatedDecisions: false,
 }
 
-export const PP_TOTAL_REQUIRED = 17
+export const PP_TOTAL_REQUIRED = 18
 
 const defaultState: PrivacyPolicyWizardState = {
   status: 'idle',

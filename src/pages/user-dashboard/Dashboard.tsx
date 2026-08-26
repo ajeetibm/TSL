@@ -2444,7 +2444,7 @@ export default function Dashboard() {
           <PrivacyPolicyWizardModal
             onClose={() => { setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
             initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
-            initialData={ppState.status === 'completed' ? undefined : ppState.data}
+            initialData={ppState.status === 'completed' ? undefined : { ...ppState.data, responsibleParty: ppState.data.responsibleParty || profile.legalName || profile.companyName }}
             onStepChange={(step, data) => savePPProgress(step, data)}
             onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
           />
@@ -3071,7 +3071,7 @@ export default function Dashboard() {
         <PrivacyPolicyWizardModal
           onClose={() => setIsPPModalOpen(false)}
           initialStep={ppState.status === 'completed' ? 1 : ppState.step + 1}
-          initialData={ppState.status === 'completed' ? undefined : ppState.data}
+          initialData={ppState.status === 'completed' ? undefined : { ...ppState.data, responsibleParty: ppState.data.responsibleParty || profile.legalName || profile.companyName }}
           onStepChange={(step, data) => savePPProgress(step, data)}
           onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false) }}
         />

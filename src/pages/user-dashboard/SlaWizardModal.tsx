@@ -979,9 +979,9 @@ export default function SlaWizardModal({
 
                 {/* Signatories */}
                 <div className="nda-modal__party-block">
-                  <h3 className="nda-modal__party-title">Signatories</h3>
-                  <p className="nda-modal__field-hint" style={{ marginBottom: 8 }}>Name and title for each party.</p>
-                  {errors['signatories'] && <p className="nda-modal__field-error" style={{ marginBottom: 8 }}>{errors['signatories']}</p>}
+                  <h3 className="nda-modal__party-title" style={{ margin: '0 0 2px' }}>Signatories <span className="nda-modal__required">*</span></h3>
+                  <p className="nda-modal__field-hint" style={{ margin: '0 0 2px' }}>Name and title for each party.</p>
+                  {errors['signatories'] && <p className="nda-modal__field-error" style={{ margin: '0 0 4px' }}>{errors['signatories']}</p>}
                   {/* header */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 34px', gap: 8, padding: '0 4px 6px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#6b7280' }}>
                     <span>Name</span><span>Title</span><span />
