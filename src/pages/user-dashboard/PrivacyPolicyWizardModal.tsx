@@ -97,12 +97,14 @@ function FormGroup({
 function TextInput({
   value,
   onChange,
+  onBlur,
   placeholder,
   type = 'text',
   error,
 }: {
   value: string
   onChange: (value: string) => void
+  onBlur?: (value: string) => void
   placeholder?: string
   type?: string
   error?: boolean
@@ -114,6 +116,7 @@ function TextInput({
       value={value}
       placeholder={placeholder}
       onChange={(event) => onChange(event.target.value)}
+      onBlur={onBlur ? (event) => onBlur(event.target.value) : undefined}
     />
   )
 }
@@ -414,10 +417,49 @@ export default function PrivacyPolicyWizardModal({
     securitySummary: data.securitySummary.join(', '),
   }), [data])
 
+  const validateField = (key: string, value: string) => {
+    setErrors((prev) => {
+      const next = { ...prev }
+      if (key === 'officerFullNames') {
+        if (!value.trim()) {
+          next.officerFullNames = "Enter the information officer's full names."
+        } else if (!/^[A-Za-z\s'-]+$/.test(value.trim())) {
+          next.officerFullNames = 'Full names must contain alphabetic characters only.'
+        } else {
+          delete next.officerFullNames
+        }
+      } else if (key === 'officerIdNumber') {
+        if (!/^\d{13}$/.test(value.trim())) {
+          next.officerIdNumber = 'Enter a 13-digit identity number.'
+        } else {
+          delete next.officerIdNumber
+        }
+      } else if (key === 'officerEmail') {
+        if (!value.trim()) {
+          next.officerEmail = 'Enter a valid email address.'
+        } else if (!EMAIL_RE.test(value.trim())) {
+          next.officerEmail = 'Enter a valid email address.'
+        } else {
+          delete next.officerEmail
+        }
+      } else if (key === 'domains') {
+        if (!value.trim()) {
+          next.domains = 'Add at least one domain or application.'
+        } else {
+          delete next.domains
+        }
+      } else {
+        delete next[key]
+      }
+      return next
+    })
+  }
+
   const set = <K extends keyof PrivacyPolicyWizardData>(key: K, value: PrivacyPolicyWizardData[K]) => {
     const updated = { ...data, [key]: value }
     setData(updated)
     onStepChange?.(step, updated)
+    if (typeof value === 'string') validateField(key as string, value)
   }
 
   const updateStringList = (key: 'domains' | 'crossBorderCountries', index: number, value: string) => {
@@ -526,14 +568,14 @@ export default function PrivacyPolicyWizardModal({
                     </FormGroup>
                     <div className="nda-modal__two-col">
                       <FormGroup label="Information officer — full names" required error={errors.officerFullNames}>
-                        <TextInput value={data.officerFullNames} onChange={(value) => set('officerFullNames', value)} placeholder="Enter full names" error={Boolean(errors.officerFullNames)} />
+                        <TextInput value={data.officerFullNames} onChange={(value) => set('officerFullNames', value)} onBlur={(value) => validateField('officerFullNames', value)} placeholder="Enter full names" error={Boolean(errors.officerFullNames)} />
                       </FormGroup>
                       <FormGroup label="Information officer — identity number" required error={errors.officerIdNumber}>
-                        <TextInput value={data.officerIdNumber} onChange={(value) => set('officerIdNumber', value.replace(/\D/g, '').slice(0, 13))} placeholder="13-digit SA ID number" error={Boolean(errors.officerIdNumber)} />
+                        <TextInput value={data.officerIdNumber} onChange={(value) => set('officerIdNumber', value.replace(/\D/g, '').slice(0, 13))} onBlur={(value) => validateField('officerIdNumber', value)} placeholder="13-digit SA ID number" error={Boolean(errors.officerIdNumber)} />
                       </FormGroup>
                     </div>
                     <FormGroup label="Information officer — email" required hint="The information officer must be registered with the Information Regulator." error={errors.officerEmail}>
-                      <TextInput value={data.officerEmail} onChange={(value) => set('officerEmail', value)} placeholder="officer@company.co.za" type="email" error={Boolean(errors.officerEmail)} />
+                      <TextInput value={data.officerEmail} onChange={(value) => set('officerEmail', value)} onBlur={(value) => validateField('officerEmail', value)} placeholder="officer@company.co.za" type="email" error={Boolean(errors.officerEmail)} />
                     </FormGroup>
                     <FormGroup label="Contact email for privacy queries" required error={errors.privacyEmail}>
                       <TextInput value={data.privacyEmail} onChange={(value) => set('privacyEmail', value)} placeholder="privacy@company.co.za" type="email" error={Boolean(errors.privacyEmail)} />
@@ -542,7 +584,7 @@ export default function PrivacyPolicyWizardModal({
                       <div className="nda-modal__repeat-list">
                         {data.domains.map((domain, index) => (
                           <div key={`domain-${index}`} className="nda-modal__repeat-row nda-modal__repeat-row--single">
-                            <TextInput value={domain} onChange={(value) => updateStringList('domains', index, value)} placeholder="e.g. www.company.co.za" />
+                            <TextInput value={domain} onChange={(value) => updateStringList('domains', index, value)} onBlur={(value) => validateField('domains', value)} placeholder="e.g. www.company.co.za" />
                             <button type="button" className="nda-modal__row-remove" onClick={() => removeStringListItem('domains', index)} aria-label="Remove domain">
                               <X size={16} />
                             </button>
