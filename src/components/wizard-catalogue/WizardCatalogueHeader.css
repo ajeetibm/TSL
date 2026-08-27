@@ -6,10 +6,13 @@
 }
 
 .wizard-catalogue-header__title {
-  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
   font-size: 30px;
-  font-weight: 800;
   line-height: 36px;
+  letter-spacing: -0.75px;
+  color: #0D1B2A;
 }
 
 .wizard-catalogue-header__copy {
