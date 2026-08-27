@@ -37,12 +37,26 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
+.wizard-hero__breadcrumb-current {
+  font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  color: #FFFFFF;
+}
+
 .wizard-hero__title {
   margin-top: 16px;
-  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Montserrat', "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 700;
   font-size: 48px;
-  font-weight: 800;
-  line-height: 1.15;
+  line-height: 48px;
+  text-align: center;
+  letter-spacing: -1.2px;
+  color: #FFFFFF;
 }
 
 .wizard-hero__copy {

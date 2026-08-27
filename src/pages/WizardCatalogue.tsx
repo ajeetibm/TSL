@@ -6,7 +6,7 @@ import { WizardCard } from '../components/wizard-catalogue/WizardCard'
 import { WizardCartBar } from '../components/wizard-catalogue/WizardCartBar'
 import { WizardCatalogueHeader } from '../components/wizard-catalogue/WizardCatalogueHeader'
 import { WizardCatalogueHero } from '../components/wizard-catalogue/WizardCatalogueHero'
-import { wizards } from '../data/wizards'
+import { wizards } from '../data/wizards.tsx'
 import { setPageMetadata } from '../services/metadata'
 import { loadWizardQuantities, saveWizardQuantities } from '../utils/wizardCart'
 import './WizardCatalogue.css'
@@ -15,7 +15,7 @@ export default function WizardCatalogue() {
   const [quantities, setQuantities] = useState(() => loadWizardQuantities())
 
   setPageMetadata(
-    'Wizard Catalogue',
+    'Blueprint Catalogue',
     'Choose a guided TSL legal workflow for South African startup documents, compliance, and agreements.',
   )
 

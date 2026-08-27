@@ -17,6 +17,7 @@ export function WizardCard({
   audience,
   included,
   icon: Icon,
+  svgIcon,
   popular,
   quantity,
   onIncrement,
@@ -38,7 +39,7 @@ export function WizardCard({
       {isSelected && <span className="wizard-card__count-badge">{quantity}</span>}
 
       <span className="wizard-card__icon">
-        <Icon size={27} />
+        {svgIcon ?? <Icon size={27} />}
       </span>
 
       <div className="wizard-card__intro">
@@ -48,7 +49,7 @@ export function WizardCard({
 
       <div className="wizard-card__facts">
         <InfoRow icon={Clock3} label="Time:" value={time} />
-        <InfoRow icon={Zap} label="Cost:" value={credits} iconColor="#cf9b2f" />
+        <InfoRow icon={Zap} label="Cost:" value={credits} />
         <InfoRow icon={Clock3} label="For:" value={audience} variant="audience" customIcon={
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path fill="none" d="M9.33073 12.25V11.0833C9.33073 10.4645 9.0849 9.871 8.64731 9.43342C8.20973 8.99583 7.61623 8.75 6.9974 8.75H3.4974C2.87856 8.75 2.28506 8.99583 1.84748 9.43342C1.4099 9.871 1.16406 10.4645 1.16406 11.0833V12.25" stroke="#333333" strokeWidth="1.16667" strokeLinecap="round" strokeLinejoin="round"/>

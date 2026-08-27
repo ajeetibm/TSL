@@ -11,7 +11,7 @@ import {
   Star,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { wizards } from '../../data/wizards'
+import { wizards } from '../../data/wizards.tsx'
 import { loadWizardQuantities, saveWizardQuantities } from '../../utils/wizardCart'
 import './WizardDetailOverview.css'
 

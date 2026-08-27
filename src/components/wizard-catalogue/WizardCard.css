@@ -89,9 +89,13 @@
 
 .wizard-card__description {
   margin-top: 8px;
-  color: #4a5565;
-  font-size: 14px;
+  font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
   line-height: 26px;
+  text-align: center;
+  color: #333333;
 }
 
 .wizard-card__facts {
@@ -160,8 +164,8 @@
 }
 
 .wizard-card__included span {
-  border-radius: 4px;
-  background: #fcf3dc;
+  border-radius: 6.8px;
+  background: rgba(199, 154, 59, 0.1);
   padding: 4px 8px;
   color: #9f7629;
   font-size: 12px;
@@ -179,9 +183,13 @@
   border-radius: 24px;
   background: #c79a3b;
   box-shadow: 0px 4px 6px -1px rgba(0, 0, 0, 0.1), 0px 2px 4px -2px rgba(0, 0, 0, 0.1);
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 700;
+  font-family: 'Open Sans', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  color: #FFFFFF;
   transition: background-color 160ms ease;
 }
 
