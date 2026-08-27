@@ -140,7 +140,7 @@ export default function DashboardOverview({
           </section>
 
           <section className="admin-dashboard__top-wizards">
-            <h2>Top Performing Wizards</h2>
+            <h2>Top Performing Blueprints</h2>
             {(topWizards.length
               ? topWizards
               : [

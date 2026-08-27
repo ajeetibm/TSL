@@ -1358,7 +1358,7 @@ export default function AdminDashboard() {
             )}
 
             <section className="admin-dashboard__top-wizards">
-              <h2>Top Performing Wizards</h2>
+              <h2>Top Performing Blueprints</h2>
               {(topWizards.length ? topWizards : [
                 { name: 'NDA Generator', completions: 1234, percent: 92 },
                 { name: 'Employment Contract', completions: 987, percent: 85 },
