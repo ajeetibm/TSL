@@ -161,34 +161,50 @@ function hasFilledCookie(row: PrivacyCookieRow) {
   return hasText(row.name) && hasText(row.purpose) && hasText(row.duration) && hasText(row.necessary)
 }
 
-export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData): number {
-  let total = 18
-  let filled = 0
+export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData, reachedStep = 6): number {
+  // Do not count default or conditional values from screens the user has not
+  // reached yet. This keeps the dashboard percentage aligned to actual form
+  // completion, rather than making a new draft appear partly complete.
+  const checksByScreen: boolean[][] = [
+    // Screen 1 - Who you are
+    [
+      data.responsiblePartyConfirmed,
+      hasText(data.officerFullNames),
+      hasText(data.officerIdNumber),
+      hasText(data.officerEmail),
+      hasText(data.privacyEmail),
+      data.domains.some(hasText),
+    ],
+    // Screen 2 - What you collect
+    [
+      data.piCategories.length > 0,
+      data.specialPi.length === 0 || hasText(data.specialPiBasis),
+      data.childrenData === false || hasText(data.childrenConsent),
+    ],
+    // Screen 3 - Why and on what basis
+    [data.purposes.some(hasFilledPurpose), data.retention.some(hasFilledRetention)],
+    // Screen 4 - Who else sees it
+    [
+      data.thirdParties.some(hasFilledThirdParty),
+      data.crossBorder === false || (data.crossBorderCountries.some(hasText) && hasText(data.transferBasis)),
+      data.directMarketing === true || data.directMarketing === false,
+    ],
+    // Screen 5 - Cookies
+    [data.cookies.some(hasFilledCookie), hasText(data.cookieConsent)],
+    // Screen 6 - Publication
+    [
+      hasText(data.dsrChannel),
+      Number(data.dsrDays) > 0,
+      data.securitySummary.length > 0,
+      hasText(data.effectiveDate),
+    ],
+  ]
 
-  if (data.responsiblePartyConfirmed) filled += 1
-  if (hasText(data.officerFullNames)) filled += 1
-  if (hasText(data.officerIdNumber)) filled += 1
-  if (hasText(data.officerEmail)) filled += 1
-  if (hasText(data.privacyEmail)) filled += 1
-  if (data.domains.some(hasText)) filled += 1
-  if (data.piCategories.length > 0) filled += 1
-  if (!data.specialPi.length || hasText(data.specialPiBasis)) filled += 1
-  if (!data.childrenData || hasText(data.childrenConsent)) filled += 1
-  if (data.purposes.some(hasFilledPurpose)) filled += 1
-  if (data.retention.some(hasFilledRetention)) filled += 1
-  if (data.thirdParties.some(hasFilledThirdParty)) filled += 1
-  if (!data.crossBorder || (data.crossBorderCountries.length > 0 && hasText(data.transferBasis))) filled += 1
-  if (data.cookies.some(hasFilledCookie)) filled += 1
-  if (hasText(data.cookieConsent)) filled += 1
-  if (hasText(data.dsrChannel)) filled += 1
-  if (data.securitySummary.length > 0) filled += 1
-  if (hasText(data.effectiveDate)) filled += 1
-
-  if (data.specialPi.length > 0) total += 1
-  if (data.childrenData) total += 1
-  if (data.crossBorder) total += 1
-
-  return Math.round((filled / total) * 100)
+  const visibleScreens = Math.min(Math.max(reachedStep, 0), checksByScreen.length)
+  const checks = checksByScreen.flatMap((screenChecks, index) =>
+    index < visibleScreens ? screenChecks : screenChecks.map(() => false),
+  )
+  return Math.round((checks.filter(Boolean).length / checks.length) * 100)
 }
 
 export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
@@ -221,7 +237,7 @@ export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
   automatedDecisions: false,
 }
 
-export const PP_TOTAL_REQUIRED = 18
+export const PP_TOTAL_REQUIRED = 20
 
 const defaultState: PrivacyPolicyWizardState = {
   status: 'idle',
@@ -240,7 +256,7 @@ function draftToState(draft: WizardDraft<PrivacyPolicyWizardData>): PrivacyPolic
   return {
     status,
     step: draft.step,
-    progress: calcPrivacyPolicyProgress(data),
+    progress: calcPrivacyPolicyProgress(data, draft.step),
     data,
     startedAt: draft.startedAt,
     completedAt: draft.completedAt,
@@ -310,7 +326,7 @@ export function usePrivacyPolicyWizard(
         ...prev,
         step,
         data,
-        progress: calcPrivacyPolicyProgress(data),
+        progress: calcPrivacyPolicyProgress(data, step),
       }
       persist(next, immediate)
       return next
@@ -320,7 +336,12 @@ export function usePrivacyPolicyWizard(
   const completeWizard = useCallback(async () => {
     setState((prev) => {
       const completedAt = new Date().toISOString()
-      const next: PrivacyPolicyWizardState = { ...prev, status: 'completed', completedAt }
+      const next: PrivacyPolicyWizardState = {
+        ...prev,
+        status: 'completed',
+        progress: calcPrivacyPolicyProgress(prev.data, 6),
+        completedAt,
+      }
       persist(next, true)
       if (wizardService.mode === 'api' && toApiFields) {
         void privacyPolicyWizardApi.complete(toApiFields(next.data))

@@ -114,7 +114,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
       } else if (key === 'candidate.email') {
         if (!value.trim()) {
           next['candidate.email'] = "Enter the candidate's email address."
-        } else if (!/^\S+@\S+\.\S+$/.test(value.trim())) {
+        } else if (!/^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value.trim())) {
           next['candidate.email'] = 'Enter a valid email address.'
         } else {
           delete next['candidate.email']
@@ -158,7 +158,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     if (step === 1) {
       if (!data.company_id) e['company_id'] = 'Confirm the employer from the Company Snapshot.'
       if (!data['candidate.full_names'].trim()) e['candidate.full_names'] = 'Enter the candidate\'s full names.'
-      if (!/^\S+@\S+\.\S+$/.test(data['candidate.email'])) e['candidate.email'] = 'Enter the candidate\'s email address.'
+      if (!/^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(data['candidate.email'].trim())) e['candidate.email'] = 'Enter the candidate\'s email address.'
       if (!data.job_title.trim()) e['job_title'] = 'Job title is required.'
       if (!data.reports_to.trim()) e['reports_to'] = 'Reports to is required.'
       if (!data.start_date) e['start_date'] = 'Start date is required.'
@@ -223,12 +223,17 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
               <div className="nda-modal__form-group">
                 <label className="nda-modal__label">Employer</label>
                 <div className={`nda-modal__snapshot-confirm${e['company_id'] ? ' nda-modal__snapshot-confirm--error' : ''}`}>
-                  <span>{snapshotEmployerName || data.employer_name || 'Complete your Company Snapshot'}</span>
+                  <span>{snapshotEmployerName || data.employer_name || 'Your company'}</span>
                   <button
                     type="button"
                     className={`nda-modal__snapshot-btn${data.company_id ? ' nda-modal__snapshot-btn--confirmed' : ''}`}
-                    disabled={!snapshotEmployerName || !profile.companySnapshotId}
-                    onClick={() => set('company_id', profile.companySnapshotId)}
+                    onClick={() => {
+                      if (!snapshotEmployerName || !profile.companySnapshotId) {
+                        setErrors((prev) => ({ ...prev, company_id: 'Please complete your Company Snapshot first before confirming the employer.' }))
+                        return
+                      }
+                      set('company_id', profile.companySnapshotId)
+                    }}
                   >
                     {data.company_id ? 'Confirmed' : 'CONFIRM'}
                   </button>

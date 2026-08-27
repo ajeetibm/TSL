@@ -37,7 +37,7 @@ const STEPS: { label: string }[] = [
   { label: 'Publication' },
 ]
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 
 const boolLabel = (value: boolean) => (value ? 'Yes' : 'No')
 const hasText = (value: string) => value.trim().length > 0
@@ -370,7 +370,7 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
 }
 
 interface PrivacyPolicyWizardModalProps {
-  onClose: () => void
+  onClose: (step: number, data: PrivacyPolicyWizardData) => void
   onComplete?: (data: PrivacyPolicyWizardData) => void
   initialStep?: number
   initialData?: PrivacyPolicyWizardData
@@ -402,7 +402,7 @@ export default function PrivacyPolicyWizardModal({
     }
   })
 
-  const progress = calcPrivacyPolicyProgress(data)
+  const progress = calcPrivacyPolicyProgress(data, step)
   const isComplete = progress === 100
   const incompleteCount = Math.max(0, PP_TOTAL_REQUIRED - Math.round((progress / 100) * PP_TOTAL_REQUIRED))
 
@@ -534,23 +534,25 @@ export default function PrivacyPolicyWizardModal({
     setStep(targetStep)
   }
 
+  const handleClose = () => onClose(step, data)
+
   const handleGenerate = () => {
     if (!isComplete) return
     setIsGenerating(true)
     setTimeout(() => {
       setIsGenerating(false)
       onComplete?.(data)
-      onClose()
+      onClose(step, data)
     }, 1500)
   }
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : handleClose}>
       <div className="nda-modal nda-modal--wide" role="dialog" aria-modal="true" aria-label="Privacy and Cookies Policy Wizard" onClick={(event) => event.stopPropagation()}>
         <header className="nda-modal__header">
           <h2>Privacy and Cookies Policy</h2>
           <p className="nda-modal__header-subtitle">Published privacy notice & cookies policy · 2 run units · Emits two documents from one input set</p>
-          <button type="button" className="nda-modal__close" aria-label="Close" onClick={isGenerating ? undefined : onClose} disabled={isGenerating}>
+          <button type="button" className="nda-modal__close" aria-label="Close" onClick={isGenerating ? undefined : handleClose} disabled={isGenerating}>
             <X size={18} />
           </button>
           <StepBar current={step} isPreview={isPreview} />

@@ -465,7 +465,7 @@ export default function SlaWizardModal({
   const updateSeverity = (i: number, f: keyof SeverityTarget, v: string) =>
     set('severityTargets', data.severityTargets.map((r, idx) => idx === i ? { ...r, [f]: v } : r))
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
   const PHONE_RE = /^[0-9\s+()./-]+$/
 
   const validateEscalationField = (i: number, f: keyof EscalationContact, v: string) => {

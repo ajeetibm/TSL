@@ -24,7 +24,7 @@ interface UserDetailsModalProps {
 const PLANS   = ['Launchpad', 'Operator', 'Boardroom']
 const STATUSES = ['Active', 'Inactive']
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 const PHONE_RE = /^[+\d][\d\s\-().]{6,19}$/
 
 function validate(form: UserData): Partial<Record<keyof UserData, string>> {

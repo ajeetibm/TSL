@@ -17,7 +17,7 @@ const contactCards = [
 // ─── Validation helpers ───────────────────────────────────────────────────────
 
 const FULL_NAME_RE = /^[a-zA-Z\s'\-\.]{2,}$/
-const EMAIL_RE     = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const EMAIL_RE     = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 const PHONE_RE     = /^[\+\d][\d\s\-\(\)]{6,19}$/
 
 function validateFullName(v: string): string {
