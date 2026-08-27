@@ -803,6 +803,11 @@ function EarningsChart({
           <span>R1k</span>
           <span>R0k</span>
         </div>
+        <svg className="counsel-dashboard__gridlines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {[0, 25, 50, 75, 100].map((y) => (
+            <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#e5e5e5" strokeWidth="1" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+          ))}
+        </svg>
         <svg className="counsel-dashboard__target-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <polyline points={linePoints} fill="none" stroke="#d19a2f" strokeDasharray="4 4" strokeWidth="1.6" vectorEffect="non-scaling-stroke" />
         </svg>
