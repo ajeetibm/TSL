@@ -1,4 +1,4 @@
-import { BadgeCheck, ChevronRight, Circle, ShieldCheck, Sparkles } from 'lucide-react'
+import { ChevronRight, Circle } from 'lucide-react'
 import './WizardCatalogueHero.css'
 
 export function WizardCatalogueHero() {
@@ -21,15 +21,39 @@ export function WizardCatalogueHero() {
 
         <div className="wizard-hero__badges">
           <span>
-            <BadgeCheck size={18} />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g clipPath="url(#cipc-clip)">
+                <path d="M9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5Z" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path fill="none" d="M6.75 9L8.25 10.5L11.25 7.5" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="cipc-clip"><rect width="18" height="18" fill="white"/></clipPath>
+              </defs>
+            </svg>
             CIPC Compliant
           </span>
           <span>
-            <ShieldCheck size={18} />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g clipPath="url(#popia-clip)">
+                <path d="M9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5Z" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path fill="none" d="M6.75 9L8.25 10.5L11.25 7.5" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="popia-clip"><rect width="18" height="18" fill="white"/></clipPath>
+              </defs>
+            </svg>
             POPIA Certified
           </span>
           <span>
-            <Sparkles size={18} />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <g clipPath="url(#startups-clip)">
+                <path d="M9 16.5C13.1421 16.5 16.5 13.1421 16.5 9C16.5 4.85786 13.1421 1.5 9 1.5C4.85786 1.5 1.5 4.85786 1.5 9C1.5 13.1421 4.85786 16.5 9 16.5Z" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path fill="none" d="M6.75 9L8.25 10.5L11.25 7.5" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="startups-clip"><rect width="18" height="18" fill="white"/></clipPath>
+              </defs>
+            </svg>
             500+ SA Startups
           </span>
         </div>
