@@ -185,8 +185,8 @@ export default function DashboardWizards() {
   }, [])
 
   setPageMetadata(
-    'Browse All Wizards',
-    'Browse TSL dashboard legal wizards and select a workflow to generate a document.',
+    'Browse All Blueprints',
+    'Browse TSL dashboard legal blueprints and select a workflow to generate a document.',
   )
 
   // Titles the user already has on their dashboard — normalised to lowercase

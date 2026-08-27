@@ -2338,7 +2338,7 @@ export default function Dashboard() {
                 </div>
                 <button type="button" className="user-dashboard__action user-dashboard__action--primary" onClick={browseWizards}>
                   <Box size={18} />
-                  Browse All Wizards
+                  Browse All Blueprints
                 </button>
                 <button type="button" className="user-dashboard__action" onClick={() => navigate('/dashboard/counsel')}>
                   <Scale size={18} />
