@@ -9,17 +9,26 @@
 }
 
 .how-it-works h3 {
-  font-family: Montserrat, "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 700;
   font-size: 20px;
-  font-weight: 800;
+  line-height: 28px;
+  text-align: center;
+  letter-spacing: -0.5px;
+  color: #0D1B2A;
 }
 
 .how-it-works p {
   max-width: 672px;
   margin: 12px auto 0;
-  color: #4a5565;
-  font-size: 14px;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
   line-height: 28px;
+  text-align: center;
+  color: #333333;
 }
 
 .how-it-works__steps {
@@ -46,8 +55,13 @@
 .how-it-works__step strong {
   display: block;
   margin-top: 12px;
-  color: #0d1b2a;
-  font-size: 14px;
+  font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 28px;
+  text-align: center;
+  color: #0D1B2A;
 }
 
 .how-it-works__step small {
