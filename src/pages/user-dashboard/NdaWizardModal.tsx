@@ -43,7 +43,7 @@ function validateParty(prefix: string, party: NdaParty, entityType: NdaEntityTyp
     if (!party.id_number.trim()) errors[`${prefix}.id_number`] = 'This field is required.'
   }
   if (!party.email.trim()) errors[`${prefix}.email`] = 'This field is required.'
-  if (party.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(party.email.trim()))
+  if (party.email.trim() && !/^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(party.email.trim()))
     errors[`${prefix}.email`] = 'Enter a valid email address.'
   validateAddress(`${prefix}.address`, party.address, errors)
 }
@@ -525,7 +525,7 @@ function PreviewPartyBlock({ title, party }: { title: string; party: NdaParty })
 
 /* ─── Main Modal ─────────────────────────────────────────── */
 interface NdaWizardModalProps {
-  onClose: () => void
+  onClose: (step: number, data: NdaWizardData) => void
   onComplete?: (data: NdaWizardData) => void
   /** Resume from a saved step (1-4; 5 = preview) */
   initialStep?: number
@@ -601,23 +601,34 @@ export default function NdaWizardModal({
   const [errors, setErrors] = useState<Errors>({})
   const [isGenerating, setIsGenerating] = useState(false)
 
-  // When the profile loads asynchronously (first render had empty profile),
-  // apply the snapshot once — but only if party_a is still empty.
+  // Re-apply the snapshot whenever the profile's key fields change
+  // (covers: async load on first render, and user filling snapshot then re-opening).
   useEffect(() => {
     if (!snapshotHasData(profile)) return
-    setData((prev) => {
-      const alreadyFilled = Boolean(
-        prev.party_a.legal_name || prev.party_a.full_names || prev.party_a.email,
-      )
-      if (alreadyFilled) return prev
-      const party = snapshotToParty(profile)
-      return { ...prev, party_a: party, domicilium_a: { ...party.address } }
-    })
-  // profile.companySnapshotId changing is the only signal we care about
+    const party = snapshotToParty(profile)
+    setData((prev) => ({ ...prev, party_a: party, domicilium_a: { ...party.address } }))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile.companySnapshotId])
+  }, [
+    profile.companySnapshotId,
+    profile.entityType,
+    profile.legalName,
+    profile.individualFullNames,
+    profile.unitNumber,
+    profile.streetName,
+    profile.suburb,
+    profile.city,
+    profile.province,
+    profile.postalCode,
+    profile.country,
+    profile.businessEmail,
+    profile.email,
+    profile.businessPhone,
+    profile.phone,
+    profile.signatoryName,
+    profile.signatoryCapacity,
+  ])
 
-  const progress = calcNdaProgress(data)
+  const progress = calcNdaProgress(data, step)
   const isComplete = progress === 100
 
   /* ── Runtime validate helper — runs on every field change ── */
@@ -730,13 +741,15 @@ export default function NdaWizardModal({
 
   const goTo = (s: Step) => { setIsPreview(false); setErrors({}); setStep(s) }
 
+  const handleClose = () => onClose(step, data)
+
   const handleGenerate = () => {
     if (!isComplete) return
     setIsGenerating(true)
     setTimeout(() => {
       setIsGenerating(false)
       onComplete?.(data)
-      onClose()
+      onClose(step, data)
     }, 2000)
   }
 
@@ -753,7 +766,7 @@ export default function NdaWizardModal({
   const labelB = oneWay ? (data.disclosing_party === 'Your company' ? 'Receiving Party' : 'Disclosing Party') : 'Other Party'
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : onClose}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : handleClose}>
       <div
         className="nda-modal"
         role="dialog"
@@ -765,7 +778,7 @@ export default function NdaWizardModal({
         <header className="nda-modal__header">
           <div className="nda-modal__header-top">
             <h2>Non-Disclosure Agreement (NDA)</h2>
-            <button type="button" className="nda-modal__close" aria-label="Close" onClick={isGenerating ? undefined : onClose} disabled={isGenerating}>
+            <button type="button" className="nda-modal__close" aria-label="Close" onClick={isGenerating ? undefined : handleClose} disabled={isGenerating}>
               <X size={18} />
             </button>
           </div>
@@ -787,6 +800,17 @@ export default function NdaWizardModal({
             {/* ══ STEP 1: PARTIES ══ */}
             {!isPreview && step === 1 && (
               <div className="nda-modal__step-content">
+
+                {/* Company Snapshot incomplete banner */}
+                {!snapshotHasData(profile) && (
+                  <div className="nda-modal__banner nda-modal__banner--info" role="note">
+                    <AlertCircle size={18} className="nda-modal__banner-icon" />
+                    <div>
+                      <strong>Complete your Company Snapshot first</strong>
+                      <p>Your company details will be auto-filled once your Company Snapshot is complete.</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Agreement type card */}
                 <div className="nda-modal__card">

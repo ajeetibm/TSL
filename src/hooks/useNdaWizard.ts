@@ -118,8 +118,11 @@ export function partyTypeToEntity(t: string): NdaEntityType {
   return map[t] ?? 'Company'
 }
 
-export function calcNdaProgress(data: NdaWizardData): number {
-  const checks: boolean[] = [
+export function calcNdaProgress(data: NdaWizardData, reachedStep = 4): number {
+  // Defaults such as duration and governing law must not make a draft look
+  // complete before the user reaches those screens.
+  const checksByStep: boolean[][] = [
+    [
     // Party A core
     isEntity(data.party_a.entity_type) ? !!data.party_a.legal_name.trim() : !!data.party_a.full_names.trim(),
     isEntity(data.party_a.entity_type) ? !!data.party_a.signatory_name.trim() : !!data.party_a.id_number.trim(),
@@ -138,23 +141,30 @@ export function calcNdaProgress(data: NdaWizardData): number {
     !!data.party_b.address.city.trim(),
     !!data.party_b.address.postal_code.trim(),
     !!data.party_b.email.trim(),
+    ],
     // Step 2
-    !!data.purpose.trim(),
+    [!!data.purpose.trim()],
     // Step 3
-    data.duration_years > 0,
+    [data.duration_years > 0],
     // Step 4
-    !!data.governing_law.trim(),
-    !!data.domicilium_a.street_number.trim(),
-    !!data.domicilium_a.street_name.trim(),
-    !!data.domicilium_a.suburb.trim(),
-    !!data.domicilium_a.city.trim(),
-    !!data.domicilium_a.postal_code.trim(),
-    !!data.domicilium_b.street_number.trim(),
-    !!data.domicilium_b.street_name.trim(),
-    !!data.domicilium_b.suburb.trim(),
-    !!data.domicilium_b.city.trim(),
-    !!data.domicilium_b.postal_code.trim(),
+    [
+      !!data.governing_law.trim(),
+      !!data.domicilium_a.street_number.trim(),
+      !!data.domicilium_a.street_name.trim(),
+      !!data.domicilium_a.suburb.trim(),
+      !!data.domicilium_a.city.trim(),
+      !!data.domicilium_a.postal_code.trim(),
+      !!data.domicilium_b.street_number.trim(),
+      !!data.domicilium_b.street_name.trim(),
+      !!data.domicilium_b.suburb.trim(),
+      !!data.domicilium_b.city.trim(),
+      !!data.domicilium_b.postal_code.trim(),
+    ],
   ]
+  const visibleSteps = Math.min(Math.max(reachedStep, 0), checksByStep.length)
+  const checks = checksByStep.flatMap((stepChecks, index) =>
+    index < visibleSteps ? stepChecks : stepChecks.map(() => false),
+  )
   const filled = checks.filter(Boolean).length
   return Math.round((filled / checks.length) * 100)
 }
@@ -202,7 +212,7 @@ function draftToState(draft: WizardDraft<NdaWizardData>): NdaWizardState {
   return {
     status,
     step: draft.step,
-    progress: calcNdaProgress(data),
+    progress: calcNdaProgress(data, draft.step),
     data,
     startedAt: draft.startedAt,
     completedAt: draft.completedAt,
@@ -263,7 +273,7 @@ export function useNdaWizard() {
         status: prev.status === 'completed' ? 'completed' : 'inProgress',
         step,
         data,
-        progress: calcNdaProgress(data),
+        progress: calcNdaProgress(data, step),
         startedAt: prev.startedAt ?? new Date().toISOString(),
         completedAt: prev.status === 'completed' ? prev.completedAt : null,
       }
@@ -275,7 +285,12 @@ export function useNdaWizard() {
   const completeWizard = useCallback(async () => {
     setState((prev) => {
       const completedAt = new Date().toISOString()
-      const next: NdaWizardState = { ...prev, status: 'completed', completedAt }
+      const next: NdaWizardState = {
+        ...prev,
+        status: 'completed',
+        progress: calcNdaProgress(prev.data, 4),
+        completedAt,
+      }
       persist(next, true)
       wizardService.complete('nda', prev.data).then((serverTime) => {
         setState((s) => ({ ...s, completedAt: serverTime }))

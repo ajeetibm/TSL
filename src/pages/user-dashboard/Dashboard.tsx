@@ -2422,8 +2422,8 @@ export default function Dashboard() {
             visible. Completing lands on Completed tab. */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={() => { setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
+            onClose={(step, data) => { saveProgress(step, data, true); setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
+            initialStep={ndaState.status === 'completed' ? 1 : (ndaState.step || 1)}
             initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
             onStepChange={(step, data) => saveProgress(step, data)}
             onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
@@ -3049,8 +3049,8 @@ export default function Dashboard() {
 
       {isNdaModalOpen && (
         <NdaWizardModal
-          onClose={() => setIsNdaModalOpen(false)}
-          initialStep={ndaState.status === 'completed' ? 1 : ndaState.step + 1}
+          onClose={(step, data) => { saveProgress(step, data, true); setIsNdaModalOpen(false) }}
+          initialStep={ndaState.status === 'completed' ? 1 : (ndaState.step || 1)}
           initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
           onStepChange={(step, data) => saveProgress(step, data)}
           onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false) }}
