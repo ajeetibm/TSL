@@ -83,6 +83,12 @@ export function AppRoutes() {
             <Route path="dashboard/blueprints" element={<DashboardWizards />} />
             <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
             <Route path="admin/dashboard" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/users" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/counsel" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/counsel-requests" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/issues" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/settings" element={<AdminDashboard />} />
+            <Route path="admin/dashboard/profile" element={<AdminDashboard />} />
             <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
             <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
             <Route path="counsel/profile" element={<CounselProfile />} />

@@ -85,7 +85,7 @@ export default function DashboardOverview({
           </span>
           <div>
             <strong>{(dashboardData?.kpis?.activeWizards ?? 1234).toLocaleString('en-ZA')}</strong>
-            <h2>Active Wizards</h2>
+            <h2>Active Blueprints</h2>
             <p>Trending upward</p>
           </div>
         </article>

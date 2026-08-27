@@ -31,7 +31,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { setPageMetadata } from '../../services/metadata'
 import { adminApi, clearAuthSession } from '../../services/tslApi'
 import type { ActiveSession } from '../../services/tslApi'
@@ -275,12 +275,16 @@ export default function AdminDashboard() {
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
   const [assignableCounselMembers, setAssignableCounselMembers] = useState(counselMembers)
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
-  const [searchParams] = useSearchParams()
-  const [activeNav, setActiveNav] = useState<AdminNavKey>(() => {
-    const nav = searchParams.get('nav')
-    return (nav === 'profile' ? 'profile' : 'dashboard') as AdminNavKey
-  })
-  const [showAllRequests, setShowAllRequests] = useState(false)
+  const { pathname } = useLocation()
+  const pathKey = pathname.replace('/admin/dashboard', '').replace(/^\//, '') || 'dashboard'
+  const validKeys = ['dashboard', 'users', 'counsel', 'counsel-requests', 'issues', 'settings', 'profile']
+  const activeNav = (validKeys.includes(pathKey) ? pathKey : 'dashboard') as AdminNavKey
+
+  const navigateTo = (key: AdminNavKey) => {
+    navigate(key === 'dashboard' ? '/admin/dashboard' : `/admin/dashboard/${key}`, { replace: false })
+    setRequestSearch('')
+  }
+  const [showAllRequests] = useState(false)
   const [requestSearch, setRequestSearch] = useState('')
   const [requestFilterStatus, setRequestFilterStatus] = useState('All Status')
 
@@ -659,9 +663,7 @@ export default function AdminDashboard() {
               ? 'Settings'
               : activeNav === 'profile'
                 ? 'Profile'
-                : showAllRequests
-                  ? 'Counsel Requests'
-                  : 'Dashboard Overview'
+                : 'Dashboard Overview'
   const headerDescription =
     activeNav === 'users'
       ? 'Manage platform administrators, permissions, and user access'
@@ -675,16 +677,14 @@ export default function AdminDashboard() {
               ? 'Configure billing, notifications, and platform security'
               : activeNav === 'profile'
                 ? 'Manage your account settings and preferences'
-                : showAllRequests
-                  ? 'All counsel requests submitted by users'
-                  : "Welcome back! Here's what's happening with your platform today."
+                : "Welcome back! Here's what's happening with your platform today."
 
   return (
     <>
     <div className="admin-dashboard">
       {activeNav !== 'dashboard' && (
         <BackButton
-          onClick={() => setActiveNav('dashboard')}
+          onClick={() => navigateTo('dashboard')}
           label="Back to Dashboard"
           className=" admin-dashboard__back-btn"
         />
@@ -705,26 +705,14 @@ export default function AdminDashboard() {
                 className={[
                   'admin-dashboard__nav-item',
                   item.key === 'issues' ? 'admin-dashboard__nav-item--issues' : '',
-                  (item.key === 'counsel-requests'
-                    ? showAllRequests && activeNav === 'dashboard'
-                    : item.key === 'dashboard'
-                    ? activeNav === 'dashboard' && !showAllRequests
+                  (item.key === 'dashboard'
+                    ? activeNav === 'dashboard'
                     : activeNav === item.key) ? 'admin-dashboard__nav-item--active' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
                 key={item.label}
-                onClick={() => {
-                  if (item.key === 'counsel-requests') {
-                    setActiveNav('dashboard')
-                    setShowAllRequests(true)
-                    setRequestSearch('')
-                  } else {
-                    setActiveNav(item.key)
-                    setShowAllRequests(false)
-                    setRequestSearch('')
-                  }
-                }}
+                onClick={() => navigateTo(item.key)}
               >
                 <Icon size={17} />
                 <span>{item.label}</span>
@@ -738,7 +726,7 @@ export default function AdminDashboard() {
           <button
             type="button"
             className={activeNav === 'profile' ? 'admin-dashboard__nav-item admin-dashboard__nav-item--active' : 'admin-dashboard__nav-item'}
-            onClick={() => { setActiveNav('profile'); setShowAllRequests(false); setRequestSearch('') }}
+            onClick={() => navigateTo('profile')}
           >
             <UserRound size={17} />
             <span>Profile</span>
@@ -1157,10 +1145,10 @@ export default function AdminDashboard() {
             counselMembers={counselList}
             onCounselAdded={(c) => setCounselList((prev) => [...prev, c])}
           />
-        ) : showAllRequests ? (
+        ) : activeNav === 'counsel-requests' ? (
           <section className="admin-dashboard__all-requests">
             <BackButton
-              onClick={() => setShowAllRequests(false)}
+              onClick={() => navigateTo('dashboard')}
               label="Back to Dashboard"
               className="admin-dashboard__back-btn"
             />
@@ -1292,7 +1280,7 @@ export default function AdminDashboard() {
             </span>
             <div>
               <strong>{(dashboardData?.kpis?.activeWizards ?? 1234).toLocaleString('en-ZA')}</strong>
-              <h2>Active Wizards</h2>
+              <h2>Active Blueprints</h2>
               <p>Trending upward</p>
             </div>
           </article>
@@ -1358,7 +1346,7 @@ export default function AdminDashboard() {
                         : label === 'Create Counsel'
                           ? () => setIsAddCounselModalOpen(true)
                           : label === 'Billing & Invoices'
-                            ? () => { setActiveNav('settings'); setSettingsTab('billing') }
+                            ? () => { navigateTo('settings'); setSettingsTab('billing') }
                             : undefined
                     }
                   >
