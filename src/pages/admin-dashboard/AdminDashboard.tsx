@@ -284,7 +284,7 @@ export default function AdminDashboard() {
     navigate(key === 'dashboard' ? '/admin/dashboard' : `/admin/dashboard/${key}`, { replace: false })
     setRequestSearch('')
   }
-  const [showAllRequests] = useState(false)
+  const [showAllRequests, setShowAllRequests] = useState(false)
   const [requestSearch, setRequestSearch] = useState('')
   const [requestFilterStatus, setRequestFilterStatus] = useState('All Status')
 
