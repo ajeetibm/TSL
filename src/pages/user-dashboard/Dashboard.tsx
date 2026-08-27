@@ -2246,7 +2246,7 @@ export default function Dashboard() {
           <div className="user-dashboard__landing-grid">
             <section className="user-dashboard__wizard-review">
               <div className="user-dashboard__review-copy">
-                <h2>Review Your Pre-Selected Wizards</h2>
+                <h2>Review Your Pre-Selected Blueprints</h2>
                 <p>
                   We've prepared these essential legal documents based on typical startup needs. Adjust quantities
                   or remove items as needed, then execute your wizards to begin.
