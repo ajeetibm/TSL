@@ -284,7 +284,6 @@ export default function AdminDashboard() {
     navigate(key === 'dashboard' ? '/admin/dashboard' : `/admin/dashboard/${key}`, { replace: false })
     setRequestSearch('')
   }
-  const [showAllRequests, setShowAllRequests] = useState(false)
   const [requestSearch, setRequestSearch] = useState('')
   const [requestFilterStatus, setRequestFilterStatus] = useState('All Status')
 
@@ -1303,7 +1302,7 @@ export default function AdminDashboard() {
                 <h2>Counsel Requests</h2>
                 <p>counsel requests from users</p>
               </div>
-              <button type="button" onClick={() => setShowAllRequests(true)}>View All</button>
+              <button type="button" onClick={() => navigateTo('counsel-requests')}>View All</button>
             </div>
             <div className="admin-dashboard__request-grid">
               {counselRequests.map((request) => {

@@ -95,8 +95,8 @@ function StepBar({ current }: { current: Step }) {
 }
 
 /* ─── Toggle group (Yes / No) ────────────────────────────── */
-function ToggleGroup({ options, value, onChange }: {
-  options: string[]; value: string; onChange: (v: string) => void
+function ToggleGroup({ options, value, onChange, disabled }: {
+  options: string[]; value: string; onChange: (v: string) => void; disabled?: boolean
 }) {
   return (
     <div className="nda-modal__duration-grid">
@@ -107,8 +107,10 @@ function ToggleGroup({ options, value, onChange }: {
           className={[
             'nda-modal__duration-btn',
             value === opt ? 'nda-modal__duration-btn--active nda-modal__duration-btn--active-dark' : '',
+            disabled ? 'nda-modal__duration-btn--disabled' : '',
           ].filter(Boolean).join(' ')}
-          onClick={() => onChange(opt)}
+          onClick={() => !disabled && onChange(opt)}
+          disabled={disabled}
         >
           {opt}
         </button>
@@ -321,10 +323,11 @@ function validatePriorIpField(key: string, value: string): string {
   return ''
 }
 
-function PriorIpRow({ item, index, canRemove, onChange, onRemove, submitErrors }: {
+function PriorIpRow({ item, index, canRemove, onChange, onRemove, submitErrors, disabled }: {
   item: FAPriorIp; index: number; canRemove: boolean
   onChange: (f: FAPriorIp) => void; onRemove: () => void
   submitErrors?: Record<string, string>
+  disabled?: boolean
 }) {
   const [liveErrors, setLiveErrors] = useState<Record<string, string>>({})
   const labelStyle: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }
@@ -342,33 +345,33 @@ function PriorIpRow({ item, index, canRemove, onChange, onRemove, submitErrors }
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Founder <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.founder ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. Thandiwe Nkosi"
-            value={item.founder} onChange={e => up('founder', e.target.value)} />
+            value={item.founder} onChange={e => up('founder', e.target.value)} disabled={disabled} />
           {err.founder && <p className="nda-modal__field-error">{err.founder}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Description <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.description ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. Prototype pricing engine"
-            value={item.description} onChange={e => up('description', e.target.value)} />
+            value={item.description} onChange={e => up('description', e.target.value)} disabled={disabled} />
           {err.description && <p className="nda-modal__field-error">{err.description}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Date created <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.dateCreated ? ' nda-modal__input--error' : ''}`} type="date"
-            value={item.dateCreated} onChange={e => up('dateCreated', e.target.value)} />
+            value={item.dateCreated} onChange={e => up('dateCreated', e.target.value)} disabled={disabled} />
           {err.dateCreated && <p className="nda-modal__field-error">{err.dateCreated}</p>}
         </div>
         <div className="nda-modal__form-group" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
           <div>
             <label className="nda-modal__label" style={labelStyle}>Treatment</label>
             <select className="nda-modal__input" value={item.treatment}
-              onChange={e => up('treatment', e.target.value as FAPriorIp['treatment'])}>
+              onChange={e => up('treatment', e.target.value as FAPriorIp['treatment'])} disabled={disabled}>
               <option value="">Select…</option>
               <option>Assigned to the company</option>
               <option>Licensed to the company</option>
               <option>Excluded and retained</option>
             </select>
           </div>
-          {canRemove && (
+          {canRemove && !disabled && (
             <button type="button" className="nda-modal__row-remove" aria-label={`Remove prior IP ${index + 1}`}
               onClick={onRemove} style={{ marginBottom: 1 }}>
               <X size={14} />
@@ -472,9 +475,9 @@ function SignatoryRow({ sig, index, canRemove, onChange, onRemove, submitErrors 
 }
 
 /* ─── Add row button ─────────────────────────────────────── */
-function AddRowBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function AddRowBtn({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) {
   return (
-    <button type="button" className="nda-modal__add-row" onClick={onClick}>
+    <button type="button" className="nda-modal__add-row" onClick={onClick} disabled={disabled}>
       {label}
     </button>
   )
@@ -539,6 +542,7 @@ export default function FounderAgreementWizardModal({
     onStepChangeRef.current?.(step, data)
   }, [data, step])
   const isPublicFundingBlocked = data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved'
+  const ipSectionLocked = data.publiclyFunded === 'Yes' && (data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected')
   const goTo = (target: Step) => {
     setErrors({})
     setStep(isPublicFundingBlocked && target > 5 ? 5 : target)
@@ -999,7 +1003,7 @@ export default function FounderAgreementWizardModal({
 
                   <Field label="Assignment covers work created before incorporation" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.ipPreIncorporation}
-                      onChange={v => set('ipPreIncorporation', v as 'Yes' | 'No')} />
+                      onChange={v => set('ipPreIncorporation', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                   </Field>
 
                   <Field label="Pre-existing intellectual property" required
@@ -1009,13 +1013,14 @@ export default function FounderAgreementWizardModal({
                       {data.priorIp.map((item, i) => (
                         <PriorIpRow key={item.id} item={item} index={i} canRemove={data.priorIp.length > 1}
                           onChange={updated => updatePriorIp(i, updated)} onRemove={() => removePriorIp(i)}
+                          disabled={ipSectionLocked}
                           submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`priorIp_${i}_`)).map(([k, v]) => [k.replace(`priorIp_${i}_`, ''), v]))} />
                       ))}
                     </div>
-                    <AddRowBtn label="+ Add pre-existing IP" onClick={addPriorIp} />
+                    <AddRowBtn label="+ Add pre-existing IP" onClick={addPriorIp} disabled={ipSectionLocked} />
                     <label className="fa-nil-checkbox">
                       <input type="checkbox" checked={data.priorIpNil}
-                        onChange={e => set('priorIpNil', e.target.checked)} />
+                        onChange={e => set('priorIpNil', e.target.checked)} disabled={ipSectionLocked} />
                       Nothing to declare
                     </label>
                   </Field>
@@ -1030,11 +1035,11 @@ export default function FounderAgreementWizardModal({
                           publicFundingReviewStatus: v === 'Yes' ? previous.publicFundingReviewStatus : 'not_required',
                           publicFundingReviewRequestId: v === 'Yes' ? previous.publicFundingReviewRequestId : null,
                           publicFundingReviewReason: v === 'Yes' ? previous.publicFundingReviewReason : null,
-                        }))} />
+                        }))} disabled={ipSectionLocked} />
                     </Field>
                     <Field label="Any of it created while employed elsewhere" required>
                       <ToggleGroup options={['Yes', 'No']} value={data.createdAtEmployer}
-                        onChange={v => set('createdAtEmployer', v as 'Yes' | 'No')} />
+                        onChange={v => set('createdAtEmployer', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                     </Field>
                   </div>
 
