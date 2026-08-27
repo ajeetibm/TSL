@@ -43,6 +43,13 @@ const openSignUp = () => {
   window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup' } }))
 }
 
+// The header, sticky plan details and comparison rows share this exact grid.
+// Keeping the feature-label column in the header prevents the highlighted
+// Operator plan from shifting relative to its comparison column.
+const pricingGridStyle = {
+  gridTemplateColumns: 'minmax(0, 1fr) repeat(3, minmax(0, 1.8fr))',
+}
+
 export function PricingSection() {
   return (
     <section className="bg-white pt-14 lg:pt-16 pb-8 lg:pb-10" id="pricing">
@@ -74,7 +81,8 @@ export function PricingSection() {
           {/* ── Non-sticky top strip: tagline bar + icon ── */}
           <div className="rounded-t-3xl overflow-hidden border-2 border-b-0 border-[#E5E7EB] bg-white">
             <motion.div
-              className="hidden md:grid md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr]"
+              className="hidden md:grid"
+              style={pricingGridStyle}
               initial="visible"
               animate="visible"
               variants={staggerContainer}
@@ -119,7 +127,8 @@ export function PricingSection() {
           {/* ── Sticky lid: plan names + price + badge ── */}
           <div className="sticky top-16 lg:top-20 z-20 overflow-hidden border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_4px_6px_-1px_rgba(0,0,0,0.15),0_2px_4px_-2px_rgba(0,0,0,0.1)]">
             <motion.div
-              className="hidden md:grid md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr]"
+              className="hidden md:grid"
+              style={pricingGridStyle}
               initial="visible"
               animate="visible"
               variants={staggerContainer}
@@ -179,7 +188,7 @@ export function PricingSection() {
               all columns share identical track widths regardless of cell content.
           */}
           <div className="rounded-b-3xl border-2 border-t-0 border-[#E5E7EB] bg-white shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)] overflow-hidden">
-            <div className="hidden md:grid md:grid-cols-[1fr_1.8fr_1.8fr_1.8fr]">
+            <div className="hidden md:grid" style={pricingGridStyle}>
 
               {/* ── Feature sections ── */}
               {[
