@@ -1,4 +1,4 @@
-import { BookOpen, Users, Zap } from 'lucide-react'
+import { BookOpen, Users, Zap, ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -41,10 +41,10 @@ export function ApproachSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
-          <span className="inline-flex h-[40px] items-center justify-center rounded-[20px] bg-[#FCF8EE] px-[48px] text-[13px] font-semibold leading-none text-[#3D3D3D]" style={{ border: '1px solid #E8DFC8' }}>
+          <span className="inline-flex h-[40px] items-center justify-center rounded-[20px] bg-[#FCF8EE] px-[48px] text-[14px] font-semibold leading-none text-[#3D3D3D]" style={{ border: '1px solid #E8DFC8' }}>
             Our Approach
           </span>
-          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[24px] font-semibold leading-[1.2] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+          <h2 className="mx-auto mt-[36px] max-w-[578px] text-[36px] font-semibold leading-[1.2] text-center tracking-[-0.01em] text-[#0D1B2A]" style={{ fontFamily: 'Montserrat, sans-serif' }}>
             How We Make Legal Simple
           </h2>
         </motion.div>
@@ -98,10 +98,10 @@ export function ApproachSection() {
         <div className="mt-[100px] flex justify-center">
           <a
             href="#contact"
-            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-center gap-[22px] rounded-full bg-[#C79A3B] px-8 text-[16px] font-bold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#b8891f] hover:text-white"
+            className="inline-flex min-h-[64px] min-w-[330px] items-center justify-between rounded-full bg-[#C79A3B] px-8 text-[16px] font-semibold text-white shadow-[0_14px_24px_rgba(0,0,0,0.18)] transition hover:-translate-y-1 hover:bg-[#b8891f] hover:text-white"
           >
             Book Your Free Consultation
-            <span aria-hidden="true">→</span>
+            <ArrowRight size={16} strokeWidth={2} className="ml-4 shrink-0" aria-hidden="true" />
           </a>
         </div>
       </Container>

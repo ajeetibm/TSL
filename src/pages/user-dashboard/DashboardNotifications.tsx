@@ -396,11 +396,11 @@ export default function DashboardNotifications() {
               <dl>
                 <div>
                   <dt>Total notifications</dt>
-                  <dd>{unread.length + earlier.length}</dd>
+                  <dd>{hasSubscription ? unread.length + earlier.length : 0}</dd>
                 </div>
                 <div>
                   <dt>Unread</dt>
-                  <dd>{unread.length}</dd>
+                  <dd>{hasSubscription ? unread.length : 0}</dd>
                 </div>
               </dl>
             </section>

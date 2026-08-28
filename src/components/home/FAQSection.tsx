@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, HelpCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { revealUp, staggerContainer, defaultViewport } from '../../hooks/useScrollReveal'
 import { Container } from '../layout/Container'
@@ -126,7 +126,7 @@ export function FAQSection() {
   const filtered = faqs.filter((f) => f.category === activeCategory)
 
   return (
-    <section className="bg-white py-20 lg:py-28">
+    <section className="bg-white pb-20 pt-[48px] lg:pb-28 lg:pt-[56px]">
       <Container>
         {/* Heading */}
         <motion.div
@@ -136,6 +136,12 @@ export function FAQSection() {
           viewport={defaultViewport}
           variants={revealUp}
         >
+          {/* Got Questions pill */}
+          <div className="mb-5 inline-flex min-h-[38px] items-center gap-3 rounded-full border border-[rgba(13,27,42,0.1)] bg-[rgba(13,27,42,0.05)] px-8 text-[14px] font-semibold leading-5 text-[#333] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <HelpCircle size={17} strokeWidth={1.75} className="text-[#C79A3B]" />
+            <span>Got Questions?</span>
+          </div>
+
           <h2 className="font-display text-[40px] font-bold leading-[1.15] tracking-[-0.02em] text-[#0D1B2A] md:text-[36px]">
             Frequently Asked Questions
           </h2>

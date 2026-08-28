@@ -179,7 +179,7 @@ export function FeaturesSection() {
           <p style={{ fontFamily: "'Open Sans', sans-serif", fontStyle: 'normal', fontWeight: 400, fontSize: '14px', lineHeight: '28px', textAlign: 'center', color: '#333333', width: '249px', margin: '0 auto' }}>Not sure which option is right for you?</p>
           <a
             href="/contact"
-            className="mt-6 inline-flex min-h-[60px] items-center gap-3 rounded-full bg-[#C9982A] px-12 text-base font-semibold text-white shadow-md transition-all hover:bg-[#b8881f] hover:scale-[1.02]"
+            className="mt-6 inline-flex min-h-[60px] items-center gap-3 rounded-full bg-[#C9982A] px-12 text-[14px] font-semi-bold text-white shadow-md transition-all hover:bg-[#b8881f] hover:scale-[1.02]"
           >
             Schedule a Free Consultation
             <span aria-hidden="true">→</span>
