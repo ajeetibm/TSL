@@ -39,6 +39,13 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
   const navigate = useNavigate()
   const { unreadCount, seedUnreadCount } = useNotificationCount()
 
+  const hasSubscription = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem('tsl-wizard-access-cache') ?? 'null') as { hasSubscription?: boolean } | null
+      return Boolean(cached?.hasSubscription)
+    } catch { return false }
+  })()
+
   // Seed the badge from the API on first mount. seedUnreadCount is a no-op if
   // the Notifications page has already written a live value into context.
   useEffect(() => {
@@ -78,7 +85,7 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
             >
               <Icon size={18} />
               <span>{label}</span>
-              {label === 'Notifications' && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
+              {label === 'Notifications' && hasSubscription && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
             </button>
           ))}
         </nav>

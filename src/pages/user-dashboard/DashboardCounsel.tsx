@@ -473,7 +473,7 @@ export default function DashboardCounsel() {
                 one standard credit, top-up pricing applies at {topUpRate} per additional credit.
               </p>
             </div>
-            <button type="button" onClick={() => setIsCreditsModalOpen(true)}>
+            <button type="button" onClick={() => hasSubscription ? setIsCreditsModalOpen(true) : openUpgradePlans()}>
               Top Up Credits
               <ChevronRight size={16} />
             </button>
