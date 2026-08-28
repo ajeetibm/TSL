@@ -4,7 +4,7 @@ const processSteps = [
   ['1', 'Add to Cart', 'Multiple times if needed'],
   ['2', 'View Details', "See what's included"],
   ['3', 'Sign Up', 'Only when ready'],
-  ['4', 'Complete Wizards', 'Get your docs'],
+  ['4', 'Complete Blueprints', 'Get your docs'],
 ]
 
 export function HowItWorks() {
@@ -12,7 +12,7 @@ export function HowItWorks() {
     <section className="how-it-works">
       <h3>How This Works</h3>
       <p>
-        Add wizards to your cart. You can add the same wizard multiple times if you need multiple documents of the same
+        Add blueprints to your cart. You can add the same blueprint multiple times if you need multiple documents of the same
         type.
       </p>
 

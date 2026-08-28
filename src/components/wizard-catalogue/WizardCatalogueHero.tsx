@@ -19,7 +19,7 @@ export function WizardCatalogueHero() {
 
         <h1 className="wizard-hero__title">Choose a Legal Workflow</h1>
         <p className="wizard-hero__copy">
-          Step-by-step guided wizards that draft, review, and finalize your legal documents with proof of compliance.
+          Step-by-step guided blueprints that draft, review, and finalize your legal documents with proof of compliance.
         </p>
 
         <div className="wizard-hero__badges">

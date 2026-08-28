@@ -14,7 +14,7 @@ describe('WizardCatalogueHeader', () => {
     it('should render the title', () => {
       render(<WizardCatalogueHeader totalItems={0} selectedWizardCount={0} />)
 
-      expect(screen.getByRole('heading', { name: 'Available Wizards' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { name: 'Available Blueprints' })).toBeInTheDocument()
     })
 
     it('should render the description', () => {
@@ -184,7 +184,7 @@ describe('WizardCatalogueHeader', () => {
       render(<WizardCatalogueHeader totalItems={0} selectedWizardCount={0} />)
 
       const heading = screen.getByRole('heading', { level: 2 })
-      expect(heading).toHaveTextContent('Available Wizards')
+      expect(heading).toHaveTextContent('Available Blueprints')
     })
 
     it('should use semantic HTML', () => {
@@ -295,8 +295,8 @@ describe('WizardCatalogueHeader', () => {
     it('should render complete title text', () => {
       render(<WizardCatalogueHeader totalItems={0} selectedWizardCount={0} />)
 
-      const title = screen.getByRole('heading', { name: 'Available Wizards' })
-      expect(title.textContent).toBe('Available Wizards')
+      const title = screen.getByRole('heading', { name: 'Available Blueprints' })
+      expect(title.textContent).toBe('Available Blueprints')
     })
 
     it('should render complete description text', () => {

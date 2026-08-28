@@ -117,7 +117,7 @@
   margin-top: 8px;
 }
 
-.wizard-card__fact-row span {
+.wizard-card__fact-row > span:first-child {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
@@ -142,6 +142,8 @@
   line-height: 24px;
   text-align: right;
   color: #333333;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .wizard-card__included {

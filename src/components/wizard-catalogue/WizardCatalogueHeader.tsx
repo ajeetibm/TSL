@@ -10,9 +10,9 @@ export function WizardCatalogueHeader({ totalItems, selectedWizardCount }: Wizar
   return (
     <div className="wizard-catalogue-header">
       <div>
-        <h2 className="wizard-catalogue-header__title">Available Wizards</h2>
+        <h2 className="wizard-catalogue-header__title">Available Blueprints</h2>
         <p className="wizard-catalogue-header__copy">
-          Add workflows to your cart—you can add the same wizard multiple times
+          Add workflows to your cart—you can add the same blueprint multiple times
         </p>
       </div>
 
@@ -20,7 +20,7 @@ export function WizardCatalogueHeader({ totalItems, selectedWizardCount }: Wizar
         {totalItems > 0 && (
           <span className="wizard-catalogue-header__cart">
             <ShoppingCart size={16} />
-            {totalItems} items ({selectedWizardCount} wizards)
+            {totalItems} items ({selectedWizardCount} blueprints)
           </span>
         )}
         <span className="wizard-catalogue-header__popular">
