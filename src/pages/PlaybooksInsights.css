@@ -593,23 +593,23 @@
 .pi-plan-pill {
   display: inline-flex;
   align-items: center;
-  padding: 4px 14px;
-  border-radius: 8px;
+  padding: 4px 8px;
+  border-radius: 20px;
   font-family: 'Open Sans', sans-serif;
-  font-size: 0.82rem;
-  font-weight: 700;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 16px;
   white-space: nowrap;
-  line-height: 1.5;
+  color: #ffffff;
 }
 
 .pi-plan-pill--dark {
   background: #0D1B2A;
-  color: #ffffff;
 }
 
 .pi-plan-pill--gold {
   background: #C79A3B;
-  color: #ffffff;
 }
 
 /* ── CTA section ───────────────────────────────────────────── */
