@@ -160,6 +160,16 @@
   color: #111827;
 }
 
+.pi-section__title--plug-in {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  text-align: center;
+  color: #0D1B2A;
+}
+
 .pi-section__subtitle {
   max-width: 720px;
   margin: 14px auto 40px;

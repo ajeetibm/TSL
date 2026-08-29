@@ -439,7 +439,7 @@ export default function PlaybooksInsights() {
         variants={staggerContainer}
       >
         <div className="pi-shell">
-          <motion.h2 className="pi-section__title" variants={revealUp}>
+          <motion.h2 className="pi-section__title pi-section__title--plug-in" variants={revealUp}>
             Playbooks and Insights: How They Plug In
           </motion.h2>
           <motion.p className="pi-section__subtitle" variants={revealUp}>
@@ -479,7 +479,12 @@ export default function PlaybooksInsights() {
             <motion.article className="pi-feature-card" variants={revealUp}>
               <div className="pi-feature-card__header">
                 <span className="pi-feature-card__icon-wrap">
-                  <BarChart2 size={22} strokeWidth={2} />
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M3 3V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M18 17V9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M13 17V5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8 17V14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
                 </span>
                 <h3>Insights by Plan</h3>
               </div>
