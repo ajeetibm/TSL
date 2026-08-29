@@ -115,8 +115,9 @@ const playbooksByPlan = [
     TierIcon: Building2,
     label: 'Playbooks Core',
     labelClass: 'pi-plan-pill pi-plan-pill--gold',
-    description: '. Saved checklists and team notes.',
-    descriptionBold: 'Full library including Raising Funds Internationally',
+    description: 'Full library including ',
+    descriptionBold: 'Raising Funds Internationally',
+    descriptionAfter: '. Saved checklists and team notes.',
   },
   {
     tier: 'Boardroom',
@@ -466,8 +467,9 @@ export default function PlaybooksInsights() {
                         <span className={row.labelClass}>{row.label}</span>
                       </div>
                       <p>
-                        {row.descriptionBold && <strong>{row.descriptionBold}</strong>}
                         {row.description}
+                        {row.descriptionBold && <strong className="pi-feature-row__bold-highlight">{row.descriptionBold}</strong>}
+                        {'descriptionAfter' in row && (row as any).descriptionAfter}
                       </p>
                     </div>
                   )

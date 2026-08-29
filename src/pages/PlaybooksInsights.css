@@ -600,6 +600,13 @@
   line-height: inherit;
 }
 
+.pi-feature-row__bold-highlight {
+  font-weight: 700;
+  color: #0D1B2A;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 /* ── Plan pills (dark / gold) inside feature rows ──────────── */
 .pi-plan-pill {
   display: inline-flex;
