@@ -36,6 +36,16 @@
   border-color: rgba(212, 152, 42, 0.45);
 }
 
+.pi-pill--dark-text {
+  background: #EFEBE1;
+  color: #0D1B2A;
+  border-color: #C79A3B;
+}
+
+.pi-pill--dark-text svg {
+  color: #C79A3B;
+}
+
 .pi-pill--muted {
   background: rgba(255, 255, 255, 0.08);
   color: #f4d28a;
@@ -144,6 +154,10 @@
 
 .pi-section--soft {
   background: #efefef;
+}
+
+.pi-section--white {
+  background: #ffffff;
 }
 
 .pi-section__eyebrow {
@@ -338,7 +352,15 @@
 
 .pi-banner--gold {
   border: 1px solid #C79A3B;
-  background: #F9F5EB;
+  background: #EFEBE1;
+}
+
+.pi-banner__bold {
+  display: inline;
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 28px;
+  color: #0D1B2A;
 }
 
 .pi-banner--warm {
@@ -362,7 +384,7 @@
   background: #C79A3B;
 }
 
-.pi-banner__body strong {
+.pi-banner__body strong:not(.pi-banner__bold) {
   display: block;
   margin-bottom: 5px;
   font-family: 'Open Sans', sans-serif;
@@ -375,9 +397,16 @@
 
 .pi-banner__body p {
   margin: 0;
-  font-size: 0.88rem;
-  line-height: 1.65;
-  color: #4b5563;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 28px;
+  color: #333333;
+  flex: none;
+  order: 1;
+  align-self: stretch;
+  flex-grow: 0;
 }
 
 /* ── Sample Playbook guides ────────────────────────────────── */
@@ -532,7 +561,7 @@
 
 /* ── Feature cards (How They Plug In) ─────────────────────── */
 .pi-feature-card {
-  background: #f3f4f6;
+  background: #F4F4F4;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 28px 28px 24px;
@@ -569,12 +598,10 @@
 }
 
 .pi-feature-row {
-  border-top: 1px solid #e5e7eb;
   padding-top: 16px;
 }
 
 .pi-feature-row:first-child {
-  border-top: none;
   padding-top: 0;
 }
 

@@ -324,7 +324,7 @@ export default function PlaybooksInsights() {
             <div className="pi-banner__body">
               <strong>Playbooks Do Not Consume Blueprint Runs</strong>
               <p>
-                Access playbooks as often as you need. They&apos;re included based on your subscription tier and designed to support your legal workflows, not consume billable units. When you&apos;re ready to create a document, playbooks can jump you directly into the correct blueprint step.
+                Access playbooks as often as you need. They&apos;re included based on your subscription tier and designed to <strong className="pi-banner__bold">support</strong> your legal workflows, not consume billable units. When you&apos;re ready to create a document, playbooks can jump you directly into the correct blueprint step.
               </p>
             </div>
           </motion.div>
@@ -341,10 +341,10 @@ export default function PlaybooksInsights() {
       >
         <div className="pi-shell">
           <motion.div className="pi-section__eyebrow" variants={revealUp}>
-            <Link to="/playbooks" className="pi-pill pi-pill--light">
+            <span className="pi-pill pi-pill--light pi-pill--dark-text">
               <Download size={13} strokeWidth={2.2} />
               Sample Playbooks
-            </Link>
+            </span>
           </motion.div>
           <motion.h2 className="pi-section__title" variants={revealUp}>
             Practical Guides for Investors and Founders
@@ -433,7 +433,7 @@ export default function PlaybooksInsights() {
 
       {/* ── How They Plug In ──────────────────────────────────────── */}
       <motion.section
-        className="pi-section pi-section--soft"
+        className="pi-section pi-section--white"
         initial="hidden"
         whileInView="visible"
         viewport={defaultViewport}
