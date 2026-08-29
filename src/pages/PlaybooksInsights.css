@@ -88,11 +88,29 @@
 }
 
 .pi-hero__subtitle {
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto 12px;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pi-hero__tagline {
+  width: 100%;
   max-width: 680px;
   margin: 0 auto 28px;
-  font-size: 1rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.85);
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .pi-hero__badges {
@@ -288,8 +306,8 @@
 }
 
 .pi-banner--gold {
-  border: 1px solid rgba(201, 152, 42, 0.65);
-  background: #ede8de;
+  border: 1px solid #C79A3B;
+  background: #F9F5EB;
 }
 
 .pi-banner--warm {
@@ -316,9 +334,12 @@
 .pi-banner__body strong {
   display: block;
   margin-bottom: 5px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #111827;
+  font-family: 'Open Sans', sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.5px;
+  color: #0D1B2A;
 }
 
 .pi-banner__body p {

@@ -253,6 +253,29 @@ export function PricingSection() {
                 <div className="bg-[#F9FAFB] border-t-2 border-t-[#E5E7EB]" />
               </div>
 
+              {/* ── Playbooks Do Not Consume Blueprint Runs notice ── */}
+              <div
+                className="col-span-4 flex items-center gap-3 px-6 md:px-8 py-4 border border-[#C79A3B]"
+                style={{ background: '#F9F5EB' }}
+              >
+                <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
+                  <path d="M0 20C0 8.95431 8.95431 0 20 0C31.0457 0 40 8.95431 40 20C40 31.0457 31.0457 40 20 40C8.95431 40 0 31.0457 0 20Z" fill="#C79A3B"/>
+                  <g clipPath="url(#clip-pb-info)">
+                    <path d="M19.9974 28.3327C24.5998 28.3327 28.3307 24.6017 28.3307 19.9993C28.3307 15.397 24.5998 11.666 19.9974 11.666C15.395 11.666 11.6641 15.397 11.6641 19.9993C11.6641 24.6017 15.395 28.3327 19.9974 28.3327Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20 16.666V19.9993" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20 23.334H20.0083" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip-pb-info">
+                      <rect width="20" height="20" fill="white" transform="translate(10 10)"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+                <span style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 600, fontSize: '20px', lineHeight: '28px', letterSpacing: '-0.5px', color: '#0D1B2A' }}>
+                  Playbooks Do Not Consume Blueprint Runs
+                </span>
+              </div>
+
               {/* Playbooks Lite */}
               <div className="contents">
                 <div className="flex items-center px-6 md:px-8 py-5 font-medium text-sm text-[#4F5F78] bg-white border-r border-[#E5E7EB] border-b border-[#F3F4F6]">

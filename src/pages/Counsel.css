@@ -26,8 +26,9 @@
 }
 
 .counsel-pill--light {
-  background: #fff9eb;
-  color: #9a6a00 !important;
+  background: #F9F5EB;
+  border-color: #C79A3B;
+  color: #000000 !important;
 }
 
 
@@ -128,8 +129,8 @@
 }
 
 .counsel-pill--light svg {
-  color: #9a6a00 !important;
-  stroke: #9a6a00 !important;
+  color: #C79A3B !important;
+  stroke: #C79A3B !important;
 }
 
 .counsel-button--dark svg {
@@ -446,10 +447,15 @@
 
 .counsel-governance-strip__header h3 {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #111827;
-  line-height: 1.3;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.5px;
+  color: #0D1B2A;
+  flex: 1;
+  flex-grow: 1;
 }
 
 .counsel-governance-strip__icon {

@@ -1,4 +1,3 @@
-import { Fragment } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
@@ -394,19 +393,30 @@ export default function Counsel() {
           </motion.div>
 
           <motion.div className="counsel-governance-strip" variants={revealUp}>
-            {governanceStripCards.map((card, i) => {
+            {governanceStripCards.map((card) => {
               const Icon = card.icon
               return (
-                <Fragment key={card.title}>
-                  {i > 0 && <span className="counsel-governance-strip__divider" aria-hidden="true" />}
-                  <div className="counsel-governance-strip__item">
-                    <div className="counsel-governance-strip__header">
-                      <Icon size={18} strokeWidth={2.1} className="counsel-governance-strip__icon" />
-                      <h3>{card.title}</h3>
-                    </div>
-                    <p>{card.description}</p>
+                <div key={card.title} className="counsel-governance-strip__item">
+                  <div className="counsel-governance-strip__header">
+                    {card.title === 'Time-Stamped' ? (
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="counsel-governance-strip__icon" style={{ flexShrink: 0 }}>
+                        <g clipPath="url(#clip0_308_17185)">
+                          <path d="M10 5V10L13.3333 11.6667" stroke="#C79A3B" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M9.9974 18.3327C14.5998 18.3327 18.3307 14.6017 18.3307 9.99935C18.3307 5.39698 14.5998 1.66602 9.9974 1.66602C5.39502 1.66602 1.66406 5.39698 1.66406 9.99935C1.66406 14.6017 5.39502 18.3327 9.9974 18.3327Z" stroke="#C79A3B" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+                        <defs>
+                          <clipPath id="clip0_308_17185">
+                            <rect width="20" height="20" fill="white"/>
+                          </clipPath>
+                        </defs>
+                      </svg>
+                    ) : (
+                      <Icon size={20} strokeWidth={2.1} className="counsel-governance-strip__icon" />
+                    )}
+                    <h3>{card.title}</h3>
                   </div>
-                </Fragment>
+                  <p>{card.description}</p>
+                </div>
               )
             })}
           </motion.div>
