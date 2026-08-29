@@ -566,14 +566,20 @@
 }
 
 .pi-feature-row__tier-icon {
-  color: #C79A3B !important;
+  color: #0D1B2A !important;
   flex-shrink: 0;
 }
 
 .pi-feature-row__title strong {
-  font-size: 0.95rem;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
   font-weight: 700;
-  color: #111827;
+  font-size: 16px;
+  line-height: 24px;
+  color: #0D1B2A;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
 }
 
 .pi-feature-row p {
@@ -587,15 +593,17 @@
 .pi-plan-pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 12px;
-  border-radius: 6px;
-  font-size: 0.78rem;
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-family: 'Open Sans', sans-serif;
+  font-size: 0.82rem;
   font-weight: 700;
   white-space: nowrap;
+  line-height: 1.5;
 }
 
 .pi-plan-pill--dark {
-  background: #0f172a;
+  background: #0D1B2A;
   color: #ffffff;
 }
 
