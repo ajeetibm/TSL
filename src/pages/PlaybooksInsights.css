@@ -593,12 +593,19 @@
   color: #4b5563;
 }
 
+.pi-feature-row p strong {
+  font-weight: 700;
+  color: #4b5563;
+  font-size: inherit;
+  line-height: inherit;
+}
+
 /* ── Plan pills (dark / gold) inside feature rows ──────────── */
 .pi-plan-pill {
   display: inline-flex;
   align-items: center;
   padding: 4px 8px;
-  border-radius: 20px;
+  border-radius: 8px;
   font-family: 'Open Sans', sans-serif;
   font-style: normal;
   font-weight: 600;
