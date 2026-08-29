@@ -159,6 +159,14 @@ const insightsByPlan = [
 const outcomeCards = [
   {
     icon: BarChart2,
+    svgIcon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M3 3V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M18 17V9" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M13 17V5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M8 17V14" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    ),
     title: 'Workflow Dashboards',
     description: 'Visual overview of all your legal workflows, completion rates, and pending actions in one place',
   },
@@ -523,12 +531,17 @@ export default function PlaybooksInsights() {
       >
         <div className="pi-shell">
           <motion.div className="pi-section__eyebrow" variants={revealUp}>
-            <span className="pi-pill pi-pill--light">
-              <BarChart2 size={13} strokeWidth={2.2} />
+            <span className="pi-pill pi-pill--light pi-pill--dark-text">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M2.25 2.25V14.25C2.25 14.6478 2.40804 15.0294 2.68934 15.3107C2.97064 15.592 3.35218 15.75 3.75 15.75H15.75" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M13.5 12.75V6.75" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M9.75 12.75V3.75" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 12.75V10.5" stroke="#C79A3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               Insights
             </span>
           </motion.div>
-          <motion.h2 className="pi-section__title" variants={revealUp}>
+          <motion.h2 className="pi-section__title pi-section__title--visibility" variants={revealUp}>
             Visibility Into Outcomes, Not Just Activity
           </motion.h2>
           <motion.p className="pi-section__subtitle" variants={revealUp}>
@@ -541,7 +554,7 @@ export default function PlaybooksInsights() {
               return (
                 <motion.article key={card.title} className="pi-outcome-card" variants={revealUp}>
                   <span className="pi-outcome-card__icon">
-                    <Icon size={22} strokeWidth={2} />
+                    {(card as any).svgIcon ?? <Icon size={22} strokeWidth={2} />}
                   </span>
                   <h3>{card.title}</h3>
                   <p>{card.description}</p>

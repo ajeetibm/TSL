@@ -38,8 +38,17 @@
 
 .pi-pill--dark-text {
   background: #EFEBE1;
-  color: #0D1B2A;
   border-color: #C79A3B;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  color: #0D1B2A;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
 }
 
 .pi-pill--dark-text svg {
@@ -185,6 +194,17 @@
 }
 
 .pi-section__title--investor {
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  text-align: center;
+  color: #0D1B2A;
+}
+
+.pi-section__title--visibility {
   font-family: 'Montserrat', sans-serif;
   font-style: normal;
   font-weight: 600;
@@ -680,35 +700,43 @@
 
 /* ── CTA section ───────────────────────────────────────────── */
 .pi-cta-section {
-  background: linear-gradient(180deg, #07182a 0%, #081b30 100%);
+  background: #0D1B2A;
   text-align: center;
-  margin: 0 2rem 4rem;
-  border-radius: 20px;
+  margin: 0 4rem 4rem;
+  border-radius: 16px;
   overflow: hidden;
 }
 
 .pi-cta {
   max-width: 760px;
   margin: 0 auto;
-  padding: 96px 32px;
+  padding: 80px 32px;
   text-align: center;
 }
 
 .pi-cta h2 {
   margin: 0 0 20px;
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  text-align: center;
   color: #ffffff;
+  white-space: nowrap;
 }
 
 .pi-cta > p {
-  max-width: 640px;
+  max-width: 764px;
   margin: 0 auto 40px;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.75);
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .pi-cta__btn {
@@ -731,11 +759,15 @@
   transform: translateY(-2px);
 }
 
-.pi-cta__note {
-  margin: 28px 0 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
-  letter-spacing: 0.01em;
+.pi-cta .pi-cta__note {
+  margin: 24px 0 0;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ── Responsive ────────────────────────────────────────────── */
