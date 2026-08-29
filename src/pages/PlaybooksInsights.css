@@ -570,6 +570,10 @@
   flex-shrink: 0;
 }
 
+.pi-feature-card--playbooks .pi-feature-row__tier-icon {
+  color: #C79A3B !important;
+}
+
 .pi-feature-row__title strong {
   font-family: 'Open Sans', sans-serif;
   font-style: normal;

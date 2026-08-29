@@ -448,7 +448,7 @@ export default function PlaybooksInsights() {
 
           <motion.div className="pi-grid pi-grid--2" variants={staggerContainer}>
             {/* Playbooks by Plan */}
-            <motion.article className="pi-feature-card" variants={revealUp}>
+            <motion.article className="pi-feature-card pi-feature-card--playbooks" variants={revealUp}>
               <div className="pi-feature-card__header">
                 <span className="pi-feature-card__icon-wrap">
                   <BookOpen size={22} strokeWidth={2} />
