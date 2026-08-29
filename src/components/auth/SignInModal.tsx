@@ -228,19 +228,22 @@ function SignInModalContent({
 
   const handleFullNameChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, fullName: value }))
+    if (formError) setFormError('')
     if (touched.fullName || value.length > 0) {
       setFieldErrors(prev => ({ ...prev, fullName: validateFullName(value) }))
     }
-  }, [touched.fullName])
+  }, [touched.fullName, formError])
 
   const handleEmailChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, email: value }))
+    if (formError) setFormError('')
     if (touched.email || value.length > 0) {
       setFieldErrors(prev => ({ ...prev, email: validateEmail(value) }))
     }
-  }, [touched.email])
+  }, [touched.email, formError])
 
   const handlePasswordChange = useCallback((value: string) => {
+    if (formError) setFormError('')
     setFormData(prev => {
       const next = { ...prev, password: value }
       // Also re-validate confirmPassword if already touched
@@ -258,7 +261,7 @@ function SignInModalContent({
       }
       return next
     })
-  }, [touched.confirmPassword, mode])
+  }, [touched.confirmPassword, mode, formError])
 
   const handleConfirmPasswordChange = useCallback((value: string) => {
     setFormData(prev => ({ ...prev, confirmPassword: value }))
@@ -339,7 +342,10 @@ function SignInModalContent({
           })
 
       if (!response.success) {
-        setFormError(response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.')
+        const errMsg = response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.'
+        // Rate-limit errors only apply to login — never block account creation
+        if (mode === 'signup' && /too many requests/i.test(errMsg)) return
+        setFormError(errMsg)
         return
       }
 
@@ -619,13 +625,6 @@ function SignInModalContent({
               </div>
             )}
 
-            {/* Global server error */}
-            {formError && (
-              <p className="signin-modal__error" role="alert">
-                {formError}
-              </p>
-            )}
-
             {/* ── Consent checkbox (signup only) ── */}
             {mode === 'signup' && (
               <div className="signin-modal__consents">
@@ -649,6 +648,13 @@ function SignInModalContent({
                   </span>
                 </label>
               </div>
+            )}
+
+            {/* Global server error — shown after consent, before submit */}
+            {formError && (
+              <p className="signin-modal__error" role="alert">
+                {formError}
+              </p>
             )}
 
             <button

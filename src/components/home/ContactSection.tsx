@@ -33,8 +33,7 @@ function validateEmail(v: string): string {
 }
 
 function validatePhone(v: string): string {
-  if (!v) return 'Phone Number is required.'
-  if (!PHONE_RE.test(v)) return 'Please enter a valid phone number.'
+  if (v && !PHONE_RE.test(v)) return 'Please enter a valid phone number.'
   return ''
 }
 

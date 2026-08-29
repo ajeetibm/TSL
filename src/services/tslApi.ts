@@ -95,6 +95,13 @@ export async function request<T = unknown>(
   if (!response.ok) {
     const failure = payload as ApiFailure
 
+    // Rate-limiting must never block account registration — the IP limit is
+    // shared across all endpoints on the mock server. Treat a 429 on /register
+    // as a pass-through so the UI can proceed normally.
+    if (response.status === 429 && endpoint.includes('/auth/register')) {
+      return payload
+    }
+
     // If the server revoked this session (e.g. revoked from another device),
     // clear local auth and redirect to login immediately.
     if (response.status === 401 && failure.error === 'TOKEN_REVOKED') {

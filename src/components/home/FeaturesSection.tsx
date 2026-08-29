@@ -6,7 +6,7 @@ import { SectionHeader } from './SectionHeader'
 
 const features = [
   {
-    title: 'WIZARDS',
+    title: 'BLUEPRINTS',
     subtitle: 'Completed Legal Jobs With Proof',
     description: 'Every workflow handles data capture, drafting, negotiation, e-signature, optional certification, and records updates- all with deterministic PDFs and evidence packs.',
     icon: FileText,
@@ -18,7 +18,7 @@ const features = [
       'QR-verified certification',
       'Automatic Company Snapshot sync',
     ],
-    buttonText: 'Start a Wizard',
+    buttonText: 'Start a Blueprint',
     buttonHref: '/wizard-catalogue',
     buttonStyle: 'bg-navy-primary hover:bg-navy-primary/90 text-white',
     borderStyle: 'border-l-[6px] border-navy-primary',
@@ -49,7 +49,7 @@ const features = [
     iconBg: 'bg-[#303030]',
     checkBg: 'bg-[#303030]',
     items: [
-      'Playbook checklists & wizard links',
+      'Playbook checklists & blueprint links',
       'Usage dashboards (basic → executive)',
       'Document orchestration guides',
       'Quarterly compliance updates',
@@ -73,7 +73,7 @@ export function FeaturesSection() {
             </>
           }
           title="Complete Legal Workflows, Not Just Templates"
-          description="Every subscription tier includes wizards, playbooks, and full negotiation tools- delivering signed transactions with audit trails"
+          description="Every subscription tier includes blueprints, playbooks, and full negotiation tools- delivering signed transactions with audit trails"
         />
 
         <motion.div

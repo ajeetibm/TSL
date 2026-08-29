@@ -23,7 +23,7 @@ export function CounselCreditsSection() {
                 Counsel is available in all tiers.
               </p>
               <p className="text-[14px] font-normal leading-[1.6] text-[#4A5565]">
-                Request inside the wizard. The vetted lawyer works in the same negotiation room. Credits reset monthly. There is no rollover. A credit is used on submission.
+                Request inside the blueprint. The vetted lawyer works in the same negotiation room. Credits reset monthly. There is no rollover. A credit is used on submission.
               </p>
             </div>
 

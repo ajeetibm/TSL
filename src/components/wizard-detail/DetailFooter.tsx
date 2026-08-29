@@ -4,7 +4,7 @@ import './DetailFooter.css'
 
 const footerGroups = {
   'Quick Links': ['About Us', 'How It Works', 'Pricing', 'FAQ', 'Contact'],
-  Services: ['Wizards', 'Get Counsel', 'Playbooks', 'CIPC Services', 'Company Registration'],
+  Services: ['Blueprints', 'Get Counsel', 'Playbooks', 'CIPC Services', 'Company Registration'],
   Legal: ['Privacy Policy', 'Terms & Conditions', 'POPIA Compliance', 'Refund Policy'],
 }
 
@@ -18,7 +18,7 @@ const sectionAnchors: Record<string, string> = {
 const routeLinks: Record<string, string> = {
   'Get Counsel': '/counsel',
   Playbooks: '/playbooks-insights',
-  Wizards: '/wizard-catalogue'
+  Blueprints: '/wizard-catalogue'
 }
 
 function handleSectionClick(sectionId: string) {

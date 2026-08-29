@@ -29,7 +29,7 @@ const faqs: FAQItem[] = [
     category: 'General',
     question: 'What makes TSL different from traditional law firms?',
     answer:
-      'TSL combines technology with vetted legal expertise to deliver faster, more affordable outcomes. Instead of hourly billing and email chains, you get guided wizards, automated document generation, transparent pricing, and a full audit trail — all in one platform.',
+      'TSL combines technology with vetted legal expertise to deliver faster, more affordable outcomes. Instead of hourly billing and email chains, you get guided blueprints, automated document generation, transparent pricing, and a full audit trail — all in one platform.',
   },
   {
     category: 'General',
@@ -41,7 +41,7 @@ const faqs: FAQItem[] = [
     category: 'Features',
     question: 'What features does TSL offer?',
     answer:
-      'TSL offers company registration, CIPC compliance management, due diligence reports, director updates, contract generation, guided legal wizards, and a secure document vault — all accessible from a single dashboard.',
+      'TSL offers company registration, CIPC compliance management, due diligence reports, director updates, contract generation, guided legal blueprints, and a secure document vault — all accessible from a single dashboard.',
   },
   {
     category: 'Counsel',

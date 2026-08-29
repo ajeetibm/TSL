@@ -5,7 +5,7 @@ import { Container } from '../layout/Container'
 
 const proofCards = [
   {
-    title: 'Wizards',
+    title: 'Blueprints',
     description: 'Legally compliant documents that third parties accept.',
     icon: FileCheck,
   },
