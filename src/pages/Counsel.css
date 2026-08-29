@@ -538,10 +538,15 @@
   background: #b8871f;
 }
 
-.counsel-cta__note {
-  margin: 20px auto 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.5);
+.counsel-cta .counsel-cta__note {
+  margin: 24px auto 0;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 28px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 @media (max-width: 960px) {
