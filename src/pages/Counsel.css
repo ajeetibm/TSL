@@ -495,10 +495,16 @@
 }
 
 .counsel-cta h2 {
-  font-size: clamp(1.8rem, 3vw, 2.4rem);
-  font-weight: 700;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  text-align: center;
   color: #ffffff;
   margin: 0 0 16px;
+  white-space: nowrap;
 }
 
 .counsel-cta > p {
