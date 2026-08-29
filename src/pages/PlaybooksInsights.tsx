@@ -283,10 +283,10 @@ export default function PlaybooksInsights() {
         variants={staggerContainer}
       >
         <div className="pi-shell">
-          <motion.h2 className="pi-section__title" variants={revealUp}>
+          <motion.h2 className="pi-section__title pi-section__title--investor" variants={revealUp}>
             Investor-Grade Legal Guidance
           </motion.h2>
-          <motion.p className="pi-section__subtitle" variants={revealUp}>
+          <motion.p className="pi-section__subtitle pi-section__subtitle--investor" variants={revealUp}>
             Checklists, calculators, and guidance notes that link directly into blueprint steps — supporting your legal workflows without consuming runs.
           </motion.p>
 

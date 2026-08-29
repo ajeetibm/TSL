@@ -170,6 +170,17 @@
   color: #0D1B2A;
 }
 
+.pi-section__title--investor {
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 30px;
+  line-height: 36px;
+  letter-spacing: -0.75px;
+  text-align: center;
+  color: #0D1B2A;
+}
+
 .pi-section__subtitle {
   max-width: 720px;
   margin: 14px auto 40px;
@@ -177,6 +188,16 @@
   font-size: 0.95rem;
   line-height: 1.7;
   color: #4b5563;
+}
+
+.pi-section__subtitle--investor {
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  text-align: center;
+  color: #333333;
 }
 
 /* ── Grid ──────────────────────────────────────────────────── */
