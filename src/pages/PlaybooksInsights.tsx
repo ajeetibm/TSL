@@ -210,27 +210,29 @@ export default function PlaybooksInsights() {
     'Guidance and visibility to help you make the right legal decisions without consuming runs.'
   )
 
-  const [sampleDoc, setSampleDoc] = useState<DocumentItem | null>(null)
+  const [investorDoc, setInvestorDoc] = useState<DocumentItem | null>(null)
+  const [foundersDoc, setFoundersDoc] = useState<DocumentItem | null>(null)
   const [docLoading, setDocLoading] = useState(true)
 
   useEffect(() => {
     documentsApi.list().then((res) => {
       if (res.success && res.data && res.data.length > 0) {
-        setSampleDoc(res.data[1])
+        setInvestorDoc(res.data[1] ?? null)
+        setFoundersDoc(res.data[2] ?? res.data[1] ?? null)
       }
     }).finally(() => {
       setDocLoading(false)
     })
   }, [])
 
-  function handleDownloadSample() {
-    if (!sampleDoc) return
-    const url = sampleDoc.url.startsWith('/')
-      ? `${API_BASE_URL}${sampleDoc.url}`
-      : sampleDoc.url
+  function handleDownloadDoc(doc: DocumentItem | null) {
+    if (!doc) return
+    const url = doc.url.startsWith('/')
+      ? `${API_BASE_URL}${doc.url}`
+      : doc.url
     const a = document.createElement('a')
     a.href = url
-    a.download = `${sampleDoc.name}.pdf`
+    a.download = `${doc.name}.pdf`
     a.target = '_blank'
     a.rel = 'noopener noreferrer'
     document.body.appendChild(a)
@@ -388,15 +390,15 @@ export default function PlaybooksInsights() {
                 </li>
               </ul>
               <div className="pi-guide__btn-wrap">
-                 <button
-                   className="pi-guide__btn"
-                   onClick={handleDownloadSample}
-                   disabled={docLoading || !sampleDoc}
-                 >
-                   <Download size={16} strokeWidth={2.2} />
-                   {docLoading ? 'Loading…' : 'Download Sample'}
-                 </button>
-               </div>
+                <button
+                  className="pi-guide__btn"
+                  onClick={() => handleDownloadDoc(investorDoc)}
+                  disabled={docLoading || !investorDoc}
+                >
+                  <Download size={16} strokeWidth={2.2} />
+                  {docLoading ? 'Loading…' : 'Download Sample'}
+                </button>
+              </div>
              </motion.article>
 
              <motion.article className="pi-guide" variants={revealUp}>
@@ -424,16 +426,16 @@ export default function PlaybooksInsights() {
                    <span>Instant download</span>
                  </li>
                </ul>
-               <div className="pi-guide__btn-wrap">
-                 <button
-                   className="pi-guide__btn"
-                   onClick={handleDownloadSample}
-                   disabled={docLoading || !sampleDoc}
-                 >
-                   <Download size={16} strokeWidth={2.2} />
-                   {docLoading ? 'Loading…' : 'Download Sample'}
-                 </button>
-               </div>
+              <div className="pi-guide__btn-wrap">
+                <button
+                  className="pi-guide__btn"
+                  onClick={() => handleDownloadDoc(foundersDoc)}
+                  disabled={docLoading || !foundersDoc}
+                >
+                  <Download size={16} strokeWidth={2.2} />
+                  {docLoading ? 'Loading…' : 'Download Sample'}
+                </button>
+              </div>
              </motion.article>
           </motion.div>
         </div>
