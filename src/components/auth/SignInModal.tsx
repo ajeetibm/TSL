@@ -342,9 +342,11 @@ function SignInModalContent({
           })
 
       if (!response.success) {
-        const errMsg = response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.'
+        let errMsg = response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.'
         // Rate-limit errors only apply to login — never block account creation
         if (mode === 'signup' && /too many requests/i.test(errMsg)) return
+        // Replace backend rate-limit window with a friendlier 30-second message
+        errMsg = errMsg.replace(/please try again in 15 minutes/i, 'Please try again in 30 seconds')
         setFormError(errMsg)
         return
       }
