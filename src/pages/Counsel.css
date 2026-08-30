@@ -27,7 +27,7 @@
 
 .counsel-pill--light {
   background: #EFEBE1;
-  border-color: #C79A3B;
+  border: 2px solid #C79A3B;
   color: #0D1B2A !important;
   font-family: 'Open Sans', sans-serif;
   font-style: normal;
