@@ -11,6 +11,7 @@
   justify-content: space-between;
   gap: 24px;
   border-radius: 12px;
+  border: 1.5px solid #C79A3B;
   background: #07192b;
   padding: 16px 24px;
   color: #ffffff;
@@ -22,7 +23,9 @@
 }
 
 .wizard-cart-bar__summary strong {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   line-height: 20px;
 }
@@ -74,7 +77,8 @@
 }
 
 .wizard-cart-bar__clear {
-  background: rgba(255, 255, 255, 0.12);
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
   color: #ffffff;
 }
 
@@ -83,7 +87,8 @@
   align-items: center;
   gap: 8px;
   background: #c79a3b;
-  color: #0d1b2a;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 @media (max-width: 900px) {

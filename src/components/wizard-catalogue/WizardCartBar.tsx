@@ -36,12 +36,26 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
     <div className="wizard-cart-bar">
       <div className="wizard-cart-bar__content">
         <div className="wizard-cart-bar__summary">
-          <strong>Your Cart ({totalItems} items):</strong>
+          <strong>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style={{ flexShrink: 0 }}>
+              <g clipPath="url(#clip0_308_16121)">
+                <path d="M6 16.5C6.41421 16.5 6.75 16.1642 6.75 15.75C6.75 15.3358 6.41421 15 6 15C5.58579 15 5.25 15.3358 5.25 15.75C5.25 16.1642 5.58579 16.5 6 16.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14.25 16.5C14.6642 16.5 15 16.1642 15 15.75C15 15.3358 14.6642 15 14.25 15C13.8358 15 13.5 15.3358 13.5 15.75C13.5 16.1642 13.8358 16.5 14.25 16.5Z" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1.53906 1.53711H3.03906L5.03406 10.8521C5.10725 11.1933 5.29707 11.4982 5.57085 11.7145C5.84463 11.9308 6.18524 12.0449 6.53406 12.0371H13.8691C14.2104 12.0366 14.5414 11.9196 14.8073 11.7055C15.0732 11.4914 15.2582 11.193 15.3316 10.8596L16.5691 5.28711H3.84156" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_308_16121">
+                  <rect width="18" height="18" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+            Your Cart ({totalItems} items):
+          </strong>
           <div className="wizard-cart-bar__chips">
             {selectedWizards.map((wizard) => (
               <span key={wizard.title}>
                 {wizard.title}
-                <b>{wizard.quantity}</b>
+                <b>×{wizard.quantity}</b>
               </span>
             ))}
           </div>
@@ -52,8 +66,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
             Clear Cart
           </button>
           <button className="wizard-cart-bar__details" onClick={handleViewDetails}>
-            <ShoppingCart size={16} />
-            View Details
+            Get Start &amp; View Details
             <ChevronRight size={16} />
           </button>
         </div>
