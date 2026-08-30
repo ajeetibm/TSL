@@ -171,6 +171,7 @@ describe('DashboardWizards Page', () => {
   })
 
   it('clears cart when Clear Cart button is clicked', () => {
+    localStorage.setItem('tsl-selected-wizards', JSON.stringify({ 'Loan Agreement': 1 }))
     renderDashboardWizards()
     
     const selectButton = screen.getAllByRole('button', { name: /select/i })[0]
@@ -180,6 +181,7 @@ describe('DashboardWizards Page', () => {
     fireEvent.click(clearButton)
     
     expect(screen.queryByText(/your cart/i)).not.toBeInTheDocument()
+    expect(localStorage.getItem('tsl-selected-wizards')).toBeNull()
   })
 
   it('removes wizard from cart when remove button in cart is clicked', () => {

@@ -148,6 +148,7 @@ const blueprintIdByTitle: Record<string, string> = {
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'
+const guestWizardCartStorageKey = 'tsl-selected-wizards'
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 export default function DashboardWizards() {
@@ -237,6 +238,8 @@ export default function DashboardWizards() {
     setQuantities(emptyQuantities)
     localStorage.setItem('tsl-blueprint-quantities', JSON.stringify(emptyQuantities))
     localStorage.removeItem(selectedWizardStorageKey)
+    // Keep the guest catalogue in sync: it reads its selection from this key.
+    localStorage.removeItem(guestWizardCartStorageKey)
   }
 
   const viewSelectedWizardDetails = () => {

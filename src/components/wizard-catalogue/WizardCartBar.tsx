@@ -1,4 +1,4 @@
-import { ChevronRight, ShoppingCart } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import './WizardCartBar.css'
 
@@ -20,15 +20,19 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
 
   const handleViewDetails = () => {
     if (localStorage.getItem('tsl-authenticated') === 'true') {
+      // Authenticated users go straight to dashboard wizard details —
+      // "Back to Wizards" should take them to the dashboard blueprints page.
       navigate('/dashboard/wizard-details', {
-        state: {
-          selectedWizards,
-        },
+        state: { selectedWizards },
       })
       return
     }
 
     localStorage.setItem('tsl-selected-dashboard-wizards', JSON.stringify(selectedWizards))
+    // The authenticated experience continues in the dashboard. Clear the
+    // legacy return flag so a previous guest session cannot send the user
+    // back to the public catalogue after signing in.
+    localStorage.removeItem('tsl-from-catalogue')
     window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/dashboard/wizard-details' } }))
   }
 

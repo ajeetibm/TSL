@@ -870,7 +870,21 @@ export default function DashboardWizardDetails() {
           <button
             type="button"
             className="dashboard-wizard-details__back"
-            onClick={() => navigate('/dashboard/blueprints')}
+            onClick={() => {
+              // Both guest-to-sign-in and signed-in journeys continue in the
+              // dashboard. Persist the current selection for DashboardWizards
+              // so its cards remain selected after returning from this page.
+              const dashboardQuantities = Object.fromEntries(
+                selectedWizards.map(({ title, quantity }) => [title, quantity]),
+              )
+              localStorage.setItem(blueprintQuantitiesStorageKey, JSON.stringify(dashboardQuantities))
+              localStorage.setItem(
+                selectedWizardStorageKey,
+                JSON.stringify(selectedWizards.map(({ title, quantity }) => ({ title, quantity }))),
+              )
+              localStorage.removeItem('tsl-from-catalogue')
+              navigate('/dashboard/blueprints')
+            }}
           >
             <ArrowLeft size={18} />
             Back to Wizards

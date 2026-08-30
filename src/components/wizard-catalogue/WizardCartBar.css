@@ -7,15 +7,17 @@
 
 .wizard-cart-bar__content {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  border-radius: 12px;
-  border: 1.5px solid #C79A3B;
-  background: #07192b;
   padding: 16px 24px;
+  background: linear-gradient(135deg, #0D1B2A 0%, #1A3045 100%);
+  border: 2px solid #C79A3B;
+  box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
   color: #ffffff;
-  box-shadow: 0 12px 24px rgba(13, 27, 42, 0.22);
+  min-height: 130px;
 }
 
 .wizard-cart-bar__summary {
@@ -50,14 +52,18 @@
 }
 
 .wizard-cart-bar__chips b {
-  display: grid;
-  min-width: 18px;
-  height: 18px;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 31px;
+  height: 22px;
+  padding: 0 6px;
   border-radius: 9999px;
-  background: rgba(199, 154, 59, 0.28);
+  background: rgba(199, 154, 59, 0.3);
   color: #ffffff;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
 }
 
 .wizard-cart-bar__actions {
@@ -77,18 +83,43 @@
 }
 
 .wizard-cart-bar__clear {
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  width: 181px;
+  height: 68px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 24px;
   color: #ffffff;
+  font-family: 'Poppins', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  flex: none;
+  order: 0;
+  flex-grow: 0;
 }
 
 .wizard-cart-bar__details {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  background: #c79a3b;
+  width: 272px;
+  height: 68px;
+  background: #C79A3B;
+  box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 24px;
   color: #ffffff;
-  font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  flex: none;
+  order: 1;
+  flex-grow: 0;
 }
 
 @media (max-width: 900px) {
