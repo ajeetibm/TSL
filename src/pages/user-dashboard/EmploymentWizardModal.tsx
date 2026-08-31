@@ -140,9 +140,17 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
   }
   const toggle = (key: 'benefits' | 'conditions', value: string) => {
     const selected = data[key].includes(value) ? data[key].filter((entry) => entry !== value) : [...data[key], value]
+    if (key === 'conditions' && value === 'Valid work authorisation' && !selected.includes(value)) {
+      const next = { ...data, conditions: selected, work_permit_type: '', work_permit_expiry: '' }
+      setData(next)
+      onStepChange?.(step, next)
+      return
+    }
     set(key, selected)
   }
   const medicalSelected = data.conditions.includes('Medical assessment')
+  const workAuthorisationSelected = data.conditions.includes('Valid work authorisation')
+  const requiresWorkPermitExpiry = workAuthorisationSelected && Boolean(data.work_permit_type)
 
   // South African NMW 2024: R27.58/hr → R4 788.72/mo · R57 464.64/yr
   const NMW_MONTHLY = 4788.72
@@ -172,6 +180,8 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     if (step === 3) {
       if (!data.conditions.length) e['conditions'] = 'Select at least one offer condition.'
       if (medicalSelected && !data.medical_justification.trim()) e['medical_justification'] = 'An inherent requirement is needed for a medical assessment.'
+      if (workAuthorisationSelected && !data.work_permit_type) e['work_permit_type'] = 'Select the work authorisation type.'
+      if (requiresWorkPermitExpiry && !data.work_permit_expiry) e['work_permit_expiry'] = 'Work authorisation expiry is required.'
       if (!data.offer_expiry) e['offer_expiry'] = 'Offer expiry date is required.'
     }
     setErrors(e)
@@ -303,6 +313,16 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                 </div>
               )}
 
+              {Number(data.probation_months) > 6 && (
+                <div className="nda-modal__nmw-warning" role="alert">
+                  <span className="nda-modal__nmw-warning-icon">⚠</span>
+                  <div>
+                    <strong>Probation exceeds six months</strong>
+                    <p>Review whether this period is reasonable for the role before proceeding.</p>
+                  </div>
+                </div>
+              )}
+
               <Field label="Benefits" optional>
                 <div className="nda-modal__pill-grid">
                   {BENEFITS.map((benefit) => <button key={benefit} type="button" className={`nda-modal__pill-btn${data.benefits.includes(benefit) ? ' nda-modal__pill-btn--active' : ''}`} onClick={() => toggle('benefits', benefit)}>{benefit}</button>)}
@@ -340,15 +360,31 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                 <textarea className={`nda-modal__textarea${e['medical_justification'] ? ' nda-modal__input--error' : ''}`} value={data.medical_justification} onChange={(event) => set('medical_justification', event.target.value)} />
               </Field>}
 
-              <Field label="Work authorisation type" hint="Shown when the candidate is not a citizen or permanent resident.">
+              {medicalSelected && !data.medical_justification.trim() && (
+                <div className="nda-modal__nmw-warning" role="alert">
+                  <span className="nda-modal__nmw-warning-icon">⊘</span>
+                  <div>
+                    <strong>Block — medical assessment needs a justification</strong>
+                    <p>Provide the inherent requirement before this offer can proceed to preview or generation.</p>
+                  </div>
+                </div>
+              )}
+
+              {workAuthorisationSelected && <Field label="Work authorisation type" required error={e['work_permit_type']} hint="Required where the candidate is not a citizen or permanent resident.">
                 <select className="nda-modal__input" value={data.work_permit_type} onChange={(event) => set('work_permit_type', event.target.value)}>
-                  <option value="">Not required (SA citizen / permanent resident)</option>
+                  <option value="">Select…</option>
                   <option>Work visa</option>
                   <option>Critical skills visa</option>
                   <option>Intra-company transfer permit</option>
                   <option>Other</option>
                 </select>
-              </Field>
+              </Field>}
+
+              {requiresWorkPermitExpiry && <div className="nda-modal__half-col">
+                <Field label="Work authorisation expiry" required error={e['work_permit_expiry']}>
+                  <input className={`nda-modal__input${e['work_permit_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" value={data.work_permit_expiry} onChange={(event) => set('work_permit_expiry', event.target.value)} />
+                </Field>
+              </div>}
 
               <div className="nda-modal__half-col">
                 <Field label="Offer expires" required error={e['offer_expiry']}>
@@ -393,7 +429,8 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
               <PreviewSection num={3} title="Conditions" onEdit={() => goTo(3)}>
                 <PreviewField label="Offer conditional on" value={data.conditions.length ? data.conditions.join(', ') : '—'} />
                 {data.medical_justification && <PreviewField label="Medical inherent requirement" value={data.medical_justification} />}
-                <PreviewField label="Work authorisation type" value={data.work_permit_type || 'Not required (SA citizen / permanent resident)'} />
+                <PreviewField label="Work authorisation type" value={data.work_permit_type || 'Not required'} />
+                {data.work_permit_type && <PreviewField label="Work authorisation expiry" value={fmtDate(data.work_permit_expiry)} />}
                 <PreviewField label="Offer expires" value={fmtDate(data.offer_expiry)} />
               </PreviewSection>
             </>}
