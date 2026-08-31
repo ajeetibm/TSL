@@ -26,8 +26,11 @@
 }
 
 .counsel-pill--light {
-  background: #EFEBE1;
+  width: 225.52px;
+  height: 44px;
+  background: rgba(199, 154, 59, 0.1);
   border: 2px solid #C79A3B;
+  border-radius: 16777200px;
   color: #0D1B2A !important;
   font-family: 'Open Sans', sans-serif;
   font-style: normal;
@@ -37,6 +40,13 @@
   text-align: center;
 }
 
+
+.counsel-pill--included {
+  width: 192.91px;
+  height: 44px;
+  border-radius: 16777200px;
+  border: 2px solid #C79A3B;
+}
 
 .counsel-pill--muted {
   background: rgba(255, 255, 255, 0.08);
@@ -155,6 +165,10 @@
 
 .counsel-section--soft {
   background: #efefef;
+}
+
+.counsel-section--governance {
+  background: rgba(199, 154, 59, 0.1);
 }
 
 .counsel-section__eyebrowWrap {
