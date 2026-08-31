@@ -28,8 +28,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  line-height: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 28px;
+  color: #ffffff;
 }
 
 .wizard-cart-bar__chips {
@@ -45,10 +49,13 @@
   gap: 6px;
   border-radius: 9999px;
   background: rgba(255, 255, 255, 0.13);
-  padding: 3px 8px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
-  line-height: 18px;
+  padding: 4px 12px;
+  font-family: 'Poppins', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  color: #ffffff;
 }
 
 .wizard-cart-bar__chips b {

@@ -21,6 +21,8 @@ const routeLinks: Record<string, string> = {
   Blueprints: '/wizard-catalogue'
 }
 
+const noLink = new Set(['CIPC Services', 'Company Registration', 'Terms & Conditions', 'POPIA Compliance', 'Refund Policy', 'Privacy Policy'])
+
 function handleSectionClick(sectionId: string) {
   return (e: MouseEvent<HTMLAnchorElement>) => {
     const el = document.getElementById(sectionId)
@@ -87,6 +89,9 @@ export function DetailFooter() {
             <nav className="detail-footer__group" key={title}>
               <h3>{title}</h3>
               {links.map((link) => {
+                if (noLink.has(link)) {
+                  return <span key={link}>{link}</span>
+                }
                 const sectionId = sectionAnchors[link]
                 const href = sectionId ? `/#${sectionId}` : (routeLinks[link] ?? '/contact')
                 return (
