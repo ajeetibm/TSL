@@ -721,6 +721,8 @@
 }
 
 .user-dashboard__stat-icon--gold {
+  width: 48px;
+  height: 48px;
   background: #d3a038;
   color: #ffffff;
 }
@@ -732,9 +734,15 @@
 
 .user-dashboard__stat-number,
 .user-dashboard__stat-date {
-  font-family: var(--font-display);
   font-size: 30px;
-  line-height: 1;
+  line-height: 36px;
+}
+
+.user-dashboard__stat-date {
+  font-family: 'Open Sans', var(--font-display), sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  color: #ffffff;
 }
 
 .user-dashboard__stat-number span {
@@ -749,6 +757,16 @@
   font-family: var(--font-display);
   font-size: 24px;
   line-height: 1.15;
+}
+
+.user-dashboard__stat-billing {
+  font-family: 'Montserrat', var(--font-display), sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.6px;
+  color: rgba(255, 255, 255, 0.79);
 }
 
 .user-dashboard__stat-sublabel,

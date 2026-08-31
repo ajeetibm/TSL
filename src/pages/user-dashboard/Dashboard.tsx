@@ -2601,11 +2601,21 @@ export default function Dashboard() {
 
           <article className="user-dashboard__stat-card user-dashboard__stat-card--dark">
             <span className="user-dashboard__stat-icon user-dashboard__stat-icon--gold">
-              <Calendar size={18} />
+              <Calendar size={24} />
             </span>
             <div>
-              <div className="user-dashboard__stat-date">Jan 1</div>
-              <div className="user-dashboard__stat-year">2026</div>
+              {(() => {
+                const raw = subscription?.nextBillingDate
+                const date = raw ? new Date(`${raw}T00:00:00.000Z`) : null
+                const day  = date ? date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '—'
+                const year = date ? date.getUTCFullYear() : ''
+                return (
+                  <>
+                    <div className="user-dashboard__stat-date">{day}</div>
+                    {year && <div className="user-dashboard__stat-year">{year}</div>}
+                  </>
+                )
+              })()}
               <div className="user-dashboard__stat-billing">Next Billing</div>
               <div className="user-dashboard__stat-plan">{subscription?.planName ?? capitalizePlan(user?.plan)} Plan</div>
             </div>
