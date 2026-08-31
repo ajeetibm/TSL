@@ -152,9 +152,16 @@ export default function BlueprintTopUpPayment() {
     }
 
     setIsPaying(false)
-    navigate('/dashboard', {
+    // Navigate back to the blueprints page so the updated credit balance
+    // is reflected immediately without a manual refresh.
+    navigate('/dashboard/blueprints', {
       replace: true,
-      state: { blueprintTopUpSuccess: true, unitsAdded: qty },
+      state: {
+        blueprintTopUpSuccess: true,
+        selectedBlueprint: blueprintName,
+        unitsAdded: qty,
+        updatedRunsRemaining: (topUp.data as { usage?: { runsRemaining?: number } } | undefined)?.usage?.runsRemaining ?? null,
+      },
     })
   }
 

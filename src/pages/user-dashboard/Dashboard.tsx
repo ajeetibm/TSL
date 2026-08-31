@@ -1636,7 +1636,13 @@ export default function Dashboard() {
   const [ndaToast, setNdaToast] = useState('')
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number; iconName?: string } | null>(null)
   const [pdfConfirm, setPdfConfirm] = useState<{ blueprintId: string; downloadKey: string; filename: string; credits: number; build: () => Blob | Promise<Blob> } | null>(null)
-  const [pdfDownloaded, setPdfDownloaded] = useState<Set<string>>(new Set())
+  const pdfDownloadedKey = 'tsl-pdf-downloaded'
+  const [pdfDownloaded, setPdfDownloaded] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('tsl-pdf-downloaded')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch { return new Set() }
+  })
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Queue state ──────────────────────────────────────────────────────────
@@ -2002,7 +2008,11 @@ export default function Dashboard() {
     setSubscription((current) => current ? { ...current, usage: response.data!.usage } : current)
     triggerDownload(blob, filename)
     // Mark the instance as PDF-downloaded so the confirm modal won't show again
-    setPdfDownloaded((prev) => new Set([...prev, downloadKey]))
+    setPdfDownloaded((prev) => {
+      const next = new Set([...prev, downloadKey])
+      localStorage.setItem(pdfDownloadedKey, JSON.stringify([...next]))
+      return next
+    })
   }
   const PDF_CREDITS: Record<string, number> = {
     'nda': 1,

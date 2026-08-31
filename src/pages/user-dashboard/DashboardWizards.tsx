@@ -15,16 +15,30 @@ import {
   WandSparkles,
   Zap,
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
 import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
+import { openPaystackCheckout } from '../../services/paystackClient'
+import { useBillingSubscription } from '../../hooks/useBillingSubscription'
+import { UpgradePlansModal } from './billing/UpgradePlansModal'
+import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
+import { DowngradeConfirmModal } from './billing/DowngradeConfirmModal'
 import ComingSoonWizardModal from './ComingSoonWizardModal'
 import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import './Dashboard.css'
 import './DashboardWizards.css'
+
+function getStoredUserEmail() {
+  try {
+    const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
+    return user.email || 'user@example.com'
+  } catch {
+    return 'user@example.com'
+  }
+}
 
 const LIVE_BLUEPRINTS = new Set([
   'Non-Disclosure Agreement (NDA)',
@@ -161,13 +175,77 @@ const guestWizardCartStorageKey = 'tsl-selected-wizards'
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 export default function DashboardWizards() {
-   const navigate = useNavigate()
+  const navigate = useNavigate()
+  const location = useLocation()
+  const locationState = location.state as {
+    blueprintTopUpSuccess?: boolean
+    selectedBlueprint?: string
+    unitsAdded?: number
+    updatedRunsRemaining?: number | null
+  } | null
+
+  // ── Paystack payment callback injected into the billing hook ──────────────
+  const [upgradePayError, setUpgradePayError] = useState<string | null>(null)
+  const upgradePayFn = useCallback(async (amountZAR: number, planName: string): Promise<string | null> => {
+    setUpgradePayError(null)
+    const checkoutResult = await openPaystackCheckout({
+      amount: amountZAR,
+      currency: 'ZAR',
+      email: getStoredUserEmail(),
+      plan: planName.toLowerCase(),
+      paymentMethod: 'card',
+      selectedWizards: [],
+      totalWizards: 0,
+    })
+    if (checkoutResult.status === 'cancelled') return null
+    if (checkoutResult.status === 'failed') {
+      setUpgradePayError(checkoutResult.message || 'Payment failed. Please try again.')
+      return null
+    }
+    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, type: 'subscription-upgrade' })
+    if (!verifyRes.success || verifyRes.data?.status !== 'success') {
+      setUpgradePayError(verifyRes.message || 'Payment could not be verified. Please try again.')
+      return null
+    }
+    return checkoutResult.reference
+  }, [])
+
+  // ── Billing / subscription hook ───────────────────────────────────────────
+  const {
+    subscription,
+    plans,
+    plansLoading,
+    plansError,
+    upgradePreview,
+    previewLoading,
+    previewError,
+    selectedPlan,
+    activeModal: billingActiveModal,
+    closeModal: closeBillingModal,
+    actionLoading,
+    actionError,
+    upgradeResult,
+    openUpgradePlans,
+    selectPlan,
+    confirmUpgrade,
+    confirmDowngrade,
+    cancelUpgradeConfirm,
+    cancelDowngradeConfirm,
+  } = useBillingSubscription(upgradePayFn)
+
+  const effectivePlanId = subscription?.planId ?? 'free'
+
    const [quantities, setQuantities] = useState<Record<string, number>>(() => {
      try {
        const stored = localStorage.getItem('tsl-blueprint-quantities')
        const parsed: Record<string, number> = stored ? JSON.parse(stored) : Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
        // Strip any non-live blueprints persisted before the guard was added
-       return Object.fromEntries(Object.entries(parsed).filter(([title]) => LIVE_BLUEPRINTS.has(title)))
+       const savedQuantities = Object.fromEntries(Object.entries(parsed).filter(([title]) => LIVE_BLUEPRINTS.has(title))) as Record<string, number>
+       const selectedBlueprint = locationState?.blueprintTopUpSuccess ? locationState.selectedBlueprint : undefined
+       if (selectedBlueprint && LIVE_BLUEPRINTS.has(selectedBlueprint)) {
+         savedQuantities[selectedBlueprint] = Math.max(savedQuantities[selectedBlueprint] ?? 0, 1)
+       }
+       return savedQuantities
      } catch {
        return Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
      }
@@ -177,11 +255,20 @@ export default function DashboardWizards() {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
 
-  const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
+  // Seed remaining units immediately from top-up navigation state so the
+  // credits badge updates without waiting for the subscription API call.
+  const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(
+    locationState?.updatedRunsRemaining ?? null
+  )
+  const [topUpToast, setTopUpToast] = useState<string>(
+    locationState?.blueprintTopUpSuccess && locationState.unitsAdded
+      ? `${locationState.unitsAdded} Blueprint Credit${locationState.unitsAdded !== 1 ? 's' : ''} added successfully.`
+      : ''
+  )
   const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
   const [insufficientUnits, setInsufficientUnits] = useState<{ title: string; required: number; iconName: string } | null>(null)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
-  const [isUpgradeJourney, setIsUpgradeJourney] = useState(false)
+  const [pendingUpgradeBlueprint, setPendingUpgradeBlueprint] = useState<string | null>(null)
   useEffect(() => {
     paymentApi.wizardAccess().then((res) => {
       if (res.success && res.data) {
@@ -189,13 +276,47 @@ export default function DashboardWizards() {
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(res.data))
       }
     })
+    // Always re-fetch from server — this also overwrites the seeded value with
+    // the authoritative figure once the response arrives.
     subscriptionApi.get().then((res) => {
       if (res.success && res.data) setRemainingBlueprintUnits(res.data.usage.runsRemaining)
     })
     subscriptionApi.blueprints().then((res) => {
       if (res.success && res.data) setCatalogue(res.data)
     })
+    // Clear location state so the toast/seed don't re-show on future navigations
+    window.history.replaceState({}, '')
   }, [])
+
+  // A successful subscription upgrade mutates the shared billing hook while
+  // this page remains mounted. Sync its independent credits display so the
+  // user can continue without refreshing or navigating away.
+  useEffect(() => {
+    if (!subscription) return
+
+    setRemainingBlueprintUnits(subscription.usage.runsRemaining)
+    setWizardAccess((current) => {
+      const next: WizardAccess = {
+        hasSubscription: subscription.planId.toLowerCase() !== 'free',
+        plan: subscription.planId,
+        wizardLimit: current?.wizardLimit ?? subscription.wizardRuns,
+        selectedWizards: current?.selectedWizards ?? [],
+        remainingWizards: current?.remainingWizards ?? subscription.wizardRuns,
+      }
+
+      localStorage.setItem(wizardAccessCacheKey, JSON.stringify(next))
+      return next
+    })
+  }, [subscription])
+
+  // Do not add the blocked Blueprint while the customer is merely considering
+  // a plan. Add it only after the upgrade API has confirmed the new plan.
+  useEffect(() => {
+    if (!upgradeResult || !pendingUpgradeBlueprint) return
+
+    updateQuantity(pendingUpgradeBlueprint, Math.max(quantities[pendingUpgradeBlueprint] ?? 0, 1))
+    setPendingUpgradeBlueprint(null)
+  }, [upgradeResult, pendingUpgradeBlueprint])
 
   setPageMetadata(
     'Browse All Blueprints',
@@ -230,7 +351,6 @@ export default function DashboardWizards() {
     const hasSubscription = wizardAccess?.hasSubscription === true
     if (
       nextQuantity > currentQuantity &&
-      !isUpgradeJourney &&
       hasSubscription &&
       remainingBlueprintUnits !== null &&
       remainingBlueprintUnits <= 0
@@ -260,14 +380,44 @@ export default function DashboardWizards() {
   }
 
   const viewSelectedWizardDetails = () => {
+    // A cart restored from an earlier attempt must not bypass the unit gate by
+    // clicking the cart CTA after the plan chooser is cancelled.
+    if (
+      wizardAccess?.hasSubscription &&
+      remainingBlueprintUnits !== null &&
+      remainingBlueprintUnits <= 0 &&
+      selectedWizards.length > 0
+    ) {
+      const blockedWizard = selectedWizards[0]
+      const blueprint = catalogue.find((item) => item.blueprintId === blueprintIdByTitle[blockedWizard.title])
+      const card = wizardCards.find((wizard) => wizard.title === blockedWizard.title)
+      setInsufficientUnits({
+        title: blockedWizard.title,
+        required: blueprint?.blueprintUnitWeight ?? card?.fallbackWeight ?? 0,
+        iconName: card?.icon.displayName ?? card?.icon.name ?? 'Shield',
+      })
+      return
+    }
+
     localStorage.setItem(selectedWizardStorageKey, JSON.stringify(selectedWizards))
-    navigate('/dashboard/wizard-details', { state: { selectedWizards, forceUpgrade: isUpgradeJourney } })
+    navigate('/dashboard/wizard-details', { state: { selectedWizards } })
   }
 
+
+  useEffect(() => {
+    if (!topUpToast) return
+    const timer = setTimeout(() => setTopUpToast(''), 5000)
+    return () => clearTimeout(timer)
+  }, [topUpToast])
 
   return (
     <DashboardShell activeSection="Blueprints">
       <div className="dashboard-wizards">
+        {topUpToast && (
+          <div className="dashboard-wizards__toast" role="status">
+            {topUpToast}
+          </div>
+        )}
         <header className="dashboard-wizards__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
           <span className="dashboard-wizards__header-marker" aria-hidden="true">
@@ -449,11 +599,46 @@ export default function DashboardWizards() {
             iconName={insufficientUnits.iconName}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => {
-              const title = insufficientUnits.title
+              setPendingUpgradeBlueprint(insufficientUnits.title)
               setInsufficientUnits(null)
-              setIsUpgradeJourney(true)
-              updateQuantity(title, 1)
+              void openUpgradePlans()
             }}
+          />
+        )}
+        {billingActiveModal === 'upgrade-plans' && (
+          <UpgradePlansModal
+            currentPlanId={effectivePlanId}
+            plans={plans}
+            plansLoading={plansLoading}
+            plansError={plansError}
+            onSelectUpgrade={(plan) => void selectPlan(plan, 'upgrade')}
+            onSelectDowngrade={(plan) => void selectPlan(plan, 'downgrade')}
+            onClose={() => {
+              setPendingUpgradeBlueprint(null)
+              closeBillingModal()
+            }}
+          />
+        )}
+        {billingActiveModal === 'upgrade-confirm' && selectedPlan && (
+          <UpgradeConfirmModal
+            plan={selectedPlan}
+            preview={upgradePreview}
+            previewLoading={previewLoading}
+            previewError={previewError}
+            actionLoading={actionLoading}
+            actionError={upgradePayError ?? actionError}
+            onConfirm={() => void confirmUpgrade()}
+            onCancel={cancelUpgradeConfirm}
+          />
+        )}
+        {billingActiveModal === 'downgrade-confirm' && selectedPlan && subscription && (
+          <DowngradeConfirmModal
+            plan={selectedPlan}
+            subscription={subscription}
+            actionLoading={actionLoading}
+            actionError={actionError}
+            onConfirm={() => void confirmDowngrade()}
+            onCancel={cancelDowngradeConfirm}
           />
         )}
     </DashboardShell>

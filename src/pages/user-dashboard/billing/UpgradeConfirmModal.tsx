@@ -51,11 +51,16 @@ export function UpgradeConfirmModal({
       >
         <header className="bs-confirm-modal__header">
           <div>
-            <h2 id="upgrade-confirm-title">Confirm your upgrade</h2>
+            <h2 id="upgrade-confirm-title">
+              {preview && preview.currentPlanName === preview.newPlanName
+                ? 'Confirm your renewal'
+                : 'Confirm your upgrade'}
+            </h2>
             {preview && !previewLoading && (
               <p>
-                You're switching from {preview.currentPlanName} to {preview.newPlanName}.
-                This takes effect immediately.
+                {preview.currentPlanName === preview.newPlanName
+                  ? `You're renewing your ${preview.newPlanName} plan for another month. This takes effect immediately.`
+                  : `You're switching from ${preview.currentPlanName} to ${preview.newPlanName}. This takes effect immediately.`}
               </p>
             )}
           </div>

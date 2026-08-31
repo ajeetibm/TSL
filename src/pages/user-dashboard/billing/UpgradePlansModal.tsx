@@ -165,11 +165,10 @@ export function UpgradePlansModal({
                       {isCurrent && (
                         <button
                           type="button"
-                          className="bs-upm-btn bs-upm-btn--current"
-                          disabled
-                          aria-disabled="true"
+                          className="bs-upm-btn bs-upm-btn--upgrade"
+                          onClick={() => onSelectUpgrade(plan)}
                         >
-                          Current plan
+                          Upgrade
                         </button>
                       )}
                       {canUpgrade && (
