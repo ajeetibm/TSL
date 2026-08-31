@@ -1534,7 +1534,7 @@ export default function Dashboard() {
   )
   const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
-  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
+  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA } = useServiceAgreementWizard()
   const mapSlaApiFields = useCallback(
     (data: SlaWizardData) => mapSlaFields(data) as unknown as Record<string, unknown>,
     [],
