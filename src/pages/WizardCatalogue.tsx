@@ -6,13 +6,28 @@ import { WizardCard } from '../components/wizard-catalogue/WizardCard'
 import { WizardCartBar } from '../components/wizard-catalogue/WizardCartBar'
 import { WizardCatalogueHeader } from '../components/wizard-catalogue/WizardCatalogueHeader'
 import { WizardCatalogueHero } from '../components/wizard-catalogue/WizardCatalogueHero'
+import ComingSoonWizardModal from './user-dashboard/ComingSoonWizardModal'
 import { wizards } from '../data/wizards.tsx'
 import { setPageMetadata } from '../services/metadata'
 import { loadWizardQuantities, saveWizardQuantities } from '../utils/wizardCart'
 import './WizardCatalogue.css'
 
+const LIVE_BLUEPRINTS = new Set([
+  'Non-Disclosure Agreement (NDA)',
+  'Employment Offer Letter',
+  'Privacy & Cookies Policy',
+  'Founders Agreement and IP Assignment',
+  'Founders agreement and IP assignment',
+  'Service Level Agreement (SLA)',
+])
+
 export default function WizardCatalogue() {
-  const [quantities, setQuantities] = useState(() => loadWizardQuantities())
+  const [quantities, setQuantities] = useState(() => {
+    const saved = loadWizardQuantities()
+    // Strip any non-live blueprints that may have been persisted before the guard was added
+    return Object.fromEntries(Object.entries(saved).filter(([title]) => LIVE_BLUEPRINTS.has(title)))
+  })
+  const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
 
   setPageMetadata(
     'Blueprint Catalogue',
@@ -33,6 +48,10 @@ export default function WizardCatalogue() {
   }, [quantities])
 
   const incrementWizard = (title: string) => {
+    if (!LIVE_BLUEPRINTS.has(title)) {
+      setComingSoonTitle(title)
+      return
+    }
     setQuantities((current) => ({ ...current, [title]: (current[title] ?? 0) + 1 }))
   }
 
@@ -77,6 +96,12 @@ export default function WizardCatalogue() {
       <DetailFooter />
 
       <WizardCartBar selectedWizards={selectedWizards} totalItems={totalItems} onClear={() => setQuantities({})} />
+      {comingSoonTitle && (
+        <ComingSoonWizardModal
+          title={comingSoonTitle}
+          onClose={() => setComingSoonTitle(null)}
+        />
+      )}
     </div>
   )
 }

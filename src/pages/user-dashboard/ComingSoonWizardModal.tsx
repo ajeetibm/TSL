@@ -1,4 +1,5 @@
 import { Clock, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import './NdaWizardModal.css'
 import './ComingSoonWizardModal.css'
 
@@ -8,7 +9,7 @@ interface Props {
 }
 
 export default function ComingSoonWizardModal({ title, onClose }: Props) {
-  return (
+  return createPortal(
     <div className="nda-modal__backdrop" role="dialog" aria-modal="true" aria-labelledby="cs-modal-title">
       <div className="nda-modal cs-modal">
         <div className="nda-modal__header cs-modal__header">
@@ -38,6 +39,7 @@ export default function ComingSoonWizardModal({ title, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

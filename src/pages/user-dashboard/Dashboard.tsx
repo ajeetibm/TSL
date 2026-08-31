@@ -16,6 +16,7 @@ import {
   Scale,
   Shield,
   Target,
+  X,
   Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -1644,6 +1645,14 @@ export default function Dashboard() {
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number; iconName?: string } | null>(null)
+  const [pdfConfirm, setPdfConfirm] = useState<{ blueprintId: string; downloadKey: string; filename: string; credits: number; build: () => Blob | Promise<Blob> } | null>(null)
+  const pdfDownloadedKey = 'tsl-pdf-downloaded'
+  const [pdfDownloaded, setPdfDownloaded] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('tsl-pdf-downloaded')
+      return stored ? new Set(JSON.parse(stored) as string[]) : new Set()
+    } catch { return new Set() }
+  })
   const ndaToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // ── Queue state ──────────────────────────────────────────────────────────
@@ -1750,9 +1759,6 @@ export default function Dashboard() {
     } else if (title === 'Founder Agreement' || title === 'Founders Agreement and IP Assignment' || title === 'Founders agreement and IP assignment') {
       if (faState.status === 'completed') resetFA()
       startFA(); setIsFAModalOpen(true)
-    } else if (title === 'Service Agreement') {
-      if (saState.status === 'completed') resetSA()
-      startSA(); setIsSAModalOpen(true)
     } else if (title === 'Service Level Agreement (SLA)') {
       if (slaState.status === 'completed') resetSLA()
       startSLA(); setIsSLAModalOpen(true)
@@ -2011,7 +2017,32 @@ export default function Dashboard() {
     if (!alreadyCharged && response.data.unitsCharged > 0) localStorage.setItem(chargeKey, 'true')
     setSubscription((current) => current ? { ...current, usage: response.data!.usage } : current)
     triggerDownload(blob, filename)
+    // Mark the instance as PDF-downloaded so the confirm modal won't show again
+    setPdfDownloaded((prev) => {
+      const next = new Set([...prev, downloadKey])
+      localStorage.setItem(pdfDownloadedKey, JSON.stringify([...next]))
+      return next
+    })
   }
+  const PDF_CREDITS: Record<string, number> = {
+    'nda': 1,
+    'employment-offer-letter': 2,
+    'privacy-policy': 2,
+    'service-agreement': 2,
+    'service-level-agreement': 3,
+    'founders-agreement-ip': 4,
+  }
+
+  const confirmPdfDownload = (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
+    // Skip confirm if already downloaded (credit already deducted)
+    if (pdfDownloaded.has(downloadKey)) {
+      void downloadFinalBlueprint(blueprintId, downloadKey, filename, build)
+      return
+    }
+    const credits = PDF_CREDITS[blueprintId] ?? 1
+    setPdfConfirm({ blueprintId, downloadKey, filename, credits, build })
+  }
+
   const showNdaToast = (msg: string) => {
     if (ndaToastTimerRef.current) clearTimeout(ndaToastTimerRef.current)
     setNdaToast(msg)
@@ -2593,11 +2624,21 @@ export default function Dashboard() {
 
           <article className="user-dashboard__stat-card user-dashboard__stat-card--dark">
             <span className="user-dashboard__stat-icon user-dashboard__stat-icon--gold">
-              <Calendar size={18} />
+              <Calendar size={24} />
             </span>
             <div>
-              <div className="user-dashboard__stat-date">Jan 1</div>
-              <div className="user-dashboard__stat-year">2026</div>
+              {(() => {
+                const raw = subscription?.nextBillingDate
+                const date = raw ? new Date(`${raw}T00:00:00.000Z`) : null
+                const day  = date ? date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : '—'
+                const year = date ? date.getUTCFullYear() : ''
+                return (
+                  <>
+                    <div className="user-dashboard__stat-date">{day}</div>
+                    {year && <div className="user-dashboard__stat-year">{year}</div>}
+                  </>
+                )
+              })()}
               <div className="user-dashboard__stat-billing">Next Billing</div>
               <div className="user-dashboard__stat-plan">{subscription?.planName ?? capitalizePlan(user?.plan)} Plan</div>
             </div>
@@ -2873,18 +2914,20 @@ export default function Dashboard() {
               {completedInstances.map((instance) => {
                 const { id, wizardType, completedAt, data } = instance
                 const displayDate = completedAt ? formatDate(completedAt) : 'Just now'
+                const isPdfDownloaded = pdfDownloaded.has(id)
 
                 if (wizardType === 'Non-Disclosure Agreement (NDA)') {
                   const ndaData = data as import('./NdaWizardModal').NdaWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Non-Disclosure Agreement (NDA)</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.pdf', () => buildNdaPdf(ndaData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('nda', id, 'NDA-Document.pdf', () => buildNdaPdf(ndaData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.docx', () => buildNdaDocx(ndaData, completedAt))}>
@@ -2902,13 +2945,14 @@ export default function Dashboard() {
                   const empData = data as import('./EmploymentWizardModal').EmploymentWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Employment Offer Letter</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empData, completedAt))}>
@@ -2926,13 +2970,14 @@ export default function Dashboard() {
                   const ppData = data as import('./PrivacyPolicyWizardModal').PrivacyPolicyWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Privacy Policy (POPIA Compliant)</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', id, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('privacy-policy', id, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', id, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppData, completedAt))}>
@@ -2950,13 +2995,14 @@ export default function Dashboard() {
                   const faData = data as import('./FounderAgreementWizardModal').FounderAgreementWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Founders agreement and IP assignment</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('founders-agreement-ip', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('founders-agreement-ip', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('founders-agreement-ip', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
@@ -2974,13 +3020,14 @@ export default function Dashboard() {
                   const saData = data as import('./ServiceAgreementWizardModal').ServiceAgreementWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Service Agreement</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', id, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('service-agreement', id, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', id, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saData, completedAt))}>
@@ -2998,13 +3045,14 @@ export default function Dashboard() {
                   const slaData = data as SlaWizardData
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
-                      <span className="user-dashboard__completed-icon"><CircleCheckBig size={28} /></span>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
                         <h3>Service Level Agreement (SLA)</h3>
                         <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => void downloadFinalBlueprint('service-level-agreement', id, 'Service-Level-Agreement.pdf', () => buildSlaPdf(slaData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('service-level-agreement', id, 'Service-Level-Agreement.pdf', () => buildSlaPdf(slaData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
                         <button type="button" onClick={() => void downloadFinalBlueprint('service-level-agreement', id, 'Service-Level-Agreement.docx', () => buildSlaDocx(slaData, completedAt))}>
@@ -3054,6 +3102,48 @@ export default function Dashboard() {
           onClose={() => setInsufficientUnits(null)}
           onUpgrade={() => { setInsufficientUnits(null); void openBillingUpgradePlans() }}
         />
+      )}
+
+      {pdfConfirm && (
+        <div className="pdf-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="pdf-confirm-title">
+          <div className="pdf-confirm-modal">
+            <button
+              type="button"
+              className="pdf-confirm-modal__close"
+              aria-label="Cancel"
+              onClick={() => setPdfConfirm(null)}
+            >
+              <X size={18} />
+            </button>
+            <div className="pdf-confirm-modal__icon">
+              <Download size={24} />
+            </div>
+            <h2 id="pdf-confirm-title" className="pdf-confirm-modal__title">Download PDF</h2>
+            <p className="pdf-confirm-modal__body">
+              Downloading this PDF will deduct <strong>{pdfConfirm.credits} credit{pdfConfirm.credits !== 1 ? 's' : ''}</strong> from your account balance.
+            </p>
+            <div className="pdf-confirm-modal__actions">
+              <button
+                type="button"
+                className="pdf-confirm-modal__proceed"
+                onClick={() => {
+                  const { blueprintId, downloadKey, filename, build } = pdfConfirm
+                  setPdfConfirm(null)
+                  void downloadFinalBlueprint(blueprintId, downloadKey, filename, build)
+                }}
+              >
+                Proceed
+              </button>
+              <button
+                type="button"
+                className="pdf-confirm-modal__cancel"
+                onClick={() => setPdfConfirm(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {isNdaModalOpen && (

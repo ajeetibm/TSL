@@ -9,7 +9,6 @@ import {
   Lock,
   CircleAlert,
   CircleCheck,
-  CircleDot,
   CircleX,
   Clock3,
   Eye,
