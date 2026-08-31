@@ -329,7 +329,10 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
     if (!data.breachNoticeHours.trim()) e['breachNoticeHours'] = 'This field is required.'
   }
   if (key === 'credits') {
-    if (data.creditTiers.length === 0) e['creditTiers'] = 'Add at least one credit tier.'
+    const hasCompleteTier = data.creditTiers.some((tier) => tier.uptimeBelow.trim() !== '' && tier.creditPct.trim() !== '')
+    const hasIncompleteTier = data.creditTiers.some((tier) => tier.uptimeBelow.trim() === '' || tier.creditPct.trim() === '')
+    if (!hasCompleteTier) e['creditTiers'] = 'Add at least one complete credit tier.'
+    else if (hasIncompleteTier) e['creditTiers'] = 'Complete or remove each credit tier.'
     if (!data.creditCapPct.trim()) e['creditCapPct'] = 'This field is required.'
     if (!data.creditClaimDays.trim()) e['creditClaimDays'] = 'This field is required.'
   }
@@ -523,7 +526,10 @@ export default function SlaWizardModal({
   /* gates */
   const uptimeHigh = parseFloat(data.uptimeTarget) > 99.9
   const creditsEnabled = data.modules.includes('Service credits')
-  const noCreditTier = creditsEnabled && data.creditTiers.length === 0
+  const hasCompleteCreditTier = data.creditTiers.some((tier) => tier.uptimeBelow.trim() !== '' && tier.creditPct.trim() !== '')
+  const hasIncompleteCreditTier = data.creditTiers.some((tier) => tier.uptimeBelow.trim() === '' || tier.creditPct.trim() === '')
+  const noCreditTier = creditsEnabled && !hasCompleteCreditTier
+  const invalidCreditTier = creditsEnabled && hasIncompleteCreditTier
 
   return (
     <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : () => onClose(screens.indexOf(currentKey) + 1, data)}>
@@ -967,10 +973,12 @@ export default function SlaWizardModal({
                   <h3 className="nda-modal__party-title">Service credits</h3>
                   <p className="nda-modal__field-hint" style={{ marginBottom: 16 }}>The remedy for missing the commitments above.</p>
 
-                  {noCreditTier && (
+                  {(noCreditTier || invalidCreditTier) && (
                     <GateBanner type="block">
-                      <strong>No credit tier captured</strong>
-                      Service credits are enabled but no credit tier has been added. Add at least one tier before this Blueprint can generate.
+                      <strong>{noCreditTier ? 'No complete credit tier captured' : 'Complete every credit tier'}</strong>
+                      {noCreditTier
+                        ? 'Service credits are enabled but no complete credit tier has been added. Add an uptime threshold and credit percentage before this Blueprint can generate.'
+                        : 'Every added credit tier needs both an uptime threshold and credit percentage before this Blueprint can generate.'}
                     </GateBanner>
                   )}
 
@@ -1210,8 +1218,8 @@ export default function SlaWizardModal({
 
             {isPreview ? (
               <button type="button" className="nda-modal__btn nda-modal__btn--generate"
-                onClick={handleGenerate} disabled={!isComplete || noCreditTier}
-                title={!isComplete ? 'Please complete all required fields' : noCreditTier ? 'Add at least one credit tier' : undefined}>
+                onClick={handleGenerate} disabled={!isComplete || noCreditTier || invalidCreditTier}
+                title={!isComplete ? 'Please complete all required fields' : noCreditTier ? 'Add at least one complete credit tier' : invalidCreditTier ? 'Complete or remove each credit tier' : undefined}>
                 <Check size={15} /> Generate SLA
               </button>
             ) : currentKey === 'legal' ? (
@@ -1220,7 +1228,7 @@ export default function SlaWizardModal({
               </button>
             ) : (
               <button type="button" className="nda-modal__btn nda-modal__btn--primary"
-                onClick={next} disabled={currentKey === 'credits' && noCreditTier}>
+                onClick={next} disabled={currentKey === 'credits' && (noCreditTier || invalidCreditTier)}>
                 Next Step <ArrowRight size={15} />
               </button>
             )}
