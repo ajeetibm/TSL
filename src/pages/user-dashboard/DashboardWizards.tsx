@@ -21,9 +21,18 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { setPageMetadata } from '../../services/metadata'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
 import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
+import ComingSoonWizardModal from './ComingSoonWizardModal'
 import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import './Dashboard.css'
 import './DashboardWizards.css'
+
+const LIVE_BLUEPRINTS = new Set([
+  'Non-Disclosure Agreement (NDA)',
+  'Employment Offer Letter',
+  'Privacy & Cookies Policy',
+  'Founders Agreement and IP Assignment',
+  'Service Level Agreement (SLA)',
+])
 
 const wizardCards = [
   {
@@ -156,7 +165,9 @@ export default function DashboardWizards() {
    const [quantities, setQuantities] = useState<Record<string, number>>(() => {
      try {
        const stored = localStorage.getItem('tsl-blueprint-quantities')
-       return stored ? JSON.parse(stored) : Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
+       const parsed: Record<string, number> = stored ? JSON.parse(stored) : Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
+       // Strip any non-live blueprints persisted before the guard was added
+       return Object.fromEntries(Object.entries(parsed).filter(([title]) => LIVE_BLUEPRINTS.has(title)))
      } catch {
        return Object.fromEntries(wizardCards.map((wizard) => [wizard.title, 0]))
      }
@@ -169,6 +180,7 @@ export default function DashboardWizards() {
   const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
   const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
   const [insufficientUnits, setInsufficientUnits] = useState<{ title: string; required: number; iconName: string } | null>(null)
+  const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [isUpgradeJourney, setIsUpgradeJourney] = useState(false)
   useEffect(() => {
     paymentApi.wizardAccess().then((res) => {
@@ -205,6 +217,11 @@ export default function DashboardWizards() {
   }
 
   const selectBlueprint = (title: string, nextQuantity: number) => {
+    // Show Coming Soon modal for blueprints not yet live
+    if (!LIVE_BLUEPRINTS.has(title)) {
+      setComingSoonTitle(title)
+      return
+    }
     const currentQuantity = quantities[title] ?? 0
     // Users without a subscription have 0 blueprint units but must be allowed
     // to select wizards so they can proceed through the payment/upgrade flow.
@@ -417,6 +434,12 @@ export default function DashboardWizards() {
           </section>
         )}
       </div>
+        {comingSoonTitle && (
+          <ComingSoonWizardModal
+            title={comingSoonTitle}
+            onClose={() => setComingSoonTitle(null)}
+          />
+        )}
         {insufficientUnits && (
           <InsufficientBlueprintUnitsModal
             blueprintName={insufficientUnits.title}
