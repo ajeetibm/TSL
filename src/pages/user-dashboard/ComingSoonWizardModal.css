@@ -1,3 +1,7 @@
+.cs-modal {
+  max-width: 520px !important;
+}
+
 .cs-modal__header {
   padding-bottom: 28px;
 }
@@ -7,8 +11,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 48px 40px 52px;
+  gap: 12px;
+  padding: 28px 32px 32px;
   text-align: center;
   background: #ffffff;
 }

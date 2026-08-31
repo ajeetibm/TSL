@@ -1743,9 +1743,6 @@ export default function Dashboard() {
     } else if (title === 'Founder Agreement' || title === 'Founders Agreement and IP Assignment' || title === 'Founders agreement and IP assignment') {
       if (faState.status === 'completed') resetFA()
       startFA(); setIsFAModalOpen(true)
-    } else if (title === 'Service Agreement') {
-      if (saState.status === 'completed') resetSA()
-      startSA(); setIsSAModalOpen(true)
     } else if (title === 'Service Level Agreement (SLA)') {
       if (slaState.status === 'completed') resetSLA()
       startSLA(); setIsSLAModalOpen(true)
