@@ -441,22 +441,35 @@ export function ContactSection() {
                 type="submit"
                 disabled={sendDisabled}
                 aria-disabled={sendDisabled}
-                className={`mt-10 inline-flex min-h-[60px] w-full items-center justify-center rounded-full px-6 font-sans text-[15px] font-semibold shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition ${
+                className={`mt-10 inline-flex min-h-[60px] w-full items-center justify-center gap-2 rounded-full px-6 font-sans text-[15px] font-semibold shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition ${
                   sendDisabled
-                    ? 'cursor-not-allowed bg-gold/50 text-white/60'
-                    : 'bg-gold text-white hover:-translate-y-1 hover:bg-gold-light hover:text-navy-primary'
+                    ? 'cursor-not-allowed bg-gold/50 text-[#0D1B2A]/60'
+                    : 'bg-gold text-[#0D1B2A] hover:-translate-y-1 hover:bg-gold-light'
                 }`}
               >
                 {submitting ? (
                   <>
                     <span
                       aria-hidden="true"
-                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-[#0D1B2A]/30 border-t-[#0D1B2A]"
                     />
                     Sending...
                   </>
                 ) : (
-                  'Send Message'
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <g clipPath="url(#clip0_308_17285)">
+                        <path d="M9.69314 14.4577C9.71847 14.5208 9.7625 14.5747 9.81932 14.6121C9.87615 14.6494 9.94304 14.6685 10.011 14.6668C10.079 14.665 10.1449 14.6426 10.1997 14.6023C10.2545 14.5621 10.2957 14.506 10.3178 14.4417L14.6511 1.77503C14.6725 1.71596 14.6765 1.65203 14.6629 1.59073C14.6492 1.52943 14.6184 1.47329 14.574 1.42888C14.5295 1.38447 14.4734 1.35363 14.4121 1.33996C14.3508 1.32629 14.2869 1.33036 14.2278 1.3517L1.56114 5.68503C1.49681 5.70709 1.44076 5.74831 1.40052 5.80314C1.36029 5.85798 1.33779 5.92381 1.33605 5.9918C1.33431 6.05979 1.3534 6.12669 1.39078 6.18351C1.42816 6.24034 1.48202 6.28437 1.54514 6.3097L6.83181 8.4297C6.99893 8.49661 7.15078 8.59667 7.27819 8.72385C7.40559 8.85103 7.50593 9.00269 7.57314 9.1697L9.69314 14.4577Z" stroke="#0D1B2A" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14.5668 1.43164L7.27344 8.72431" stroke="#0D1B2A" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+                      </g>
+                      <defs>
+                        <clipPath id="clip0_308_17285">
+                          <rect width="16" height="16" fill="white"/>
+                        </clipPath>
+                      </defs>
+                    </svg>
+                    Send Message
+                  </>
                 )}
               </button>
 

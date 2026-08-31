@@ -591,11 +591,20 @@
 }
 
 .counsel-cta {
-  border-radius: 20px;
+  width: 100%;
+  max-width: 1316px;
+  height: 336px;
+  margin: 0 auto;
+  border-radius: 16px;
   padding: 80px 24px;
   text-align: center;
   color: #ffffff;
   background: linear-gradient(180deg, #081728 0%, #0b1f35 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 .counsel-cta h2 {
