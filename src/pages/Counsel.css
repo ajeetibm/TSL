@@ -471,6 +471,10 @@
   place-items: center !important;
 }
 
+.counsel-detail-card__example strong {
+  font-weight: 600;
+}
+
 .counsel-detail-card__example {
   display: block;
   padding: 12px 12px;
