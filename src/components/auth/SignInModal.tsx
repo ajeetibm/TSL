@@ -35,12 +35,12 @@ function getAuthenticatedRoute(user?: AuthenticatedRouteUser & { mustResetPasswo
 
 // ─── Validation helpers ───────────────────────────────────────────────────────
 
-const FULL_NAME_RE = /^[a-zA-Z\s]+$/
+const FULL_NAME_RE = /^[a-zA-Z0-9\s]+$/
 
 function validateFullName(v: string): string {
   const trimmed = v.trim()
   if (!trimmed) return 'Full name is required.'
-  if (!FULL_NAME_RE.test(trimmed)) return 'Only letters and spaces are allowed.'
+  if (!FULL_NAME_RE.test(trimmed)) return 'Only letters, numbers and spaces are allowed.'
   if (trimmed.length < 2) return 'Full name must be at least 2 characters.'
   return ''
 }
@@ -82,9 +82,9 @@ function getPasswordStrength(rules: PasswordRules): StrengthLevel {
 }
 
 function validatePassword(v: string): string {
-  if (!v || !v.trim()) return 'Password is required.'
-  if (/\s/.test(v)) return 'Password cannot contain spaces.'
-  const rules = getPasswordRules(v)
+  const trimmed = v.trim()
+  if (!trimmed) return 'Password is required.'
+  const rules = getPasswordRules(trimmed)
   if (!rules.minLength) return 'Password must be at least 8 characters.'
   if (!rules.hasUpper) return 'Add at least one uppercase letter.'
   if (!rules.hasLower) return 'Add at least one lowercase letter.'
@@ -94,8 +94,10 @@ function validatePassword(v: string): string {
 }
 
 function validateConfirmPassword(password: string, confirm: string): string {
-  if (!confirm || !confirm.trim()) return 'Please confirm your password.'
-  if (password !== confirm) return 'Passwords do not match.'
+  const trimmedPassword = password.trim()
+  const trimmedConfirm = confirm.trim()
+  if (!trimmedConfirm) return 'Please confirm your password.'
+  if (trimmedPassword !== trimmedConfirm) return 'Passwords do not match.'
   return ''
 }
 
