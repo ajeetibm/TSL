@@ -140,9 +140,10 @@ interface PlanCardProps {
   planName: string
   benefits: string[]
   variant: 'landing' | 'paid'
+  isFree?: boolean
 }
 
-function PlanCard({ planName, benefits, variant }: PlanCardProps) {
+function PlanCard({ planName, benefits, variant, isFree }: PlanCardProps) {
   const [showAll, setShowAll] = useState(false)
   const hasMore = benefits.length > PREVIEW_COUNT
   const visible = showAll ? benefits : benefits.slice(0, PREVIEW_COUNT)
@@ -152,28 +153,37 @@ function PlanCard({ planName, benefits, variant }: PlanCardProps) {
       <h3>
         Your <span>{planName} Plan</span> Includes:
       </h3>
-      <ul>
-        {visible.map((benefit) => (
-          <li key={benefit}>
-            <CheckCircle2 size={18} />
-            {benefit}
-          </li>
-        ))}
-      </ul>
 
-      {hasMore && (
-        <button
-          type="button"
-          className="user-dashboard__plan-card-toggle"
-          onClick={() => setShowAll((s) => !s)}
-          aria-expanded={showAll}
-        >
-          {showAll ? 'Show Less' : 'View All Features'}
-          <ChevronDown
-            size={13}
-            className={`user-dashboard__plan-card-chevron${showAll ? ' user-dashboard__plan-card-chevron--open' : ''}`}
-          />
-        </button>
+      {isFree ? (
+        <p className="user-dashboard__plan-card-free-text">
+          Get started with the basics — upgrade anytime to unlock more.
+        </p>
+      ) : (
+        <>
+          <ul>
+            {visible.map((benefit) => (
+              <li key={benefit}>
+                <CheckCircle2 size={18} />
+                {benefit}
+              </li>
+            ))}
+          </ul>
+
+          {hasMore && (
+            <button
+              type="button"
+              className="user-dashboard__plan-card-toggle"
+              onClick={() => setShowAll((s) => !s)}
+              aria-expanded={showAll}
+            >
+              {showAll ? 'Show Less' : 'View All Features'}
+              <ChevronDown
+                size={13}
+                className={`user-dashboard__plan-card-chevron${showAll ? ' user-dashboard__plan-card-chevron--open' : ''}`}
+              />
+            </button>
+          )}
+        </>
       )}
     </div>
   )
@@ -247,7 +257,7 @@ const newWizards = [
   {
     id: 5,
     title: 'Service Level Agreement (SLA)',
-    note: 'Formalise uptime and support commitments',
+    note: 'Multiple client contracts needed',
     wizards: 1,
     paidItems: 'Item',
     landingItems: 'Items',
@@ -2144,6 +2154,9 @@ export default function Dashboard() {
   const paidRunsTotal = subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
   const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
+  const isFreePlan = (subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'
+  const isPaidPlan = Boolean(wizardAccess?.hasSubscription) && !isFreePlan
+
   if (!isPaidDashboard) {
     return (
       <DashboardShell activeSection="Dashboard">
@@ -2151,19 +2164,24 @@ export default function Dashboard() {
           <div>
             <h2>Welcome to The Startup Legal! 🎉</h2>
             <p>
-              You're all set up with your{' '}
-              <strong>
-                {isInitialSubscriptionDashboard
-                  ? `${wizardAccess?.plan ?? ''} Plan`
-                  : wizardAccess?.hasSubscription
-                    ? `${wizardAccess.plan ?? ''} Plan`
-                    : 'no active subscription'}
-              </strong>.{' '}
-              {isInitialSubscriptionDashboard
-                ? "Let's get your first legal document created."
-                : wizardAccess?.hasSubscription
-                  ? 'Select your wizards to start creating documents.'
-                  : 'Choose a plan and select your wizards to start creating documents.'}
+              {isPaidPlan ? (
+                <>
+                  You're all set up with your{' '}
+                  <strong>{`${wizardAccess?.plan ?? ''} Plan`}</strong>. Let's get your first legal document created.
+                </>
+              ) : (
+                <>
+                  You're all set up with your{' '}
+                  <strong>
+                    {wizardAccess?.hasSubscription
+                      ? `${wizardAccess.plan ?? ''} Plan`
+                      : 'no active subscription'}
+                  </strong>.{' '}
+                  {wizardAccess?.hasSubscription
+                    ? 'Select your wizards to start creating documents.'
+                    : 'Choose a plan and select your wizards to start creating documents.'}
+                </>
+              )}
             </p>
             <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
               Browse Blueprints
@@ -2175,6 +2193,7 @@ export default function Dashboard() {
             planName={subscription?.planName ?? capitalizePlan(user?.plan)}
             benefits={subscription ? buildPlanBenefits(subscription, currentPlan) : []}
             variant="landing"
+            isFree={(subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'}
           />
         </header>
 
@@ -2264,7 +2283,10 @@ export default function Dashboard() {
               <div className="user-dashboard__landing-wizard-list">
                 {newWizards.map((wizard) => {
                   const w = wizard as typeof newWizards[0]
-                  const selectedQty = w.wizards
+                  const hasAccess = wizardAccessConfirmed && wizardAccess?.hasSubscription
+                  const selectedQty = hasAccess
+                    ? (wizardAccess?.selectedWizards ?? []).filter((sw) => sw.title === wizard.title).length
+                    : 0
                   const unitCost = w.unitCost ?? 1
                   const costLabel = `${unitCost} ${unitCost === 1 ? 'Credit' : 'Credits'} each`
                   return (
@@ -2512,6 +2534,7 @@ export default function Dashboard() {
           planName={subscription?.planName ?? capitalizePlan(user?.plan)}
           benefits={subscription ? buildPlanBenefits(subscription, currentPlan) : []}
           variant="paid"
+          isFree={(subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'}
         />
       </header>
 

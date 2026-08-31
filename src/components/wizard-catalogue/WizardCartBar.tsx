@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import './WizardCartBar.css'
 
@@ -36,7 +37,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
     window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/dashboard/wizard-details' } }))
   }
 
-  return (
+  return createPortal(
     <div className="wizard-cart-bar">
       <div className="wizard-cart-bar__content">
         <div className="wizard-cart-bar__summary">
@@ -75,6 +76,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

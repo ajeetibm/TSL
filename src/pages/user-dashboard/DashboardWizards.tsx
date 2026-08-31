@@ -258,7 +258,7 @@ export default function DashboardWizards() {
           </span>
           <div>
             <h1>Browse All Blueprints</h1>
-            <p>Choose a Blueprint to prepare your legal document</p>
+            <p>Select a legal blueprint to generate your document</p>
           </div>
 
           {wizardAccess?.hasSubscription && remainingBlueprintUnits !== null && (

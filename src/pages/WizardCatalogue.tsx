@@ -57,7 +57,6 @@ export default function WizardCatalogue() {
 
       <section className="wizard-catalogue-page__body">
         <WizardCatalogueHeader totalItems={totalItems} selectedWizardCount={selectedWizards.length} />
-        <WizardCartBar selectedWizards={selectedWizards} totalItems={totalItems} onClear={() => setQuantities({})} />
 
         <div className="wizard-catalogue-page__grid">
           {wizards.map((wizard) => (
@@ -76,6 +75,8 @@ export default function WizardCatalogue() {
 
       <DetailContactSection />
       <DetailFooter />
+
+      <WizardCartBar selectedWizards={selectedWizards} totalItems={totalItems} onClear={() => setQuantities({})} />
     </div>
   )
 }
