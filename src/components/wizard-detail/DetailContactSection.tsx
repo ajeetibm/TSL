@@ -1,4 +1,4 @@
-import { Clock3, Mail, MapPin, Phone, Send, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, Clock3, Mail, MapPin, Phone, type LucideIcon } from 'lucide-react'
 import './DetailContactSection.css'
 
 const contactCards: Array<[string, string, LucideIcon]> = [
@@ -68,7 +68,7 @@ export function DetailContactSection() {
                 directly.
               </p>
               <strong>
-                <Send size={14} />
+                <CheckCircle2 size={16} fill="currentColor" strokeWidth={0} />
                 Available Now
               </strong>
             </article>
