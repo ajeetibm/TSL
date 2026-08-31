@@ -24,6 +24,18 @@ export default function ResetSuccess() {
   const loginPath  = LOGIN_PATHS[role]  ?? '/'
   const loginLabel = LOGIN_LABELS[role] ?? 'Back to Login'
 
+  const handleBackToLogin = () => {
+    if (!role || role === 'user') {
+      // Navigate home then open the sign-in modal
+      navigate('/')
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin' } }))
+      }, 100)
+      return
+    }
+    navigate(loginPath)
+  }
+
   return (
     <main className="auth-page">
       <section className="auth-page__panel">
@@ -56,7 +68,7 @@ export default function ResetSuccess() {
           <button
             type="button"
             className="auth-page__btn--primary"
-            onClick={() => navigate(loginPath)}
+            onClick={handleBackToLogin}
           >
             {loginLabel}
           </button>
