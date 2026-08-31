@@ -1055,6 +1055,17 @@
   background: #ffffff;
 }
 
+.user-dashboard__completed-icon--downloaded {
+  background: #16a34a !important;
+}
+
+.user-dashboard__downloaded-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #16a34a;
+  margin: 2px 0 0;
+}
+
 .user-dashboard__completed-icon {
   width: 48px;
   height: 48px;
@@ -1230,4 +1241,119 @@
   .user-dashboard__new-wizard-button {
     width: 100%;
   }
+}
+
+/* ── PDF Credit Confirmation Modal ──────────────────────────────────────── */
+.pdf-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 1rem;
+}
+
+.pdf-confirm-modal {
+  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 36px 32px 28px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+}
+
+.pdf-confirm-modal__close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pdf-confirm-modal__close:hover {
+  background: #e5e7eb;
+}
+
+.pdf-confirm-modal__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  background: rgba(199, 154, 59, 0.12);
+  color: #c79a3b;
+  margin: 0 auto 16px;
+}
+
+.pdf-confirm-modal__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0d1b2a;
+  margin: 0 0 10px;
+}
+
+.pdf-confirm-modal__body {
+  font-size: 0.9rem;
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}
+
+.pdf-confirm-modal__body strong {
+  color: #0d1b2a;
+}
+
+.pdf-confirm-modal__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.pdf-confirm-modal__proceed {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  border: none;
+  background: #c79a3b;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pdf-confirm-modal__proceed:hover {
+  background: #b8892e;
+}
+
+.pdf-confirm-modal__cancel {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1.5px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pdf-confirm-modal__cancel:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
 }

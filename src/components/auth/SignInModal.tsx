@@ -1,5 +1,5 @@
 import { Eye, EyeOff, Mail, User, X } from 'lucide-react'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
@@ -201,6 +201,8 @@ function SignInModalContent({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState('')
+  const [countdown, setCountdown] = useState(0)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [acceptedPolicy, setAcceptedPolicy] = useState(false)
 
   const [formData, setFormData] = useState({
@@ -223,6 +225,22 @@ function SignInModalContent({
     password: false,
     confirmPassword: false,
   })
+
+  // ─── Countdown timer for rate-limit errors ───────────────────────────────
+  useEffect(() => {
+    if (countdown <= 0) return
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current!)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => { if (countdownRef.current) clearInterval(countdownRef.current) }
+  }, [countdown])
 
   // ─── Field change handlers with real-time validation ─────────────────────
 
@@ -348,6 +366,9 @@ function SignInModalContent({
         // Replace backend rate-limit window with a friendlier 30-second message
         errMsg = errMsg.replace(/please try again in 15 minutes/i, 'Please try again in 30 seconds')
         setFormError(errMsg)
+        if (/too many requests/i.test(errMsg)) {
+          setCountdown(30)
+        }
         return
       }
 
@@ -656,6 +677,9 @@ function SignInModalContent({
             {formError && (
               <p className="signin-modal__error" role="alert">
                 {formError}
+                {countdown > 0 && (
+                  <span className="signin-modal__countdown"> ({countdown}s)</span>
+                )}
               </p>
             )}
 

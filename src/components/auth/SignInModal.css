@@ -246,6 +246,11 @@
   line-height: 1.35;
 }
 
+.signin-modal__countdown {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .signin-modal__divider {
   position: relative;
   height: 1.25rem;
