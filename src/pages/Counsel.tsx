@@ -22,7 +22,6 @@ import {
   Timer,
   UserCheck,
 } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { ContactSection } from '../components/home/ContactSection'
 import { defaultViewport, revealUp, staggerContainer } from '../hooks/useScrollReveal'
 import { setPageMetadata } from '../services/metadata'
@@ -456,10 +455,10 @@ export default function Counsel() {
               We&apos;re building attorney support into The StartUp Legal platform. Join our
               early access list to be notified when Counsel becomes available.
             </p>
-            <Link to="/contact" className="counsel-cta__button">
+            <button type="button" className="counsel-cta__button">
               Join Early Access List
               <ArrowRight size={18} strokeWidth={2.2} />
-            </Link>
+            </button>
             <p className="counsel-cta__note">No obligation • Be the first to know when Counsel launches</p>
           </div>
         </div>
