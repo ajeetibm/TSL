@@ -116,7 +116,7 @@ export function WhyChooseTSLSection() {
 
           <a
             href="#pricing"
-            className="inline-flex h-[56px] min-w-[240px] items-center justify-center gap-3 rounded-full bg-[#C79A3B] px-10 font-sans text-[15px] font-semibold leading-none text-black shadow-none transition hover:-translate-y-1"
+            className="inline-flex h-[56px] min-w-[240px] items-center justify-center gap-3 rounded-full bg-[#C79A3B] px-10 font-sans text-[15px] font-semibold leading-none text-white shadow-none transition hover:-translate-y-1"
           >
             View Pricing Options
             <ArrowRight size={18} strokeWidth={2.2} />

@@ -287,7 +287,7 @@ export default function Counsel() {
       >
         <div className="counsel-shell">
           <motion.div className="counsel-section__eyebrowWrap" variants={revealUp}>
-            <span className="counsel-pill counsel-pill--light">
+            <span className="counsel-pill counsel-pill--light counsel-pill--when-involved">
               <Target size={14} strokeWidth={2.1} />
               When Counsel Is Involved
             </span>
