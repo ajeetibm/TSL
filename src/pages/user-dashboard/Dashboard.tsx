@@ -96,34 +96,35 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
-      '4 Credits per month',
+      '4 Blueprint run units per month',
       '0 Counsel credits per month',
-      'Credit top-ups at R250 per Credit',
-      'Standard support (48-72h response)',
-      '1GB document storage',
-      'PDF export',
+      'Basic email support',
+      '6 months document storage',
+      'No API access',
+      'No white-label',
     ]
   }
 
   if (id === 'operator') {
     return [
-      '12 Credits per month',
+      '12 Blueprint run units per month',
       '2 Counsel credits per month',
-      'Credit top-ups at R250 per Credit',
-      'Priority support (24-48h response)',
+      'Priority support (24–48 hr)',
       'Unlimited document storage',
-      'API access for integrations',
+      'API access',
+      'No white-label',
     ]
   }
 
   if (id === 'boardroom') {
     return [
-      '30 Credits per month',
+      '30 Blueprint run units per month',
       '6 Counsel credits per month',
-      'Credit top-ups at R250 per Credit',
       'Dedicated support (SLA)',
       'Unlimited document storage',
-      'API access + white-label options',
+      'API access',
+      'White-label options',
+      'Custom workflows',
     ]
   }
 
