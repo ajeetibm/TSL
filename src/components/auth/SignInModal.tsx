@@ -230,7 +230,11 @@ function SignInModalContent({
 
   // ─── Countdown timer for rate-limit errors ───────────────────────────────
   useEffect(() => {
-    if (countdown <= 0) return
+    if (countdown <= 0) {
+      // Clear the rate-limit error message once the countdown expires
+      setFormError((prev) => (/too many requests/i.test(prev) ? '' : prev))
+      return
+    }
     if (countdownRef.current) clearInterval(countdownRef.current)
     countdownRef.current = setInterval(() => {
       setCountdown((prev) => {
@@ -365,12 +369,12 @@ function SignInModalContent({
         let errMsg = response.messages?.[0] ?? response.message ?? 'Unable to authenticate. Please try again.'
         // Rate-limit errors only apply to login — never block account creation
         if (mode === 'signup' && /too many requests/i.test(errMsg)) return
-        // Replace backend rate-limit window with a friendlier 30-second message
-        errMsg = errMsg.replace(/please try again in 15 minutes/i, 'Please try again in 30 seconds')
-        setFormError(errMsg)
+        // Normalise any server-side rate-limit window to 30 seconds
         if (/too many requests/i.test(errMsg)) {
+          errMsg = 'Too many requests. Please try again in 30 seconds.'
           setCountdown(30)
         }
+        setFormError(errMsg)
         return
       }
 
@@ -688,9 +692,13 @@ function SignInModalContent({
             <button
               type="submit"
               className="signin-modal__primary"
-              disabled={isSubmitting || (mode === 'signup' && !acceptedPolicy)}
+              disabled={isSubmitting || countdown > 0 || (mode === 'signup' && !acceptedPolicy)}
             >
-              {isSubmitting ? 'Please wait...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+              {isSubmitting
+                ? 'Please wait...'
+                : countdown > 0
+                  ? `Try again in ${countdown}s`
+                  : mode === 'signin' ? 'Sign In' : 'Create Account'}
             </button>
 
             <div className="signin-modal__divider">
