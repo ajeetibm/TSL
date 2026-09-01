@@ -151,7 +151,11 @@
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #c10007;
+  color: #dc2626;
+  background: rgba(254, 226, 226, 0.7);
+  border: 1px solid rgba(220, 38, 38, 0.45);
+  border-radius: 10px;
+  padding: 0.6rem 0.875rem;
 }
 
 /* ── Password rules checklist ── */
