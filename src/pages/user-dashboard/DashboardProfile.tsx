@@ -9,6 +9,7 @@ import type { ActiveSession } from '../../services/tslApi'
 import { setPageMetadata } from '../../services/metadata'
 import { useUserProfile } from '../../context/UserProfileContext'
 import type { UserProfile } from '../../context/UserProfileContext'
+import { useBillingSubscription } from '../../hooks/useBillingSubscription'
 import './Dashboard.css'
 import './DashboardProfile.css'
 
@@ -32,6 +33,8 @@ function isValidSaId(idNumber: string) {
 export default function DashboardProfile() {
   const navigate = useNavigate()
   const { profile, updateProfile } = useUserProfile()
+  const { subscription } = useBillingSubscription()
+  const planName = subscription?.planName ?? 'Free'
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
   const [formData, setFormData] = useState<UserProfile>(profile)
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null)
@@ -41,6 +44,7 @@ export default function DashboardProfile() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [legalNameError, setLegalNameError] = useState<string | null>(null)
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -183,7 +187,25 @@ export default function DashboardProfile() {
     prefMsgTimerRef.current = setTimeout(() => setPrefMessage(null), 4000)
   }
 
+  const LEGAL_NAME_MAX = 40
+  // Must contain at least one letter or digit (not special-chars-only).
+  const LEGAL_NAME_VALID = /[a-zA-Z0-9]/
+
   const handleInputChange = (field: keyof UserProfile, value: string) => {
+    if (field === 'legalName') {
+      const trimmed = value.slice(0, LEGAL_NAME_MAX)
+      if (trimmed.length > 0 && !LEGAL_NAME_VALID.test(trimmed)) {
+        setLegalNameError('Legal name must contain at least one letter or number — special characters alone are not allowed.')
+      } else if (trimmed.length >= LEGAL_NAME_MAX) {
+        setLegalNameError(`Legal name cannot exceed ${LEGAL_NAME_MAX} characters.`)
+      } else {
+        setLegalNameError(null)
+      }
+      setFormData((prev) => ({ ...prev, legalName: trimmed }))
+      setSaveError(null)
+      setSaveMessage(null)
+      return
+    }
     setFormData((prev) => ({ ...prev, [field]: value }))
     setSaveError(null)
     setSaveMessage(null)
@@ -247,6 +269,16 @@ export default function DashboardProfile() {
     if (formData.entityType === 'Individual' && formData.idNumber && !isValidSaId(formData.idNumber)) {
       setSaveError('Enter a valid 13-digit South African ID number.')
       return
+    }
+    if (formData.entityType !== 'Individual' && formData.legalName) {
+      if (!LEGAL_NAME_VALID.test(formData.legalName)) {
+        setLegalNameError('Legal name must contain at least one letter or number — special characters alone are not allowed.')
+        return
+      }
+      if (formData.legalName.length > LEGAL_NAME_MAX) {
+        setLegalNameError(`Legal name cannot exceed ${LEGAL_NAME_MAX} characters.`)
+        return
+      }
     }
     if (formData.country === 'South Africa' && formData.postalCode && !/^\d{4}$/.test(formData.postalCode)) {
       setSaveError('A South African postal code must contain 4 digits.')
@@ -368,7 +400,7 @@ export default function DashboardProfile() {
                   <h2>{formData.legalName || formData.individualFullNames || formData.companyName || 'Your Company'}</h2>
                   <p>Company Snapshot — confirm legal data before using it in a Blueprint.</p>
                   <div>
-                    <span>Operator Plan1</span>
+                    <span>{planName} Plan</span>
                     <span>Account Active</span>
                   </div>
                 </div>
@@ -418,13 +450,28 @@ export default function DashboardProfile() {
                   </>
                 ) : (
                   <>
-                    <label className="dashboard-profile__field">
-                      <span>Registered / legal name</span>
-                      <div className="dashboard-profile__input-wrap">
-                        <BriefcaseBusiness size={18} />
-                        <input type="text" value={formData.legalName} onChange={(e) => handleInputChange('legalName', e.target.value)} />
-                      </div>
-                    </label>
+                    <div className="dashboard-profile__field">
+                      <label className="dashboard-profile__field-label">
+                        <span>Registered / legal name</span>
+                        <div className={`dashboard-profile__input-wrap${legalNameError ? ' dashboard-profile__input-wrap--error' : ''}`}>
+                          <BriefcaseBusiness size={18} />
+                          <input
+                            type="text"
+                            maxLength={40}
+                            value={formData.legalName}
+                            onChange={(e) => handleInputChange('legalName', e.target.value)}
+                          />
+                        </div>
+                      </label>
+                      {legalNameError && (
+                        <p className="dashboard-profile__field-error" role="alert">
+                          {legalNameError}
+                        </p>
+                      )}
+                      <p className="dashboard-profile__field-hint">
+                        {formData.legalName.length}/40 characters
+                      </p>
+                    </div>
                     <label className="dashboard-profile__field">
                       <span>Registration number</span>
                       <div className="dashboard-profile__input-wrap">

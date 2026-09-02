@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowLeft, ArrowRight, Check, Loader2, Pencil, X } from 'lucide-react'
+import { AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import {
   calcPrivacyPolicyProgress,
@@ -917,6 +917,11 @@ export default function PrivacyPolicyWizardModal({
               >
                 <Check size={15} />
                 Generate Notice + Policy
+              </button>
+            ) : step === 6 ? (
+              <button type="button" className="nda-modal__btn nda-modal__btn--preview" onClick={next}>
+                <Eye size={15} />
+                Preview
               </button>
             ) : (
               <button type="button" className="nda-modal__btn nda-modal__btn--primary" onClick={next}>

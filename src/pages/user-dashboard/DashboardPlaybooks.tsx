@@ -25,6 +25,14 @@ import { openPaystackCheckout } from '../../services/paystackClient'
 import { useBillingSubscription } from '../../hooks/useBillingSubscription'
 import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
+import {
+  buildPopiaEssentialsPdf,
+  buildWebsiteLegalPdf,
+  buildBbbeeVerificationPdf,
+  buildPreSeedFundraisingPdf,
+  buildTermSheetsPdf,
+  buildDueDiligenceReadinessPdf,
+} from '../../services/playbookPdfBuilder'
 import './Dashboard.css'
 import './DashboardPlaybooks.css'
 
@@ -351,6 +359,124 @@ function resolveIcon(name: string): LucideIcon {
 const CARD_ICON_OVERRIDES: Record<string, LucideIcon> = {
   'Website Legal Readiness': Shield,
   'Due Diligence Pack': TrendingUp,
+  'POPIA Compliance Essentials': Shield,
+  'Website Legal Compliance': WandSparkles,
+  'BBBEE Verification Guide': TrendingUp,
+  'Pre-Seed Fundraising Preparation': TrendingUp,
+  'Understanding Term Sheets': FileText,
+  'Due Diligence Readiness': BookOpen,
+}
+
+/**
+ * Static playbook cards that are generated client-side.
+ * Each card builds its PDF on first access and caches the blob URL.
+ * These are merged into the Compliance section returned by the API.
+ * If the API already returns a card with the same title, the API version wins.
+ */
+const STATIC_COMPLIANCE_CARDS: PlaybookCard[] = [
+  {
+    title: 'POPIA Compliance Essentials',
+    steps: '6 steps',
+    time: '12 min',
+    description: 'A practical step-by-step guide to POPIA compliance: appoint your Information Officer, map your data, publish your Privacy Notice, and handle data subject requests.',
+    icon: Shield,
+    wizards: ['Privacy & Cookies Policy', 'Non-Disclosure Agreement (NDA)'],
+    pdfUrl: '',   // populated lazily on first open
+  },
+  {
+    title: 'Website Legal Compliance',
+    steps: '5 steps',
+    time: '10 min',
+    description: 'Every legal document your website needs under POPIA and the ECT Act: Privacy & Cookies Policy, Terms and Conditions, cookie consent, and e-commerce disclosures.',
+    icon: WandSparkles,
+    wizards: ['Privacy & Cookies Policy', 'Service Agreement'],
+    pdfUrl: '',
+  },
+  {
+    title: 'BBBEE Verification Guide',
+    steps: '8 steps',
+    time: '15 min',
+    description: 'Understand the B-BBEE scorecard, find out whether you are an EME, QSE or Generic enterprise, and prepare all the documents you need for verification.',
+    icon: TrendingUp,
+    wizards: ['Founder Agreement', 'Shareholder Resolutions'],
+    pdfUrl: '',
+  },
+]
+
+const STATIC_FUNDRAISING_CARDS: PlaybookCard[] = [
+  {
+    title: 'Pre-Seed Fundraising Preparation',
+    steps: '7 steps',
+    time: '14 min',
+    description: 'A step-by-step legal preparation guide for your first funding round: incorporate correctly, sign founder agreements, assign IP, clean up your cap table, and prepare your data room.',
+    icon: TrendingUp,
+    wizards: ['Founder Agreement', 'Non-Disclosure Agreement (NDA)', 'Shareholder Resolutions'],
+    pdfUrl: '',
+  },
+  {
+    title: 'Understanding Term Sheets',
+    steps: '6 steps',
+    time: '12 min',
+    description: 'Decode every clause in an investor term sheet — valuation, liquidation preferences, anti-dilution, board composition, pro-rata rights, vesting, and exclusivity.',
+    icon: FileText,
+    wizards: ['Founder Agreement', 'Shareholder Resolutions'],
+    pdfUrl: '',
+  },
+  {
+    title: 'Due Diligence Readiness',
+    steps: '8 steps',
+    time: '16 min',
+    description: 'Build a complete investor data room: corporate documents, IP assignments, commercial contracts, financial records, compliance certificates, and litigation disclosures.',
+    icon: BookOpen,
+    wizards: ['Founder Agreement', 'Non-Disclosure Agreement (NDA)', 'Shareholder Resolutions'],
+    pdfUrl: '',
+  },
+]
+
+/** Lazily built PDF URLs keyed by card title — built once per session. */
+const staticPdfCache = new Map<string, string>()
+
+function getStaticPdfUrl(title: string): string {
+  if (staticPdfCache.has(title)) return staticPdfCache.get(title)!
+  let url = ''
+  if (title === 'POPIA Compliance Essentials')       url = buildPopiaEssentialsPdf()
+  if (title === 'Website Legal Compliance')           url = buildWebsiteLegalPdf()
+  if (title === 'BBBEE Verification Guide')           url = buildBbbeeVerificationPdf()
+  if (title === 'Pre-Seed Fundraising Preparation')  url = buildPreSeedFundraisingPdf()
+  if (title === 'Understanding Term Sheets')          url = buildTermSheetsPdf()
+  if (title === 'Due Diligence Readiness')            url = buildDueDiligenceReadinessPdf()
+  if (url) staticPdfCache.set(title, url)
+  return url
+}
+
+function mergeIntoSection(
+  sections: PlaybookSection[],
+  sectionTitle: string,
+  fallbackIcon: LucideIcon,
+  staticCards: PlaybookCard[],
+): PlaybookSection[] {
+  const existingTitles = new Set(sections.flatMap((s) => s.cards.map((c) => c.title)))
+  const newCards = staticCards
+    .filter((c) => !existingTitles.has(c.title))
+    .map((c) => ({ ...c, pdfUrl: getStaticPdfUrl(c.title) }))
+  if (newCards.length === 0) return sections
+  const idx = sections.findIndex((s) => s.title === sectionTitle)
+  if (idx >= 0) {
+    const updated = [...sections]
+    updated[idx] = { ...updated[idx], cards: [...updated[idx].cards, ...newCards] }
+    return updated
+  }
+  return [...sections, { title: sectionTitle, icon: fallbackIcon, cards: newCards }]
+}
+
+/**
+ * Merges all static cards into the appropriate sections.
+ * API cards take precedence: a card with the same title is never duplicated.
+ */
+function mergeStaticCards(sections: PlaybookSection[]): PlaybookSection[] {
+  let result = mergeIntoSection(sections, 'Compliance', Shield, STATIC_COMPLIANCE_CARDS)
+  result = mergeIntoSection(result, 'Fundraising', TrendingUp, STATIC_FUNDRAISING_CARDS)
+  return result
 }
 
 /**
@@ -377,15 +503,24 @@ function mapApiSections(
   return raw.map(({ title, icon, cards }) => ({
     title,
     icon: resolveIcon(icon),
-    cards: cards.map((c) => ({
-      title: c.title,
-      steps: c.steps,
-      time: c.time,
-      description: c.description,
-      icon: CARD_ICON_OVERRIDES[c.title] ?? resolveIcon(c.icon ?? icon),
-      wizards: c.wizards ?? [],
-      pdfUrl: pdfMap.get(c.title) ?? c.pdfUrl ?? '',
-    })),
+    cards: cards.map((c) => {
+      // Prefer: documents-API URL → static client-generated PDF → card's own pdfUrl
+      // The static fallback ensures cards whose CDN URL isn't live yet still open correctly.
+      const resolvedUrl =
+        pdfMap.get(c.title) ||
+        getStaticPdfUrl(c.title) ||
+        c.pdfUrl ||
+        ''
+      return {
+        title: c.title,
+        steps: c.steps,
+        time: c.time,
+        description: c.description,
+        icon: CARD_ICON_OVERRIDES[c.title] ?? resolveIcon(c.icon ?? icon),
+        wizards: c.wizards ?? [],
+        pdfUrl: resolvedUrl,
+      }
+    }),
   }))
 }
 
@@ -436,9 +571,11 @@ export default function DashboardPlaybooks() {
         ? buildPdfMap(docsRes.data)
         : new Map<string, string>()
 
-      if (playbooksRes.success && playbooksRes.data?.playbookSections?.length) {
-        setSections(mapApiSections(playbooksRes.data.playbookSections, pdfMap))
-      }
+      const apiSections = playbooksRes.success && playbooksRes.data?.playbookSections?.length
+        ? mapApiSections(playbooksRes.data.playbookSections, pdfMap)
+        : []
+
+      setSections(mergeStaticCards(apiSections))
       setLoading(false)
     })
   }, [])
