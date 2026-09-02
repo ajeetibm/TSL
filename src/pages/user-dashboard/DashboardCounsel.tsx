@@ -64,40 +64,18 @@ type CreatedCounselRequest = {
 type CounselRequestResponse = CounselRequest[] | { requests?: CounselRequest[] }
 
 const fallbackCredits: CounselCredits = {
-  plan: 'Boardroom',
-  includedCredits: 6,
-  creditsTotal: 6,
-  creditsUsed: 1,
-  creditsRemaining: 2,
-  usageThisMonth: 1,
-  topUpRate: 450,
+  plan: 'Free',
+  includedCredits: 0,
+  creditsTotal: 0,
+  creditsUsed: 0,
+  creditsRemaining: 0,
+  usageThisMonth: 0,
+  topUpRate: 500,
   currency: 'ZAR',
-  resetDate: '2026-02-01',
+  resetDate: '',
 }
 
-const fallbackHistory: CounselHistoryRequest[] = [
-  {
-    requestId: 'fallback-1',
-    title: 'NDA Review - Tech Partnership',
-    date: 'Dec 15, 2025',
-    reviewer: 'Reviewed by Sarah Naidoo',
-    status: 'In Progress',
-  },
-  {
-    requestId: 'fallback-2',
-    title: 'NDA Review - Tech Partnership',
-    date: 'Dec 15, 2025',
-    reviewer: 'Reviewed by Sarah Naidoo',
-    status: 'Completed',
-  },
-  {
-    requestId: 'fallback-3',
-    title: 'NDA Review - Tech Partnership',
-    date: 'Dec 15, 2025',
-    reviewer: 'Reviewed by Sarah Naidoo',
-    status: 'Completed',
-  },
-]
+const fallbackHistory: CounselHistoryRequest[] = []
 
 function formatRequestDate(value?: string) {
   if (!value) return 'Today'
@@ -406,9 +384,6 @@ export default function DashboardCounsel() {
       <main className="dashboard-counsel">
         <header className="dashboard-counsel__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <span className="dashboard-counsel__header-marker" aria-hidden="true">
-            <Scale size={18} />
-          </span>
           <div>
             <h1>Counsel</h1>
             <p>Connect with experienced attorneys for expert guidance</p>

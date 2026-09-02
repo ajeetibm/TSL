@@ -43,11 +43,13 @@
 }
 
 .dashboard-playbooks__content {
-  max-width: 1120px;
   display: grid;
   gap: 48px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 1280px;
   padding: 32px;
+  box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .dashboard-playbooks__info-banner {
@@ -73,10 +75,13 @@
 
 .dashboard-playbooks__info-banner-title {
   margin: 0 0 4px;
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 600;
   font-size: 24px;
-  font-weight: 700;
-  color: #0b1c2f;
-  line-height: 1.4;
+  line-height: 32px;
+  letter-spacing: -0.6px;
+  color: #0d1b2a;
 }
 
 .dashboard-playbooks__info-banner-body {

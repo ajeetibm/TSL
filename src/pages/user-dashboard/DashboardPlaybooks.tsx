@@ -448,9 +448,6 @@ export default function DashboardPlaybooks() {
       <main className="dashboard-playbooks">
         <header className="dashboard-playbooks__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <span className="dashboard-playbooks__header-marker" aria-hidden="true">
-            <BookOpen size={18} />
-          </span>
           <div>
             <h1>Playbooks</h1>
             <p>Step-by-step legal guides for common business workflows</p>
