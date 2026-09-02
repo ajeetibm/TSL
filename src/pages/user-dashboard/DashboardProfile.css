@@ -331,6 +331,15 @@
   line-height: 1.4;
 }
 
+.dashboard-profile__field-hint {
+  margin: 4px 0 0;
+  padding: 0 4px;
+  color: #57606a;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: right;
+}
+
 .dashboard-profile__snapshot-heading {
   grid-column: 1 / -1;
   margin-top: 8px;
