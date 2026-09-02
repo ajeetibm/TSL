@@ -644,6 +644,30 @@
                             "description": "Prepare a legally sound website with terms, privacy disclosures, cookies, and customer-facing notices.",
                             "wizards": ["Terms of Service", "Privacy Policy"],
                             "pdfUrl": "https://cdn.tsl.co.za/playbooks/website-legal.pdf"
+                          },
+                          {
+                            "title": "POPIA Compliance Essentials",
+                            "steps": "6 steps",
+                            "time": "12 min",
+                            "description": "A practical step-by-step guide to POPIA compliance: appoint your Information Officer, map your data, publish your Privacy Notice, and handle data subject requests.",
+                            "wizards": ["Privacy & Cookies Policy", "Non-Disclosure Agreement (NDA)"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/popia-compliance-essentials.pdf"
+                          },
+                          {
+                            "title": "Website Legal Compliance",
+                            "steps": "5 steps",
+                            "time": "10 min",
+                            "description": "Every legal document your website needs under POPIA and the ECT Act: Privacy & Cookies Policy, Terms and Conditions, cookie consent, and e-commerce disclosures.",
+                            "wizards": ["Privacy & Cookies Policy", "Service Agreement"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/website-legal-compliance.pdf"
+                          },
+                          {
+                            "title": "BBBEE Verification Guide",
+                            "steps": "8 steps",
+                            "time": "15 min",
+                            "description": "Understand the B-BBEE scorecard, find out whether you are an EME, QSE or Generic enterprise, and prepare all the documents you need for verification.",
+                            "wizards": ["Founder Agreement", "Shareholder Resolutions"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/bbbee-verification-guide.pdf"
                           }
                         ]
                       },
@@ -674,6 +698,30 @@
                             "description": "Organise contracts, policies, resolutions, and employment records into a cleaner investor review package.",
                             "wizards": ["Shareholder Resolutions", "Service Agreement"],
                             "pdfUrl": "https://cdn.tsl.co.za/playbooks/due-diligence-pack.pdf"
+                          },
+                          {
+                            "title": "Pre-Seed Fundraising Preparation",
+                            "steps": "7 steps",
+                            "time": "14 min",
+                            "description": "A step-by-step legal preparation guide for your first funding round: incorporate correctly, sign founder agreements, assign IP, clean up your cap table, and prepare your data room.",
+                            "wizards": ["Founder Agreement", "Non-Disclosure Agreement (NDA)", "Shareholder Resolutions"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/pre-seed-fundraising.pdf"
+                          },
+                          {
+                            "title": "Understanding Term Sheets",
+                            "steps": "6 steps",
+                            "time": "12 min",
+                            "description": "Decode every clause in an investor term sheet — valuation, liquidation preferences, anti-dilution, board composition, pro-rata rights, vesting, and exclusivity.",
+                            "wizards": ["Founder Agreement", "Shareholder Resolutions"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/understanding-term-sheets.pdf"
+                          },
+                          {
+                            "title": "Due Diligence Readiness",
+                            "steps": "8 steps",
+                            "time": "16 min",
+                            "description": "Build a complete investor data room: corporate documents, IP assignments, commercial contracts, financial records, compliance certificates, and litigation disclosures.",
+                            "wizards": ["Founder Agreement", "Non-Disclosure Agreement (NDA)", "Shareholder Resolutions"],
+                            "pdfUrl": "https://cdn.tsl.co.za/playbooks/due-diligence-readiness.pdf"
                           }
                         ]
                       }
