@@ -167,6 +167,10 @@
   color: #0d1b2a;
 }
 
+.bs-compare-card--launchpad .bs-compare-card__name svg {
+  color: #cda85b;
+}
+
 /* ── Price block ───────────────────────────────────────────────────────────── */
 
 .bs-compare-card__price-block {

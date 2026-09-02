@@ -10,7 +10,7 @@
  * which then opens the appropriate confirmation modal.
  */
 
-import { CheckCircle2, FileText, Loader2, ShoppingCart, Sparkles, X } from 'lucide-react'
+import { CheckCircle2, FileText, Loader2, Sparkles, X } from 'lucide-react'
 import type { SubscriptionPlan } from '../../../services/dashboardTypes'
 import { planTier } from '../../../services/subscriptionService'
 import './ComparePlansModal.css'
@@ -25,6 +25,15 @@ interface Props {
   onClose: () => void
 }
 
+function BuildingIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M13.3346 16.6666V3.33329C13.3346 2.89127 13.159 2.46734 12.8465 2.15478C12.5339 1.84222 12.11 1.66663 11.668 1.66663H8.33464C7.89261 1.66663 7.46869 1.84222 7.15612 2.15478C6.84356 2.46734 6.66797 2.89127 6.66797 3.33329V16.6666" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M16.668 5H3.33464C2.41416 5 1.66797 5.74619 1.66797 6.66667V15C1.66797 15.9205 2.41416 16.6667 3.33464 16.6667H16.668C17.5884 16.6667 18.3346 15.9205 18.3346 15V6.66667C18.3346 5.74619 17.5884 5 16.668 5Z" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )
+}
+
 const PLAN_META: Record<string, {
   Icon: React.ElementType
   excluded: string[]
@@ -35,12 +44,12 @@ const PLAN_META: Record<string, {
     excluded: ['No API access', 'No white-label'],
   },
   operator: {
-    Icon: ShoppingCart,
+    Icon: BuildingIcon,
     excluded: ['No white-label'],
     popular: true,
   },
   boardroom: {
-    Icon: ShoppingCart,
+    Icon: BuildingIcon,
     excluded: [],
   },
 }

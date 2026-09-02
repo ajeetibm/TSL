@@ -66,9 +66,9 @@
 }
 
 .dashboard-notifications__content {
-  max-width: 1120px;
+  max-width: 1440px;
   display: grid;
-  grid-template-columns: minmax(0, 739px) 357px;
+  grid-template-columns: minmax(0, 1fr) 357px;
   gap: 24px;
   margin: 0 auto;
   padding: 32px;
@@ -89,8 +89,13 @@
 .dashboard-notifications__section-title h2,
 .dashboard-notifications__earlier-title {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 700;
   font-size: 24px;
+  line-height: 32px;
+  letter-spacing: -0.6px;
+  color: #0d1b2a;
 }
 
 .dashboard-notifications__section-title span {
@@ -145,9 +150,13 @@
 
 .dashboard-notifications__item-heading h3 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: 700;
   font-size: 24px;
-  line-height: 1.3;
+  line-height: 32px;
+  letter-spacing: -0.6px;
+  color: #0d1b2a;
 }
 
 .dashboard-notifications__item-heading button {
