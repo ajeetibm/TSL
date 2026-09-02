@@ -3083,9 +3083,6 @@ export default function Dashboard() {
                 <div className="user-dashboard__empty-state">
                   <CircleCheckBig size={32} />
                   <p>No completed documents yet.</p>
-                  <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-                    Start a Wizard <ArrowRight size={16} />
-                  </button>
                 </div>
               )}
             </div>

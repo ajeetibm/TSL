@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Activity,
   AlertCircle,
@@ -25,16 +25,145 @@ import {
   Target,
   TrendingUp,
   UsersRound,
+  X,
   Zap,
 } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import { defaultViewport, revealUp, staggerContainer } from '../hooks/useScrollReveal'
 import { setPageMetadata } from '../services/metadata'
 import { DetailFooter } from '../components/wizard-detail/DetailFooter'
 import { documentsApi, API_BASE_URL } from '../services/tslApi'
+import { submitContactForm } from '../services/mockContactClient'
 import type { DocumentItem } from '../services/dashboardTypes'
 import './PlaybooksInsights.css'
+
+// ─── Validation helpers ───────────────────────────────────────────────────────
+
+const FULL_NAME_RE = /^[a-zA-Z\s'\-\.]{2,}$/
+const EMAIL_RE     = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
+const PHONE_RE     = /^[\+\d][\d\s\-\(\)]{6,19}$/
+
+function validateFullName(v: string): string {
+  if (!v) return 'Full Name is required.'
+  if (!FULL_NAME_RE.test(v)) return 'Please enter a valid full name.'
+  return ''
+}
+
+function validateEmail(v: string): string {
+  if (!v) return 'Email Address is required.'
+  if (!EMAIL_RE.test(v)) return 'Please enter a valid email address.'
+  return ''
+}
+
+function validatePhone(v: string): string {
+  if (v && !PHONE_RE.test(v)) return 'Please enter a valid phone number.'
+  return ''
+}
+
+function validateMessage(v: string): string {
+  if (!v) return 'Message is required.'
+  if (v.length < 10) return 'Message should contain at least 10 characters.'
+  return ''
+}
+
+interface FormValues {
+  fullName:    string
+  email:       string
+  phone:       string
+  companyName: string
+  message:     string
+}
+
+interface FormErrors {
+  fullName: string
+  email:    string
+  phone:    string
+  message:  string
+}
+
+const EMPTY_VALUES: FormValues = { fullName: '', email: '', phone: '', companyName: '', message: '' }
+const EMPTY_ERRORS: FormErrors = { fullName: '', email: '', phone: '', message: '' }
+
+function validateAll(v: FormValues): FormErrors {
+  return {
+    fullName: validateFullName(v.fullName),
+    email:    validateEmail(v.email),
+    phone:    validatePhone(v.phone),
+    message:  validateMessage(v.message),
+  }
+}
+
+function isValid(e: FormErrors): boolean {
+  return !e.fullName && !e.email && !e.phone && !e.message
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+
+type ToastKind = 'success' | 'error'
+
+interface ToastState {
+  kind:  ToastKind
+  title: string
+  body:  string
+}
+
+function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
+  const isSuccess = toast.kind === 'success'
+  return createPortal(
+    <motion.div
+      key="pi-contact-toast"
+      role="alert"
+      aria-live="assertive"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+      className={`fixed right-4 top-5 z-[9999] flex w-[calc(100vw-2rem)] max-w-[420px] items-start gap-4 rounded-2xl border px-6 py-5 shadow-xl ${
+        isSuccess
+          ? 'border-[#2ee56f]/30 bg-[#152b1e] text-white'
+          : 'border-red-500/30 bg-[#2b1515] text-white'
+      }`}
+    >
+      <span className={`mt-0.5 shrink-0 ${isSuccess ? 'text-[#2ee56f]' : 'text-red-400'}`}>
+        {isSuccess ? <CheckCircle2 size={20} /> : <X size={20} />}
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold leading-5">{toast.title}</p>
+        <p className="mt-1 text-[13px] leading-5 text-white/65">{toast.body}</p>
+      </div>
+      <button
+        type="button"
+        aria-label="Dismiss notification"
+        onClick={onClose}
+        className="ml-2 shrink-0 text-white/40 transition hover:text-white"
+      >
+        <X size={16} />
+      </button>
+    </motion.div>,
+    document.body,
+  )
+}
+
+function FieldError({ message }: { message: string }) {
+  return (
+    <AnimatePresence>
+      {message && (
+        <motion.p
+          role="alert"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.2 }}
+          className="-mt-1 text-[12px] font-medium text-red-400"
+        >
+          {message}
+        </motion.p>
+      )}
+    </AnimatePresence>
+  )
+}
 
 const ChecklistsIcon = (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -214,6 +343,125 @@ export default function PlaybooksInsights() {
   const [foundersDoc, setFoundersDoc] = useState<DocumentItem | null>(null)
   const [docLoading, setDocLoading] = useState(true)
 
+  // ── Contact form state ────────────────────────────────────────────────────
+  const [values,     setValues]     = useState<FormValues>(EMPTY_VALUES)
+  const [errors,     setErrors]     = useState<FormErrors>(EMPTY_ERRORS)
+  const [touched,    setTouched]    = useState<Record<string, boolean>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [toast,      setToast]      = useState<ToastState | null>(null)
+
+  const fullNameRef = useRef<HTMLInputElement>(null)
+  const emailRef    = useRef<HTMLInputElement>(null)
+  const phoneRef    = useRef<HTMLInputElement>(null)
+  const messageRef  = useRef<HTMLTextAreaElement>(null)
+
+  const fieldRefs: Record<keyof FormErrors, React.RefObject<HTMLElement | null>> = {
+    fullName: fullNameRef as React.RefObject<HTMLElement | null>,
+    email:    emailRef    as React.RefObject<HTMLElement | null>,
+    phone:    phoneRef    as React.RefObject<HTMLElement | null>,
+    message:  messageRef  as React.RefObject<HTMLElement | null>,
+  }
+
+  function showToast(t: ToastState) {
+    setToast(t)
+    setTimeout(() => setToast(null), 6000)
+  }
+
+  function handleChange(field: keyof FormValues, raw: string) {
+    setValues((prev) => ({ ...prev, [field]: raw }))
+    if (touched[field]) {
+      const newErrors = validateAll({ ...values, [field]: raw.trim() })
+      setErrors((prev) => ({ ...prev, [field]: newErrors[field as keyof FormErrors] ?? '' }))
+    }
+  }
+
+  function handleBlur(field: keyof FormValues) {
+    setTouched((prev) => ({ ...prev, [field]: true }))
+    const trimmed = values[field].trim()
+    const newErrors = validateAll({ ...values, [field]: trimmed })
+    setErrors((prev) => ({ ...prev, [field]: newErrors[field as keyof FormErrors] ?? '' }))
+  }
+
+  async function handleContactSubmit(e: React.FormEvent) {
+    e.preventDefault()
+
+    const trimmed: FormValues = {
+      fullName:    values.fullName.trim(),
+      email:       values.email.trim(),
+      phone:       values.phone.trim(),
+      companyName: values.companyName.trim(),
+      message:     values.message.trim(),
+    }
+
+    const newErrors = validateAll(trimmed)
+    setErrors(newErrors)
+    setTouched({ fullName: true, email: true, phone: true, companyName: true, message: true })
+
+    if (!isValid(newErrors)) {
+      const order: (keyof FormErrors)[] = ['fullName', 'email', 'phone', 'message']
+      for (const field of order) {
+        if (newErrors[field]) {
+          const el = fieldRefs[field].current
+          if (el) {
+            if (typeof el.scrollIntoView === 'function') {
+              el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+            el.focus()
+          }
+          break
+        }
+      }
+      return
+    }
+
+    setSubmitting(true)
+    try {
+      const result = await submitContactForm(trimmed)
+      if (result.success) {
+        showToast({
+          kind:  'success',
+          title: 'Message Sent Successfully!',
+          body:  'Thank you for contacting The StartUp Legal. Our team has received your enquiry and will get back to you within 2–4 business hours.',
+        })
+        setValues(EMPTY_VALUES)
+        setErrors(EMPTY_ERRORS)
+        setTouched({})
+      } else {
+        showToast({
+          kind:  'error',
+          title: 'Unable to send your message.',
+          body:  result.message || 'Please try again later.',
+        })
+      }
+    } catch {
+      showToast({
+        kind:  'error',
+        title: 'Unable to send your message.',
+        body:  'Please try again later.',
+      })
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const contactFormErrors = validateAll({
+    fullName:    values.fullName.trim(),
+    email:       values.email.trim(),
+    phone:       values.phone.trim(),
+    companyName: values.companyName.trim(),
+    message:     values.message.trim(),
+  })
+  const allFieldsValid = isValid(contactFormErrors)
+  const sendDisabled   = !allFieldsValid || submitting
+
+  const inputBase =
+    'min-h-[58px] rounded-[22px] border bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 transition-colors focus:border-gold'
+
+  function inputClass(field: keyof FormErrors) {
+    if (touched[field] && errors[field]) return `${inputBase} border-red-400`
+    return `${inputBase} border-white/15`
+  }
+
   useEffect(() => {
     documentsApi.list().then((res) => {
       if (res.success && res.data && res.data.length > 0) {
@@ -241,6 +489,10 @@ export default function PlaybooksInsights() {
   }
 
   return (
+    <>
+    <AnimatePresence>
+      {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
+    </AnimatePresence>
     <div className="pi-page">
       {/* ── Hero ──────────────────────────────────────────────────── */}
       <motion.section
@@ -632,62 +884,142 @@ export default function PlaybooksInsights() {
 
           <div className="mt-14 grid gap-7 lg:grid-cols-[1fr_0.48fr]">
             <motion.form
+              onSubmit={handleContactSubmit}
+              noValidate
+              aria-label="Contact form"
               initial={{ opacity: 0, y: 80 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.18 }}
               transition={{ duration: 0.65, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
               className="rounded-[24px] border border-white/15 bg-[#253342] p-6 shadow-[0_20px_40px_rgba(0,0,0,0.24)] md:p-12"
             >
-              <div className="grid gap-x-12 gap-y-9 md:grid-cols-2">
-                <label className="grid gap-4 text-sm font-semibold text-white/85">
-                  Full Name *
+              <div className="grid gap-x-12 gap-y-8 md:grid-cols-2">
+                {/* Full Name */}
+                <div className="grid gap-4">
+                  <label htmlFor="pi-contact-fullName" className="text-sm font-semibold text-white/85">
+                    Full Name *
+                  </label>
                   <input
-                    className="min-h-[58px] rounded-[22px] border border-white/15 bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 focus:border-gold"
+                    ref={fullNameRef}
+                    id="pi-contact-fullName"
+                    className={inputClass('fullName')}
                     placeholder="John Doe"
+                    autoComplete="name"
+                    value={values.fullName}
+                    onChange={(e) => handleChange('fullName', e.target.value)}
+                    onBlur={() => handleBlur('fullName')}
+                    aria-describedby={errors.fullName && touched.fullName ? 'pi-err-fullName' : undefined}
+                    aria-invalid={!!(errors.fullName && touched.fullName)}
+                    disabled={submitting}
                   />
-                </label>
+                  <FieldError message={touched.fullName ? errors.fullName : ''} />
+                </div>
 
-                <label className="grid gap-4 text-sm font-semibold text-white/85">
-                  Email Address *
+                {/* Email */}
+                <div className="grid gap-4">
+                  <label htmlFor="pi-contact-email" className="text-sm font-semibold text-white/85">
+                    Email Address *
+                  </label>
                   <input
-                    className="min-h-[58px] rounded-[22px] border border-white/15 bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 focus:border-gold"
-                    placeholder="john@example.com"
+                    ref={emailRef}
+                    id="pi-contact-email"
                     type="email"
+                    className={inputClass('email')}
+                    placeholder="john@example.com"
+                    autoComplete="email"
+                    value={values.email}
+                    onChange={(e) => handleChange('email', e.target.value)}
+                    onBlur={() => handleBlur('email')}
+                    aria-describedby={errors.email && touched.email ? 'pi-err-email' : undefined}
+                    aria-invalid={!!(errors.email && touched.email)}
+                    disabled={submitting}
                   />
-                </label>
+                  <FieldError message={touched.email ? errors.email : ''} />
+                </div>
 
-                <label className="grid gap-4 text-sm font-semibold text-white/85">
-                  Phone Number
+                {/* Phone */}
+                <div className="grid gap-4">
+                  <label htmlFor="pi-contact-phone" className="text-sm font-semibold text-white/85">
+                    Phone Number
+                  </label>
                   <input
-                    className="min-h-[58px] rounded-[22px] border border-white/15 bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 focus:border-gold"
-                    placeholder="+27 82 123 4567"
+                    ref={phoneRef}
+                    id="pi-contact-phone"
                     type="tel"
+                    className={inputClass('phone')}
+                    placeholder="+27 82 123 4567"
+                    autoComplete="tel"
+                    value={values.phone}
+                    onChange={(e) => handleChange('phone', e.target.value)}
+                    onBlur={() => handleBlur('phone')}
+                    aria-describedby={errors.phone && touched.phone ? 'pi-err-phone' : undefined}
+                    aria-invalid={!!(errors.phone && touched.phone)}
+                    disabled={submitting}
                   />
-                </label>
+                  <FieldError message={touched.phone ? errors.phone : ''} />
+                </div>
 
-                <label className="grid gap-4 text-sm font-semibold text-white/85">
-                  Company Name
+                {/* Company Name */}
+                <div className="grid gap-4">
+                  <label htmlFor="pi-contact-companyName" className="text-sm font-semibold text-white/85">
+                    Company Name
+                  </label>
                   <input
-                    className="min-h-[58px] rounded-[22px] border border-white/15 bg-white/10 px-7 text-base text-white outline-none placeholder:text-white/40 focus:border-gold"
+                    id="pi-contact-companyName"
+                    className={`${inputBase} border-white/15`}
                     placeholder="Your Company (Pty) Ltd"
+                    autoComplete="organization"
+                    value={values.companyName}
+                    onChange={(e) => handleChange('companyName', e.target.value)}
+                    disabled={submitting}
                   />
-                </label>
+                </div>
               </div>
 
-              <label className="mt-9 grid gap-4 text-sm font-semibold text-white/85">
-                Message *
+              {/* Message */}
+              <div className="mt-9 grid gap-4">
+                <label htmlFor="pi-contact-message" className="text-sm font-semibold text-white/85">
+                  Message *
+                </label>
                 <textarea
-                  className="min-h-[132px] resize-none rounded-[22px] border border-white/15 bg-white/10 px-7 py-5 text-base text-white outline-none placeholder:text-white/40 focus:border-gold"
+                  ref={messageRef}
+                  id="pi-contact-message"
+                  className={`${inputClass('message')} min-h-[132px] resize-none py-5`}
                   placeholder="Tell us about your legal needs..."
+                  value={values.message}
+                  onChange={(e) => handleChange('message', e.target.value)}
+                  onBlur={() => handleBlur('message')}
+                  aria-describedby={errors.message && touched.message ? 'pi-err-message' : undefined}
+                  aria-invalid={!!(errors.message && touched.message)}
+                  disabled={submitting}
                 />
-              </label>
+                <FieldError message={touched.message ? errors.message : ''} />
+              </div>
 
               <button
-                type="button"
-                className="mt-12 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-full bg-gold px-6 text-sm font-bold text-white shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition hover:-translate-y-1 hover:bg-gold-light hover:text-navy-primary"
+                type="submit"
+                disabled={sendDisabled}
+                aria-disabled={sendDisabled}
+                className={`mt-12 inline-flex min-h-[52px] w-full items-center justify-center gap-3 rounded-full px-6 text-sm font-bold shadow-[0_14px_20px_rgba(0,0,0,0.22)] transition ${
+                  sendDisabled
+                    ? 'cursor-not-allowed bg-gold/50 text-white/60'
+                    : 'bg-gold text-white hover:-translate-y-1 hover:bg-gold-light hover:text-navy-primary'
+                }`}
               >
-                Send Message
-                <Send size={16} />
+                {submitting ? (
+                  <>
+                    <span
+                      aria-hidden="true"
+                      className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                    />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send size={16} />
+                  </>
+                )}
               </button>
 
               <p className="mt-10 text-center text-xs leading-5 text-white/45">
@@ -734,5 +1066,6 @@ export default function PlaybooksInsights() {
       </motion.section>
       <DetailFooter />
     </div>
+    </>
   )
 }

@@ -19,7 +19,7 @@
 .user-dashboard {
   height: 100vh;
   display: grid;
-  grid-template-columns: 255px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   background: #f4f4f4;
   color: #0b1c2f;
 }
@@ -32,10 +32,10 @@
 
 .dashboard-back-btn {
   position: fixed;
-  left: calc(255px - 18px);
+  left: calc(220px - 18px);
   top: 60px;
   transform: translateY(-50%);
-  z-index: 100;
+  z-index: 10;
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -65,7 +65,7 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
   background: #07192b;
@@ -1213,7 +1213,75 @@
   color: #1c6b43;
 }
 
-@media (max-width: 1180px) {
+/* ── 1024–1179 px: compact grids (sidebar already 220px from base) ───────── */
+@media (min-width: 1024px) and (max-width: 1179px) {
+  .user-dashboard__nav {
+    padding: 12px 8px;
+    gap: 6px;
+  }
+
+  .user-dashboard__nav-item {
+    font-size: 13px;
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .user-dashboard__hero--paid,
+  .user-dashboard__content,
+  .user-dashboard__landing-content {
+    padding: 20px;
+  }
+
+  .user-dashboard__hero--landing {
+    padding: 40px 20px 24px;
+  }
+
+  .user-dashboard__hero--paid h2,
+  .user-dashboard__hero--landing h2 {
+    font-size: 36px;
+  }
+
+  .user-dashboard__hero--paid p,
+  .user-dashboard__hero--landing p {
+    font-size: 16px;
+  }
+
+  /* hero: stack text + plan card */
+  .user-dashboard__hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* stats: 2-col */
+  .user-dashboard__stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* quick-start: 2-col */
+  .user-dashboard__quick-start {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* progress grid: 2-col */
+  .user-dashboard__progress-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* landing grid: single col */
+  .user-dashboard__landing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-dashboard__tabs {
+    gap: 24px;
+  }
+
+  .user-dashboard .user-dashboard__tab {
+    font-size: 20px;
+  }
+}
+
+/* ── < 1024 px: collapse sidebar to top bar ────────────────────────────── */
+@media (max-width: 1023px) {
   .user-dashboard {
     grid-template-columns: 1fr;
   }

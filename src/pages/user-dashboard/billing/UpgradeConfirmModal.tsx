@@ -23,7 +23,7 @@ interface Props {
 }
 
 function fmt(n: number) {
-  return `R${Math.abs(n).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `R${Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 export function UpgradeConfirmModal({
@@ -92,11 +92,11 @@ export function UpgradeConfirmModal({
             <dl className="bs-confirm-modal__breakdown">
               <div>
                 <dt>Current plan</dt>
-                <dd>{preview.currentPlanName} — R{preview.currentPrice.toLocaleString('en-ZA')}/mo</dd>
+                <dd>{preview.currentPlanName} — R{preview.currentPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo</dd>
               </div>
               <div>
                 <dt>New plan</dt>
-                <dd>{preview.newPlanName} — R{preview.newPrice.toLocaleString('en-ZA')}/mo</dd>
+                <dd>{preview.newPlanName} — R{preview.newPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/mo</dd>
               </div>
               <div>
                 <dt>{preview.isFullMonthlyCharge ? 'Billing period' : 'Days remaining'}</dt>

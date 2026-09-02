@@ -120,7 +120,7 @@
   left: 255px;
   top: 60px;
   transform: translateX(-50%);
-  z-index: 100;
+  z-index: 10;
   width: 36px;
   height: 36px;
   min-width: 36px;
