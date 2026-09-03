@@ -10,7 +10,6 @@ import {
   Loader2,
   Plus,
   Receipt,
-  Settings,
   Smartphone,
   WalletCards,
   Zap,
@@ -413,9 +412,6 @@ export default function DashboardSettings() {
 
         <header className="dashboard-settings__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <span className="dashboard-settings__header-marker" aria-hidden="true">
-            <Settings size={18} />
-          </span>
           <div>
             <h1>Settings</h1>
             <p>Manage your account, billing, and notification preferences</p>

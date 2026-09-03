@@ -120,8 +120,8 @@ function ToggleGroup({ options, value, onChange, disabled }: {
 }
 
 /* ─── Multiselect chips ──────────────────────────────────── */
-function MultiChips({ options, value, onChange }: {
-  options: string[]; value: string[]; onChange: (v: string[]) => void
+function MultiChips({ options, value, onChange, disabled }: {
+  options: string[]; value: string[]; onChange: (v: string[]) => void; disabled?: boolean
 }) {
   const toggle = (opt: string) =>
     onChange(value.includes(opt) ? value.filter(v => v !== opt) : [...value, opt])
@@ -132,7 +132,8 @@ function MultiChips({ options, value, onChange }: {
           key={opt}
           type="button"
           className={['nda-modal__chip', value.includes(opt) ? 'nda-modal__chip--selected' : ''].filter(Boolean).join(' ')}
-          onClick={() => toggle(opt)}
+          onClick={() => !disabled && toggle(opt)}
+          disabled={disabled}
         >
           {opt}
         </button>
@@ -156,15 +157,29 @@ function Banner({ type, title, message }: { type: 'warn' | 'block'; title: strin
 
 /* ─── Snapshot field (pre-filled from Company Snapshot) ─── */
 function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
+  const [snapshotError, setSnapshotError] = useState<string | null>(null)
+
+  function handleConfirm() {
+    if (!value.trim()) {
+      setSnapshotError('Please complete your Company Snapshot before confirming.')
+      return
+    }
+    setSnapshotError(null)
+    onConfirm()
+  }
+
   return (
-    <div className={`nda-modal__snapshot-confirm${confirmed ? ' nda-modal__snapshot-confirm--confirmed' : ''}`}>
-      <span>{value || 'Complete your Company Snapshot'}</span>
-      {confirmed ? (
-        <span className="nda-modal__snapshot-btn nda-modal__snapshot-btn--confirmed" style={{ cursor: 'default', fontWeight: 400 }}>✓ Confirmed</span>
-      ) : (
-        <button type="button" className="nda-modal__snapshot-btn" onClick={onConfirm}>CONFIRM</button>
-      )}
-    </div>
+    <>
+      <div className={`nda-modal__snapshot-confirm${confirmed ? ' nda-modal__snapshot-confirm--confirmed' : ''}`}>
+        <span>{value || 'Complete your Company Snapshot'}</span>
+        {confirmed ? (
+          <span className="nda-modal__snapshot-btn nda-modal__snapshot-btn--confirmed" style={{ cursor: 'default', fontWeight: 400 }}>✓ Confirmed</span>
+        ) : (
+          <button type="button" className="nda-modal__snapshot-btn" onClick={handleConfirm}>CONFIRM</button>
+        )}
+      </div>
+      {snapshotError && <p className="nda-modal__field-error" style={{ marginTop: 6 }}>{snapshotError}</p>}
+    </>
   )
 }
 
@@ -237,10 +252,10 @@ function validateFounderField(key: string, value: string): string {
   return ''
 }
 
-function FounderRow({ founder, index, canRemove, onChange, onRemove, submitErrors }: {
+function FounderRow({ founder, index, canRemove, onChange, onRemove, submitErrors, disabled }: {
   founder: FAFounder; index: number; canRemove: boolean
   onChange: (f: FAFounder) => void; onRemove: () => void
-  submitErrors?: Record<string, string>
+  submitErrors?: Record<string, string>; disabled?: boolean
 }) {
   const [liveErrors, setLiveErrors] = useState<Record<string, string>>({})
   const labelStyle: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }
@@ -259,25 +274,25 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, submitError
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Full names <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.fullNames ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. Thandiwe Nkosi"
-            value={founder.fullNames} onChange={e => up('fullNames', e.target.value)} />
+            value={founder.fullNames} onChange={e => up('fullNames', e.target.value)} disabled={disabled} />
           {err.fullNames && <p className="nda-modal__field-error">{err.fullNames}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Identity number <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.idNumber ? ' nda-modal__input--error' : ''}`} type="text" placeholder="13-digit SA ID"
-            value={founder.idNumber} onChange={e => up('idNumber', e.target.value.replace(/\D/g, '').slice(0, 13))} />
+            value={founder.idNumber} onChange={e => up('idNumber', e.target.value.replace(/\D/g, '').slice(0, 13))} disabled={disabled} />
           {err.idNumber && <p className="nda-modal__field-error">{err.idNumber}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Role <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.role ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. Chief executive officer"
-            value={founder.role} onChange={e => up('role', e.target.value)} />
+            value={founder.role} onChange={e => up('role', e.target.value)} disabled={disabled} />
           {err.role && <p className="nda-modal__field-error">{err.role}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Time commitment</label>
           <select className="nda-modal__input" value={founder.commitment}
-            onChange={e => up('commitment', e.target.value as FAFounder['commitment'])}>
+            onChange={e => up('commitment', e.target.value as FAFounder['commitment'])} disabled={disabled}>
             <option value="">Select…</option>
             <option>Full time</option>
             <option>Part time</option>
@@ -289,17 +304,17 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, submitError
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Equity % <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.equityPct ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. 40"
-            value={founder.equityPct} onChange={e => up('equityPct', e.target.value)} />
+            value={founder.equityPct} onChange={e => up('equityPct', e.target.value)} disabled={disabled} />
           {err.equityPct && <p className="nda-modal__field-error">{err.equityPct}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Capital contributed</label>
           <input className="nda-modal__input" type="text" placeholder="Optional"
-            value={founder.capital} onChange={e => up('capital', e.target.value)} />
+            value={founder.capital} onChange={e => up('capital', e.target.value)} disabled={disabled} />
         </div>
         {canRemove && (
           <button type="button" className="nda-modal__row-remove" aria-label={`Remove founder ${index + 1}`}
-            style={{ alignSelf: 'flex-end' }} onClick={onRemove}>
+            style={{ alignSelf: 'flex-end' }} onClick={onRemove} disabled={disabled}>
             <X size={14} />
           </button>
         )}
@@ -429,10 +444,10 @@ function validateSignatoryField(key: string, value: string): string {
   return ''
 }
 
-function SignatoryRow({ sig, index, canRemove, onChange, onRemove, submitErrors }: {
+function SignatoryRow({ sig, index, canRemove, onChange, onRemove, submitErrors, disabled }: {
   sig: FASignatory; index: number; canRemove: boolean
   onChange: (f: FASignatory) => void; onRemove: () => void
-  submitErrors?: Record<string, string>
+  submitErrors?: Record<string, string>; disabled?: boolean
 }) {
   const [liveErrors, setLiveErrors] = useState<Record<string, string>>({})
   const labelStyle: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }
@@ -450,13 +465,13 @@ function SignatoryRow({ sig, index, canRemove, onChange, onRemove, submitErrors 
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Name <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.name ? ' nda-modal__input--error' : ''}`} type="text" placeholder="Full name"
-            value={sig.name} onChange={e => up('name', e.target.value)} />
+            value={sig.name} onChange={e => up('name', e.target.value)} disabled={disabled} />
           {err.name && <p className="nda-modal__field-error">{err.name}</p>}
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Signing as <span className="nda-modal__required">*</span></label>
           <select className={`nda-modal__input${err.capacity ? ' nda-modal__input--error' : ''}`} value={sig.capacity}
-            onChange={e => up('capacity', e.target.value as FASignatory['capacity'])}>
+            onChange={e => up('capacity', e.target.value as FASignatory['capacity'])} disabled={disabled}>
             <option value="">Select…</option>
             <option>Founder</option>
             <option>Company (where incorporated)</option>
@@ -465,7 +480,7 @@ function SignatoryRow({ sig, index, canRemove, onChange, onRemove, submitErrors 
         </div>
         {canRemove && (
           <button type="button" className="nda-modal__row-remove" aria-label={`Remove signatory ${index + 1}`}
-            style={{ marginTop: 22 }} onClick={onRemove}>
+            style={{ marginTop: 22 }} onClick={onRemove} disabled={disabled}>
             <X size={14} />
           </button>
         )}
@@ -665,13 +680,12 @@ export default function FounderAgreementWizardModal({
     const valid = validate(step)
     if (!valid) return
     if (step === 5 && data.publiclyFunded === 'Yes') {
-      if (data.publicFundingReviewStatus === 'approved') { onStepChange?.(step, data); setStep(7); return }
+      if (data.publicFundingReviewStatus === 'approved') { onStepChange?.(step, data); setStep(6); return }
       if (data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') return
       void routeToCounsel()
       return
     }
     onStepChange?.(step, data)
-    if (step === 5) { setStep(7); return }
     if (step === 7) {
       // validate step 6 in case the user jumped here via Preview
       if (!validate(6)) { setStep(6); return }
@@ -782,7 +796,7 @@ export default function FounderAgreementWizardModal({
 
                   <Field label="Company incorporated" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.isIncorporated}
-                      onChange={v => set('isIncorporated', v as 'Yes' | 'No')} />
+                      onChange={v => set('isIncorporated', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                   </Field>
 
                   {data.isIncorporated === 'Yes' && (
@@ -803,12 +817,12 @@ export default function FounderAgreementWizardModal({
                       <Field label="Intended company name" required error={errors.intendedName}>
                         <input className={`nda-modal__input${errors.intendedName ? ' nda-modal__input--error' : ''}`}
                           type="text" placeholder="e.g. Acme Technologies"
-                          value={data.intendedName} onChange={e => set('intendedName', e.target.value)} />
+                          value={data.intendedName} onChange={e => set('intendedName', e.target.value)} disabled={ipSectionLocked} />
                       </Field>
                       <Field label="Target incorporation date" required error={errors.targetIncorporation}>
                         <input className={`nda-modal__input${errors.targetIncorporation ? ' nda-modal__input--error' : ''}`}
                           type="date"
-                          value={data.targetIncorporation} onChange={e => set('targetIncorporation', e.target.value)} />
+                          value={data.targetIncorporation} onChange={e => set('targetIncorporation', e.target.value)} disabled={ipSectionLocked} />
                       </Field>
                     </div>
                   )}
@@ -839,10 +853,11 @@ export default function FounderAgreementWizardModal({
                       {data.founders.map((f, i) => (
                         <FounderRow key={f.id} founder={f} index={i} canRemove={data.founders.length > 1}
                           onChange={updated => updateFounder(i, updated)} onRemove={() => removeFounder(i)}
-                          submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`founder_${i}_`)).map(([k, v]) => [k.replace(`founder_${i}_`, ''), v]))} />
+                          submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`founder_${i}_`)).map(([k, v]) => [k.replace(`founder_${i}_`, ''), v]))}
+                          disabled={ipSectionLocked} />
                       ))}
                     </div>
-                    <AddRowBtn label="+ Add another founder" onClick={addFounder} />
+                    <AddRowBtn label="+ Add another founder" onClick={addFounder} disabled={ipSectionLocked} />
                   </Field>
                 </div>
               )}
@@ -858,7 +873,7 @@ export default function FounderAgreementWizardModal({
                   <Field label="Vesting applies" required
                     hintAfter="Most investors will expect this. Help text explains why.">
                     <ToggleGroup options={['Yes', 'No']} value={data.vestingApplies}
-                      onChange={v => set('vestingApplies', v as 'Yes' | 'No')} />
+                      onChange={v => set('vestingApplies', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                   </Field>
 
                   {data.vestingApplies === 'No' && (
@@ -874,24 +889,24 @@ export default function FounderAgreementWizardModal({
                       <div className="nda-modal__two-col">
                         <Field label="Total vesting period (months)" required>
                           <input type="number" className="nda-modal__input" min={1}
-                            value={data.vestingMonths} onChange={e => set('vestingMonths', e.target.value)} />
+                            value={data.vestingMonths} onChange={e => set('vestingMonths', e.target.value)} disabled={ipSectionLocked} />
                         </Field>
                         <Field label="Cliff (months)" required>
                           <input type="number" className="nda-modal__input" min={0}
-                            value={data.cliffMonths} onChange={e => set('cliffMonths', e.target.value)} />
+                            value={data.cliffMonths} onChange={e => set('cliffMonths', e.target.value)} disabled={ipSectionLocked} />
                         </Field>
                       </div>
                       <div className="nda-modal__two-col">
                         <Field label="Vesting frequency after the cliff" required>
                           <select className="nda-modal__input" value={data.vestingFrequency}
-                            onChange={e => set('vestingFrequency', e.target.value as 'Monthly' | 'Quarterly')}>
+                            onChange={e => set('vestingFrequency', e.target.value as 'Monthly' | 'Quarterly')} disabled={ipSectionLocked}>
                             <option>Monthly</option>
                             <option>Quarterly</option>
                           </select>
                         </Field>
                         <Field label="Acceleration" optional>
                           <select className="nda-modal__input" value={data.acceleration}
-                            onChange={e => set('acceleration', e.target.value)}>
+                            onChange={e => set('acceleration', e.target.value)} disabled={ipSectionLocked}>
                             <option value="">None selected</option>
                             <option>None</option>
                             <option>On change of control</option>
@@ -903,12 +918,12 @@ export default function FounderAgreementWizardModal({
                       <Field label="Good leaver definition" optional>
                         <MultiChips
                           options={['Death', 'Permanent disability', 'Removal without cause', 'Mutual agreement']}
-                          value={data.goodLeaver} onChange={v => set('goodLeaver', v)}
+                          value={data.goodLeaver} onChange={v => set('goodLeaver', v)} disabled={ipSectionLocked}
                         />
                       </Field>
                       <Field label="Bad leaver consequence" optional>
                         <select className="nda-modal__input" value={data.badLeaverEffect}
-                          onChange={e => set('badLeaverEffect', e.target.value)}>
+                          onChange={e => set('badLeaverEffect', e.target.value)} disabled={ipSectionLocked}>
                           <option value="">None selected</option>
                           <option>Unvested forfeited</option>
                           <option>Unvested forfeited and vested repurchased at the lower of cost and fair value</option>
@@ -929,7 +944,7 @@ export default function FounderAgreementWizardModal({
 
                   <Field label="Decision model" required>
                     <select className="nda-modal__input" value={data.decisionModel}
-                      onChange={e => set('decisionModel', e.target.value as FounderAgreementWizardData['decisionModel'])}>
+                      onChange={e => set('decisionModel', e.target.value as FounderAgreementWizardData['decisionModel'])} disabled={ipSectionLocked}>
                       <option>Unanimous for everything</option>
                       <option>Majority with reserved matters unanimous</option>
                       <option>Majority for everything</option>
@@ -944,7 +959,7 @@ export default function FounderAgreementWizardModal({
                           'Change the business', 'Appoint or remove a founder', 'Approve the budget',
                           'Bring in a co-founder',
                         ]}
-                        value={data.reservedMatters} onChange={v => set('reservedMatters', v)}
+                        value={data.reservedMatters} onChange={v => set('reservedMatters', v)} disabled={ipSectionLocked}
                       />
                     </Field>
                   )}
@@ -956,6 +971,7 @@ export default function FounderAgreementWizardModal({
                           type="text" placeholder="e.g. 250000"
                           value={data.debtThreshold}
                           onChange={e => {
+                            if (ipSectionLocked) return
                             const val = e.target.value.replace(/[^\d]/g, '')
                             set('debtThreshold', val)
                             if (val && isNaN(Number(val))) {
@@ -963,7 +979,7 @@ export default function FounderAgreementWizardModal({
                             } else {
                               setErrors(prev => ({ ...prev, debtThreshold: '' }))
                             }
-                          }} />
+                          }} disabled={ipSectionLocked} />
                       </Field>
                     </div>
                   )}
@@ -971,7 +987,7 @@ export default function FounderAgreementWizardModal({
                   <div className="nda-modal__two-col">
                     <Field label="Founder removal process" required>
                       <select className="nda-modal__input" value={data.removalProcess}
-                        onChange={e => set('removalProcess', e.target.value)}>
+                        onChange={e => set('removalProcess', e.target.value)} disabled={ipSectionLocked}>
                         <option>By unanimous vote of the other founders</option>
                         <option>By majority</option>
                         <option>Only for cause</option>
@@ -979,7 +995,7 @@ export default function FounderAgreementWizardModal({
                     </Field>
                     <Field label="What happens to a departing founder's role" required>
                       <select className="nda-modal__input" value={data.departureRole}
-                        onChange={e => set('departureRole', e.target.value)}>
+                        onChange={e => set('departureRole', e.target.value)} disabled={ipSectionLocked}>
                         <option>Resigns as director and employee</option>
                         <option>Retains a board seat while holding shares</option>
                       </select>
@@ -1097,17 +1113,17 @@ export default function FounderAgreementWizardModal({
                   <div className="nda-modal__two-col">
                     <Field label="Confidentiality" required>
                       <ToggleGroup options={['Yes', 'No']} value={data.confidentiality}
-                        onChange={v => set('confidentiality', v as 'Yes' | 'No')} />
+                        onChange={v => set('confidentiality', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                     </Field>
                     <Field label="Non-solicitation of staff and customers" required>
                       <ToggleGroup options={['Yes', 'No']} value={data.nonSolicit}
-                        onChange={v => set('nonSolicit', v as 'Yes' | 'No')} />
+                        onChange={v => set('nonSolicit', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                     </Field>
                   </div>
 
                   <Field label="Restraint of trade" required>
                     <ToggleGroup options={['Yes', 'No']} value={data.restraint}
-                      onChange={v => set('restraint', v as 'Yes' | 'No')} />
+                      onChange={v => set('restraint', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                   </Field>
 
                   {showRestraintFields && (
@@ -1116,11 +1132,11 @@ export default function FounderAgreementWizardModal({
                         hintAfter="Warn where set above 24 months."
                         error={errors.restraintMonths}>
                         <input type="number" className={`nda-modal__input${errors.restraintMonths ? ' nda-modal__input--error' : ''}`}
-                          min={1} value={data.restraintMonths} onChange={e => set('restraintMonths', e.target.value)} />
+                          min={1} value={data.restraintMonths} onChange={e => set('restraintMonths', e.target.value)} disabled={ipSectionLocked} />
                       </Field>
                       <Field label="Restraint area" required>
                         <select className="nda-modal__input" value={data.restraintArea}
-                          onChange={e => set('restraintArea', e.target.value as FounderAgreementWizardData['restraintArea'])}>
+                          onChange={e => set('restraintArea', e.target.value as FounderAgreementWizardData['restraintArea'])} disabled={ipSectionLocked}>
                           <option>South Africa</option>
                           <option>Named provinces</option>
                           <option>Worldwide</option>
@@ -1140,7 +1156,7 @@ export default function FounderAgreementWizardModal({
 
                   <Field label="Deadlock mechanism" required>
                     <select className="nda-modal__input" value={data.deadlock}
-                      onChange={e => set('deadlock', e.target.value)}>
+                      onChange={e => set('deadlock', e.target.value)} disabled={ipSectionLocked}>
                       <option>Mediation then arbitration</option>
                       <option>Casting vote to a named founder</option>
                       <option>Buy or sell</option>
@@ -1151,14 +1167,14 @@ export default function FounderAgreementWizardModal({
                   <div className="nda-modal__two-col">
                     <Field label="Dispute resolution" required>
                       <select className="nda-modal__input" value={data.disputeForum}
-                        onChange={e => set('disputeForum', e.target.value)}>
+                        onChange={e => set('disputeForum', e.target.value)} disabled={ipSectionLocked}>
                         <option>Arbitration under AFSA rules</option>
                         <option>South African courts</option>
                       </select>
                     </Field>
                     <Field label="Governing law" required>
                       <select className="nda-modal__input" value={data.governingLaw}
-                        onChange={e => set('governingLaw', e.target.value)}>
+                        onChange={e => set('governingLaw', e.target.value)} disabled={ipSectionLocked}>
                         <option>South African law</option>
                       </select>
                     </Field>
@@ -1171,10 +1187,11 @@ export default function FounderAgreementWizardModal({
                       {data.signatories.map((sig, i) => (
                         <SignatoryRow key={sig.id} sig={sig} index={i} canRemove={data.signatories.length > 1}
                           onChange={updated => updateSignatory(i, updated)} onRemove={() => removeSignatory(i)}
-                          submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`signatory_${i}_`)).map(([k, v]) => [k.replace(`signatory_${i}_`, ''), v]))} />
+                          submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`signatory_${i}_`)).map(([k, v]) => [k.replace(`signatory_${i}_`, ''), v]))}
+                          disabled={ipSectionLocked} />
                       ))}
                     </div>
-                    <AddRowBtn label="+ Add a signatory" onClick={addSignatory} />
+                    <AddRowBtn label="+ Add a signatory" onClick={addSignatory} disabled={ipSectionLocked} />
                   </Field>
                 </div>
               )}
@@ -1302,7 +1319,7 @@ export default function FounderAgreementWizardModal({
                 <><Check size={15} /> Generate Agreement</>
               ) : step === 5 && data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' ? (
                  <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : '⛔'} {data.publicFundingReviewStatus === 'pending' ? 'Awaiting Counsel Approval' : data.publicFundingReviewStatus === 'rejected' ? 'Counsel Rejected — Generation Blocked' : 'Route to Counsel'}</>
-              ) : step === 5 ? (
+              ) : step === 6 ? (
                 <><Eye size={15} /> Preview</>
               ) : (
                 <>Next Step <ArrowRight size={15} /></>

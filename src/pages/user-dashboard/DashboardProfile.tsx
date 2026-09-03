@@ -187,7 +187,7 @@ export default function DashboardProfile() {
     prefMsgTimerRef.current = setTimeout(() => setPrefMessage(null), 4000)
   }
 
-  const LEGAL_NAME_MAX = 40
+  const LEGAL_NAME_MAX = 150
   // Must contain at least one letter or digit (not special-chars-only).
   const LEGAL_NAME_VALID = /[a-zA-Z0-9]/
 
@@ -196,7 +196,7 @@ export default function DashboardProfile() {
       const trimmed = value.slice(0, LEGAL_NAME_MAX)
       if (trimmed.length > 0 && !LEGAL_NAME_VALID.test(trimmed)) {
         setLegalNameError('Legal name must contain at least one letter or number — special characters alone are not allowed.')
-      } else if (trimmed.length >= LEGAL_NAME_MAX) {
+      } else if (trimmed.length > LEGAL_NAME_MAX) {
         setLegalNameError(`Legal name cannot exceed ${LEGAL_NAME_MAX} characters.`)
       } else {
         setLegalNameError(null)
@@ -308,9 +308,6 @@ export default function DashboardProfile() {
       <main className="dashboard-profile">
         <header className="dashboard-profile__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <span className="dashboard-profile__header-marker" aria-hidden="true">
-            <UserRound size={18} />
-          </span>
           <div>
             <h1>Profile</h1>
             <p>Manage your account settings and preferences</p>
@@ -438,7 +435,7 @@ export default function DashboardProfile() {
                       <span>Full names</span>
                       <div className="dashboard-profile__input-wrap">
                         <UserRound size={18} />
-                        <input type="text" value={formData.individualFullNames} onChange={(e) => handleInputChange('individualFullNames', e.target.value)} />
+                        <input type="text" maxLength={100} value={formData.individualFullNames} onChange={(e) => handleInputChange('individualFullNames', e.target.value)} />
                       </div>
                     </label>
                     <label className="dashboard-profile__field">
@@ -469,19 +466,19 @@ export default function DashboardProfile() {
                         </p>
                       )}
                       <p className="dashboard-profile__field-hint">
-                        {formData.legalName.length}/40 characters
+                        {formData.legalName.length}/{LEGAL_NAME_MAX} characters
                       </p>
                     </div>
                     <label className="dashboard-profile__field">
                       <span>Registration number</span>
                       <div className="dashboard-profile__input-wrap">
-                        <input type="text" value={formData.registrationNumber} onChange={(e) => handleInputChange('registrationNumber', e.target.value)} />
+                        <input type="text" maxLength={20} value={formData.registrationNumber} onChange={(e) => handleInputChange('registrationNumber', e.target.value)} />
                       </div>
                     </label>
                     <label className="dashboard-profile__field dashboard-profile__field--wide">
                       <span>Trading name <em>(optional)</em></span>
                       <div className="dashboard-profile__input-wrap">
-                        <input type="text" value={formData.tradingName} onChange={(e) => handleInputChange('tradingName', e.target.value)} />
+                        <input type="text" maxLength={150} value={formData.tradingName} onChange={(e) => handleInputChange('tradingName', e.target.value)} />
                       </div>
                     </label>
                   </>
@@ -530,6 +527,7 @@ export default function DashboardProfile() {
                     <MapPin size={18} />
                     <input
                       type="text"
+                      maxLength={20}
                       value={formData.unitNumber}
                       onChange={(e) => handleInputChange('unitNumber', e.target.value)}
                     />
@@ -542,6 +540,7 @@ export default function DashboardProfile() {
                     <MapPin size={18} />
                     <input
                       type="text"
+                      maxLength={100}
                       value={formData.building}
                       onChange={(e) => handleInputChange('building', e.target.value)}
                     />
@@ -554,6 +553,7 @@ export default function DashboardProfile() {
                      <MapPin size={18} />
                      <input
                        type="text"
+                       maxLength={100}
                        value={formData.streetName}
                        onChange={(e) => handleInputChange('streetName', e.target.value)}
                      />
@@ -562,11 +562,11 @@ export default function DashboardProfile() {
 
                 <label className="dashboard-profile__field">
                   <span>Suburb</span>
-                  <div className="dashboard-profile__input-wrap"><input type="text" value={formData.suburb} onChange={(e) => handleInputChange('suburb', e.target.value)} /></div>
+                  <div className="dashboard-profile__input-wrap"><input type="text" maxLength={100} value={formData.suburb} onChange={(e) => handleInputChange('suburb', e.target.value)} /></div>
                 </label>
                 <label className="dashboard-profile__field">
                   <span>City / town</span>
-                  <div className="dashboard-profile__input-wrap"><input type="text" value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} /></div>
+                  <div className="dashboard-profile__input-wrap"><input type="text" maxLength={100} value={formData.city} onChange={(e) => handleInputChange('city', e.target.value)} /></div>
                 </label>
                 {formData.country === 'South Africa' && (
                   <label className="dashboard-profile__field">
@@ -592,7 +592,7 @@ export default function DashboardProfile() {
                 <p className="dashboard-profile__section-description dashboard-profile__field--wide">The person authorised to confirm Company Snapshot data for use in a Blueprint.</p>
                 <label className="dashboard-profile__field">
                   <span>Full name</span>
-                  <div className="dashboard-profile__input-wrap"><UserRound size={18} /><input type="text" value={formData.signatoryName} onChange={(e) => handleInputChange('signatoryName', e.target.value)} /></div>
+                  <div className="dashboard-profile__input-wrap"><UserRound size={18} /><input type="text" maxLength={100} value={formData.signatoryName} onChange={(e) => handleInputChange('signatoryName', e.target.value)} /></div>
                 </label>
                 <label className="dashboard-profile__field">
                   <span>Capacity</span>

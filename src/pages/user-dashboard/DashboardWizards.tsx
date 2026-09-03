@@ -2,17 +2,14 @@ import { BackButton } from '../../components/dashboard/BackButton'
 import {
   ArrowRight,
   Briefcase,
-  Building2,
   CheckCircle2,
   Clock3,
-  Code2,
   FileText,
   Minus,
   Plus,
   Shield,
   ShoppingCart,
   UsersRound,
-  WandSparkles,
   Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -60,15 +57,6 @@ const wizardCards = [
     fallbackWeight: 1,
   },
   {
-    title: 'Board Resolution',
-    description: 'Document board decisions and authorise company actions with a legally valid resolution.',
-    time: '5-8 minutes',
-    audience: 'Registered companies (Pty Ltd)',
-    included: ['CIPC ready templates', 'Company secretary', 'Audit exemption'],
-    icon: Briefcase,
-    fallbackWeight: 1,
-  },
-  {
     title: 'Employment Offer Letter',
     description: 'Create legally compliant employment offers that meet South African labour requirements.',
     time: '10-12 minutes',
@@ -99,52 +87,6 @@ const wizardCards = [
     fallbackWeight: 3,
   },
   {
-    title: 'Memorandum of Agreement (MOA)',
-    description: 'Formalise an understanding between two or more parties before a binding contract is signed.',
-    time: '10-14 minutes',
-    audience: 'Businesses entering partnerships or collaborations',
-    included: ['SA-specific drafting', 'Scope & obligations', 'Dispute resolution'],
-    icon: FileText,
-    fallbackWeight: 2,
-  },
-  {
-    title: 'Software Development Agreement',
-    description: 'Comprehensive agreement covering scope, deliverables, IP ownership, and payment terms for software projects.',
-    time: '15-20 minutes',
-    audience: 'Software developers and their clients',
-    included: ['IP & ownership clauses', 'Milestone & payment terms', 'Warranty & liability'],
-    icon: Code2,
-    popular: true,
-    fallbackWeight: 3,
-  },
-  {
-    title: 'Employment Contract Pack',
-    description: 'A full employment contract pack covering terms, conditions, and statutory requirements for new hires.',
-    time: '15-20 minutes',
-    audience: 'Companies formalising employment relationships',
-    included: ['BCEA compliance', 'Leave & benefits', 'Termination clauses'],
-    icon: UsersRound,
-    fallbackWeight: 3,
-  },
-  {
-    title: 'Company Registration',
-    description: 'Complete CIPC company registration with all required documents and compliance checks.',
-    time: '20-25 minutes',
-    audience: 'First-time business owners',
-    included: ['MOI templates', 'Share register', 'Director appointments'],
-    icon: Building2,
-    fallbackWeight: 4,
-  },
-  {
-    title: 'Shareholders Agreement',
-    description: 'Comprehensive agreement covering rights, obligations, and dispute resolution for shareholders.',
-    time: '18-22 minutes',
-    audience: 'Companies with multiple shareholders',
-    included: ['Exit clauses', 'Voting rights', 'Dividend policies'],
-    icon: UsersRound,
-    fallbackWeight: 6,
-  },
-  {
     title: 'Founders Agreement and IP Assignment',
     description: 'Establish co-founder roles, equity splits, vesting schedules, and assign all intellectual property to the company.',
     time: '18-22 minutes',
@@ -158,15 +100,9 @@ const wizardCards = [
 // themselves are never stored in the UI; they are returned by the catalogue API.
 const blueprintIdByTitle: Record<string, string> = {
   'Non-Disclosure Agreement (NDA)': 'nda',
-  'Board Resolution': 'board-resolution',
   'Employment Offer Letter': 'employment-offer-letter',
   'Privacy & Cookies Policy': 'privacy-policy',
   'Service Level Agreement (SLA)': 'service-level-agreement',
-  'Memorandum of Agreement (MOA)': 'moa',
-  'Software Development Agreement': 'software-development-agreement',
-  'Employment Contract Pack': 'employment-pack',
-  'Company Registration': 'company-registration',
-  'Shareholders Agreement': 'shareholders-agreement',
   'Founders Agreement and IP Assignment': 'founders-agreement-ip',
 }
 
@@ -420,9 +356,6 @@ export default function DashboardWizards() {
         )}
         <header className="dashboard-wizards__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
-          <span className="dashboard-wizards__header-marker" aria-hidden="true">
-            <WandSparkles size={18} />
-          </span>
           <div>
             <h1>Browse All Blueprints</h1>
             <p>Select a legal blueprint to generate your document</p>

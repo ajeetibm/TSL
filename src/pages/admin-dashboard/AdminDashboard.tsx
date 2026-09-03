@@ -662,7 +662,7 @@ export default function AdminDashboard() {
               ? 'Settings'
               : activeNav === 'profile'
                 ? 'Profile'
-                : 'Dashboard Overview'
+                : 'Admin Dashboard Overview'
   const headerDescription =
     activeNav === 'users'
       ? 'Manage platform administrators, permissions, and user access'

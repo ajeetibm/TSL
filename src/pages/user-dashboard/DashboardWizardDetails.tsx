@@ -174,9 +174,8 @@ const plans: Record<PlanKey, {
     includes: [
       '4 Blueprint Units per month',
       '0 Counsel Credits per month',
-      'Standard support (48-72h response)',
-      '1GB document storage',
-      'PDF export',
+      'No API access',
+      'No white-label',
     ],
   },
   Operator: {
@@ -222,8 +221,6 @@ function getStoredUserEmail() {
     return 'thabo@company.co.za'
   }
 }
-
-const planFeatures = ['Unlimited runs', 'Priority processing', 'Advanced customisation', 'Bulk operations']
 
 const pricingComparisonPlans = [
   {
@@ -887,7 +884,7 @@ export default function DashboardWizardDetails() {
             }}
           >
             <ArrowLeft size={18} />
-            Back to Wizards
+            Back to Blueprints
           </button>
         </div>
 
@@ -923,7 +920,7 @@ export default function DashboardWizardDetails() {
                   <WandSparkles size={16} />
                   Selection
                 </span>
-                <h1>Blueprints Wizards</h1>
+                <h1>Blueprints</h1>
               </div>
               <span className="dashboard-wizard-details__count">
                 <ShoppingCart size={16} />
@@ -1020,16 +1017,6 @@ export default function DashboardWizardDetails() {
                     </div>
                   </div>
 
-                  <h4>Sample text for now</h4>
-                  <div className="dashboard-wizard-details__feature-grid">
-                    {planFeatures.map((feature) => (
-                      <span key={feature}>
-                        <CheckCircle2 size={18} />
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-
                   <div className="dashboard-wizard-details__operator">
                     <h5>{plan.includesLabel}</h5>
                     <ul>
@@ -1075,7 +1062,7 @@ export default function DashboardWizardDetails() {
             <div className="dashboard-wizard-details__section-heading">
               <div>
                 <h2>What You'll Need to Start</h2>
-                <p>Have these details ready to complete the wizard quickly.</p>
+                <p>Have these details ready to complete the blueprint quickly.</p>
               </div>
             </div>
 
@@ -1092,7 +1079,7 @@ export default function DashboardWizardDetails() {
           <section className="dashboard-wizard-details__panel dashboard-wizard-details__workflow">
             <div className="dashboard-wizard-details__section-heading">
               <div>
-                <h2>How the Wizard Works</h2>
+                <h2>How the Blueprint Works</h2>
               </div>
             </div>
 

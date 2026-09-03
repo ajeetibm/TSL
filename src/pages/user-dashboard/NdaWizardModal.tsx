@@ -314,22 +314,22 @@ function AddressBlock({
   return (
     <div className="nda-modal__address-block">
       <FormGroup label="Unit or street number" required error={e('street_number')}>
-        <TextField value={addr.street_number} onChange={(v) => onChange('street_number', v)} placeholder="e.g. 12" error={!!e('street_number')} />
+        <TextField value={addr.street_number} onChange={(v) => onChange('street_number', v)} placeholder="e.g. 12" maxLength={20} error={!!e('street_number')} />
       </FormGroup>
       <div className="nda-modal__two-col">
         <FormGroup label="Complex or building" optional>
-          <TextField value={addr.building} onChange={(v) => onChange('building', v)} placeholder="Optional" />
+          <TextField value={addr.building} onChange={(v) => onChange('building', v)} placeholder="Optional" maxLength={100} />
         </FormGroup>
         <FormGroup label="Street name" required error={e('street_name')}>
-          <TextField value={addr.street_name} onChange={(v) => onChange('street_name', v)} placeholder="e.g. Main Road" error={!!e('street_name')} />
+          <TextField value={addr.street_name} onChange={(v) => onChange('street_name', v)} placeholder="e.g. Main Road" maxLength={100} error={!!e('street_name')} />
         </FormGroup>
       </div>
       <div className="nda-modal__two-col">
         <FormGroup label="Suburb" required error={e('suburb')}>
-          <TextField value={addr.suburb} onChange={(v) => onChange('suburb', v)} error={!!e('suburb')} />
+          <TextField value={addr.suburb} onChange={(v) => onChange('suburb', v)} maxLength={100} error={!!e('suburb')} />
         </FormGroup>
         <FormGroup label="City or town" required error={e('city')}>
-          <TextField value={addr.city} onChange={(v) => onChange('city', v)} error={!!e('city')} />
+          <TextField value={addr.city} onChange={(v) => onChange('city', v)} maxLength={100} error={!!e('city')} />
         </FormGroup>
       </div>
       <div className="nda-modal__two-col">
@@ -346,7 +346,7 @@ function AddressBlock({
           <div />
         )}
         <FormGroup label="Postal code" required error={e('postal_code')}>
-          <TextField value={addr.postal_code} onChange={(v) => onChange('postal_code', v)} placeholder="e.g. 2196" maxLength={6} error={!!e('postal_code')} />
+          <TextField value={addr.postal_code} onChange={(v) => onChange('postal_code', v)} placeholder="e.g. 2196" maxLength={addr.country === 'South Africa' ? 4 : 20} error={!!e('postal_code')} />
         </FormGroup>
       </div>
       <FormGroup label="Country" required>
@@ -443,7 +443,7 @@ function PartyCard({
       {entity && (
         <div className="nda-modal__two-col">
           <FormGroup label="Signatory full names" required error={e('signatory_name')}>
-            <TextField value={party.signatory_name} onChange={(v) => onChange('signatory_name', v)} placeholder="Who signs on behalf of this party" error={!!e('signatory_name')} />
+            <TextField value={party.signatory_name} onChange={(v) => onChange('signatory_name', v)} placeholder="Who signs on behalf of this party" maxLength={100} error={!!e('signatory_name')} />
           </FormGroup>
           <FormGroup label="Signatory capacity" required>
             <SelectField

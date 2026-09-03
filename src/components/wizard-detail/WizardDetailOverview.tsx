@@ -22,49 +22,62 @@ const plans: Record<PlanKey, {
   price: string
   description: string
   icon: typeof Rocket
+  highlights: string[]
   includes: string[]
   includesLabel: string
 }> = {
   Launchpad: {
     title: 'Launchpad Plan',
-    price: 'R299',
+    price: 'R499',
     description: 'Perfect for startups and individuals with essential legal needs',
     icon: Rocket,
+    highlights: [
+      '4 Blueprint run units per month',
+    ],
     includesLabel: "What's Included in Launchpad:",
     includes: [
-      'Access to 4 legal wizards',
-      '5 wizard runs per month',
-      'Standard support (48-72h response)',
-      '1GB document storage',
-      'PDF export',
+      '4 Blueprint Units per month',
+      '0 Counsel Credits per month',
+      'No API access',
+      'No white-label',
     ],
   },
   Operator: {
     title: 'Operator Plan',
-    price: 'R999',
+    price: 'R1 499',
     description: 'For growing businesses with ongoing legal needs',
     icon: Building2,
+    highlights: [
+      '12 Blueprint run units per month',
+      'Priority support (24–48h)',
+    ],
     includesLabel: "What's Included in Operator:",
     includes: [
-      'Access to all 12 legal wizards',
-      'Unlimited wizard runs',
+      '12 Blueprint Units per month',
+      '2 Counsel Credits per month',
       'Priority support (24-48h response)',
       'Unlimited document storage',
       'API access for integrations',
+      'No white-label',
     ],
   },
   Boardroom: {
     title: 'Boardroom Plan',
-    price: 'R2,499',
+    price: 'R3 999',
     description: 'Enterprise-grade legal coverage for large organisations',
     icon: Crown,
+    highlights: [
+      '30 Blueprint run units per month',
+      'Dedicated support (SLA)',
+    ],
     includesLabel: "What's Included in Boardroom:",
     includes: [
-      'All 30 legal wizards',
-      'Unlimited wizard runs',
+      '30 Blueprint Units per month',
+      '6 Counsel Credits per month',
       'Dedicated support (SLA)',
       'Unlimited document storage',
       'API access + white-label options',
+      'Custom workflows',
     ],
   },
 }
@@ -186,7 +199,7 @@ export function WizardDetailOverview() {
       <div className="wizard-detail__topbar">
         <a href="/wizard-catalogue" className="wizard-detail__back">
           <ArrowLeft size={16} />
-          Back to Wizards
+          Back to Blueprints
         </a>
       </div>
 
@@ -292,12 +305,10 @@ export function WizardDetailOverview() {
               </div>
 
               <div className="wizard-detail__sample">
-                <h4>Sample text for now</h4>
                 <div className="wizard-detail__sample-grid">
-                  <span>Unlimited runs</span>
-                  <span>Priority processing</span>
-                  <span>Advanced customisation</span>
-                  <span>Bulk operations</span>
+                  {plan.highlights.map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
                 </div>
                 <div className="wizard-detail__included-box">
                   <b>{plan.includesLabel}</b>
@@ -335,7 +346,7 @@ export function WizardDetailOverview() {
 
       <section className="wizard-detail__panel wizard-detail__panel--start">
         <h2>What You'll Need to Start</h2>
-        <p>Have these details ready to complete the wizard quickly:</p>
+        <p>Have these details ready to complete the blueprint quickly:</p>
         <ul>
           {startItems.map((item) => (
             <li key={item}>{item}</li>
@@ -344,7 +355,7 @@ export function WizardDetailOverview() {
       </section>
 
       <section className="wizard-detail__panel">
-        <h2>How the Wizard Works</h2>
+        <h2>How the Blueprint Works</h2>
         <div className="wizard-detail__steps">
           {wizardSteps.map(([number, title, body, duration]) => (
             <article className="wizard-detail__step" key={number}>
