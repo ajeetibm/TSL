@@ -28,6 +28,7 @@ type CounselFormData = {
 const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 const ALLOWED_EXT = ['.pdf', '.docx']
 const MAX_FILE_SIZE = 4 * 1024 * 1024 // 4 MB
+const DESCRIPTION_MAX_LENGTH = 500
 
 type CounselHistoryRequest = {
   requestId: string
@@ -244,10 +245,6 @@ export default function DashboardCounsel() {
     const errors: string[] = []
 
     for (const file of incoming) {
-      if (attachments.length + valid.length >= 1) {
-        errors.push('A counsel request can contain only one document.')
-        continue
-      }
       const ext = file.name.toLowerCase().slice(file.name.lastIndexOf('.'))
       if (!ALLOWED_TYPES.includes(file.type) && !ALLOWED_EXT.includes(ext)) {
         errors.push(`"${file.name}" is not a PDF or DOCX file.`)
@@ -296,20 +293,16 @@ export default function DashboardCounsel() {
       return
     }
 
+    if (!formData.relatedWizard) {
+      setErrorMessage('Choose the wizard document to be reviewed before submitting a counsel request.')
+      return
+    }
+
     const creditsRequired = 1
     if (credits.creditsRemaining < creditsRequired) {
       setErrorMessage('You do not have any counsel credits remaining. Please top up before submitting.')
       return
     }
-    if (!formData.relatedWizard) {
-      setErrorMessage('Choose the wizard document to be reviewed before submitting a counsel request.')
-      return
-    }
-    if (attachments.length !== 1) {
-      setErrorMessage('A counsel request must include exactly one document.')
-      return
-    }
-
     submitInFlightRef.current = true
     setIsSubmitting(true)
 
@@ -508,18 +501,24 @@ export default function DashboardCounsel() {
                   />
                 </label>
 
-                <label className="dashboard-counsel__field">
-                  <span>Description</span>
+                <div className="dashboard-counsel__field">
+                  <span className="dashboard-counsel__label-row">
+                    <span>Description <span style={{ color: '#c0392b' }}>*</span></span>
+                    <small style={{ color: formData.description.length >= DESCRIPTION_MAX_LENGTH ? '#c0392b' : '#6d6d6d' }}>
+                      {formData.description.length}/{DESCRIPTION_MAX_LENGTH}
+                    </small>
+                  </span>
                   <textarea
                     aria-label="Description"
                     value={formData.description}
+                    maxLength={DESCRIPTION_MAX_LENGTH}
                     onChange={(event) => handleFieldChange('description', event.target.value)}
                   />
-                </label>
+                </div>
 
                 <div className="dashboard-counsel__field">
                   <span className="dashboard-counsel__label-row">
-                    Document for review
+                    <span>Document for review <small style={{ color: '#6d6d6d', fontWeight: 400 }}>(optional)</small></span>
                     <small>
                       <Upload size={14} />
                       One PDF or DOCX • Max 4MB
@@ -573,7 +572,7 @@ export default function DashboardCounsel() {
                 </div>
 
                 <label className="dashboard-counsel__field">
-                  <span>Related Wizard</span>
+                  <span>Related Wizard <span style={{ color: '#c0392b' }}>*</span></span>
                   <select
                     aria-label="Related Wizard"
                     value={formData.relatedWizard}
