@@ -2019,7 +2019,7 @@ export default function Dashboard() {
           remaining: shortage.remainingBlueprintUnits,
           required: shortage.requiredBlueprintUnits,
           blueprintName: bpName,
-          pricePerUnit: shortage.blueprintRunTopUpRate ?? 250,
+          pricePerUnit: shortage.blueprintRunTopUpRate ?? 149,
           iconName: BLUEPRINT_ICON_NAME[bpName] ?? 'Shield',
         })
       } else showNdaToast(response.message || 'Unable to generate the final document.')

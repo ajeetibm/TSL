@@ -10,7 +10,7 @@ import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './BlueprintTopUpPayment.css'
 
-const PRICE_PER_UNIT = 250
+const PRICE_PER_UNIT = 149
 const VAT_RATE = 0.15
 const MIN_UNITS = 1
 const MAX_UNITS = 100

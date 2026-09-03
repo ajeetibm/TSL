@@ -1186,7 +1186,7 @@ export default function DashboardWizardDetails() {
             blueprintName={insufficientUnits.blueprintName}
             remaining={insufficientUnits.remaining}
             required={insufficientUnits.required}
-            pricePerUnit={250}
+            pricePerUnit={149}
             iconName={insufficientUnits.iconName}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => { setInsufficientUnits(null); setIsPaymentView(true) }}

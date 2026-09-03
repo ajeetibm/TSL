@@ -15,7 +15,9 @@
 
 .bs-compare-modal {
   position: relative;
-  width: min(860px, 100%);
+  width: min(1120px, 100%);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
   border-radius: 20px;
   padding: 40px 32px 36px;
   background: #ffffff;
@@ -198,7 +200,7 @@
 
 .bs-compare-card__features {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -208,8 +210,8 @@
   display: flex;
   align-items: flex-start;
   gap: 9px;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
 }
 
 .bs-compare-card__feature--included {

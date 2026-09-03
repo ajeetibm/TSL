@@ -168,7 +168,7 @@ describe('Dashboard Page', () => {
       expect(screen.getByText('12 Blueprint Units per month')).toBeInTheDocument()
     })
     expect(screen.getByText('2 Counsel credits per month')).toBeInTheDocument()
-    expect(screen.getByText('Blueprint top-ups at R250 per Unit')).toBeInTheDocument()
+    expect(screen.getByText('Blueprint top-ups at R149 per Unit')).toBeInTheDocument()
     expect(screen.getByText('Priority support (24-48h response)')).toBeInTheDocument()
 
     // 5th item is hidden until "View All Features" is clicked
