@@ -10,6 +10,7 @@
 import { Loader2, X } from 'lucide-react'
 import type { SubscriptionData, SubscriptionPlan } from '../../../services/dashboardTypes'
 import { formatDate } from '../../../services/dashboardTypes'
+import './ComparePlansModal.css'
 
 interface Props {
   plan: SubscriptionPlan           // target (lower) plan
@@ -43,62 +44,66 @@ export function DowngradeConfirmModal({
         aria-labelledby="downgrade-confirm-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          type="button"
-          className="bs-modal-close"
-          aria-label="Close downgrade confirmation"
-          onClick={onCancel}
-        >
-          <X size={20} />
-        </button>
-
-        <h2 id="downgrade-confirm-title">Confirm your downgrade</h2>
-
-        <p className="bs-confirm-modal__subtitle">
-          Your plan will change on {effectiveDate}. You'll keep full{' '}
-          {subscription.planName} access until then. No refund is issued
-          for the unused portion of this cycle.
-        </p>
-
-        <dl className="bs-confirm-modal__breakdown">
+        <header className="bs-confirm-modal__header">
           <div>
-            <dt>Current plan (active until switch)</dt>
-            <dd>{subscription.planName} — R{subscription.price.toLocaleString('en-ZA')}/mo</dd>
+            <h2 id="downgrade-confirm-title">Confirm your downgrade</h2>
+            <p>
+              Your plan will change on {effectiveDate}. You'll keep full{' '}
+              {subscription.planName} access until then. No refund is issued
+              for the unused portion of this cycle.
+            </p>
           </div>
-          <div>
-            <dt>New plan (from {effectiveDate})</dt>
-            <dd>{plan.name} — R{plan.price.toLocaleString('en-ZA')}/mo</dd>
-          </div>
-        </dl>
-
-        <div className="bs-confirm-modal__total bs-confirm-modal__total--zero">
-          <span>Charge today</span>
-          <strong>R0.00</strong>
-        </div>
-
-        {actionError && (
-          <p className="bs-modal-error" role="alert">{actionError}</p>
-        )}
-
-        <div className="bs-confirm-modal__actions">
           <button
             type="button"
-            className="bs-confirm-modal__btn-cancel"
+            className="bs-confirm-modal__header-close"
+            aria-label="Close downgrade confirmation"
             onClick={onCancel}
-            disabled={actionLoading}
           >
-            Cancel
+            <X size={20} />
           </button>
-          <button
-            type="button"
-            className="bs-confirm-modal__btn-confirm"
-            onClick={onConfirm}
-            disabled={actionLoading}
-          >
-            {actionLoading
-              ? <><Loader2 size={16} className="bs-spin" /> Scheduling…</>
-              : 'Confirm scheduled downgrade'}
-          </button>
+        </header>
+
+        <div className="bs-confirm-modal__body">
+          <dl className="bs-confirm-modal__breakdown">
+            <div>
+              <dt>Current plan (active until switch)</dt>
+              <dd>{subscription.planName} — R{subscription.price.toLocaleString('en-ZA')}/mo</dd>
+            </div>
+            <div>
+              <dt>New plan (from {effectiveDate})</dt>
+              <dd>{plan.name} — R{plan.price.toLocaleString('en-ZA')}/mo</dd>
+            </div>
+          </dl>
+
+          <div className="bs-confirm-modal__total bs-confirm-modal__total--zero">
+            <span>Charge today</span>
+            <strong>R0.00</strong>
+          </div>
+
+          {actionError && (
+            <p className="bs-modal-error" role="alert">{actionError}</p>
+          )}
+
+          <div className="bs-confirm-modal__actions">
+            <button
+              type="button"
+              className="bs-confirm-modal__btn-cancel"
+              onClick={onCancel}
+              disabled={actionLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="bs-confirm-modal__btn-confirm"
+              onClick={onConfirm}
+              disabled={actionLoading}
+            >
+              {actionLoading
+                ? <><Loader2 size={16} className="bs-spin" /> Scheduling…</>
+                : 'Confirm scheduled downgrade'}
+            </button>
+          </div>
         </div>
       </section>
     </div>

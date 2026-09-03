@@ -22,62 +22,82 @@ const plans: Record<PlanKey, {
   price: string
   description: string
   icon: typeof Rocket
-  highlights: string[]
-  includes: string[]
   includesLabel: string
+  col1: string[]
+  col2: string[]
+  excluded: string[]
 }> = {
   Launchpad: {
     title: 'Launchpad Plan',
     price: 'R499',
     description: 'Perfect for startups and individuals with essential legal needs',
     icon: Rocket,
-    highlights: [
-      '4 Blueprint run units per month',
-    ],
     includesLabel: "What's Included in Launchpad:",
-    includes: [
-      '4 Blueprint Units per month',
-      '0 Counsel Credits per month',
-      'No API access',
-      'No white-label',
+    col1: [
+      'For founders setting the company up and putting the first documents in place',
+      'All five Blueprints',
+      '4 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+    ],
+    col2: [
+      'No Counsel credits included',
+      'Additional Counsel credits: R550 per credit (30 minutes of attorney time)',
+      'Email support: response within 48 business hours',
+      '1 user',
+      'Document storage: 12 months from generation',
+    ],
+    excluded: [
+      'Counsel credits',
+      'Additional users',
     ],
   },
   Operator: {
     title: 'Operator Plan',
     price: 'R1 499',
-    description: 'For growing businesses with ongoing legal needs',
+    description: 'For businesses that are trading and hiring, and generating documents regularly',
     icon: Building2,
-    highlights: [
-      '12 Blueprint run units per month',
-      'Priority support (24–48h)',
-    ],
     includesLabel: "What's Included in Operator:",
-    includes: [
-      '12 Blueprint Units per month',
-      '2 Counsel Credits per month',
-      'Priority support (24-48h response)',
-      'Unlimited document storage',
-      'API access for integrations',
-      'No white-label',
+    col1: [
+      'For businesses that are trading and hiring, and generating documents regularly',
+      'All five Blueprints',
+      '12 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+    ],
+    col2: [
+      '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
+      'Priority support: response within 24 business hours',
+      '3 users',
+      'Document storage: life of the subscription',
+    ],
+    excluded: [
+      'Additional users beyond 3',
     ],
   },
   Boardroom: {
     title: 'Boardroom Plan',
     price: 'R3 999',
-    description: 'Enterprise-grade legal coverage for large organisations',
+    description: 'For established companies that need high-volume documents and regular attorney access',
     icon: Crown,
-    highlights: [
-      '30 Blueprint run units per month',
-      'Dedicated support (SLA)',
-    ],
     includesLabel: "What's Included in Boardroom:",
-    includes: [
-      '30 Blueprint Units per month',
-      '6 Counsel Credits per month',
-      'Dedicated support (SLA)',
-      'Unlimited document storage',
-      'API access + white-label options',
-      'Custom workflows',
+    col1: [
+      'For established companies that need high-volume documents and regular attorney access',
+      'All five Blueprints',
+      '30 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+    ],
+    col2: [
+      '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
+      'Dedicated support with SLA',
+      'Unlimited users',
+      'Document storage: life of the subscription',
+    ],
+    excluded: [
+      'Additional users beyond 10',
     ],
   },
 }
@@ -305,21 +325,32 @@ export function WizardDetailOverview() {
               </div>
 
               <div className="wizard-detail__sample">
-                <div className="wizard-detail__sample-grid">
-                  {plan.highlights.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
                 <div className="wizard-detail__included-box">
                   <b>{plan.includesLabel}</b>
-                  <ul>
-                    {plan.includes.map((item) => (
-                      <li key={item}>
-                        <ChevronRight size={14} />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="wizard-detail__includes-cols">
+                    <ul>
+                      {plan.col1.map((item) => (
+                        <li key={item}>
+                          <ChevronRight size={14} />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                    <ul>
+                      {plan.col2.map((item) => (
+                        <li key={item}>
+                          <ChevronRight size={14} />
+                          {item}
+                        </li>
+                      ))}
+                      {plan.excluded.map((item) => (
+                        <li key={item} className="wizard-detail__includes-excluded">
+                          <span>✕</span>
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -330,18 +361,6 @@ export function WizardDetailOverview() {
           Want to see all features and pricing tiers?{' '}
           <a href="/pricing">View complete pricing comparison →</a>
         </p>
-      </section>
-
-      <section className="wizard-detail__panel">
-        <h2>What's Included</h2>
-        <div className="wizard-detail__check-grid">
-          {includedItems.map((item) => (
-            <span key={item}>
-              <ClipboardCheck size={14} />
-              {item}
-            </span>
-          ))}
-        </div>
       </section>
 
       <section className="wizard-detail__panel wizard-detail__panel--start">

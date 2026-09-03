@@ -96,35 +96,31 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 
   if (id === 'launchpad') {
     return [
+      'All five Blueprints',
       '4 Blueprint run units per month',
-      '0 Counsel credits per month',
-      'Basic email support',
-      '6 months document storage',
-      'No API access',
-      'No white-label',
+      'Additional run units: R149 each',
+      'No Counsel credits included',
+      'Additional Counsel credits: R550 per credit (30 minutes of attorney time)',
     ]
   }
 
   if (id === 'operator') {
     return [
+      'All five Blueprints',
       '12 Blueprint run units per month',
-      '2 Counsel credits per month',
-      'Priority support (24–48 hr)',
-      'Unlimited document storage',
-      'API access',
-      'No white-label',
+      'Additional run units: R149 each',
+      '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
     ]
   }
 
   if (id === 'boardroom') {
     return [
+      'All five Blueprints',
       '30 Blueprint run units per month',
-      '6 Counsel credits per month',
-      'Dedicated support (SLA)',
-      'Unlimited document storage',
-      'API access',
-      'White-label options',
-      'Custom workflows',
+      'Additional run units: R149 each',
+      '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
     ]
   }
 
@@ -138,6 +134,112 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
 const PREVIEW_COUNT = 4
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
+// Full feature details shown in the "View All Features" modal per plan
+const PLAN_FULL_FEATURES: Record<string, { items: string[]; excluded: string[] }> = {
+  Launchpad: {
+    items: [
+      'For founders setting the company up and putting the first documents in place',
+      'All five Blueprints',
+      '4 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+      'No Counsel credits included',
+      'Additional Counsel credits: R550 per credit (30 minutes of attorney time)',
+      'Email support: response within 48 business hours',
+      '1 user',
+      'Document storage: 12 months from generation',
+    ],
+    excluded: [
+      'Counsel credits',
+      'Additional users',
+    ],
+  },
+  Operator: {
+    items: [
+      'For growing teams that need regular legal documents and occasional attorney time',
+      'All five Blueprints',
+      '12 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+      '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
+      'Priority email support: response within 24 business hours',
+      'Up to 5 users',
+      'Document storage: 24 months from generation',
+    ],
+    excluded: [
+      'Additional users beyond 3',
+    ],
+  },
+  Boardroom: {
+    items: [
+      'For established companies that need high-volume documents and regular attorney access',
+      'All five Blueprints',
+      '30 Blueprint run units per month',
+      'Additional run units: R149 each',
+      'No run-unit rollover; unused units expire at the end of the billing month',
+      '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end',
+      'Additional Counsel credits: R550 per credit',
+      'Dedicated support with SLA',
+      'Unlimited users',
+      'Document storage: 36 months from generation',
+    ],
+    excluded: [
+      'Additional users beyond 10',
+    ],
+  },
+}
+
+interface PlanFeaturesModalProps {
+  planName: string
+  onClose: () => void
+}
+
+function PlanFeaturesModal({ planName, onClose }: PlanFeaturesModalProps) {
+  const plan = PLAN_FULL_FEATURES[planName]
+  if (!plan) return null
+
+  return (
+    <div
+      className="user-dashboard__plan-modal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="plan-features-modal-title"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div className="user-dashboard__plan-modal">
+        <button
+          type="button"
+          className="user-dashboard__plan-modal-close"
+          onClick={onClose}
+          aria-label="Close"
+        >
+          <X size={16} />
+        </button>
+
+        <h2 id="plan-features-modal-title" className="user-dashboard__plan-modal-title">
+          Your <span>{planName} Plan</span> Includes:
+        </h2>
+
+        <ul className="user-dashboard__plan-modal-list">
+          {plan.items.map((item) => (
+            <li key={item}>
+              <CheckCircle2 size={16} />
+              {item}
+            </li>
+          ))}
+          {plan.excluded.map((item) => (
+            <li key={item} className="user-dashboard__plan-modal-list-excluded">
+              <span className="user-dashboard__plan-modal-x">✕</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  )
+}
+
 interface PlanCardProps {
   planName: string
   benefits: string[]
@@ -146,48 +248,49 @@ interface PlanCardProps {
 }
 
 function PlanCard({ planName, benefits, variant, isFree }: PlanCardProps) {
-  const [showAll, setShowAll] = useState(false)
-  const hasMore = benefits.length > PREVIEW_COUNT
-  const visible = showAll ? benefits : benefits.slice(0, PREVIEW_COUNT)
+  const [showModal, setShowModal] = useState(false)
+  const hasFullFeatures = planName in PLAN_FULL_FEATURES
 
   return (
-    <div className={`user-dashboard__plan-card user-dashboard__plan-card--${variant}`}>
-      <h3>
-        Your <span>{planName} Plan</span> Includes:
-      </h3>
+    <>
+      <div className={`user-dashboard__plan-card user-dashboard__plan-card--${variant}`}>
+        <h3>
+          Your <span>{planName} Plan</span> Includes:
+        </h3>
 
-      {isFree ? (
-        <p className="user-dashboard__plan-card-free-text">
-          Get started with the basics — upgrade anytime to unlock more.
-        </p>
-      ) : (
-        <>
-          <ul>
-            {visible.map((benefit) => (
-              <li key={benefit}>
-                <CheckCircle2 size={18} />
-                {benefit}
-              </li>
-            ))}
-          </ul>
+        {isFree ? (
+          <p className="user-dashboard__plan-card-free-text">
+            Get started with the basics — upgrade anytime to unlock more.
+          </p>
+        ) : (
+          <>
+            <ul>
+              {benefits.map((benefit) => (
+                <li key={benefit}>
+                  <CheckCircle2 size={18} />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
 
-          {hasMore && (
-            <button
-              type="button"
-              className="user-dashboard__plan-card-toggle"
-              onClick={() => setShowAll((s) => !s)}
-              aria-expanded={showAll}
-            >
-              {showAll ? 'Show Less' : 'View All Features'}
-              <ChevronDown
-                size={13}
-                className={`user-dashboard__plan-card-chevron${showAll ? ' user-dashboard__plan-card-chevron--open' : ''}`}
-              />
-            </button>
-          )}
-        </>
+            {hasFullFeatures && (
+              <button
+                type="button"
+                className="user-dashboard__plan-card-toggle"
+                onClick={() => setShowModal(true)}
+              >
+                View All Features
+                <ChevronDown size={13} className="user-dashboard__plan-card-chevron" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {showModal && (
+        <PlanFeaturesModal planName={planName} onClose={() => setShowModal(false)} />
       )}
-    </div>
+    </>
   )
 }
 

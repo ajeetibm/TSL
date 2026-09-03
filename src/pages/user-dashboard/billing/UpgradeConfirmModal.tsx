@@ -110,15 +110,11 @@ export function UpgradeConfirmModal({
                 <dt>{preview.isFullMonthlyCharge ? `Full monthly ${preview.newPlanName} charge` : `Prorated ${preview.newPlanName} charge`}</dt>
                 <dd>{fmt(preview.proratedNewCharge)}</dd>
               </div>
-              <div>
-                <dt>VAT (15%)</dt>
-                <dd>{fmt(preview.tax)}</dd>
-              </div>
             </dl>
 
             <div className="bs-confirm-modal__total">
               <span>Total due today</span>
-              <strong>{fmt(preview.totalDueToday)}</strong>
+              <strong>{fmt(preview.totalDueToday - preview.tax)}</strong>
             </div>
 
             {preview.paymentMethod && (
@@ -152,7 +148,7 @@ export function UpgradeConfirmModal({
             {actionLoading
               ? <><Loader2 size={16} className="bs-spin" /> Processing…</>
               : preview
-                ? `Confirm & pay ${fmt(preview.totalDueToday)}`
+                ? `Confirm & pay ${fmt(preview.totalDueToday - preview.tax)}`
                 : `Upgrade to ${plan.name}`}
           </button>
         </div>

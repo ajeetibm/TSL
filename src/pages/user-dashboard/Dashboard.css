@@ -263,7 +263,7 @@
 
 .user-dashboard__plan-card li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   font-size: 16px;
 }
@@ -277,6 +277,8 @@
 }
 
 .user-dashboard__plan-card svg {
+  flex-shrink: 0;
+  margin-top: 2px;
   color: #cf9b2f;
 }
 
@@ -315,6 +317,101 @@
   color: #a0a0a0;
   line-height: 1.5;
 }
+
+/* ── Plan Features Modal ─────────────────────────────────────────────────── */
+.user-dashboard__plan-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.user-dashboard__plan-modal {
+  position: relative;
+  background: #1c2333;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 36px 40px 40px;
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.user-dashboard__plan-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.user-dashboard__plan-modal-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.user-dashboard__plan-modal .user-dashboard__plan-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 16px;
+  padding-right: 36px;
+}
+
+.user-dashboard__plan-modal-title span {
+  color: #cf9b2f;
+}
+
+.user-dashboard__plan-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.user-dashboard__plan-modal-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: #d6dce8;
+  line-height: 1.5;
+}
+
+.user-dashboard__plan-modal-list li svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #cf9b2f;
+}
+
+.user-dashboard__plan-modal-list-excluded {
+  color: #7a8394 !important;
+}
+
+.user-dashboard__plan-modal-x {
+  flex-shrink: 0;
+  margin-top: 1px;
+  font-size: 13px;
+  color: #7a8394;
+  line-height: 1.5;
+}
+
+
 
 .user-dashboard__landing-content {
   flex: 1;
