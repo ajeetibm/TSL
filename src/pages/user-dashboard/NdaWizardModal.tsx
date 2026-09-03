@@ -146,6 +146,7 @@ function TextField({
   type = 'text',
   maxLength,
   error,
+  disabled = false,
 }: {
   value: string
   onChange: (v: string) => void
@@ -153,6 +154,7 @@ function TextField({
   type?: string
   maxLength?: number
   error?: boolean
+  disabled?: boolean
 }) {
   return (
     <input
@@ -162,6 +164,7 @@ function TextField({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       maxLength={maxLength}
+      disabled={disabled}
     />
   )
 }
@@ -172,17 +175,20 @@ function SelectField({
   onChange,
   options,
   error,
+  disabled = false,
 }: {
   value: string
   onChange: (v: string) => void
   options: string[]
   error?: boolean
+  disabled?: boolean
 }) {
   return (
     <select
       className={`nda-modal__input${error ? ' nda-modal__input--error' : ''}`}
       value={value}
       onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
     >
       {options.map((o) => (
         <option key={o} value={o}>{o}</option>
@@ -301,11 +307,13 @@ function AddressBlock({
   addr,
   onChange,
   errors,
+  disabled = false,
 }: {
   prefix: string
   addr: NdaAddress
   onChange: (field: keyof NdaAddress, val: string) => void
   errors: Errors
+  disabled?: boolean
 }) {
   const e = (f: string) => errors[`${prefix}.${f}`]
   const SA_PROVINCES = ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'Northern Cape', 'North West', 'Western Cape']
@@ -314,22 +322,22 @@ function AddressBlock({
   return (
     <div className="nda-modal__address-block">
       <FormGroup label="Unit or street number" required error={e('street_number')}>
-        <TextField value={addr.street_number} onChange={(v) => onChange('street_number', v)} placeholder="e.g. 12" maxLength={20} error={!!e('street_number')} />
+        <TextField value={addr.street_number} onChange={(v) => onChange('street_number', v)} placeholder="e.g. 12" maxLength={20} error={!!e('street_number')} disabled={disabled} />
       </FormGroup>
       <div className="nda-modal__two-col">
         <FormGroup label="Complex or building" optional>
-          <TextField value={addr.building} onChange={(v) => onChange('building', v)} placeholder="Optional" maxLength={100} />
+          <TextField value={addr.building} onChange={(v) => onChange('building', v)} placeholder="Optional" maxLength={100} disabled={disabled} />
         </FormGroup>
         <FormGroup label="Street name" required error={e('street_name')}>
-          <TextField value={addr.street_name} onChange={(v) => onChange('street_name', v)} placeholder="e.g. Main Road" maxLength={100} error={!!e('street_name')} />
+          <TextField value={addr.street_name} onChange={(v) => onChange('street_name', v)} placeholder="e.g. Main Road" maxLength={100} error={!!e('street_name')} disabled={disabled} />
         </FormGroup>
       </div>
       <div className="nda-modal__two-col">
         <FormGroup label="Suburb" required error={e('suburb')}>
-          <TextField value={addr.suburb} onChange={(v) => onChange('suburb', v)} maxLength={100} error={!!e('suburb')} />
+          <TextField value={addr.suburb} onChange={(v) => onChange('suburb', v)} maxLength={100} error={!!e('suburb')} disabled={disabled} />
         </FormGroup>
         <FormGroup label="City or town" required error={e('city')}>
-          <TextField value={addr.city} onChange={(v) => onChange('city', v)} maxLength={100} error={!!e('city')} />
+          <TextField value={addr.city} onChange={(v) => onChange('city', v)} maxLength={100} error={!!e('city')} disabled={disabled} />
         </FormGroup>
       </div>
       <div className="nda-modal__two-col">
@@ -340,13 +348,14 @@ function AddressBlock({
               onChange={(v) => onChange('province', v)}
               options={['', ...SA_PROVINCES]}
               error={!!e('province')}
+              disabled={disabled}
             />
           </FormGroup>
         ) : (
           <div />
         )}
         <FormGroup label="Postal code" required error={e('postal_code')}>
-          <TextField value={addr.postal_code} onChange={(v) => onChange('postal_code', v)} placeholder="e.g. 2196" maxLength={addr.country === 'South Africa' ? 4 : 20} error={!!e('postal_code')} />
+          <TextField value={addr.postal_code} onChange={(v) => onChange('postal_code', v)} placeholder="e.g. 2196" maxLength={addr.country === 'South Africa' ? 4 : 20} error={!!e('postal_code')} disabled={disabled} />
         </FormGroup>
       </div>
       <FormGroup label="Country" required>
@@ -354,6 +363,7 @@ function AddressBlock({
           value={addr.country}
           onChange={(v) => onChange('country', v)}
           options={COUNTRIES}
+          disabled={disabled}
         />
       </FormGroup>
     </div>
@@ -370,6 +380,7 @@ function PartyCard({
   onChange,
   onAddressChange,
   errors,
+  locked = false,
 }: {
   title: string
   prefix: string
@@ -379,6 +390,7 @@ function PartyCard({
   onChange: (field: keyof NdaParty, val: string) => void
   onAddressChange: (field: keyof NdaAddress, val: string) => void
   errors: Errors
+  locked?: boolean
 }) {
   const e = (f: string) => errors[`${prefix}.${f}`]
   const entity = isEntity(entityType)
@@ -396,6 +408,7 @@ function PartyCard({
             value={party.entity_type}
             onChange={(v) => onChange('entity_type', v)}
             options={['Company', 'Close corporation', 'Trust', 'Partnership', 'Individual']}
+            disabled={locked}
           />
         </FormGroup>
       )}
@@ -403,24 +416,24 @@ function PartyCard({
       {entity ? (
         <>
           <FormGroup label="Registered name" required error={e('legal_name')}>
-            <TextField value={party.legal_name} onChange={(v) => onChange('legal_name', v)} placeholder="Enter legal entity name" maxLength={150} error={!!e('legal_name')} />
+            <TextField value={party.legal_name} onChange={(v) => onChange('legal_name', v)} placeholder="Enter legal entity name" maxLength={150} error={!!e('legal_name')} disabled={locked} />
           </FormGroup>
           <div className="nda-modal__two-col">
             <FormGroup label="Registration number" optional help="Optional for NDAs.">
-              <TextField value={party.reg_number} onChange={(v) => onChange('reg_number', v)} placeholder="e.g. 2023/123456/07" maxLength={20} />
+              <TextField value={party.reg_number} onChange={(v) => onChange('reg_number', v)} placeholder="e.g. 2023/123456/07" maxLength={20} disabled={locked} />
             </FormGroup>
             <FormGroup label="Trading name" optional>
-              <TextField value={party.trading_name} onChange={(v) => onChange('trading_name', v)} placeholder="Optional" maxLength={150} />
+              <TextField value={party.trading_name} onChange={(v) => onChange('trading_name', v)} placeholder="Optional" maxLength={150} disabled={locked} />
             </FormGroup>
           </div>
         </>
       ) : (
         <>
           <FormGroup label="Full names" required error={e('full_names')}>
-            <TextField value={party.full_names} onChange={(v) => onChange('full_names', v)} placeholder="Enter full legal name" maxLength={100} error={!!e('full_names')} />
+            <TextField value={party.full_names} onChange={(v) => onChange('full_names', v)} placeholder="Enter full legal name" maxLength={100} error={!!e('full_names')} disabled={locked} />
           </FormGroup>
           <FormGroup label="Identity number" required error={e('id_number')}>
-            <TextField value={party.id_number} onChange={(v) => onChange('id_number', v)} placeholder="13-digit SA ID number" maxLength={13} error={!!e('id_number')} />
+            <TextField value={party.id_number} onChange={(v) => onChange('id_number', v)} placeholder="13-digit SA ID number" maxLength={13} error={!!e('id_number')} disabled={locked} />
           </FormGroup>
         </>
       )}
@@ -428,28 +441,29 @@ function PartyCard({
       <div style={{ marginBottom: 4 }}>
         <label className="nda-modal__label">Address <span className="nda-modal__required">*</span></label>
         <div className="nda-modal__subtle-divider" />
-        <AddressBlock prefix={`${prefix}.address`} addr={party.address} onChange={onAddressChange} errors={errors} />
+        <AddressBlock prefix={`${prefix}.address`} addr={party.address} onChange={onAddressChange} errors={errors} disabled={locked} />
       </div>
 
       <div className="nda-modal__two-col">
         <FormGroup label="Email" required error={e('email')}>
-          <TextField value={party.email} onChange={(v) => onChange('email', v)} type="email" placeholder="name@company.co.za" error={!!e('email')} />
+          <TextField value={party.email} onChange={(v) => onChange('email', v)} type="email" placeholder="name@company.co.za" error={!!e('email')} disabled={locked} />
         </FormGroup>
         <FormGroup label="Telephone" optional>
-          <TextField value={party.phone} onChange={(v) => onChange('phone', v)} type="tel" placeholder="Optional" />
+          <TextField value={party.phone} onChange={(v) => onChange('phone', v)} type="tel" placeholder="Optional" disabled={locked} />
         </FormGroup>
       </div>
 
       {entity && (
         <div className="nda-modal__two-col">
           <FormGroup label="Signatory full names" required error={e('signatory_name')}>
-            <TextField value={party.signatory_name} onChange={(v) => onChange('signatory_name', v)} placeholder="Who signs on behalf of this party" maxLength={100} error={!!e('signatory_name')} />
+            <TextField value={party.signatory_name} onChange={(v) => onChange('signatory_name', v)} placeholder="Who signs on behalf of this party" maxLength={100} error={!!e('signatory_name')} disabled={locked} />
           </FormGroup>
           <FormGroup label="Signatory capacity" required>
             <SelectField
               value={party.signatory_capacity}
               onChange={(v) => onChange('signatory_capacity', v)}
               options={['Director', 'Member', 'Trustee', 'Partner', 'Authorised representative']}
+              disabled={locked}
             />
           </FormGroup>
         </div>
@@ -858,6 +872,10 @@ export default function NdaWizardModal({
                   onChange={setPartyA}
                   onAddressChange={setPartyAAddr}
                   errors={errors}
+                  // Your Company is always sourced from the Company Snapshot.
+                  // Keep it locked even while the snapshot is incomplete so a
+                  // manual NDA entry cannot diverge from the company profile.
+                  locked
                 />
 
                 {/* Party B */}

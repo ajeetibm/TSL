@@ -219,10 +219,10 @@ export function UpgradePlansModal({
                       {isCurrent && (
                         <button
                           type="button"
-                          className="bs-upm-btn bs-upm-btn--upgrade"
-                          onClick={() => onSelectUpgrade(plan)}
+                          className="bs-upm-btn bs-upm-btn--current"
+                          disabled
                         >
-                          Upgrade
+                          Current plan
                         </button>
                       )}
                       {canUpgrade && (
