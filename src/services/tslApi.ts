@@ -153,6 +153,8 @@ export function clearAuthSession() {
   localStorage.removeItem('tsl-dashboard-queue')
   localStorage.removeItem('tsl-selected-dashboard-wizards')
   localStorage.removeItem('tsl-dashboard-completed-instances')
+  // Clear in-session counsel credit cache so the next login starts fresh
+  try { sessionStorage.removeItem('tsl-counsel-credits-session') } catch { /* ignore */ }
   emitAuthSessionChanged()
 }
 

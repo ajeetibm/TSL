@@ -18,6 +18,7 @@ import './Dashboard.css'
 import './DashboardCounsel.css'
 
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
+const counselCreditsSessionKey = 'tsl-counsel-credits-session'
 
 type CounselFormData = {
   subject: string
@@ -74,6 +75,19 @@ const fallbackCredits: CounselCredits = {
   topUpRate: 500,
   currency: 'ZAR',
   resetDate: '',
+}
+
+/** Read persisted credits from sessionStorage (survives React remounts / tab switches). */
+function readSessionCredits(): CounselCredits | null {
+  try {
+    const raw = sessionStorage.getItem(counselCreditsSessionKey)
+    return raw ? (JSON.parse(raw) as CounselCredits) : null
+  } catch { return null }
+}
+
+/** Persist the latest credits to sessionStorage so remounts keep the correct count. */
+function writeSessionCredits(credits: CounselCredits) {
+  try { sessionStorage.setItem(counselCreditsSessionKey, JSON.stringify(credits)) } catch { /* ignore */ }
 }
 
 const fallbackHistory: CounselHistoryRequest[] = []
@@ -172,7 +186,9 @@ export default function DashboardCounsel() {
   const [activeTab, setActiveTab] = useState<'book' | 'history'>(() =>
     hasSubscription ? 'book' : 'history',
   )
-  const [credits, setCredits] = useState<CounselCredits>(fallbackCredits)
+  // Seed from sessionStorage so that navigating back to this page (which unmounts/remounts
+  // the component) preserves any in-session decrements without a server round-trip.
+  const [credits, setCredits] = useState<CounselCredits>(() => readSessionCredits() ?? fallbackCredits)
   const [history, setHistory] = useState<CounselHistoryRequest[]>(fallbackHistory)
   const [formData, setFormData] = useState<CounselFormData>({
     subject: '',
@@ -223,7 +239,19 @@ export default function DashboardCounsel() {
       if (!isMounted) return
 
       if (creditsResponse.success && creditsResponse.data) {
-        setCredits(creditsResponse.data)
+        const serverCredits = creditsResponse.data
+        setCredits((current) => {
+          // If we already have a session-persisted value that is LOWER than what the
+          // server reports, keep the local (decremented) value — the server is stale.
+          // Only accept the server value when it's lower (real server deduction) or
+          // when this is a fresh session (current === fallbackCredits, creditsRemaining 0).
+          const hasSessionValue = current.creditsRemaining !== fallbackCredits.creditsRemaining
+            || current.creditsUsed !== fallbackCredits.creditsUsed
+          const serverIsLower = serverCredits.creditsRemaining < current.creditsRemaining
+          const merged = (hasSessionValue && !serverIsLower) ? current : serverCredits
+          writeSessionCredits(merged)
+          return merged
+        })
       }
 
       if (requestsResponse.success) {
@@ -341,20 +369,18 @@ export default function DashboardCounsel() {
       }
 
       setHistory((current) => [createdRequest, ...current])
-      setCredits((current) => ({
-        ...current,
-        creditsRemaining:
-          typeof created?.creditsRemaining === 'number'
-            ? created.creditsRemaining
-            : Math.max(current.creditsRemaining - creditsRequired, 0),
-        creditsUsed: current.creditsUsed + creditsRequired,
-        usageThisMonth: current.usageThisMonth + creditsRequired,
-      }))
-
-      const refreshedCredits = await counselApi.credits()
-      if (refreshedCredits.success && refreshedCredits.data) {
-        setCredits(refreshedCredits.data)
-      }
+      // Always decrement by 1 from current local state and persist to sessionStorage
+      // so remounts (sidebar navigation) preserve the correct remaining count.
+      setCredits((current) => {
+        const updated = {
+          ...current,
+          creditsRemaining: Math.max(current.creditsRemaining - creditsRequired, 0),
+          creditsUsed: current.creditsUsed + creditsRequired,
+          usageThisMonth: current.usageThisMonth + creditsRequired,
+        }
+        writeSessionCredits(updated)
+        return updated
+      })
 
       setFormData({
         subject: '',
@@ -646,7 +672,6 @@ export default function DashboardCounsel() {
             // Pass current credits so the payment page can show used/remaining
             navigate('/dashboard/counsel/topup', { state: { plan, credits } })
           }}
-          onManagePlans={() => navigate('/dashboard/settings')}
         />
 
         {activeModal === 'upgrade-plans' && (
