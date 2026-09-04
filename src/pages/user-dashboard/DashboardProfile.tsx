@@ -15,19 +15,33 @@ import './DashboardProfile.css'
 
 type ProfileTab = 'information' | 'security' | 'preferences'
 
-function isValidSaId(idNumber: string) {
+function isValidSaId(idNumber: string): boolean {
   if (!/^\d{13}$/.test(idNumber)) return false
-  const digits = idNumber.split('').map(Number)
+
+  // Validate date of birth (YYMMDD)
+  const mm = parseInt(idNumber.slice(2, 4), 10)
+  const dd = parseInt(idNumber.slice(4, 6), 10)
+  const yy = parseInt(idNumber.slice(0, 2), 10)
+  if (mm < 1 || mm > 12) return false
+  const daysInMonth = new Date(2000 + yy, mm, 0).getDate()
+  if (dd < 1 || dd > daysInMonth) return false
+
+  // Citizenship digit (index 10) must be 0 or 1
+  const citizenship = parseInt(idNumber[10], 10)
+  if (citizenship !== 0 && citizenship !== 1) return false
+
+  // Luhn check: sum over first 12 digits, double every second digit (1-indexed even positions)
   let sum = 0
-  for (let index = 0; index < 13; index += 1) {
-    let digit = digits[12 - index]
-    if (index % 2 === 1) {
+  for (let i = 0; i < 12; i++) {
+    let digit = parseInt(idNumber[i], 10)
+    if (i % 2 !== 0) {
       digit *= 2
       if (digit > 9) digit -= 9
     }
     sum += digit
   }
-  return sum % 10 === 0
+  const checkDigit = (10 - (sum % 10)) % 10
+  return checkDigit === parseInt(idNumber[12], 10)
 }
 
 export default function DashboardProfile() {

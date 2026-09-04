@@ -19,10 +19,9 @@ interface CounselCreditsModalProps {
   onClose: () => void
   currentPlan: string
   onTopUp: (plan: TopUpPlan) => void
-  onManagePlans: () => void
 }
 
-export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp, onManagePlans }: CounselCreditsModalProps) {
+export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp }: CounselCreditsModalProps) {
   if (!isOpen) return null
 
   const normalizedCurrentPlan = currentPlan.trim().toLowerCase()
@@ -121,11 +120,10 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
                     className={`counsel-credits-modal__button${isCurrentPlan(plan.name) ? ' counsel-credits-modal__button--primary' : ''}`}
                     onClick={() => {
                       onClose()
-                      if (isCurrentPlan(plan.name)) onTopUp(plan)
-                      else onManagePlans()
+                      onTopUp(plan)
                     }}
                   >
-                    {isCurrentPlan(plan.name) ? 'Top Up' : 'Manage in Settings'}
+                    Top Up
                   </button>
                 </div>
               ))}
@@ -142,7 +140,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               <li>Standard scope: 30 minutes, up to 10 pages or 1,500 words, five clause changes, and one counterparty round</li>
               <li>Credits reset monthly on your billing date</li>
               <li>Unused credits do not roll over to the next month</li>
-              <li>Top-up credits can be purchased anytime at your current tier rate</li>
+              <li>Top-up credits can be purchased anytime at the tier rate you select</li>
               <li>Response times are business hours (Mon-Fri, 9am-5pm SAST)</li>
             </ul>
           </div>

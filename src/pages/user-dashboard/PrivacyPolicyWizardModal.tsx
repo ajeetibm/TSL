@@ -39,6 +39,43 @@ const STEPS: { label: string }[] = [
 
 const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 
+/**
+ * Validates a South African ID number (YYMMDDSSSSCAZ — 13 digits).
+ * Rules:
+ *  1. Exactly 13 digits.
+ *  2. First 6 digits form a valid YYMMDD date.
+ *  3. Citizenship digit (index 10) is 0 (citizen) or 1 (permanent resident).
+ *  4. Check digit (index 12) passes the Luhn algorithm.
+ */
+function isValidSaId(id: string): boolean {
+  if (!/^\d{13}$/.test(id)) return false
+
+  // 1. Validate date of birth (YYMMDD)
+  const yy = parseInt(id.slice(0, 2), 10)
+  const mm = parseInt(id.slice(2, 4), 10)
+  const dd = parseInt(id.slice(4, 6), 10)
+  if (mm < 1 || mm > 12) return false
+  const daysInMonth = new Date(2000 + yy, mm, 0).getDate()
+  if (dd < 1 || dd > daysInMonth) return false
+
+  // 2. Citizenship digit must be 0 or 1
+  const citizenship = parseInt(id[10], 10)
+  if (citizenship !== 0 && citizenship !== 1) return false
+
+  // 3. Luhn check digit
+  let sum = 0
+  for (let i = 0; i < 12; i++) {
+    let digit = parseInt(id[i], 10)
+    if (i % 2 !== 0) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+  }
+  const checkDigit = (10 - (sum % 10)) % 10
+  return checkDigit === parseInt(id[12], 10)
+}
+
 const boolLabel = (value: boolean) => (value ? 'Yes' : 'No')
 const hasText = (value: string) => value.trim().length > 0
 
@@ -239,10 +276,25 @@ function ChipMultiSelect({
 }
 
 function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
+  const isEmpty = !value.trim()
   return (
     <div className="nda-modal__snapshot-field">
-      <span>{value}</span>
-      <button type="button" className={`nda-modal__confirm-pill${confirmed ? ' nda-modal__confirm-pill--done' : ''}`} onClick={onConfirm}>
+      {isEmpty ? (
+        <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>
+          Not set — fill in <strong>Registered / legal name</strong> (or <strong>Full name</strong> for individuals) in your{' '}
+          <a href="/dashboard/profile" target="_blank" rel="noreferrer" style={{ color: '#cf9b2f' }}>Company Snapshot</a>.
+        </span>
+      ) : (
+        <span>{value}</span>
+      )}
+      <button
+        type="button"
+        className={`nda-modal__confirm-pill${confirmed ? ' nda-modal__confirm-pill--done' : ''}`}
+        onClick={() => { if (!isEmpty) onConfirm() }}
+        disabled={isEmpty}
+        title={isEmpty ? 'Set your company name in the Company Snapshot first' : undefined}
+        style={isEmpty ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
+      >
         {confirmed ? 'Confirmed' : 'Confirm'}
       </button>
     </div>
@@ -293,9 +345,10 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
   const errors: PrivacyErrors = {}
 
   if (step === 1) {
-    if (!data.responsiblePartyConfirmed) errors.responsiblePartyConfirmed = 'Confirm the responsible party.'
+    if (!data.responsibleParty.trim()) errors.responsiblePartyConfirmed = 'Set your company name in the Company Snapshot before proceeding.'
+    else if (!data.responsiblePartyConfirmed) errors.responsiblePartyConfirmed = 'Confirm the responsible party.'
     if (!hasText(data.officerFullNames)) errors.officerFullNames = "Enter the information officer's full names."
-    if (!/^\d{13}$/.test(data.officerIdNumber.trim())) errors.officerIdNumber = 'Enter a 13-digit identity number.'
+    if (!isValidSaId(data.officerIdNumber.trim())) errors.officerIdNumber = 'Enter a valid 13-digit South African ID number.'
     if (!EMAIL_RE.test(data.officerEmail.trim())) errors.officerEmail = 'Enter a valid email address.'
     if (!EMAIL_RE.test(data.privacyEmail.trim())) errors.privacyEmail = 'Enter a valid email address.'
     if (!data.domains.some(hasText)) errors.domains = 'Add at least one domain or application.'
@@ -429,8 +482,8 @@ export default function PrivacyPolicyWizardModal({
           delete next.officerFullNames
         }
       } else if (key === 'officerIdNumber') {
-        if (!/^\d{13}$/.test(value.trim())) {
-          next.officerIdNumber = 'Enter a 13-digit identity number.'
+        if (!isValidSaId(value.trim())) {
+          next.officerIdNumber = 'Enter a valid 13-digit South African ID number.'
         } else {
           delete next.officerIdNumber
         }

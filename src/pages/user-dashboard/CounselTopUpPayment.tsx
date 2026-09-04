@@ -38,16 +38,21 @@ export default function CounselTopUpPayment() {
 
   const requestedPlan = location.state?.plan as TopUpPlan | undefined
   const credits = location.state?.credits as CounselCredits | undefined
-  const plan = credits ? COUNSEL_PLANS[credits.plan.trim().toLowerCase()] : undefined
+  // Use the plan the user explicitly clicked (requestedPlan) so any plan can be
+  // topped up regardless of which plan the user is currently subscribed to.
+  const plan = requestedPlan ? COUNSEL_PLANS[requestedPlan.name.trim().toLowerCase()] : undefined
 
   setPageMetadata('Top Up Credits', 'Purchase additional counsel credits.')
 
-  const [qty,      setQty]      = useState(1)
+  // Default qty to the plan's included credits (Operator=2, Boardroom=6) so the
+  // user tops up the natural batch size for that tier. Floor at 1 for Launchpad (0 included).
+  const defaultQty = Math.max(1, plan?.credits ?? 1)
+  const [qty,      setQty]      = useState(defaultQty)
   const [isPaying, setIsPaying] = useState(false)
   const [error,    setError]    = useState('')
 
   // Guard: if no plan was passed, redirect back
-  if (!plan || !credits || requestedPlan?.name.toLowerCase() !== plan.name.toLowerCase()) {
+  if (!plan || !requestedPlan) {
     navigate('/dashboard/counsel', { replace: true })
     return null
   }
@@ -95,7 +100,8 @@ export default function CounselTopUpPayment() {
       return
     }
 
-    // Verify with backend — this records the transaction and activates credits
+    // A Counsel tier is a purchase choice, not a subscription upgrade. The
+    // backend records the selected tier's rate while leaving the account plan unchanged.
     const verification = await paymentApi.verifyPaystack({
       reference:  result.reference,
       plan:       plan!.name,
@@ -142,26 +148,22 @@ export default function CounselTopUpPayment() {
 
             {/* ── Plan summary card ── */}
             <section className="counsel-topup-payment__plan-card">
-              <h2>Selected Plan</h2>
+              <h2>Selected Counsel Tier</h2>
               <div className="counsel-topup-payment__plan-name">{plan.name}</div>
 
               <ul className="counsel-topup-payment__plan-details">
-                {credits && (
-                  <>
-                    <li>
-                      <span>Included monthly credits</span>
-                      <strong>{credits.creditsTotal}</strong>
-                    </li>
-                    <li>
-                      <span>Credits used</span>
-                      <strong>{credits.creditsUsed}</strong>
-                    </li>
-                    <li>
-                      <span>Credits remaining</span>
-                      <strong>{credits.creditsRemaining}</strong>
-                    </li>
-                  </>
-                )}
+                <li>
+                  <span>Included monthly credits</span>
+                  <strong>{plan.credits}</strong>
+                </li>
+                <li>
+                  <span>Credits used</span>
+                  <strong>{credits?.creditsUsed ?? 0}</strong>
+                </li>
+                <li>
+                  <span>Credits remaining</span>
+                  <strong>{credits?.creditsRemaining ?? 0}</strong>
+                </li>
                 <li>
                   <span>Response Time SLA</span>
                   <strong>{plan.sla}</strong>

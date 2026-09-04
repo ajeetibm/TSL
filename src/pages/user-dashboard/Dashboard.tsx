@@ -23,7 +23,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
-import type { DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
+import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import type { FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
@@ -54,6 +54,8 @@ import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import type { SlaWizardData } from './SlaWizardModal'
 import ComingSoonWizardModal from './ComingSoonWizardModal'
+import CounselCreditsModal from './CounselCreditsModal'
+import type { TopUpPlan } from './CounselCreditsModal'
 import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
 import './Dashboard.css'
@@ -82,6 +84,15 @@ interface CompletedInstance {
   wizardType: string      // matches wizard.title
   completedAt: string
   data: unknown           // typed narrowly in render helpers
+}
+
+interface InProgressInstance {
+  id: string              // unique per in-progress run
+  wizardType: string      // matches wizard.title
+  step: number
+  progress: number
+  startedAt: string
+  data: unknown
 }
 
 // Per-plan benefit lines shown in the top-right hero card.
@@ -1658,7 +1669,7 @@ export default function Dashboard() {
   )
   const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
   const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
-  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA } = useServiceAgreementWizard()
+  const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
   const mapSlaApiFields = useCallback(
     (data: SlaWizardData) => mapSlaFields(data) as unknown as Record<string, unknown>,
     [],
@@ -1758,6 +1769,8 @@ export default function Dashboard() {
   const [isSLAModalOpen, setIsSLAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
+  const [counselCreditsForGate, setCounselCreditsForGate] = useState<CounselCredits | null>(null)
+  const [isNoCounselCreditModalOpen, setIsNoCounselCreditModalOpen] = useState(false)
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number; iconName?: string } | null>(null)
   const [pdfConfirm, setPdfConfirm] = useState<{ blueprintId: string; downloadKey: string; filename: string; credits: number; build: () => Blob | Promise<Blob> } | null>(null)
   const pdfDownloadedKey = 'tsl-pdf-downloaded'
@@ -1786,8 +1799,17 @@ export default function Dashboard() {
       return storedRaw ? (JSON.parse(storedRaw) as Record<string, number>) : {}
     } catch { return {} }
   })
+  // A persisted queue is authoritative: a zero count means the user already
+  // started every instance of that Blueprint. Do not re-seed it on refresh.
+  const queueWasRestoredRef = useRef((() => {
+    try { return localStorage.getItem(queueStorageKey) !== null } catch { return false }
+  })())
   // Whether the queue has been seeded from the server-authoritative selectedWizards
   const queueSeedRef = useRef(false)
+  // The New-tab item is consumed as soon as the user presses Start. The wizard
+  // close/complete handlers still call decrementQueue for older flows, so this
+  // ref prevents that same item from being deducted a second time.
+  const startedQueueItemRef = useRef<string | null>(null)
   // Tracks whether the initial billingSubscription load has been observed so
   // the billing upgrade effect only fires on genuine in-place plan changes,
   // not on the initial mount hydration from the server.
@@ -1817,65 +1839,82 @@ export default function Dashboard() {
     return id
   }
 
-  // ── In-progress set ──────────────────────────────────────────────────────
-  // Tracks which blueprint types currently have an active (inProgress) run in
-  // their single-slot hook. Prevents double-starting the same type while it is
-  // already open — the user must finish or close the current run first.
-  // Derived from live hook states so it is always in sync.
-  const inProgressTitles = new Set<string>([
-    ...(ndaState.status === 'inProgress' ? ['Non-Disclosure Agreement (NDA)'] : []),
-    ...(empState.status === 'inProgress' ? ['Employment Offer Letter'] : []),
-    ...(ppState.status === 'inProgress' ? ['Privacy & Cookies Policy'] : []),
-    ...(faState.status === 'inProgress' ? ['Founders agreement and IP assignment'] : []),
-    ...(saState.status === 'inProgress' ? ['Service Agreement'] : []),
-    ...(slaState.status === 'inProgress' ? ['Service Level Agreement (SLA)'] : []),
-  ])
+  // ── In-progress instances ─────────────────────────────────────────────────
+  // Each closed-mid-progress run is stored here so multiple instances of the
+  // same blueprint type each appear as a separate card in the In Progress tab.
+  const inProgressInstancesKey = 'tsl-dashboard-inprogress-instances'
+  const [inProgressInstances, setInProgressInstances] = useState<InProgressInstance[]>(() => {
+    try {
+      const raw = localStorage.getItem('tsl-dashboard-inprogress-instances')
+      return raw ? (JSON.parse(raw) as InProgressInstance[]) : []
+    } catch { return [] }
+  })
+
+  // Ref tracking which in-progress instance is currently being continued so
+  // onClose/onComplete handlers can update or remove it.
+  const continuingInstanceRef = useRef<string | null>(null)
+  // Flag set by onComplete so the subsequent onClose call (fired by all modals
+  // after generation) knows not to push a new in-progress instance.
+  const justCompletedRef = useRef(false)
+
+  const pushInProgressInstance = (wizardType: string, step: number, progress: number, data: unknown): string => {
+    const id = `${wizardType}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`
+    const entry: InProgressInstance = { id, wizardType, step, progress, startedAt: new Date().toISOString(), data }
+    setInProgressInstances((prev) => {
+      const next = [...prev, entry]
+      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
+      return next
+    })
+    return id
+  }
+
+  const updateInProgressInstance = (id: string, step: number, progress: number, data: unknown) => {
+    setInProgressInstances((prev) => {
+      const next = prev.map((inst) => inst.id === id ? { ...inst, step, progress, data } : inst)
+      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
+      return next
+    })
+  }
+
+  const removeInProgressInstance = (id: string) => {
+    setInProgressInstances((prev) => {
+      const next = prev.filter((inst) => inst.id !== id)
+      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
+      return next
+    })
+  }
+
+  // Derived: set of blueprint types that have at least one in-progress instance
+  const inProgressTitles = new Set<string>(inProgressInstances.map((inst) => inst.wizardType))
 
   // Decrement one instance from the New queue and open the corresponding modal.
-  // Guard: if this blueprint type is already inProgress, do not allow a second
-  // concurrent start — show the in-progress card instead by switching tabs.
-  // If the hook is in 'completed' state reset it first so startWizard() can
-  // transition it back to inProgress.
   const handleStart = (title: string) => {
-    // Block double-start: a wizard slot can only hold one active run at a time.
-    // Switch to In Progress so the user can Continue rather than starting again.
-    if (inProgressTitles.has(title)) {
-      setActiveTab('inProgress')
-      return
-    }
-
     // Do NOT flip the view yet — the landing page stays visible behind the
     // modal. The transition to the tabbed dashboard happens only when the
     // user closes or completes the modal (see onClose / onComplete handlers).
 
-    // Ensure the New tab has an entry for this wizard when we transition to the
-    // paid tabbed dashboard after the modal closes. This guards against the case
-    // where the queue has not yet been seeded from the API (e.g. the user starts
-    // a wizard from the initial subscription view before the wizardAccess response
-    // arrives). Without this, the New tab would be empty after the transition.
-    if ((queuedCounts[title] ?? 0) <= 0) {
-      setQueuedCounts((prev) => {
-        const next = { ...prev, [title]: 1 }
-        localStorage.setItem(queueStorageKey, JSON.stringify(next))
-        return next
-      })
-    }
+    // Consume the exact New-tab item immediately, not when the modal closes.
+    // Persisting the zero count means a browser refresh cannot restore it from
+    // the original server-side selection quantity.
+    startedQueueItemRef.current = title
+    setQueuedCounts((prev) => {
+      const current = prev[title] ?? 0
+      const next = { ...prev, [title]: Math.max(0, current - 1) }
+      localStorage.setItem(queueStorageKey, JSON.stringify(next))
+      queueWasRestoredRef.current = true
+      return next
+    })
 
     if (title === 'Non-Disclosure Agreement (NDA)') {
-      if (ndaState.status === 'completed') resetNda()
-      startWizard(); setIsNdaModalOpen(true)
+      resetNda(); startWizard(); setIsNdaModalOpen(true)
     } else if (title === 'Employment Offer Letter') {
-      if (empState.status === 'completed') resetEmp()
-      startEmp(); setIsEmpModalOpen(true)
+      resetEmp(); startEmp(); setIsEmpModalOpen(true)
     } else if (title === 'Privacy & Cookies Policy') {
-      if (ppState.status === 'completed') resetPP()
-      startPP(); setIsPPModalOpen(true)
+      resetPP(); startPP(); setIsPPModalOpen(true)
     } else if (title === 'Founder Agreement' || title === 'Founders Agreement and IP Assignment' || title === 'Founders agreement and IP assignment') {
-      if (faState.status === 'completed') resetFA()
-      startFA(); setIsFAModalOpen(true)
+      resetFA(); startFA(); setIsFAModalOpen(true)
     } else if (title === 'Service Level Agreement (SLA)') {
-      if (slaState.status === 'completed') resetSLA()
-      startSLA(); setIsSLAModalOpen(true)
+      resetSLA(); startSLA(); setIsSLAModalOpen(true)
     } else {
       setComingSoonTitle(title)
     }
@@ -1953,24 +1992,26 @@ export default function Dashboard() {
         setWizardAccess(freshAccess)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(freshAccess))
 
-        // When the user just returned from "Add to Dashboard", set the queue
-        // directly from the server-authoritative selectedWizards so there is no
-        // double-count (the seed block below would add on top of what the server
-        // already includes for the newly added wizards).
+        // When the user returns from "Add to Dashboard", add only the quantities
+        // selected in that action. The server response contains every historical
+        // selection, which must not overwrite items already started in New.
         if (addedCount > 0 && locationState?.addedWizards) {
+          const addedWizards = locationState.addedWizards
           queueSeedRef.current = true
+          queueWasRestoredRef.current = true
           setQueuedCounts((prev) => {
             const next = { ...prev }
-            for (const w of freshAccess.selectedWizards) {
-              // Use the server quantity as the authoritative count; preserve any
-              // count that is already higher (e.g. user had extras queued).
-              if ((next[w.title] ?? 0) < (w.quantity ?? 1)) {
-                next[w.title] = w.quantity ?? 1
-              }
+            for (const addedWizard of addedWizards) {
+              const quantity = Math.max(1, Number(addedWizard.quantity) || 1)
+              next[addedWizard.title] = (next[addedWizard.title] ?? 0) + quantity
             }
             localStorage.setItem(queueStorageKey, JSON.stringify(next))
             return next
           })
+          // This is a one-time return payload. Browser refresh preserves
+          // history.state, so remove it after seeding; otherwise every reload
+          // would restore the original server quantity over the saved queue.
+          navigate(location.pathname, { replace: true, state: null })
           return
         }
 
@@ -1979,7 +2020,7 @@ export default function Dashboard() {
         // On the first-time landing the queue is populated one wizard at a time
         // as the user clicks Start, so auto-seeding all selectedWizards would
         // flood the New tab with every blueprint the account has ever saved.
-        if (!queueSeedRef.current && localStorage.getItem('tsl-dashboard-view-mode') === 'returning') {
+        if (!queueSeedRef.current && !queueWasRestoredRef.current && localStorage.getItem('tsl-dashboard-view-mode') === 'returning') {
           queueSeedRef.current = true
           setQueuedCounts((prev) => {
             const next = { ...prev }
@@ -1989,6 +2030,7 @@ export default function Dashboard() {
               }
             }
             localStorage.setItem(queueStorageKey, JSON.stringify(next))
+            queueWasRestoredRef.current = true
             return next
           })
         }
@@ -2164,6 +2206,10 @@ export default function Dashboard() {
   }
 
   const decrementQueue = (title: string) => {
+    if (startedQueueItemRef.current === title) {
+      startedQueueItemRef.current = null
+      return
+    }
     setQueuedCounts((prev) => {
       const current = prev[title] ?? 0
       if (current <= 0) return prev
@@ -2178,7 +2224,6 @@ export default function Dashboard() {
     saveProgress(4, data)
     completeWizard()
     pushCompletedInstance('Non-Disclosure Agreement (NDA)', data, completedAt)
-    decrementQueue('Non-Disclosure Agreement (NDA)')
     showNdaToast('NDA generated successfully. Your document is ready to download.')
   }
 
@@ -2187,7 +2232,6 @@ export default function Dashboard() {
     saveEmpProgress(6, data)
     completeEmp(data)
     pushCompletedInstance('Employment Offer Letter', data, completedAt)
-    decrementQueue('Employment Offer Letter')
     showNdaToast('Employment Offer Letter generated successfully. Your document is ready to download.')
   }
 
@@ -2196,7 +2240,6 @@ export default function Dashboard() {
     savePPProgress(7, data)
     completePP()
     pushCompletedInstance('Privacy & Cookies Policy', data, completedAt)
-    decrementQueue('Privacy & Cookies Policy')
     showNdaToast('Privacy Policy generated successfully. Your document is ready to download.')
   }
 
@@ -2205,11 +2248,18 @@ export default function Dashboard() {
     saveFAProgress(8, data)
     completeFA()
     pushCompletedInstance('Founders agreement and IP assignment', data, completedAt)
-    decrementQueue('Founders agreement and IP assignment')
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
   const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap) => {
+    // Check whether the user has at least one counsel credit before routing.
+    const creditsRes = await counselApi.credits()
+    const credits = creditsRes.success && creditsRes.data ? creditsRes.data : null
+    if (!credits || credits.creditsRemaining < 1) {
+      setCounselCreditsForGate(credits)
+      setIsNoCounselCreditModalOpen(true)
+      return null
+    }
     const response = await counselApi.createPublicFundingReview({
       subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
       company: fields.intended_name || 'Founder company',
@@ -2233,7 +2283,6 @@ export default function Dashboard() {
     saveSAProgress(8, data)
     completeSA()
     pushCompletedInstance('Service Agreement', data, completedAt)
-    decrementQueue('Service Agreement')
     showNdaToast('Service Agreement generated successfully. Your document is ready to download.')
   }
 
@@ -2242,7 +2291,6 @@ export default function Dashboard() {
     saveSLAProgress(10, data)
     completeSLA()
     pushCompletedInstance('Service Level Agreement (SLA)', data, completedAt)
-    decrementQueue('Service Level Agreement (SLA)')
     showNdaToast('Service Level Agreement generated successfully. Your document is ready to download.')
   }
 
@@ -2571,45 +2619,88 @@ export default function Dashboard() {
         )}
 
         {/* Landing-view modals: background stays as the landing page while the
-            modal is open. Closing (X) lands on New tab so the queued wizard is
-            visible. Completing lands on Completed tab. */}
+            modal is open. Closing (X) lands on In Progress tab. Completing lands on Completed tab. */}
         {isNdaModalOpen && (
           <NdaWizardModal
-            onClose={(step, data) => { saveProgress(step, data, true); setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={ndaState.status === 'completed' ? 1 : (ndaState.step || 1)}
-            initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
+            onClose={(step, data) => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, step, Math.round(((step - 1) / 3) * 100), data); continuingInstanceRef.current = null }
+              else { decrementQueue('Non-Disclosure Agreement (NDA)'); pushInProgressInstance('Non-Disclosure Agreement (NDA)', step, Math.round(((step - 1) / 3) * 100), data) }
+              setIsNdaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as NdaWizardData | undefined) : undefined}
             onStepChange={(step, data) => saveProgress(step, data)}
-            onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Non-Disclosure Agreement (NDA)') }
+              handleNdaComplete(data); setIsNdaModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
           />
         )}
 
         {isEmpModalOpen && (
           <EmploymentWizardModal
-            onClose={(step, data) => { if (step && data) saveEmpProgress(step, data, true); setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={empState.status === 'completed' ? 1 : (empState.step || 1)}
-            initialData={empState.status === 'completed' ? undefined : empState.data}
+            onClose={(step, data) => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round(((( step ?? 1) - 1) / 5) * 100), data); continuingInstanceRef.current = null }
+              else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data) }
+              setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as EmploymentWizardData | undefined) : undefined}
             onStepChange={(step, data) => saveEmpProgress(step, data)}
-            onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Employment Offer Letter') }
+              handleEmpComplete(data); setIsEmpModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
           />
         )}
 
         {isPPModalOpen && (
           <PrivacyPolicyWizardModal
-            onClose={(step, data) => { savePPProgress(step, data, true); setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={ppState.status === 'completed' ? 1 : (ppState.step || 1)}
-            initialData={ppState.status === 'completed' ? undefined : { ...ppState.data, responsibleParty: ppState.data.responsibleParty || profile.legalName || profile.companyName }}
+            onClose={(step, data) => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, step, Math.round(((step - 1) / 6) * 100), data); continuingInstanceRef.current = null }
+              else { decrementQueue('Privacy & Cookies Policy'); pushInProgressInstance('Privacy & Cookies Policy', step, Math.round(((step - 1) / 6) * 100), data) }
+              setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.legalName || profile.individualFullNames || profile.tradingName || '' } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
             onStepChange={(step, data) => savePPProgress(step, data)}
-            onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Privacy & Cookies Policy') }
+              handlePPComplete(data); setIsPPModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
           />
         )}
 
         {isFAModalOpen && (
           <FounderAgreementWizardModal
-            onClose={(step, data) => { if (step && data) saveFAProgress(step, data, true); setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={faState.status === 'completed' ? 1 : (faState.step || 1)}
-            initialData={faState.status === 'completed' ? undefined : faState.data}
+            onClose={(step, data) => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data); continuingInstanceRef.current = null }
+              else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
+              setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined}
             onStepChange={(step, data) => saveFAProgress(step, data)}
-            onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Founders agreement and IP assignment') }
+              handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
             onRouteToCounsel={routeFounderPublicFundingToCounsel}
             onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
           />
@@ -2617,23 +2708,55 @@ export default function Dashboard() {
 
         {isSAModalOpen && (
           <ServiceAgreementWizardModal
-            onClose={() => { setIsSAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
-            initialData={saState.status === 'completed' ? undefined : saState.data}
+            onClose={() => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, saState.step, saState.progress, saState.data); continuingInstanceRef.current = null }
+              else { decrementQueue('Service Agreement'); pushInProgressInstance('Service Agreement', saState.step, saState.progress, saState.data) }
+              setIsSAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ServiceAgreementWizardData | undefined) : undefined}
             onStepChange={(step, data) => saveSAProgress(step, data)}
-            onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Service Agreement') }
+              handleSAComplete(data); setIsSAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
           />
         )}
 
         {isSLAModalOpen && (
           <SlaWizardModal
-            onClose={(step, data) => { if (step && data) saveSLAProgress(step, data, true); setIsSLAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard() }}
-            initialStep={slaState.status === 'completed' ? 1 : (slaState.step || 1)}
-            initialData={slaState.status === 'completed' ? undefined : slaState.data}
+            onClose={(step, data) => {
+              if (justCompletedRef.current) { justCompletedRef.current = false; return }
+              const cid = continuingInstanceRef.current
+              if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data); continuingInstanceRef.current = null }
+              else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data) }
+              setIsSLAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as SlaWizardData | undefined) : undefined}
             onStepChange={(step, data) => saveSLAProgress(step, data)}
-            onComplete={(data) => { handleSLAComplete(data); setIsSLAModalOpen(false); setActiveTab('completed'); openReturningDashboard() }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Service Level Agreement (SLA)') }
+              handleSLAComplete(data); setIsSLAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
           />
         )}
+
+        <CounselCreditsModal
+          isOpen={isNoCounselCreditModalOpen}
+          onClose={() => setIsNoCounselCreditModalOpen(false)}
+          currentPlan={counselCreditsForGate?.plan ?? subscription?.planName ?? 'Launchpad'}
+          onTopUp={(plan: TopUpPlan) => {
+            setIsNoCounselCreditModalOpen(false)
+            navigate('/dashboard/counsel/topup', { state: { plan, credits: counselCreditsForGate } })
+          }}
+        />
 
         {billingActiveModal === 'upgrade-plans' && (
           <UpgradePlansModal
@@ -2763,7 +2886,7 @@ export default function Dashboard() {
           {/* ── Tab counts ────────────────────────────────────────────── */}
           {(() => {
             const newCount = availableWizards.reduce((sum, w) => sum + w.queuedCount, 0)
-            const inProgressCount = inProgressTitles.size
+            const inProgressCount = inProgressInstances.length
             const completedCount = completedInstances.length
             return (
               <div className="user-dashboard__tabs" role="tablist" aria-label="Dashboard workflow status">
@@ -2778,7 +2901,7 @@ export default function Dashboard() {
                 >
                   New
                   {newCount > 0 && (
-                    <span className="user-dashboard__tab-badge" aria-label={`${newCount} queued`}>
+                    <span className="user-dashboard__tab-badge" aria-label={`${newCount} available`}>
                       {newCount}
                     </span>
                   )}
@@ -2823,7 +2946,6 @@ export default function Dashboard() {
             <div className="user-dashboard__new-list" role="tabpanel">
               {availableWizards.map((wizard) => {
                 if (wizard.queuedCount <= 0) return null
-                const isRunning = inProgressTitles.has(wizard.title)
                 return (
                   <article className="user-dashboard__new-row" key={`${wizard.id}-new`}>
                     <div className="user-dashboard__new-row-left">
@@ -2846,29 +2968,16 @@ export default function Dashboard() {
                         <strong className="user-dashboard__new-row-meta-count">
                           {hasExhaustedWizardRuns
                             ? 'Monthly limit reached'
-                            : isRunning
-                              ? `${wizard.queuedCount} queued · 1 in progress`
-                              : `${wizard.queuedCount} queued`}
+                            : `${wizard.queuedCount} available`}
                         </strong>
                       </div>
-                      {isRunning ? (
-                        <button
-                          type="button"
-                          className="user-dashboard__new-row-btn user-dashboard__new-row-btn--resume"
-                          onClick={() => setActiveTab('inProgress')}
-                          title="Finish the current run before starting the next"
-                        >
-                          <ArrowRight size={14} /> Resume
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="user-dashboard__new-row-btn"
-                          onClick={() => handleStart(wizard.title)}
-                        >
-                          <Play size={14} /> Start
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        className="user-dashboard__new-row-btn"
+                        onClick={() => handleStart(wizard.title)}
+                      >
+                        <Play size={14} /> Start
+                      </button>
                     </div>
                   </article>
                 )
@@ -2888,127 +2997,38 @@ export default function Dashboard() {
 
           {derivedTab === 'inProgress' && (
             <div className="user-dashboard__progress-grid" role="tabpanel">
-              {ndaState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Non-Disclosure Agreement (NDA)</h3>
+              {inProgressInstances.map((inst) => (
+                <article className="user-dashboard__progress-card" key={inst.id}>
+                  <h3>{inst.wizardType}</h3>
                   <span className="user-dashboard__status-badge">In Progress</span>
                   <div className="user-dashboard__progress-row">
                     <span>Progress</span>
-                    <strong>{ndaState.progress}%</strong>
+                    <strong>{inst.progress}%</strong>
                   </div>
                   <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${ndaState.progress}%` }} />
+                    <span style={{ width: `${inst.progress}%` }} />
                   </div>
                   <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(ndaState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startWizard(); setIsNdaModalOpen(true) }}>
+                    <span>{relativeUpdated(inst.startedAt)}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        continuingInstanceRef.current = inst.id
+                        if (inst.wizardType === 'Non-Disclosure Agreement (NDA)') { resetNda(); startWizard(); setIsNdaModalOpen(true) }
+                        else if (inst.wizardType === 'Employment Offer Letter') { resetEmp(); startEmp(); setIsEmpModalOpen(true) }
+                        else if (inst.wizardType === 'Privacy & Cookies Policy') { resetPP(); startPP(); setIsPPModalOpen(true) }
+                        else if (inst.wizardType === 'Founders agreement and IP assignment') { resetFA(); startFA(); setIsFAModalOpen(true) }
+                        else if (inst.wizardType === 'Service Agreement') { resetSA(); startSA(); setIsSAModalOpen(true) }
+                        else if (inst.wizardType === 'Service Level Agreement (SLA)') { resetSLA(); startSLA(); setIsSLAModalOpen(true) }
+                      }}
+                    >
                       Continue <ArrowRight size={15} />
                     </button>
                   </div>
                 </article>
-              )}
+              ))}
 
-              {empState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Employment Offer Letter</h3>
-                  <span className="user-dashboard__status-badge">In Progress</span>
-                  <div className="user-dashboard__progress-row">
-                    <span>Progress</span>
-                    <strong>{empState.progress}%</strong>
-                  </div>
-                  <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${empState.progress}%` }} />
-                  </div>
-                  <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(empState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startEmp(); setIsEmpModalOpen(true) }}>
-                      Continue <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </article>
-              )}
-
-              {ppState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Privacy Policy (POPIA Compliant)</h3>
-                  <span className="user-dashboard__status-badge">In Progress</span>
-                  <div className="user-dashboard__progress-row">
-                    <span>Progress</span>
-                    <strong>{ppState.progress}%</strong>
-                  </div>
-                  <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${ppState.progress}%` }} />
-                  </div>
-                  <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(ppState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startPP(); setIsPPModalOpen(true) }}>
-                      Continue <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </article>
-              )}
-
-              {faState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Founders agreement and IP assignment</h3>
-                  <span className="user-dashboard__status-badge">In Progress</span>
-                  <div className="user-dashboard__progress-row">
-                    <span>Progress</span>
-                    <strong>{faState.progress}%</strong>
-                  </div>
-                  <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${faState.progress}%` }} />
-                  </div>
-                  <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(faState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startFA(); setIsFAModalOpen(true) }}>
-                      Continue <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </article>
-              )}
-
-              {saState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Service Agreement</h3>
-                  <span className="user-dashboard__status-badge">In Progress</span>
-                  <div className="user-dashboard__progress-row">
-                    <span>Progress</span>
-                    <strong>{saState.progress}%</strong>
-                  </div>
-                  <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${saState.progress}%` }} />
-                  </div>
-                  <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(saState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startSA(); setIsSAModalOpen(true) }}>
-                      Continue <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </article>
-              )}
-
-              {slaState.status === 'inProgress' && (
-                <article className="user-dashboard__progress-card">
-                  <h3>Service Level Agreement (SLA)</h3>
-                  <span className="user-dashboard__status-badge">In Progress</span>
-                  <div className="user-dashboard__progress-row">
-                    <span>Progress</span>
-                    <strong>{slaState.progress}%</strong>
-                  </div>
-                  <div className="user-dashboard__progress-track">
-                    <span style={{ width: `${slaState.progress}%` }} />
-                  </div>
-                  <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(slaState.startedAt ?? undefined)}</span>
-                    <button type="button" onClick={() => { startSLA(); setIsSLAModalOpen(true) }}>
-                      Continue <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </article>
-              )}
-
-              {[ndaState, empState, ppState, faState, saState, slaState].every((s) => s.status !== 'inProgress') && (
+              {inProgressInstances.length === 0 && (
                 <div className="user-dashboard__empty-state">
                   <FileText size={32} />
                   <p>No documents in progress.</p>
@@ -3259,41 +3279,85 @@ export default function Dashboard() {
 
       {isNdaModalOpen && (
         <NdaWizardModal
-          onClose={(step, data) => { saveProgress(step, data, true); setIsNdaModalOpen(false) }}
-          initialStep={ndaState.status === 'completed' ? 1 : (ndaState.step || 1)}
-          initialData={ndaState.status === 'completed' ? undefined : ndaState.data}
+          onClose={(step, data) => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, step, Math.round(((step - 1) / 3) * 100), data); continuingInstanceRef.current = null }
+            else { decrementQueue('Non-Disclosure Agreement (NDA)'); pushInProgressInstance('Non-Disclosure Agreement (NDA)', step, Math.round(((step - 1) / 3) * 100), data) }
+            setIsNdaModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as NdaWizardData | undefined) : undefined}
           onStepChange={(step, data) => saveProgress(step, data)}
-          onComplete={(data) => { handleNdaComplete(data); setIsNdaModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Non-Disclosure Agreement (NDA)') }
+            handleNdaComplete(data); setIsNdaModalOpen(false)
+          }}
         />
       )}
 
       {isEmpModalOpen && (
         <EmploymentWizardModal
-          onClose={(step, data) => { if (step && data) saveEmpProgress(step, data, true); setIsEmpModalOpen(false) }}
-          initialStep={empState.status === 'completed' ? 1 : (empState.step || 1)}
-          initialData={empState.status === 'completed' ? undefined : empState.data}
+          onClose={(step, data) => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data); continuingInstanceRef.current = null }
+            else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data) }
+            setIsEmpModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as EmploymentWizardData | undefined) : undefined}
           onStepChange={(step, data) => saveEmpProgress(step, data)}
-          onComplete={(data) => { handleEmpComplete(data); setIsEmpModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Employment Offer Letter') }
+            handleEmpComplete(data); setIsEmpModalOpen(false)
+          }}
         />
       )}
 
       {isPPModalOpen && (
         <PrivacyPolicyWizardModal
-          onClose={(step, data) => { savePPProgress(step, data, true); setIsPPModalOpen(false) }}
-          initialStep={ppState.status === 'completed' ? 1 : (ppState.step || 1)}
-          initialData={ppState.status === 'completed' ? undefined : { ...ppState.data, responsibleParty: ppState.data.responsibleParty || profile.legalName || profile.companyName }}
+          onClose={(step, data) => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, step, Math.round(((step - 1) / 6) * 100), data); continuingInstanceRef.current = null }
+            else { decrementQueue('Privacy & Cookies Policy'); pushInProgressInstance('Privacy & Cookies Policy', step, Math.round(((step - 1) / 6) * 100), data) }
+            setIsPPModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.legalName || profile.individualFullNames || profile.tradingName || '' } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
           onStepChange={(step, data) => savePPProgress(step, data)}
-          onComplete={(data) => { handlePPComplete(data); setIsPPModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Privacy & Cookies Policy') }
+            handlePPComplete(data); setIsPPModalOpen(false)
+          }}
         />
       )}
 
       {isFAModalOpen && (
         <FounderAgreementWizardModal
-          onClose={(step, data) => { if (step && data) saveFAProgress(step, data, true); setIsFAModalOpen(false) }}
-          initialStep={faState.status === 'completed' ? 1 : (faState.step || 1)}
-          initialData={faState.status === 'completed' ? undefined : faState.data}
+          onClose={(step, data) => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data); continuingInstanceRef.current = null }
+            else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
+            setIsFAModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined}
           onStepChange={(step, data) => saveFAProgress(step, data)}
-          onComplete={(data) => { handleFAComplete(data); setIsFAModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Founders agreement and IP assignment') }
+            handleFAComplete(data); setIsFAModalOpen(false)
+          }}
           onRouteToCounsel={routeFounderPublicFundingToCounsel}
           onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
         />
@@ -3301,21 +3365,43 @@ export default function Dashboard() {
 
       {isSAModalOpen && (
         <ServiceAgreementWizardModal
-          onClose={() => setIsSAModalOpen(false)}
-          initialStep={saState.status === 'completed' ? 1 : saState.step + 1}
-          initialData={saState.status === 'completed' ? undefined : saState.data}
+          onClose={() => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, saState.step, saState.progress, saState.data); continuingInstanceRef.current = null }
+            else { decrementQueue('Service Agreement'); pushInProgressInstance('Service Agreement', saState.step, saState.progress, saState.data) }
+            setIsSAModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ServiceAgreementWizardData | undefined) : undefined}
           onStepChange={(step, data) => saveSAProgress(step, data)}
-          onComplete={(data) => { handleSAComplete(data); setIsSAModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Service Agreement') }
+            handleSAComplete(data); setIsSAModalOpen(false)
+          }}
         />
       )}
 
       {isSLAModalOpen && (
         <SlaWizardModal
-          onClose={(step, data) => { if (step && data) saveSLAProgress(step, data, true); setIsSLAModalOpen(false) }}
-          initialStep={slaState.status === 'completed' ? 1 : (slaState.step || 1)}
-          initialData={slaState.status === 'completed' ? undefined : slaState.data}
+          onClose={(step, data) => {
+            if (justCompletedRef.current) { justCompletedRef.current = false; return }
+            const cid = continuingInstanceRef.current
+            if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data); continuingInstanceRef.current = null }
+            else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data) }
+            setIsSLAModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as SlaWizardData | undefined) : undefined}
           onStepChange={(step, data) => saveSLAProgress(step, data)}
-          onComplete={(data) => { handleSLAComplete(data); setIsSLAModalOpen(false) }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Service Level Agreement (SLA)') }
+            handleSLAComplete(data); setIsSLAModalOpen(false)
+          }}
         />
       )}
 
@@ -3325,6 +3411,16 @@ export default function Dashboard() {
           onClose={() => setComingSoonTitle(null)}
         />
       )}
+
+      <CounselCreditsModal
+        isOpen={isNoCounselCreditModalOpen}
+        onClose={() => setIsNoCounselCreditModalOpen(false)}
+        currentPlan={counselCreditsForGate?.plan ?? subscription?.planName ?? 'Launchpad'}
+        onTopUp={(plan: TopUpPlan) => {
+          setIsNoCounselCreditModalOpen(false)
+          navigate('/dashboard/counsel/topup', { state: { plan, credits: counselCreditsForGate } })
+        }}
+      />
 
     </DashboardShell>
   )
