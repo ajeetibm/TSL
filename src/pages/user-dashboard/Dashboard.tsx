@@ -60,6 +60,21 @@ import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
 import './Dashboard.css'
 
+// ── Shared counsel-credit session helpers ─────────────────────────────────
+// Must use the SAME key as DashboardCounsel.tsx so both pages share one counter.
+const COUNSEL_CREDITS_SESSION_KEY = 'tsl-counsel-credits-session'
+
+function readSessionCounselCredits(): CounselCredits | null {
+  try {
+    const raw = sessionStorage.getItem(COUNSEL_CREDITS_SESSION_KEY)
+    return raw ? (JSON.parse(raw) as CounselCredits) : null
+  } catch { return null }
+}
+
+function writeSessionCounselCredits(credits: CounselCredits) {
+  try { sessionStorage.setItem(COUNSEL_CREDITS_SESSION_KEY, JSON.stringify(credits)) } catch { /* ignore */ }
+}
+
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
 const BLUEPRINT_ICON_NAME: Record<string, string> = {
@@ -2252,9 +2267,14 @@ export default function Dashboard() {
   }
 
   const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap) => {
-    // Check whether the user has at least one counsel credit before routing.
-    const creditsRes = await counselApi.credits()
-    const credits = creditsRes.success && creditsRes.data ? creditsRes.data : null
+    // Use the session-persisted credit count so in-session decrements are
+    // respected. Only fall back to a live API call when no session value exists.
+    let credits = readSessionCounselCredits()
+    if (!credits) {
+      const creditsRes = await counselApi.credits()
+      credits = creditsRes.success && creditsRes.data ? creditsRes.data : null
+      if (credits) writeSessionCounselCredits(credits)
+    }
     if (!credits || credits.creditsRemaining < 1) {
       setCounselCreditsForGate(credits)
       setIsNoCounselCreditModalOpen(true)
@@ -2269,6 +2289,15 @@ export default function Dashboard() {
       showNdaToast(response.message || 'Unable to submit this review to admin.')
       return null
     }
+    // Decrement the session credit counter so the next request in this session
+    // sees the updated balance — both here and on the /dashboard/counsel page.
+    const updated: CounselCredits = {
+      ...credits,
+      creditsRemaining: Math.max(credits.creditsRemaining - 1, 0),
+      creditsUsed: credits.creditsUsed + 1,
+      usageThisMonth: credits.usageThisMonth + 1,
+    }
+    writeSessionCounselCredits(updated)
     showNdaToast('Your publicly funded IP review has been sent to admin for counsel assignment.')
     return response.data
   }, [])
