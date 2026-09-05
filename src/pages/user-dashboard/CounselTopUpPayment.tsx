@@ -11,7 +11,6 @@ import type { TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './CounselTopUpPayment.css'
 
-const VAT_RATE = 0.15
 const MIN_CREDITS = 1
 const MAX_CREDITS = 20
 const COUNSEL_PLANS: Record<string, TopUpPlan> = {
@@ -59,10 +58,8 @@ export default function CounselTopUpPayment() {
   }
 
   // ── order calculations ───────────────────────────────────────────────────
-  const unitPrice  = plan.ratePerCredit
-  const subtotal   = unitPrice * qty
-  const vat        = Math.round(subtotal * VAT_RATE)
-  const total      = subtotal + vat
+  const unitPrice = plan.ratePerCredit
+  const total     = unitPrice * qty
 
   // ── quantity handlers ────────────────────────────────────────────────────
   const clamp = (n: number) => Math.max(MIN_CREDITS, Math.min(MAX_CREDITS, n))
@@ -218,11 +215,7 @@ export default function CounselTopUpPayment() {
                   <span>
                     {plan.name} Top-Up ({qty} credit{qty !== 1 ? 's' : ''} × {fmtZAR(unitPrice)})
                   </span>
-                  <span>{fmtZAR(subtotal)}</span>
-                </li>
-                <li>
-                  <span>VAT (15%)</span>
-                  <span>{fmtZAR(vat)}</span>
+                  <span>{fmtZAR(total)}</span>
                 </li>
               </ul>
 
@@ -246,7 +239,7 @@ export default function CounselTopUpPayment() {
               </button>
 
               <p className="counsel-topup-payment__secure-note">
-                Secured via Paystack · ZAR · VAT incl.
+                Secured via Paystack · ZAR
               </p>
             </section>
 
