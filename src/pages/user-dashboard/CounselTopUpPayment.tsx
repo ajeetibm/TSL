@@ -1,4 +1,5 @@
-import { ArrowLeft, CheckCircle2, CreditCard, Minus, Plus } from 'lucide-react'
+import { CheckCircle2, CreditCard, Minus, Plus } from 'lucide-react'
+import { BackButton } from '../../components/dashboard/BackButton'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
@@ -128,14 +129,7 @@ export default function CounselTopUpPayment() {
     <DashboardShell activeSection="Counsel">
       <main className="counsel-topup-payment">
         <header className="counsel-topup-payment__header">
-          <button
-            type="button"
-            className="counsel-topup-payment__back-btn"
-            aria-label="Back to Counsel"
-            onClick={() => navigate('/dashboard/counsel')}
-          >
-            <ArrowLeft size={18} />
-          </button>
+          <BackButton to="/dashboard/counsel" label="Back to Counsel" />
           <div>
             <h1>Top Up Credits</h1>
             <p>Complete your credit purchase</p>

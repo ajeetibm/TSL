@@ -6,7 +6,6 @@
 
 /* ── Header ─────────────────────────────────────────────────────────── */
 .counsel-topup-payment__header {
-  position: relative;
   min-height: 110px;
   display: flex;
   align-items: center;
@@ -15,38 +14,6 @@
   padding: 16px 32px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
-
-/* Circular back button — matches counsel portal header style */
-.counsel-topup-payment__back-btn {
-  position: absolute;
-  left: -18px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 50%;
-  padding: 0;
-  background: #d3a038;
-  color: #ffffff;
-  cursor: pointer;
-  transition: background 160ms ease;
-}
-
-.counsel-topup-payment__back-btn:hover {
-  background: #b8892e;
-}
-
-.counsel-topup-payment__back-btn:focus-visible {
-  outline: 2px solid #d3a038;
-  outline-offset: 2px;
 }
 
 .counsel-topup-payment__header h1 {
