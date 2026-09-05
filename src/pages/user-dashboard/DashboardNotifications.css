@@ -173,11 +173,14 @@
 }
 
 .dashboard-notifications__item-copy p {
-  max-width: 520px;
+  max-width: 454px;
   margin: 8px 0 0;
-  color: #0b1c2f;
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 400;
   font-size: 16px;
-  line-height: 1.7;
+  line-height: 28px;
+  color: #0D1E2A;
 }
 
 .dashboard-notifications__meta {

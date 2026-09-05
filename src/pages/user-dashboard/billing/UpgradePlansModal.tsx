@@ -198,13 +198,6 @@ export function UpgradePlansModal({
           </div>
         )}
 
-        {!plansLoading && !plansError && plans.length > 0 && (
-          <div className="bs-compare-terms">
-            <p>Billing is monthly in advance. Subscriptions run month to month and can be cancelled with 30 days&apos; notice, effective at the end of the notice period. There is no minimum term.</p>
-            <p>Prices are in South African rand. No VAT is charged. Entitlements are governed by the Platform Entitlement Schedule.</p>
-          </div>
-        )}
-
         {/* ── Cancel pill ──────────────────────────────────────────── */}
         {!plansLoading && (
           <div className="bs-compare-footer">

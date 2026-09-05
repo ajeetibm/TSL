@@ -12,6 +12,17 @@ import './DashboardNotifications.css'
 
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
+// Custom Scale/Renewal icon for Subscription Renewal notifications
+const SubscriptionRenewalIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M28 28L31 20L34 28C33.13 28.65 32.08 29 31 29C29.92 29 28.87 28.65 28 28Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14 28L17 20L20 28C19.13 28.65 18.08 29 17 29C15.92 29 14.87 28.65 14 28Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M19 33H29" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M24 15V33" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M15 19H17C19 19 22 18 24 17C26 18 29 19 31 19H33" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+)
+
 // Custom CheckCircle icon matching Figma design
 const CheckCircleIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -162,6 +173,7 @@ function NotificationIcon({ type }: { type: string }) {
   const lc = type.toLowerCase()
   if (lc.includes('document') || lc.includes('completed')) return <CheckCircleIcon />
   if (lc.includes('signature')) return <AlertCircleIcon />
+  if (lc.includes('subscription') || lc.includes('renewal')) return <SubscriptionRenewalIcon />
   const LucideIcon = getNotificationIcon(lc)
   return <LucideIcon size={24} />
 }
