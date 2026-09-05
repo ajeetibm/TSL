@@ -201,7 +201,10 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
     // ── Step 1: collect payment when a payFn is injected ─────────────────
     let paymentReference: string | undefined
     if (payFn && upgradePreview) {
-      const ref = await payFn(upgradePreview.totalDueToday, selectedPlan.name)
+      // Pass the pre-tax amount — the UI displays totalDueToday minus tax,
+      // and Paystack adds VAT itself, so sending the gross would double-charge.
+      const amountExTax = upgradePreview.totalDueToday - (upgradePreview.tax ?? 0)
+      const ref = await payFn(amountExTax, selectedPlan.name)
       if (ref === null) {
         // User cancelled or payment failed — payFn already showed an error
         setActionLoading(false)
