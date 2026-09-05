@@ -148,6 +148,39 @@
   background: var(--color-gold-light, #E3C36F);
 }
 
+/* ── Snapshot navigation link when snapshot incomplete ────── */
+.fa-snapshot-missing-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.fa-snapshot-missing-text {
+  color: #64748b;
+  font-size: 14px;
+}
+
+.fa-snapshot-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--color-gold, #c79a3b);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s ease;
+}
+
+.fa-snapshot-nav-link:hover {
+  color: #a87f27;
+}
+
 /* ── Counsel-sent toast ───────────────────────────────────── */
 .fa-counsel-toast {
   display: flex;

@@ -1,7 +1,8 @@
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, X,
+  AlertCircle, ArrowLeft, ArrowRight, Check, ExternalLink, Eye, Loader2, Pencil, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useUserProfile } from '../../context/UserProfileContext'
 import { mapFounderAgreementFields, type FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import {
@@ -156,11 +157,22 @@ function Banner({ type, title, message }: { type: 'warn' | 'block'; title: strin
 }
 
 /* ─── Snapshot field (pre-filled from Company Snapshot) ─── */
-function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
+function SnapshotField({
+  value,
+  confirmed,
+  onConfirm,
+  onNavigateToSnapshot,
+}: {
+  value: string
+  confirmed: boolean
+  onConfirm: () => void
+  onNavigateToSnapshot?: () => void
+}) {
   const [snapshotError, setSnapshotError] = useState<string | null>(null)
+  const isMissing = !value.trim()
 
   function handleConfirm() {
-    if (!value.trim()) {
+    if (isMissing) {
       setSnapshotError('Please complete your Company Snapshot before confirming.')
       return
     }
@@ -171,7 +183,23 @@ function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirm
   return (
     <>
       <div className={`nda-modal__snapshot-confirm${confirmed ? ' nda-modal__snapshot-confirm--confirmed' : ''}`}>
-        <span>{value || 'Complete your Company Snapshot'}</span>
+        {isMissing ? (
+          <div className="fa-snapshot-missing-row">
+            <span className="fa-snapshot-missing-text">Complete your Company Snapshot</span>
+            {onNavigateToSnapshot && (
+              <button
+                type="button"
+                className="fa-snapshot-nav-link"
+                onClick={onNavigateToSnapshot}
+              >
+                Go to Company Snapshot
+                <ExternalLink size={13} />
+              </button>
+            )}
+          </div>
+        ) : (
+          <span>{value}</span>
+        )}
         {confirmed ? (
           <span className="nda-modal__snapshot-btn nda-modal__snapshot-btn--confirmed" style={{ cursor: 'default', fontWeight: 400 }}>✓ Confirmed</span>
         ) : (
@@ -525,6 +553,7 @@ export default function FounderAgreementWizardModal({
   onRouteToCounsel,
   onRefreshPublicFundingReview,
 }: FounderAgreementWizardModalProps) {
+  const navigate = useNavigate()
   const { profile } = useUserProfile()
   const snapshotCompanyName = profile.entityType === 'Individual'
     ? profile.individualFullNames.trim()
@@ -805,6 +834,10 @@ export default function FounderAgreementWizardModal({
                         value={data.companyName}
                         confirmed={data.companyConfirmed}
                         onConfirm={() => set('companyConfirmed', true)}
+                        onNavigateToSnapshot={() => {
+                          onClose(step, data)
+                          navigate('/dashboard/profile')
+                        }}
                       />
                       <p className="nda-modal__field-hint" style={{ marginTop: 6 }}>
                         Pre-filled from your Company Snapshot.
