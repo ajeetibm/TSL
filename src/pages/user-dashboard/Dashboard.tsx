@@ -2701,7 +2701,8 @@ export default function Dashboard() {
               setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.legalName || profile.individualFullNames || profile.tradingName || '' } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '') } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
+            responsiblePartyFallback={profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '')}
             onStepChange={(step, data) => savePPProgress(step, data)}
             onComplete={(data) => {
               const cid = continuingInstanceRef.current
@@ -3358,7 +3359,8 @@ export default function Dashboard() {
             setIsPPModalOpen(false)
           }}
           initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.legalName || profile.individualFullNames || profile.tradingName || '' } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '') } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
+          responsiblePartyFallback={profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '')}
           onStepChange={(step, data) => savePPProgress(step, data)}
           onComplete={(data) => {
             const cid = continuingInstanceRef.current

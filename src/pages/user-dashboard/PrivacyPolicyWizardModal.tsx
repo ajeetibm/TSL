@@ -280,10 +280,12 @@ function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirm
   return (
     <div className="nda-modal__snapshot-field">
       {isEmpty ? (
-        <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>
-          Not set — fill in <strong>Registered / legal name</strong> (or <strong>Full name</strong> for individuals) in your{' '}
-          <a href="/dashboard/profile" target="_blank" rel="noreferrer" style={{ color: '#cf9b2f' }}>Company Snapshot</a>.
-        </span>
+        <>
+          <span>{value}</span>
+          <p className="nda-modal__field-error" role="alert" style={{ gridColumn: '1 / -1', marginTop: 6 }}>
+            Please complete your Company Snapshot profile before proceeding — go to Profile and fill in your Registered / legal name (or Full name for individuals).
+          </p>
+        </>
       ) : (
         <span>{value}</span>
       )}
@@ -292,7 +294,6 @@ function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirm
         className={`nda-modal__confirm-pill${confirmed ? ' nda-modal__confirm-pill--done' : ''}`}
         onClick={() => { if (!isEmpty) onConfirm() }}
         disabled={isEmpty}
-        title={isEmpty ? 'Set your company name in the Company Snapshot first' : undefined}
         style={isEmpty ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
       >
         {confirmed ? 'Confirmed' : 'Confirm'}
@@ -428,6 +429,8 @@ interface PrivacyPolicyWizardModalProps {
   initialStep?: number
   initialData?: PrivacyPolicyWizardData
   onStepChange?: (step: number, data: PrivacyPolicyWizardData) => void
+  /** Profile-derived name to use as Responsible party when the saved/initial data has none. */
+  responsiblePartyFallback?: string
 }
 
 export default function PrivacyPolicyWizardModal({
@@ -436,6 +439,7 @@ export default function PrivacyPolicyWizardModal({
   initialStep = 1,
   initialData,
   onStepChange,
+  responsiblePartyFallback = '',
 }: PrivacyPolicyWizardModalProps) {
   const resolved = Math.min(Math.max(initialStep, 1), 7)
   const [step, setStep] = useState<Step>(resolved > 6 ? 6 : (resolved as Step))
@@ -444,9 +448,15 @@ export default function PrivacyPolicyWizardModal({
   const [errors, setErrors] = useState<PrivacyErrors>({})
   const [data, setData] = useState<PrivacyPolicyWizardData>(() => {
     const source = initialData ?? PP_EMPTY_DATA
+    // If the saved/initial data has no responsible party, seed it from the
+    // profile fallback so continuing in-progress instances also get the value.
+    const responsibleParty = source.responsibleParty?.trim()
+      ? source.responsibleParty
+      : responsiblePartyFallback
     return {
       ...PP_EMPTY_DATA,
       ...source,
+      responsibleParty,
       domains: ensureAtLeastOne(source.domains ?? PP_EMPTY_DATA.domains, () => ''),
       purposes: ensureAtLeastOne(source.purposes ?? PP_EMPTY_DATA.purposes, createEmptyPurpose),
       retention: ensureAtLeastOne(source.retention ?? PP_EMPTY_DATA.retention, createEmptyRetention),

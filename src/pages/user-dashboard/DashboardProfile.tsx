@@ -55,6 +55,8 @@ export default function DashboardProfile() {
   const [avatarPreview, setAvatarPreview] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const entityTypeRef = useRef<HTMLDivElement>(null)
+  const idNumberRef = useRef<HTMLDivElement>(null)
+  const [idNumberError, setIdNumberError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -281,9 +283,11 @@ export default function DashboardProfile() {
       return
     }
     if (formData.entityType === 'Individual' && formData.idNumber && !isValidSaId(formData.idNumber)) {
-      setSaveError('Enter a valid 13-digit South African ID number.')
+      setIdNumberError('Enter a valid 13-digit South African ID number.')
+      idNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
+    setIdNumberError(null)
     if (formData.entityType !== 'Individual' && formData.legalName) {
       if (!LEGAL_NAME_VALID.test(formData.legalName)) {
         setLegalNameError('Legal name must contain at least one letter or number — special characters alone are not allowed.')
@@ -452,12 +456,17 @@ export default function DashboardProfile() {
                         <input type="text" maxLength={100} value={formData.individualFullNames} onChange={(e) => handleInputChange('individualFullNames', e.target.value)} />
                       </div>
                     </label>
-                    <label className="dashboard-profile__field">
-                      <span>South African ID number</span>
-                      <div className="dashboard-profile__input-wrap">
-                        <input type="text" inputMode="numeric" maxLength={13} value={formData.idNumber} onChange={(e) => handleInputChange('idNumber', e.target.value.replace(/\D/g, ''))} />
-                      </div>
-                    </label>
+                    <div className="dashboard-profile__field" ref={idNumberRef}>
+                      <label className="dashboard-profile__field-label">
+                        <span>South African ID number</span>
+                        <div className={`dashboard-profile__input-wrap${idNumberError ? ' dashboard-profile__input-wrap--error' : ''}`}>
+                          <input type="text" inputMode="numeric" maxLength={13} value={formData.idNumber} onChange={(e) => { handleInputChange('idNumber', e.target.value.replace(/\D/g, '')); if (idNumberError) setIdNumberError(null) }} />
+                        </div>
+                      </label>
+                      {idNumberError && (
+                        <p className="dashboard-profile__field-error" role="alert">{idNumberError}</p>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
