@@ -113,7 +113,7 @@ export function InvoiceViewModal({ invoice, onClose, onDownload }: Props) {
               <span>{fmtZAR(invoice.amount)}</span>
             </div>
             <div className="bs-inv-modal__breakdown-row">
-              <span>VAT (15%)</span>
+              <span>VAT (not charged)</span>
               <span>{fmtZAR(invoice.tax)}</span>
             </div>
             <div className="bs-inv-modal__breakdown-row bs-inv-modal__breakdown-row--total">

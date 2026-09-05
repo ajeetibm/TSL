@@ -1,4 +1,7 @@
 import { Info, X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { subscriptionApi } from '../../services/tslApi'
+import type { SubscriptionPlan } from '../../services/dashboardTypes'
 import './CounselCreditsModal.css'
 
 export interface TopUpPlan {
@@ -8,12 +11,6 @@ export interface TopUpPlan {
   ratePerCredit: number
 }
 
-const PLANS: TopUpPlan[] = [
-  { name: 'Launchpad', credits: 0, sla: '2 Business Days', ratePerCredit: 550 },
-  { name: 'Operator', credits: 2, sla: '1 Business Day', ratePerCredit: 500 },
-  { name: 'Boardroom', credits: 6, sla: '8 Business Hours', ratePerCredit: 450 },
-]
-
 interface CounselCreditsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -22,10 +19,33 @@ interface CounselCreditsModalProps {
 }
 
 export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp }: CounselCreditsModalProps) {
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([])
+  const [plansError, setPlansError] = useState('')
+
+  useEffect(() => {
+    if (!isOpen) return
+    let active = true
+    setPlansError('')
+    subscriptionApi.plans()
+      .then((response) => {
+        if (active) setPlans(Array.isArray(response.data) ? response.data as SubscriptionPlan[] : [])
+      })
+      .catch(() => {
+        if (active) setPlansError('Plan information is unavailable. Please try again.')
+      })
+    return () => { active = false }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   const normalizedCurrentPlan = currentPlan.trim().toLowerCase()
   const isCurrentPlan = (planName: string) => normalizedCurrentPlan === planName.toLowerCase()
+  const counselPlans: TopUpPlan[] = plans.map((plan) => ({
+    name: plan.name,
+    credits: plan.counselCredits ?? 0,
+    sla: plan.counselSla ?? '—',
+    ratePerCredit: plan.counselTopUpRate ?? 0,
+  }))
 
   return (
     <div className="counsel-credits-overlay" onClick={onClose}>
@@ -46,10 +66,15 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
         </div>
 
         <div className="counsel-credits-modal__content">
+          {plansError ? (
+            <p className="bs-modal-error" role="alert">{plansError}</p>
+          ) : counselPlans.length === 0 ? (
+            <div className="bs-modal-loading">Loading plans…</div>
+          ) : (
           <div className="counsel-credits-modal__table">
             <div className="counsel-credits-modal__row counsel-credits-modal__row--header">
               <div className="counsel-credits-modal__cell">Feature</div>
-              {PLANS.map((plan) => (
+              {counselPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
@@ -68,7 +93,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Credits per month
               </div>
-              {PLANS.map((plan) => (
+              {counselPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
@@ -84,7 +109,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Response Time SLA
               </div>
-              {PLANS.map((plan) => (
+              {counselPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
@@ -98,7 +123,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Top-up rate (per credit)
               </div>
-              {PLANS.map((plan) => (
+              {counselPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
@@ -110,7 +135,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
 
             <div className="counsel-credits-modal__row counsel-credits-modal__row--actions">
               <div className="counsel-credits-modal__cell"></div>
-              {PLANS.map((plan) => (
+              {counselPlans.map((plan) => (
                 <div
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
@@ -129,6 +154,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               ))}
             </div>
           </div>
+          )}
 
           <div className="counsel-credits-modal__info">
             <h3>

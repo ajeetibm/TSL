@@ -17,24 +17,20 @@ interface Props {
   onClose: () => void
 }
 
-// Static per-plan meta — excluded features shown greyed-out with ✗
+// Presentation-only metadata. Commercial content comes from the plan API.
 const PLAN_META: Record<string, {
   Icon: React.ElementType
-  excluded: string[]
   popular?: boolean
 }> = {
   launchpad: {
     Icon: FileText,
-    excluded: ['No API access', 'No white-label'],
   },
   operator: {
     Icon: ShoppingCart,
-    excluded: ['No white-label'],
     popular: true,
   },
   boardroom: {
     Icon: ShoppingCart,
-    excluded: [],
   },
 }
 
@@ -86,8 +82,8 @@ export function ComparePlansModal({ plans, plansLoading, plansError, onClose }: 
           <div className="bs-compare-grid">
             {plans.map((plan) => {
               const key  = plan.planId.toLowerCase()
-              const meta = PLAN_META[key] ?? { Icon: ShoppingCart, excluded: [] }
-              const { Icon, excluded, popular } = meta
+              const meta = PLAN_META[key] ?? { Icon: ShoppingCart }
+              const { Icon, popular } = meta
 
               return (
                 <div key={plan.planId} className="bs-compare-card-wrapper">
@@ -130,17 +126,18 @@ export function ComparePlansModal({ plans, plansLoading, plansError, onClose }: 
                           {f}
                         </li>
                       ))}
-                      {excluded.map((f) => (
-                        <li key={f} className="bs-compare-card__feature--excluded">
-                          <X size={14} />
-                          {f}
-                        </li>
-                      ))}
                     </ul>
                   </article>
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {!plansLoading && !plansError && plans.length > 0 && (
+          <div className="bs-compare-terms">
+            <p>Billing is monthly in advance. Subscriptions run month to month and can be cancelled with 30 days&apos; notice, effective at the end of the notice period. There is no minimum term.</p>
+            <p>Prices are in South African rand. No VAT is charged. Entitlements are governed by the Platform Entitlement Schedule.</p>
           </div>
         )}
 

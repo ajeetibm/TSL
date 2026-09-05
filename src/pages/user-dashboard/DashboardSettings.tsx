@@ -81,7 +81,7 @@ function downloadInvoicePdf(inv: BillingHistoryInvoice) {
   </table>
   <table>
     <tr><td class="label">Subscription amount</td><td>${fmtZAR(inv.amount)}</td></tr>
-    <tr><td class="label">VAT (15%)</td><td>${fmtZAR(inv.tax)}</td></tr>
+    <tr><td class="label">VAT (not charged)</td><td>${fmtZAR(inv.tax)}</td></tr>
     <tr class="total"><td>Total</td><td>${fmtZAR(inv.total)}</td></tr>
   </table>
 </body>

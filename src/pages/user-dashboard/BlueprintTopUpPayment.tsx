@@ -11,7 +11,7 @@ import './Dashboard.css'
 import './BlueprintTopUpPayment.css'
 
 const PRICE_PER_UNIT = 149
-const VAT_RATE = 0.15
+const VAT_RATE = 0
 const MIN_UNITS = 1
 const MAX_UNITS = 100
 
@@ -278,7 +278,7 @@ export default function BlueprintTopUpPayment() {
                   <span>{fmtZAR(subtotal)}</span>
                 </li>
                 <li>
-                  <span>VAT (15%)</span>
+                  <span>VAT (not charged)</span>
                   <span>{fmtZAR(vat)}</span>
                 </li>
               </ul>
@@ -305,7 +305,7 @@ export default function BlueprintTopUpPayment() {
               {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
             </button>
             <p className="btu-secure-note">
-              Secured via Paystack · ZAR · VAT incl.
+              Secured via Paystack · ZAR · No VAT charged
             </p>
           </div>
 

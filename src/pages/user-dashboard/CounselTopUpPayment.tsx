@@ -13,12 +13,6 @@ import './CounselTopUpPayment.css'
 
 const MIN_CREDITS = 1
 const MAX_CREDITS = 20
-const COUNSEL_PLANS: Record<string, TopUpPlan> = {
-  launchpad: { name: 'Launchpad', credits: 0, sla: '2 Business Days', ratePerCredit: 550 },
-  operator: { name: 'Operator', credits: 2, sla: '1 Business Day', ratePerCredit: 500 },
-  boardroom: { name: 'Boardroom', credits: 6, sla: '8 Business Hours', ratePerCredit: 450 },
-}
-
 function getStoredUserEmail() {
   try {
     const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
@@ -38,9 +32,9 @@ export default function CounselTopUpPayment() {
 
   const requestedPlan = location.state?.plan as TopUpPlan | undefined
   const credits = location.state?.credits as CounselCredits | undefined
-  // Use the plan the user explicitly clicked (requestedPlan) so any plan can be
-  // topped up regardless of which plan the user is currently subscribed to.
-  const plan = requestedPlan ? COUNSEL_PLANS[requestedPlan.name.trim().toLowerCase()] : undefined
+  // The selected tier comes from the plan configuration returned by the API.
+  // It determines this one-off Counsel credit purchase only.
+  const plan = requestedPlan
 
   setPageMetadata('Top Up Credits', 'Purchase additional counsel credits.')
 

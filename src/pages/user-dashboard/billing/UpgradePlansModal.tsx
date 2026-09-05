@@ -36,62 +36,17 @@ function BuildingIcon({ size = 22 }: { size?: number }) {
 
 const PLAN_META: Record<string, {
   Icon: React.ElementType
-  price: number
-  features: string[]
-  excluded: string[]
   popular?: boolean
 }> = {
   launchpad: {
     Icon: FileText,
-    price: 499,
-    features: [
-      'For founders setting the company up and putting the first documents in place',
-      'All five Blueprints',
-      '4 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-      'No Counsel credits included',
-      'Additional Counsel credits: R550 per credit (30 minutes of attorney time)',
-      'Email support: response within 48 business hours',
-      '1 user',
-      'Document storage: 12 months from generation',
-    ],
-    excluded: ['Counsel credits', 'Additional users'],
   },
   operator: {
     Icon: BuildingIcon,
-    price: 1499,
-    features: [
-      'For businesses that are trading and hiring, and generating documents regularly',
-      'All five Blueprints',
-      '12 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-      '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end',
-      'Additional Counsel credits: R550 per credit',
-      'Priority support: response within 24 business hours',
-      '3 users',
-      'Document storage: life of the subscription',
-    ],
-    excluded: ['Additional users beyond 3'],
     popular: true,
   },
   boardroom: {
     Icon: BuildingIcon,
-    price: 3999,
-    features: [
-      'For businesses with a board, investors or a supplier base, needing attorney time every month',
-      'All five Blueprints',
-      '30 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-      '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end',
-      'Additional Counsel credits: R550 per credit',
-      'Dedicated support with an SLA: response within 8 business hours',
-      '10 users',
-      'Document storage: life of the subscription',
-    ],
-    excluded: ['Additional users beyond 10'],
   },
 }
 
@@ -156,10 +111,8 @@ export function UpgradePlansModal({
               const key        = plan.planId.toLowerCase()
               const meta       = PLAN_META[key]
               const Icon       = meta?.Icon ?? FileText
-              const excluded   = meta?.excluded ?? []
               const popular    = meta?.popular
-              const features   = meta?.features ?? plan.features
-              const price      = meta?.price ?? plan.price
+              const features   = plan.features
               const isCurrent  = plan.planId.toLowerCase() === currentPlanId.toLowerCase()
               const canUpgrade = tier > currentTier
               const canDowngrade = tier < currentTier
@@ -193,7 +146,7 @@ export function UpgradePlansModal({
                     {/* Price — stacked */}
                     <div className="bs-compare-card__price-block">
                       <span className="bs-compare-card__price-amount">
-                        R{price.toLocaleString('en-ZA')}
+                        R{plan.price.toLocaleString('en-ZA')}
                       </span>
                       <span className="bs-compare-card__price-period">/month</span>
                     </div>
@@ -203,12 +156,6 @@ export function UpgradePlansModal({
                       {features.map((f) => (
                         <li key={f} className="bs-compare-card__feature--included">
                           <CheckCircle2 size={15} />
-                          {f}
-                        </li>
-                      ))}
-                      {excluded.map((f) => (
-                        <li key={f} className="bs-compare-card__feature--excluded">
-                          <X size={14} />
                           {f}
                         </li>
                       ))}
@@ -248,6 +195,13 @@ export function UpgradePlansModal({
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {!plansLoading && !plansError && plans.length > 0 && (
+          <div className="bs-compare-terms">
+            <p>Billing is monthly in advance. Subscriptions run month to month and can be cancelled with 30 days&apos; notice, effective at the end of the notice period. There is no minimum term.</p>
+            <p>Prices are in South African rand. No VAT is charged. Entitlements are governed by the Platform Entitlement Schedule.</p>
           </div>
         )}
 

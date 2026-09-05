@@ -239,7 +239,25 @@
 .bs-compare-footer {
   display: flex;
   justify-content: center;
-  padding-top: 4px;
+  padding-top: 16px;
+}
+
+.bs-compare-terms {
+  margin: 0 auto;
+  max-width: 860px;
+  color: #5f6773;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.bs-compare-terms p {
+  margin: 0;
+}
+
+.bs-compare-terms p + p {
+  margin-top: 6px;
+  color: #707986;
 }
 
 .bs-compare-close-btn {

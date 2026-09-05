@@ -120,6 +120,10 @@ export interface SubscriptionPlan {
   wizardRuns: number  // per month; -1 = unlimited
   teamMembers: number // -1 = unlimited
   storage: string
+  counselCredits?: number
+  blueprintRunTopUpRate?: number
+  counselTopUpRate?: number
+  counselSla?: string
   features: string[]
 }
 
