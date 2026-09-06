@@ -107,30 +107,9 @@ const fallbackMonths: EarningsMonth[] = [
   { month: 'Dec', earnings: 3900, target: 3800 },
 ]
 
-const fallbackPending: DashboardRequest[] = [
-  {
-    requestId: 'req_77b2',
-    subject: 'Contract Review for SaaS Agreement',
-    fromUser: 'Michael Chen',
-    userEmail: 'michael.chen@company.com',
-    assignedBy: 'Admin Sarah',
-    timeAgo: '12 min ago',
-    earnings: 550,
-  },
-  {
-    requestId: 'req_77b3',
-    subject: 'Employment Contract Consultation',
-    fromUser: 'Jessica Williams',
-    userEmail: 'jessica.w@startup.co.za',
-    assignedBy: 'Admin Sarah',
-    timeAgo: '25 min ago',
-    earnings: 450,
-  },
-]
+const fallbackPending: DashboardRequest[] = []
 
 const fallbackRequests: CounselRequest[] = [
-  { ...fallbackPending[0], status: 'pending', date: '2026-01-12' },
-  { ...fallbackPending[1], status: 'pending', date: '2026-01-12' },
   {
     requestId: 'req_77b4',
     subject: 'Shareholder Agreement Review',
