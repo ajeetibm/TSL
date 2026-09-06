@@ -276,29 +276,32 @@ function ChipMultiSelect({
 }
 
 function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
+  const [snapshotError, setSnapshotError] = useState('')
   const isEmpty = !value.trim()
+
+  const handleConfirm = () => {
+    if (isEmpty) {
+      setSnapshotError('Please complete your Company Snapshot before confirming the responsible party.')
+      return
+    }
+    setSnapshotError('')
+    onConfirm()
+  }
+
   return (
-    <div className="nda-modal__snapshot-field">
-      {isEmpty ? (
-        <>
-          <span>{value}</span>
-          <p className="nda-modal__field-error" role="alert" style={{ gridColumn: '1 / -1', marginTop: 6 }}>
-            Please complete your Company Snapshot profile before proceeding — go to Profile and fill in your Registered / legal name (or Full name for individuals).
-          </p>
-        </>
-      ) : (
-        <span>{value}</span>
-      )}
-      <button
-        type="button"
-        className={`nda-modal__confirm-pill${confirmed ? ' nda-modal__confirm-pill--done' : ''}`}
-        onClick={() => { if (!isEmpty) onConfirm() }}
-        disabled={isEmpty}
-        style={isEmpty ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
-      >
-        {confirmed ? 'Confirmed' : 'Confirm'}
-      </button>
-    </div>
+    <>
+      <div className={`nda-modal__snapshot-confirm${snapshotError ? ' nda-modal__snapshot-confirm--error' : ''}`}>
+        <span>{value || 'Your company'}</span>
+        <button
+          type="button"
+          className={`nda-modal__snapshot-btn${confirmed ? ' nda-modal__snapshot-btn--confirmed' : ''}`}
+          onClick={handleConfirm}
+        >
+          {confirmed ? 'Confirmed' : 'CONFIRM'}
+        </button>
+      </div>
+      {snapshotError && <p className="nda-modal__field-error" role="alert">{snapshotError}</p>}
+    </>
   )
 }
 
@@ -636,7 +639,14 @@ export default function PrivacyPolicyWizardModal({
                   <section className="nda-modal__panel">
                     <h3>Who you are</h3>
                     <p>The responsible party and information officer for this notice.</p>
-                    <FormGroup label="Responsible party" required error={errors.responsiblePartyConfirmed}>
+                    <FormGroup
+                      label="Responsible party"
+                      required
+                      hint={data.responsibleParty
+                        ? 'Pre-filled from your Company Snapshot. Confirm before it is used.'
+                        : 'Complete the legal entity and legal name in your Company Snapshot before continuing.'}
+                      error={errors.responsiblePartyConfirmed}
+                    >
                       <SnapshotField value={data.responsibleParty} confirmed={data.responsiblePartyConfirmed} onConfirm={() => set('responsiblePartyConfirmed', true)} />
                     </FormGroup>
                     <div className="nda-modal__two-col">

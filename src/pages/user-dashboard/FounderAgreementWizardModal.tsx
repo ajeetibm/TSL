@@ -1,8 +1,7 @@
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Check, ExternalLink, Eye, Loader2, Pencil, X,
+  AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useUserProfile } from '../../context/UserProfileContext'
 import { mapFounderAgreementFields, type FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import {
@@ -161,12 +160,10 @@ function SnapshotField({
   value,
   confirmed,
   onConfirm,
-  onNavigateToSnapshot,
 }: {
   value: string
   confirmed: boolean
   onConfirm: () => void
-  onNavigateToSnapshot?: () => void
 }) {
   const [snapshotError, setSnapshotError] = useState<string | null>(null)
   const isMissing = !value.trim()
@@ -184,19 +181,7 @@ function SnapshotField({
     <>
       <div className={`nda-modal__snapshot-confirm${confirmed ? ' nda-modal__snapshot-confirm--confirmed' : ''}`}>
         {isMissing ? (
-          <div className="fa-snapshot-missing-row">
-            <span className="fa-snapshot-missing-text">Complete your Company Snapshot</span>
-            {onNavigateToSnapshot && (
-              <button
-                type="button"
-                className="fa-snapshot-nav-link"
-                onClick={onNavigateToSnapshot}
-              >
-                Go to Company Snapshot
-                <ExternalLink size={13} />
-              </button>
-            )}
-          </div>
+          <span className="fa-snapshot-missing-text">Complete your Company Snapshot</span>
         ) : (
           <span>{value}</span>
         )}
@@ -533,7 +518,7 @@ interface FounderAgreementWizardModalProps {
   initialStep?: number
   initialData?: FounderAgreementWizardData
   onStepChange?: (step: number, data: FounderAgreementWizardData) => void
-  onRouteToCounsel?: (fields: FounderAgreementFieldMap) => Promise<{ requestId: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
+  onRouteToCounsel?: (fields: FounderAgreementFieldMap, step: number, data: FounderAgreementWizardData) => Promise<{ requestId: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
   onRefreshPublicFundingReview?: (requestId: string) => Promise<{ status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
 }
 
@@ -553,7 +538,6 @@ export default function FounderAgreementWizardModal({
   onRouteToCounsel,
   onRefreshPublicFundingReview,
 }: FounderAgreementWizardModalProps) {
-  const navigate = useNavigate()
   const { profile } = useUserProfile()
   const snapshotCompanyName = profile.entityType === 'Individual'
     ? profile.individualFullNames.trim()
@@ -737,7 +721,7 @@ export default function FounderAgreementWizardModal({
   const routeToCounsel = async () => {
     if (!onRouteToCounsel || isRoutingToCounsel) return
     setIsRoutingToCounsel(true)
-    const review = await onRouteToCounsel(mapFounderAgreementFields(data, profile))
+    const review = await onRouteToCounsel(mapFounderAgreementFields(data, profile), step, data)
     if (review) {
       setData((previous) => ({
         ...previous,
@@ -834,10 +818,6 @@ export default function FounderAgreementWizardModal({
                         value={data.companyName}
                         confirmed={data.companyConfirmed}
                         onConfirm={() => set('companyConfirmed', true)}
-                        onNavigateToSnapshot={() => {
-                          onClose(step, data)
-                          navigate('/dashboard/profile')
-                        }}
                       />
                       <p className="nda-modal__field-hint" style={{ marginTop: 6 }}>
                         Pre-filled from your Company Snapshot.

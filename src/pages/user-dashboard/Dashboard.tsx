@@ -77,6 +77,22 @@ function writeSessionCounselCredits(credits: CounselCredits) {
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
+type CounselBlueprintReturn = {
+  wizard: 'founder-agreement'
+  step: number
+  data: FounderAgreementWizardData
+}
+
+type DashboardLocationState = {
+  addedCount?: number
+  blueprintTopUpSuccess?: boolean
+  unitsAdded?: number
+  addedWizards?: Array<{ title: string; quantity: number }>
+  topUpSuccess?: boolean
+  creditsAdded?: number
+  counselBlueprintReturn?: CounselBlueprintReturn
+}
+
 const BLUEPRINT_ICON_NAME: Record<string, string> = {
   'Non-Disclosure Agreement (NDA)': 'Shield',
   'Board Resolution': 'Briefcase',
@@ -1672,6 +1688,9 @@ function buildSlaEvidencePack(d: SlaWizardData, completedAt: string | null): Blo
 export default function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [counselBlueprintReturn, setCounselBlueprintReturn] = useState(
+    () => (location.state as DashboardLocationState | null)?.counselBlueprintReturn,
+  )
   const { profile } = useUserProfile()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -1779,7 +1798,9 @@ export default function Dashboard() {
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false)
   const [isPPModalOpen, setIsPPModalOpen] = useState(false)
-  const [isFAModalOpen, setIsFAModalOpen] = useState(false)
+  const [isFAModalOpen, setIsFAModalOpen] = useState(
+    () => counselBlueprintReturn?.wizard === 'founder-agreement',
+  )
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const [isSLAModalOpen, setIsSLAModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
@@ -1936,7 +1957,7 @@ export default function Dashboard() {
   }
 
   // Toast shown after a wizard is added to dashboard without payment
-  const locationState = location.state as { addedCount?: number; blueprintTopUpSuccess?: boolean; unitsAdded?: number; addedWizards?: Array<{ title: string; quantity: number }> } | null
+  const locationState = location.state as DashboardLocationState | null
   const addedCount = locationState?.addedCount ?? 0
   const [addToast, setAddToast] = useState(() => {
     if (locationState?.blueprintTopUpSuccess && locationState.unitsAdded) {
@@ -2266,7 +2287,7 @@ export default function Dashboard() {
     showNdaToast("Founders' Agreement generated successfully. Your document is ready to download.")
   }
 
-  const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap) => {
+  const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap, step: number, data: FounderAgreementWizardData) => {
     // Use the session-persisted credit count so in-session decrements are
     // respected. Only fall back to a live API call when no session value exists.
     let credits = readSessionCounselCredits()
@@ -2276,6 +2297,8 @@ export default function Dashboard() {
       if (credits) writeSessionCounselCredits(credits)
     }
     if (!credits || credits.creditsRemaining < 1) {
+      saveFAProgress(step, data, true)
+      setCounselBlueprintReturn({ wizard: 'founder-agreement', step, data })
       setCounselCreditsForGate(credits)
       setIsNoCounselCreditModalOpen(true)
       return null
@@ -2300,7 +2323,7 @@ export default function Dashboard() {
     writeSessionCounselCredits(updated)
     showNdaToast('Your publicly funded IP review has been sent to admin for counsel assignment.')
     return response.data
-  }, [])
+  }, [saveFAProgress])
 
   const refreshFounderPublicFundingReview = useCallback(async (requestId: string) => {
     const response = await counselApi.publicFundingReviewStatus(requestId)
@@ -2722,8 +2745,8 @@ export default function Dashboard() {
               else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
               setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
-            initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined}
+            initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
+            initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
             onStepChange={(step, data) => saveFAProgress(step, data)}
             onComplete={(data) => {
               const cid = continuingInstanceRef.current
@@ -2784,7 +2807,16 @@ export default function Dashboard() {
           currentPlan={counselCreditsForGate?.plan ?? subscription?.planName ?? 'Launchpad'}
           onTopUp={(plan: TopUpPlan) => {
             setIsNoCounselCreditModalOpen(false)
-            navigate('/dashboard/counsel/topup', { state: { plan, credits: counselCreditsForGate } })
+            navigate('/dashboard/counsel/topup', {
+              state: {
+                plan,
+                credits: counselCreditsForGate,
+                returnTo: counselBlueprintReturn ? {
+                  pathname: '/dashboard',
+                  state: { counselBlueprintReturn },
+                } : undefined,
+              },
+            })
           }}
         />
 
@@ -3380,8 +3412,8 @@ export default function Dashboard() {
             else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
             setIsFAModalOpen(false)
           }}
-          initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined}
+          initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
+          initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
           onStepChange={(step, data) => saveFAProgress(step, data)}
           onComplete={(data) => {
             const cid = continuingInstanceRef.current
@@ -3449,7 +3481,16 @@ export default function Dashboard() {
         currentPlan={counselCreditsForGate?.plan ?? subscription?.planName ?? 'Launchpad'}
         onTopUp={(plan: TopUpPlan) => {
           setIsNoCounselCreditModalOpen(false)
-          navigate('/dashboard/counsel/topup', { state: { plan, credits: counselCreditsForGate } })
+          navigate('/dashboard/counsel/topup', {
+            state: {
+              plan,
+              credits: counselCreditsForGate,
+              returnTo: counselBlueprintReturn ? {
+                pathname: '/dashboard',
+                state: { counselBlueprintReturn },
+              } : undefined,
+            },
+          })
         }}
       />
 

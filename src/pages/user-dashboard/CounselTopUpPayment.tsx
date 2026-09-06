@@ -26,12 +26,18 @@ function fmtZAR(amount: number) {
   return `R${amount.toLocaleString('en-ZA')}`
 }
 
+export type CounselTopUpReturnState = {
+  pathname: string
+  state?: Record<string, unknown>
+}
+
 export default function CounselTopUpPayment() {
   const location = useLocation()
   const navigate  = useNavigate()
 
   const requestedPlan = location.state?.plan as TopUpPlan | undefined
   const credits = location.state?.credits as CounselCredits | undefined
+  const returnTo = location.state?.returnTo as CounselTopUpReturnState | undefined
   // The selected tier comes from the plan configuration returned by the API.
   // It determines this one-off Counsel credit purchase only.
   const plan = requestedPlan
@@ -110,9 +116,21 @@ export default function CounselTopUpPayment() {
 
     setIsPaying(false)
 
-    navigate('/dashboard/counsel', {
+    if (credits) {
+      const updatedCredits: CounselCredits = {
+        ...credits,
+        creditsRemaining: credits.creditsRemaining + qty,
+      }
+      sessionStorage.setItem('tsl-counsel-credits-session', JSON.stringify(updatedCredits))
+    }
+
+    navigate(returnTo?.pathname ?? '/dashboard/counsel', {
       replace: true,
-      state:   { topUpSuccess: true, creditsAdded: qty },
+      state: {
+        ...(returnTo?.state ?? {}),
+        topUpSuccess: true,
+        creditsAdded: qty,
+      },
     })
   }
 
