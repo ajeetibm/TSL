@@ -149,10 +149,12 @@
 
 .counsel-portal__header h2 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', var(--font-display);
+  font-style: normal;
+  font-weight: 600;
   font-size: 30px;
-  font-weight: 700;
   line-height: 36px;
+  color: #0D1B2A;
 }
 
 .counsel-portal__header p {
@@ -365,9 +367,16 @@
 .counsel-dashboard__section-heading h3,
 .counsel-dashboard__chart-card h3 {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', var(--font-display);
+  font-style: normal;
+  font-weight: 600;
   font-size: 20px;
   line-height: 28px;
+  color: #0D1B2A;
+}
+
+.counsel-dashboard__section-heading h3 {
+  font-weight: 500;
 }
 
 .counsel-dashboard__section-heading p,
@@ -411,6 +420,7 @@
 .counsel-dashboard__accepted-row h4 {
   margin: 0;
   font-family: var(--font-display);
+  font-weight: 600;
   font-size: 14px;
   line-height: 20px;
 }
@@ -723,7 +733,7 @@
 .counsel-dashboard__chart-summary strong {
   display: block;
   margin-top: 4px;
-  font-family: var(--font-display);
+  font-family: 'Montserrat', var(--font-display);
   font-style: normal;
   font-weight: 400;
   font-size: 20px;

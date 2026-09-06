@@ -192,6 +192,8 @@ export interface UpgradeResult {
   invoiceNumber: string
   amountCharged: number
   paidAt: string
+  counselCreditsTotal?: number
+  counselCreditsRemaining?: number
 }
 
 export interface DowngradeResult {

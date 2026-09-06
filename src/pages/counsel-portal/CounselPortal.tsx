@@ -74,6 +74,7 @@ type DashboardData = {
   acceptedRequests?: Array<{
     requestId: string
     subject: string
+    relatedWizard?: string | null
     company: string
     date: string
     earnings: number
@@ -125,12 +126,6 @@ const fallbackPending: DashboardRequest[] = [
     timeAgo: '25 min ago',
     earnings: 450,
   },
-]
-
-const fallbackAccepted = [
-  { requestId: 'a1', subject: 'NDA Review', company: 'TechStart Inc.', date: '2026-01-10', earnings: 500 },
-  { requestId: 'a2', subject: 'Employment Contract', company: 'Growth Ventures', date: '2026-01-09', earnings: 500 },
-  { requestId: 'a3', subject: 'Shareholder Review', company: 'Digital Solutions', date: '2026-01-07', earnings: 500 },
 ]
 
 const fallbackRequests: CounselRequest[] = [
@@ -216,6 +211,21 @@ function normalizeStatus(status: RequestStatus | string): RequestStatus {
   return status as RequestStatus
 }
 
+type AcceptedEntry = NonNullable<DashboardData['acceptedRequests']>[number]
+
+const ACCEPTED_STORAGE_KEY = 'tsl-counsel-accepted-requests'
+
+function readStoredAccepted(): AcceptedEntry[] {
+  try {
+    const raw = localStorage.getItem(ACCEPTED_STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as AcceptedEntry[]) : []
+  } catch { return [] }
+}
+
+function writeStoredAccepted(list: AcceptedEntry[]) {
+  try { localStorage.setItem(ACCEPTED_STORAGE_KEY, JSON.stringify(list)) } catch { /* ignore */ }
+}
+
 function normalizeRequests(payload: unknown): CounselRequest[] {
   const data = payload as { requests?: CounselRequest[] } | CounselRequest[] | undefined
   const raw = Array.isArray(data) ? data : (data?.requests ?? [])
@@ -228,6 +238,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const location = useLocation()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [requests, setRequests] = useState<CounselRequest[]>(fallbackRequests)
+  const [acceptedRequestsState, setAcceptedRequestsState] = useState<AcceptedEntry[]>(() => readStoredAccepted())
   const [availability, setAvailability] = useState<Availability>('available')
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
@@ -272,12 +283,32 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       const data = (response.data ?? null) as DashboardData | null
       setDashboardData(data)
       setAvailability(data?.availability ?? 'available')
+      // Merge API accepted requests with locally-stored ones, deduplicating by requestId.
+      // Local entries (accepted in this session before the API refreshed) take precedence.
+      if ((data?.acceptedRequests?.length ?? 0) > 0) {
+        setAcceptedRequestsState((current) => {
+          const merged = [...current]
+          for (const entry of data!.acceptedRequests!) {
+            if (!merged.some((r) => r.requestId === entry.requestId)) {
+              merged.push(entry)
+            }
+          }
+          writeStoredAccepted(merged)
+          return merged
+        })
+      }
     })
     counselPortalApi.requests(storedEmail).then((response) => {
       if (!response.success) return
       setRequests(normalizeRequests(response.data))
     })
   }, [])
+
+  // Persist accepted list to localStorage whenever it changes so a page
+  // refresh restores the full list without a round-trip.
+  useEffect(() => {
+    writeStoredAccepted(acceptedRequestsState)
+  }, [acceptedRequestsState])
 
   useEffect(() => {
     document.title = 'Counsel Portal | The Startup Legal'
@@ -288,7 +319,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const pendingRequests = requests.length > 0
     ? requests.filter((r) => r.status === 'pending')
     : (dashboardData ? (dashboardData.pendingRequests ?? []) : fallbackPending)
-  const acceptedRequests = dashboardData ? (dashboardData.acceptedRequests ?? []) : fallbackAccepted
+  const acceptedRequests = acceptedRequestsState
   const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
   const chartYear = dashboardData?.earningsChart?.year ?? 2025
   const summary = dashboardData?.earningsChart?.summary ?? {
@@ -321,6 +352,26 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       const response = await counselPortalApi.acceptRequest(requestId)
       if (response.success) {
         setSelectedRequest((current) => current?.requestId === requestId ? { ...current, status: 'in_progress' } : current)
+        // Push the accepted request into the dashboard Requests Accepted list
+        const accepted = requests.find((r) => r.requestId === requestId)
+        if (accepted) {
+          setAcceptedRequestsState((current) => {
+            const alreadyIn = current.some((r) => r.requestId === requestId)
+            if (alreadyIn) return current
+            const newEntry = {
+              requestId: accepted.requestId,
+              subject: accepted.subject,
+              relatedWizard: accepted.relatedWizard ?? null,
+              company: accepted.company ?? accepted.fromUser ?? '',
+              date: new Date().toISOString().slice(0, 10),
+              earnings: accepted.earnings ?? 500,
+              currency: accepted.currency ?? 'ZAR',
+            }
+            const updated = [newEntry, ...current].slice(0, 10)
+            writeStoredAccepted(updated)
+            return updated
+          })
+        }
       }
     } else if (normStatus === 'rejected') {
       await counselPortalApi.rejectRequest(requestId, rejectionReason)
@@ -723,16 +774,19 @@ function DashboardView({
 
         <section className="counsel-dashboard__accepted">
           <div className="counsel-dashboard__section-heading">
-            <h3>In Progress &amp; Completed</h3>
+            <h3>Requests Accepted</h3>
             <Link to="/counsel/requests">View All</Link>
           </div>
           {acceptedRequests.slice(0, 3).map((request) => (
             <article className="counsel-dashboard__accepted-row" key={request.requestId}>
               <span>
-                <CircleCheck size={20} />
+                <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M26.349 17.5006C26.6915 19.1816 26.4474 20.9292 25.6574 22.4519C24.8674 23.9747 23.5792 25.1806 22.0076 25.8686C20.4361 26.5565 18.6762 26.6849 17.0215 26.2324C15.3667 25.7798 13.9171 24.7737 12.9145 23.3817C11.9118 21.9897 11.4166 20.296 11.5115 18.5831C11.6064 16.8703 12.2857 15.2417 13.436 13.969C14.5863 12.6963 16.1382 11.8564 17.8328 11.5894C19.5274 11.3225 21.2623 11.6445 22.7482 12.5019" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M16.75 18.25L19 20.5L26.5 13" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
               </span>
               <div>
-                <h4>{request.subject}</h4>
+                <h4>{request.relatedWizard || request.subject}</h4>
                 <p>{request.company}</p>
                 <time>
                   <CalendarDays size={13} />

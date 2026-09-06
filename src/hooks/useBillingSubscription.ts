@@ -251,8 +251,8 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
       nextBillingDate: result.nextBillingDate,
       paymentMethod: prev?.paymentMethod ?? null,
       pendingDowngrade: null,
-      counselCreditsTotal: spec?.counselCredits ?? 0,
-      counselCreditsRemaining: spec?.counselCredits ?? 0,
+      counselCreditsTotal: result.counselCreditsTotal ?? spec?.counselCredits ?? 0,
+      counselCreditsRemaining: result.counselCreditsRemaining ?? spec?.counselCredits ?? 0,
     }))
 
     // ── Step 5: update wizardAccess cache so Dashboard unlocks wizard access

@@ -241,6 +241,13 @@ export default function DashboardCounsel() {
       if (creditsResponse.success && creditsResponse.data) {
         const serverCredits = creditsResponse.data
         setCredits((current) => {
+          // If the plan changed (server reports more includedCredits than session),
+          // the user has upgraded — always take the server value and clear stale state.
+          const planUpgraded = serverCredits.includedCredits > current.includedCredits
+          if (planUpgraded) {
+            writeSessionCredits(serverCredits)
+            return serverCredits
+          }
           // If we already have a session-persisted value that is LOWER than what the
           // server reports, keep the local (decremented) value — the server is stale.
           // Only accept the server value when it's lower (real server deduction) or
@@ -339,9 +346,6 @@ export default function DashboardCounsel() {
         subject,
         description,
         relatedWizard: formData.relatedWizard || undefined,
-        fromUser: 'Thabo Molefe',
-        userEmail: 'thabo@company.co.za',
-        company: 'FibreGents (Pty) Ltd',
         attachments: attachments.map((file) => ({ name: file.name, size: file.size, type: file.type })),
       })
 
