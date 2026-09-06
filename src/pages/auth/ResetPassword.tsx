@@ -1,4 +1,4 @@
-import { Eye, EyeOff, LockKeyhole, ShieldAlert } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole, ShieldAlert, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -157,6 +157,14 @@ export default function ResetPassword() {
       {createPortal(
         <div className="auth-overlay">
           <form className="auth-overlay__card" onSubmit={handleSubmit} noValidate>
+          <button
+            type="button"
+            className="auth-overlay__close"
+            aria-label="Close"
+            onClick={() => navigate('/')}
+          >
+            <X size={18} />
+          </button>
           <div>
             <h2>Reset Your Password</h2>
             {tokenRole && (
