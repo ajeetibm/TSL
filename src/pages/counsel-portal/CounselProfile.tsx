@@ -740,7 +740,10 @@ export default function CounselProfile() {
                 onClick={() => {
                   setShowPasswordSuccessModal(false)
                   clearAuthSession()
-                  navigate('/counsel/login')
+                  navigate('/')
+                  setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin' } }))
+                  }, 50)
                 }}
               >
                 Sign In Again
