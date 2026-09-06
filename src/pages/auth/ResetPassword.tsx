@@ -1,7 +1,7 @@
 import { Eye, EyeOff, LockKeyhole, ShieldAlert, X } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../../services/tslApi'
 import Home from '../Home'
 import './Auth.css'
@@ -27,9 +27,14 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function ResetPassword() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token') ?? ''
 
+  const [closed, setClosed]             = useState(false)
+
+  // Re-open modal whenever the user navigates to this route again
+  useEffect(() => { setClosed(false) }, [location.key])
   const [tokenStatus, setTokenStatus] = useState<TokenStatus>('checking')
   const [tokenMessage, setTokenMessage] = useState('')
   const [tokenRole, setTokenRole]       = useState<Role>('')
@@ -116,8 +121,13 @@ export default function ResetPassword() {
         {createPortal(
           <div className="auth-overlay">
             <div className="auth-overlay__card auth-overlay__card--center">
-              <div className="auth-page__spinner" role="status" aria-label="Verifying reset link" />
-              <p>Verifying your reset link…</p>
+              <div className="auth-overlay__header">
+                <p className="auth-overlay__header-title">Reset Your Password</p>
+                <p className="auth-overlay__header-sub">Verifying your reset link…</p>
+              </div>
+              <div className="auth-overlay__body">
+                <div className="auth-page__spinner" role="status" aria-label="Verifying reset link" />
+              </div>
             </div>
           </div>,
           document.body
@@ -134,14 +144,20 @@ export default function ResetPassword() {
         {createPortal(
           <div className="auth-overlay">
             <div className="auth-overlay__card">
-              <div className="auth-page__expired">
-                <ShieldAlert size={40} />
-                <h2>Link Expired</h2>
-                <p>{tokenMessage}</p>
+              <div className="auth-overlay__header">
+                <p className="auth-overlay__header-title">Reset Your Password</p>
+                <p className="auth-overlay__header-sub">Link verification failed</p>
               </div>
-              <button type="button" className="auth-page__btn--primary" onClick={() => navigate('/forgot-password')}>
-                Request a New Reset Link
-              </button>
+              <div className="auth-overlay__body">
+                <div className="auth-page__expired">
+                  <ShieldAlert size={40} />
+                  <h2>Link Expired</h2>
+                  <p>{tokenMessage}</p>
+                </div>
+                <button type="button" className="auth-page__btn--primary" onClick={() => navigate('/forgot-password')}>
+                  Request a New Reset Link
+                </button>
+              </div>
             </div>
           </div>,
           document.body
@@ -154,79 +170,84 @@ export default function ResetPassword() {
   return (
     <>
       <Home />
-      {createPortal(
+      {!closed && createPortal(
         <div className="auth-overlay">
           <form className="auth-overlay__card" onSubmit={handleSubmit} noValidate>
-          <button
-            type="button"
-            className="auth-overlay__close"
-            aria-label="Close"
-            onClick={() => navigate('/')}
-          >
-            <X size={18} />
-          </button>
-          <div>
-            <h2>Reset Your Password</h2>
-            {tokenRole && (
-              <div className="auth-page__role-badge">
-                <span className={`auth-page__role-dot auth-page__role-dot--${tokenRole}`} />
-                {ROLE_LABELS[tokenRole] ?? tokenRole}
-                {tokenEmail && <span className="auth-page__role-email"> · {tokenEmail}</span>}
-              </div>
-            )}
-            <p style={{ marginTop: 8 }}>Create a strong new password for your TSL account.</p>
-          </div>
+            {/* Gold header */}
+            <div className="auth-overlay__header">
+              <button
+                type="button"
+                className="auth-overlay__close"
+                aria-label="Close"
+                onClick={() => setClosed(true)}
+              >
+                <X size={18} />
+              </button>
+              <p className="auth-overlay__header-title">Reset Your Password</p>
+              <p className="auth-overlay__header-sub">Create a strong new password for your TSL account.</p>
+            </div>
 
-          <label>
-            <span>New Password</span>
-            <div className={fieldErrors.password ? 'auth-page__field auth-page__field--error' : 'auth-page__field'}>
-              <LockKeyhole size={18} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined })) }}
-                placeholder="Enter new password"
-                autoComplete="new-password"
-                autoFocus
-              />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide' : 'Show'}>
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            {/* Body */}
+            <div className="auth-overlay__body">
+              {tokenRole && (
+                <div className="auth-page__role-badge">
+                  <span className={`auth-page__role-dot auth-page__role-dot--${tokenRole}`} />
+                  {ROLE_LABELS[tokenRole] ?? tokenRole}
+                  {tokenEmail && <span className="auth-page__role-email"> · {tokenEmail}</span>}
+                </div>
+              )}
+
+              <label>
+                <span>New Password</span>
+                <div className={fieldErrors.password ? 'auth-page__field auth-page__field--error' : 'auth-page__field'}>
+                  <LockKeyhole size={18} />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); if (fieldErrors.password) setFieldErrors((p) => ({ ...p, password: undefined })) }}
+                    placeholder="Enter new password"
+                    autoComplete="new-password"
+                    autoFocus
+                  />
+                  <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide' : 'Show'}>
+                    {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {fieldErrors.password && <span className="auth-page__field-error">{fieldErrors.password}</span>}
+                <ul className="auth-page__rules">
+                  {PASSWORD_RULES.map((r) => (
+                    <li key={r.label} className={password && r.test(password) ? 'auth-page__rule--pass' : ''}>
+                      {r.label}
+                    </li>
+                  ))}
+                </ul>
+              </label>
+
+              <label>
+                <span>Confirm Password</span>
+                <div className={fieldErrors.confirm ? 'auth-page__field auth-page__field--error' : 'auth-page__field'}>
+                  <LockKeyhole size={18} />
+                  <input
+                    type={showConfirm ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={(e) => { setConfirm(e.target.value); if (fieldErrors.confirm) setFieldErrors((p) => ({ ...p, confirm: undefined })) }}
+                    placeholder="Confirm new password"
+                    autoComplete="new-password"
+                  />
+                  <button type="button" onClick={() => setShowConfirm((v) => !v)} aria-label={showConfirm ? 'Hide' : 'Show'}>
+                    {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </div>
+                {fieldErrors.confirm && <span className="auth-page__field-error">{fieldErrors.confirm}</span>}
+              </label>
+
+              {apiError && <p className="auth-page__error" role="alert">{apiError}</p>}
+
+              <button type="submit" className="auth-page__btn--primary" disabled={isSubmitting}>
+                {isSubmitting ? 'Updating password…' : 'Update Password'}
               </button>
             </div>
-            {fieldErrors.password && <span className="auth-page__field-error">{fieldErrors.password}</span>}
-            <ul className="auth-page__rules">
-              {PASSWORD_RULES.map((r) => (
-                <li key={r.label} className={password && r.test(password) ? 'auth-page__rule--pass' : ''}>
-                  {r.label}
-                </li>
-              ))}
-            </ul>
-          </label>
-
-          <label>
-            <span>Confirm Password</span>
-            <div className={fieldErrors.confirm ? 'auth-page__field auth-page__field--error' : 'auth-page__field'}>
-              <LockKeyhole size={18} />
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                value={confirm}
-                onChange={(e) => { setConfirm(e.target.value); if (fieldErrors.confirm) setFieldErrors((p) => ({ ...p, confirm: undefined })) }}
-                placeholder="Confirm new password"
-                autoComplete="new-password"
-              />
-              <button type="button" onClick={() => setShowConfirm((v) => !v)} aria-label={showConfirm ? 'Hide' : 'Show'}>
-                {showConfirm ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-            {fieldErrors.confirm && <span className="auth-page__field-error">{fieldErrors.confirm}</span>}
-          </label>
-
-          {apiError && <p className="auth-page__error" role="alert">{apiError}</p>}
-
-          <button type="submit" className="auth-page__btn--primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Updating password…' : 'Update Password'}
-          </button>
-        </form>
+          </form>
         </div>,
         document.body
       )}

@@ -12,7 +12,8 @@ function isMarketingRoute(pathname: string) {
 function isCounselPublicRoute(pathname: string) {
   return (
     pathname.startsWith('/counsel/login') ||
-    pathname.startsWith('/counsel/email-sent')
+    pathname.startsWith('/counsel/email-sent') ||
+    pathname.startsWith('/counsel/reset-password')
   )
 }
 
@@ -23,7 +24,8 @@ export function RootLayout() {
     pathname.startsWith('/admin') ||
     (pathname.startsWith('/counsel/') && !isCounselPublicRoute(pathname))
   const isMarketing = isMarketingRoute(pathname)
-  const showCounselFooter = isCounselPublicRoute(pathname)
+  // Only show the dark footer for counsel login/email-sent, NOT reset-password (uses marketing bg)
+  const showCounselFooter = isCounselPublicRoute(pathname) && !pathname.startsWith('/counsel/reset-password')
 
   useEffect(() => {
     // Pages that manage their own scroll target should not be reset to top

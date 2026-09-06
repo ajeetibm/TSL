@@ -1,4 +1,5 @@
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, X } from 'lucide-react'
+import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import Home from '../Home'
@@ -22,8 +23,8 @@ export default function ResetSuccess() {
   const navigate = useNavigate()
   const location = useLocation()
   const role: Role = (location.state as { role?: Role })?.role ?? ''
+  const [closed, setClosed] = useState(false)
 
-  const loginPath  = LOGIN_PATHS[role]  ?? '/'
   const loginLabel = LOGIN_LABELS[role] ?? 'Back to Login'
 
   const handleBackToLogin = () => {
@@ -34,40 +35,56 @@ export default function ResetSuccess() {
       }, 100)
       return
     }
-    navigate(loginPath)
+    navigate(LOGIN_PATHS[role] ?? '/')
   }
 
   return (
     <>
       <Home />
-      {createPortal(
+      {!closed && createPortal(
         <div className="auth-overlay">
-        <div className="auth-overlay__card">
-          <div className="auth-page__success-icon">
-            <CheckCircle2 size={52} />
-          </div>
+          <div className="auth-overlay__card">
+            {/* Gold header */}
+            <div className="auth-overlay__header">
+              <button
+                type="button"
+                className="auth-overlay__close"
+                aria-label="Close"
+                onClick={() => setClosed(true)}
+              >
+                <X size={18} />
+              </button>
+              <p className="auth-overlay__header-title">Password Updated!</p>
+              <p className="auth-overlay__header-sub">Your TSL account password has been changed.</p>
+            </div>
 
-          <div>
-            <h2>Password Updated!</h2>
-            <p>
-              Your password has been updated successfully. You can now sign in
-              using your new password.
-            </p>
-            {role && (
-              <p className="auth-page__success-note">
-                Your new password will remain active until the mock server is restarted.
-              </p>
-            )}
-          </div>
+            {/* Body */}
+            <div className="auth-overlay__body" style={{ textAlign: 'center' }}>
+              <div className="auth-page__success-icon">
+                <CheckCircle2 size={52} />
+              </div>
 
-          <button
-            type="button"
-            className="auth-page__btn--primary"
-            onClick={handleBackToLogin}
-          >
-            {loginLabel}
-          </button>
-        </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '15px', color: '#333', lineHeight: 1.6 }}>
+                  Your password has been updated successfully. You can now sign in
+                  using your new password.
+                </p>
+                {role && (
+                  <p className="auth-page__success-note">
+                    Your new password will remain active until the mock server is restarted.
+                  </p>
+                )}
+              </div>
+
+              <button
+                type="button"
+                className="auth-page__btn--primary"
+                onClick={handleBackToLogin}
+              >
+                {loginLabel}
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )}
