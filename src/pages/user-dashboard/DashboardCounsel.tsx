@@ -5,11 +5,13 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { counselApi, paymentApi } from '../../services/tslApi'
+import { readPfReviewRequests } from '../../services/pfReviewStore'
 import type { CounselCredits, CounselRequest } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { useCounselRequests } from '../../context/CounselRequestContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { useBillingSubscription } from '../../hooks/useBillingSubscription'
+import { PLAN_SPECS } from '../../services/subscriptionService'
 import CounselCreditsModal, { type TopUpPlan } from './CounselCreditsModal'
 import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
@@ -144,10 +146,8 @@ function toHistoryRequest(request: CounselRequest | CreatedCounselRequest): Coun
   }
 }
 
-function normalizeHistory(payload?: CounselRequestResponse): CounselHistoryRequest[] {
-  const requests = Array.isArray(payload) ? payload : payload?.requests ?? []
-
-  return requests.length > 0 ? requests.map(toHistoryRequest) : fallbackHistory
+function toRawRequests(payload?: CounselRequestResponse): CounselRequest[] {
+  return Array.isArray(payload) ? payload : payload?.requests ?? []
 }
 
 export default function DashboardCounsel() {
@@ -230,11 +230,48 @@ export default function DashboardCounsel() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // intentionally empty — read location.state only on mount
 
+  // Re-sync credits immediately when an upgrade completes — no refresh needed.
+  useEffect(() => {
+    if (!upgradeResult) return
+    let cancelled = false
+
+    // First, apply PLAN_SPECS as an instant local update so the UI reflects
+    // the correct credits before the API responds.
+    const spec = PLAN_SPECS[upgradeResult.planId?.toLowerCase() ?? '']
+    const total = upgradeResult.counselCreditsTotal ?? spec?.counselCredits ?? 0
+    const remaining = upgradeResult.counselCreditsRemaining ?? total
+    const optimistic: CounselCredits = {
+      ...fallbackCredits,
+      plan:             upgradeResult.planName,
+      includedCredits:  total,
+      creditsTotal:     total,
+      creditsRemaining: remaining,
+      creditsUsed:      total - remaining,
+      usageThisMonth:   0,
+    }
+    setCredits(optimistic)
+    writeSessionCredits(optimistic)
+    setActiveTab('book')
+
+    // Then confirm with a server round-trip to get the authoritative value.
+    counselApi.credits().then((res) => {
+      if (cancelled || !res.success || !res.data) return
+      setCredits(res.data)
+      writeSessionCredits(res.data)
+    })
+
+    return () => { cancelled = true }
+  }, [upgradeResult]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let isMounted = true
 
     async function loadCounselData() {
-      const [creditsResponse, requestsResponse] = await Promise.all([counselApi.credits(), counselApi.requests()])
+      const [creditsResponse, requestsResponse, pfReviewsResponse] = await Promise.all([
+        counselApi.credits(),
+        counselApi.requests(),
+        counselApi.publicFundingRequests(),
+      ])
 
       if (!isMounted) return
 
@@ -261,9 +298,44 @@ export default function DashboardCounsel() {
         })
       }
 
-      if (requestsResponse.success) {
-        setHistory(normalizeHistory(requestsResponse.data as CounselRequestResponse | undefined))
-      }
+      const regularRaw = requestsResponse.success
+        ? toRawRequests(requestsResponse.data as CounselRequestResponse | undefined)
+        : []
+
+      // API list endpoint for pf-reviews (may not exist on all backends).
+      const pfApiRaw = pfReviewsResponse.success
+        ? toRawRequests(pfReviewsResponse.data as CounselRequestResponse | undefined)
+        : []
+
+      // Deduplicate the two API sources against each other by requestId.
+      const apiSeen = new Set<string>()
+      const apiRaw = [...regularRaw, ...pfApiRaw].filter((r) => {
+        if (apiSeen.has(r.requestId)) return false
+        apiSeen.add(r.requestId)
+        return true
+      })
+
+      // Locally-stored pf-review requests — written at submission time so they
+      // always appear even when the backend list endpoint doesn't return them.
+      // Each local entry has its own unique localId, so multiple submissions that
+      // received the same requestId (idempotent backend) all appear separately.
+      // Only skip a local entry if the exact same requestId is already covered
+      // by the API results (meaning the backend now returns it).
+      const pfLocal = readPfReviewRequests()
+      const pfLocalRaw: CounselRequest[] = pfLocal
+        .filter((r) => !apiSeen.has(r.requestId))
+        .map((r) => ({
+          // Use localId as requestId so each submission gets its own history row.
+          requestId: r.localId,
+          subject: r.subject,
+          status: r.status,
+          submittedAt: r.submittedAt,
+        }))
+
+      const allRaw = [...apiRaw, ...pfLocalRaw]
+      allRaw.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+
+      setHistory(allRaw.length > 0 ? allRaw.map(toHistoryRequest) : fallbackHistory)
     }
 
     loadCounselData()

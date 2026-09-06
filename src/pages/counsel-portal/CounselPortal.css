@@ -1145,9 +1145,9 @@
   margin-top: 2px;
 }
 
-/* Mark as Done — fixed width, centred */
+/* Mark as Done / Approve & Release Generation — centred, wide enough for longest label */
 .counsel-request-modal__done {
-  width: 220px;
+  width: 280px;
   display: block;
   margin-left: auto;
   margin-right: auto;

@@ -26,6 +26,7 @@ import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import { appendPfReviewRequest } from '../../services/pfReviewStore'
 import type { FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import { mapPrivacyPolicyFields } from '../../services/privacyPolicyFieldMap'
 import { mapSlaFields } from '../../services/slaFieldMap'
@@ -2312,6 +2313,14 @@ export default function Dashboard() {
       showNdaToast(response.message || 'Unable to submit this review to admin.')
       return null
     }
+    // Persist to localStorage so Request History always shows this entry —
+    // even if the backend list endpoint doesn't return it yet.
+    appendPfReviewRequest({
+      requestId: response.data.requestId,
+      subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
+      status: response.data.status ?? 'pending',
+      submittedAt: new Date().toISOString(),
+    })
     // Decrement the session credit counter so the next request in this session
     // sees the updated balance — both here and on the /dashboard/counsel page.
     const updated: CounselCredits = {
