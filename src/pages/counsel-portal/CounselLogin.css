@@ -149,3 +149,19 @@
   font-weight: 800;
   cursor: pointer;
 }
+
+/* ── Dark marketing background variant (reset-password page) ─────────────── */
+.counsel-login--dark {
+  background: #0d1b2a;
+  background-image:
+    radial-gradient(circle at 15% 60%, rgba(199, 154, 59, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 85% 30%, rgba(199, 154, 59, 0.08) 0%, transparent 40%);
+  color: #ffffff;
+  flex: 1;
+  min-height: 0;
+}
+
+.counsel-login--dark .counsel-login__brand {
+  display: none;
+}
+

@@ -241,3 +241,8 @@
   letter-spacing: -0.15px;
   color: #ffffff;
 }
+
+/* Lift FAB above the footer on pages that show the dark footer bar */
+.has-counsel-footer .tsl-ai-fab-label {
+  bottom: 92px !important;
+}

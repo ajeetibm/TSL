@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, useNavigate, useLocation } from 'react-router-dom'
 import { navigation } from '../../data/navigation'
 import { cn } from '../../utils/cn'
+import { clearAuthSession } from '../../services/tslApi'
 import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
 import { SignInModal } from '../auth/SignInModal'
 import { Container } from './Container'
@@ -55,6 +56,13 @@ export function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => localStorage.getItem('tsl-authenticated') === 'true')
   const accountName = getAccountName()
   const isHomePage = location.pathname === '/'
+  const isCounselPublicPage =
+    location.pathname.startsWith('/counsel/login') ||
+    location.pathname.startsWith('/counsel/reset-password') ||
+    location.pathname.startsWith('/counsel/email-sent') ||
+    location.pathname.startsWith('/forgot-password') ||
+    location.pathname.startsWith('/reset-password') ||
+    location.pathname.startsWith('/reset-success')
 
   const openModal = (mode: 'signin' | 'signup', redirectTo?: string) => {
     setModalMode(mode)
@@ -103,9 +111,14 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className={cn('navbar', (!isHomePage || isAuthenticated) && 'navbar--light')}>
+    <header className={cn('navbar', !isCounselPublicPage && (!isHomePage || isAuthenticated) && 'navbar--light')}>
       <Container className="navbar__inner">
-        <NavLink to="/" className="navbar__brand" aria-label="TSL home">
+        <NavLink
+          to="/"
+          className="navbar__brand"
+          aria-label="TSL home"
+          onClick={() => { if (isCounselPublicPage) clearAuthSession() }}
+        >
           <span className="navbar__brand-mark">TSL</span>
           <span className="navbar__brand-name">The StartUp Legal</span>
         </NavLink>
@@ -118,13 +131,14 @@ export function Navbar() {
               className={({ isActive }) =>
                 cn('navbar__link', isActive && 'navbar__link--active')
               }
+              onClick={() => { if (isCounselPublicPage) clearAuthSession() }}
             >
               {item.label}
             </NavLink>
           ))}
         </nav>
 
-        {isAuthenticated ? (
+        {isAuthenticated && !isCounselPublicPage ? (
           <div className="navbar__account-wrap">
             <button
               className="navbar__account"

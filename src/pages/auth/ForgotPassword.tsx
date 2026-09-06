@@ -56,7 +56,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--dark">
       {showToast && (
         <div className="auth-page__toast" role="status">
           <CheckCircle2 size={18} />

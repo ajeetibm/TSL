@@ -9,6 +9,54 @@
   color: #0d1b2a;
 }
 
+.auth-page--dark {
+  position: relative;
+  background: #0d1b2a;
+  color: #ffffff;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Left golden glow — mirrors HeroSection */
+.auth-page--dark::before {
+  content: '';
+  position: absolute;
+  left: -80px;
+  top: 288px;
+  width: 416px;
+  height: 416px;
+  border-radius: 50%;
+  background: rgba(199, 154, 59, 0.15);
+  filter: blur(64px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Right golden glow — mirrors HeroSection */
+.auth-page--dark::after {
+  content: '';
+  position: absolute;
+  right: -96px;
+  top: 448px;
+  width: 432px;
+  height: 432px;
+  border-radius: 50%;
+  background: rgba(199, 154, 59, 0.10);
+  filter: blur(64px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.auth-page--dark .auth-page__panel {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-page--dark .auth-page__brand {
+  display: none;
+}
+
 .auth-page button,
 .auth-page input {
   font: inherit;

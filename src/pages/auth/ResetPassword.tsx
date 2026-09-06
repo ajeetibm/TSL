@@ -110,7 +110,7 @@ export default function ResetPassword() {
   // ── Checking spinner ──
   if (tokenStatus === 'checking') {
     return (
-      <main className="auth-page">
+      <main className="auth-page auth-page--dark">
         <section className="auth-page__panel">
           <div className="auth-page__card auth-page__card--center">
             <div className="auth-page__spinner" role="status" aria-label="Verifying reset link" />
@@ -124,7 +124,7 @@ export default function ResetPassword() {
   // ── Invalid / expired ──
   if (tokenStatus === 'invalid') {
     return (
-      <main className="auth-page">
+      <main className="auth-page auth-page--dark">
         <section className="auth-page__panel">
           <div className="auth-page__brand">
             <span><TslIcon /></span>
@@ -147,7 +147,7 @@ export default function ResetPassword() {
 
   // ── Valid — show form ──
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--dark">
       <section className="auth-page__panel">
         <div className="auth-page__brand">
           <span><TslIcon /></span>

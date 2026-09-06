@@ -76,7 +76,7 @@ export default function CounselResetPassword() {
   }
 
   return (
-    <main className="counsel-login">
+    <main className="counsel-login counsel-login--dark">
       <section className="counsel-login__panel">
         <div className="counsel-login__brand">
           <span>

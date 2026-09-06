@@ -37,7 +37,7 @@ export default function ResetSuccess() {
   }
 
   return (
-    <main className="auth-page">
+    <main className="auth-page auth-page--dark">
       <section className="auth-page__panel">
         <div className="auth-page__brand">
           <span><TslIcon /></span>
