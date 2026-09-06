@@ -1,7 +1,9 @@
 import { Eye, EyeOff, LockKeyhole, ShieldAlert } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { authApi } from '../../services/tslApi'
+import Home from '../Home'
 import './Auth.css'
 
 type PasswordRule = { label: string; test: (v: string) => boolean }
@@ -41,7 +43,6 @@ export default function ResetPassword() {
   const [apiError, setApiError]         = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Guard against StrictMode double-invoke
   const verifiedRef = useRef(false)
 
   useEffect(() => {
@@ -110,51 +111,52 @@ export default function ResetPassword() {
   // ── Checking spinner ──
   if (tokenStatus === 'checking') {
     return (
-      <main className="auth-page auth-page--dark">
-        <section className="auth-page__panel">
-          <div className="auth-page__card auth-page__card--center">
-            <div className="auth-page__spinner" role="status" aria-label="Verifying reset link" />
-            <p>Verifying your reset link…</p>
-          </div>
-        </section>
-      </main>
+      <>
+        <Home />
+        {createPortal(
+          <div className="auth-overlay">
+            <div className="auth-overlay__card auth-overlay__card--center">
+              <div className="auth-page__spinner" role="status" aria-label="Verifying reset link" />
+              <p>Verifying your reset link…</p>
+            </div>
+          </div>,
+          document.body
+        )}
+      </>
     )
   }
 
   // ── Invalid / expired ──
   if (tokenStatus === 'invalid') {
     return (
-      <main className="auth-page auth-page--dark">
-        <section className="auth-page__panel">
-          <div className="auth-page__brand">
-            <span><TslIcon /></span>
-            <div><h1>The Startup Legal</h1><p>Password Reset</p></div>
-          </div>
-          <div className="auth-page__card">
-            <div className="auth-page__expired">
-              <ShieldAlert size={40} />
-              <h2>Link Expired</h2>
-              <p>{tokenMessage}</p>
+      <>
+        <Home />
+        {createPortal(
+          <div className="auth-overlay">
+            <div className="auth-overlay__card">
+              <div className="auth-page__expired">
+                <ShieldAlert size={40} />
+                <h2>Link Expired</h2>
+                <p>{tokenMessage}</p>
+              </div>
+              <button type="button" className="auth-page__btn--primary" onClick={() => navigate('/forgot-password')}>
+                Request a New Reset Link
+              </button>
             </div>
-            <button type="button" className="auth-page__btn--primary" onClick={() => navigate('/forgot-password')}>
-              Request a New Reset Link
-            </button>
-          </div>
-        </section>
-      </main>
+          </div>,
+          document.body
+        )}
+      </>
     )
   }
 
   // ── Valid — show form ──
   return (
-    <main className="auth-page auth-page--dark">
-      <section className="auth-page__panel">
-        <div className="auth-page__brand">
-          <span><TslIcon /></span>
-          <div><h1>The Startup Legal</h1><p>Password Reset</p></div>
-        </div>
-
-        <form className="auth-page__card" onSubmit={handleSubmit} noValidate>
+    <>
+      <Home />
+      {createPortal(
+        <div className="auth-overlay">
+          <form className="auth-overlay__card" onSubmit={handleSubmit} noValidate>
           <div>
             <h2>Reset Your Password</h2>
             {tokenRole && (
@@ -217,15 +219,9 @@ export default function ResetPassword() {
             {isSubmitting ? 'Updating password…' : 'Update Password'}
           </button>
         </form>
-      </section>
-    </main>
-  )
-}
-
-function TslIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v18M5 7h14M6 7l-3 7h6L6 7Zm12 0-3 7h6l-3-7ZM9 21h6" />
-    </svg>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }

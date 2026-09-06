@@ -1,8 +1,10 @@
 import { Eye, EyeOff, LockKeyhole, Mail } from 'lucide-react'
 import { useMemo, useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { counselPortalApi, saveAuthSession } from '../../services/tslApi'
-import './CounselLogin.css'
+import Home from '../Home'
+import '../auth/Auth.css'
 
 type ResetState = {
   email?: string
@@ -76,85 +78,75 @@ export default function CounselResetPassword() {
   }
 
   return (
-    <main className="counsel-login counsel-login--dark">
-      <section className="counsel-login__panel">
-        <div className="counsel-login__brand">
-          <span>
-            <ScaleIcon />
-          </span>
-          <div>
-            <h1>Counsel Portal</h1>
-            <p>Legal Review Platform</p>
-          </div>
-        </div>
-
-        <form className="counsel-login__card" onSubmit={submitReset}>
-          <div>
-            <h2>Reset Your Password</h2>
-            <p>Create a new password before entering the TSL Counsel Portal.</p>
-          </div>
-
-          <label>
-            <span>Email Address</span>
+    <>
+      <Home />
+      {createPortal(
+        <div className="auth-overlay">
+          <form className="auth-overlay__card" onSubmit={submitReset} noValidate>
             <div>
-              <Mail size={18} />
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-                placeholder="s.nkosi@tsl.co.za"
-              />
+              <h2>Reset Your Password</h2>
+              <p>Create a new password before entering the TSL Counsel Portal.</p>
             </div>
-          </label>
 
-          <label>
-            <span>New Password</span>
-            <div>
-              <LockKeyhole size={18} />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(event) => setFormData({ ...formData, newPassword: event.target.value })}
-                placeholder="Enter new password"
-              />
-              <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
-                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-          </label>
+            <label>
+              <span>Email Address</span>
+              <div className="auth-page__field">
+                <Mail size={18} />
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(event) => setFormData({ ...formData, email: event.target.value })}
+                  placeholder="s.nkosi@tsl.co.za"
+                  autoComplete="email"
+                />
+              </div>
+            </label>
 
-          <label>
-            <span>Confirm New Password</span>
-            <div>
-              <LockKeyhole size={18} />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(event) => setFormData({ ...formData, confirmPassword: event.target.value })}
-                placeholder="Confirm new password"
-              />
-              <button type="button" onClick={() => setShowConfirmPassword((value) => !value)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
-                {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </div>
-          </label>
+            <label>
+              <span>New Password</span>
+              <div className="auth-page__field">
+                <LockKeyhole size={18} />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.newPassword}
+                  onChange={(event) => setFormData({ ...formData, newPassword: event.target.value })}
+                  placeholder="Enter new password"
+                  autoComplete="new-password"
+                  autoFocus
+                />
+                <button type="button" onClick={() => setShowPassword((v) => !v)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
 
-          {error && <p role="alert">{error}</p>}
-          {message && <p className="counsel-login__success">{message}</p>}
+            <label>
+              <span>Confirm New Password</span>
+              <div className="auth-page__field">
+                <LockKeyhole size={18} />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(event) => setFormData({ ...formData, confirmPassword: event.target.value })}
+                  placeholder="Confirm new password"
+                  autoComplete="new-password"
+                />
+                <button type="button" onClick={() => setShowConfirmPassword((v) => !v)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+                  {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                </button>
+              </div>
+            </label>
 
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Resetting...' : 'Reset Password'}
-          </button>
-        </form>
-      </section>
-    </main>
-  )
-}
+            {error && <p className="auth-page__error" role="alert">{error}</p>}
+            {message && <p style={{ margin: 0, color: '#00a83e', fontWeight: 700 }}>{message}</p>}
 
-function ScaleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v18M5 7h14M6 7l-3 7h6L6 7Zm12 0-3 7h6l-3-7ZM9 21h6" />
-    </svg>
+            <button type="submit" className="auth-page__btn--primary" disabled={isSubmitting}>
+              {isSubmitting ? 'Resetting...' : 'Reset Password'}
+            </button>
+          </form>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }

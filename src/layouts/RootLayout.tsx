@@ -3,20 +3,16 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { FloatingAIButton } from '../components/home/FloatingAIButton'
 import { Navbar } from '../components/layout/Navbar'
 
-const MARKETING_ROUTES = ['/', '/about', '/features', '/pricing', '/contact', '/counsel', '/playbooks-insights', '/wizard-catalogue', '/wizard-details']
+const MARKETING_ROUTES = ['/', '/about', '/features', '/pricing', '/contact', '/counsel', '/playbooks-insights', '/wizard-catalogue', '/wizard-details', '/forgot-password', '/reset-password', '/reset-success', '/counsel/reset-password']
 
 function isMarketingRoute(pathname: string) {
-  return MARKETING_ROUTES.includes(pathname) || pathname.startsWith('/wizard')
+  return MARKETING_ROUTES.includes(pathname) || pathname.startsWith('/wizard') || pathname.startsWith('/forgot-password') || pathname.startsWith('/reset-password') || pathname.startsWith('/reset-success') || pathname.startsWith('/counsel/reset-password')
 }
 
 function isCounselPublicRoute(pathname: string) {
   return (
     pathname.startsWith('/counsel/login') ||
-    pathname.startsWith('/counsel/reset-password') ||
-    pathname.startsWith('/counsel/email-sent') ||
-    pathname.startsWith('/forgot-password') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/reset-success')
+    pathname.startsWith('/counsel/email-sent')
   )
 }
 

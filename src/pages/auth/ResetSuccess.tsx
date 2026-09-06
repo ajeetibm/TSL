@@ -1,5 +1,7 @@
 import { CheckCircle2 } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router-dom'
+import Home from '../Home'
 import './Auth.css'
 
 type Role = 'user' | 'admin' | 'counsel' | ''
@@ -26,7 +28,6 @@ export default function ResetSuccess() {
 
   const handleBackToLogin = () => {
     if (!role || role === 'user') {
-      // Navigate home then open the sign-in modal
       navigate('/')
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin' } }))
@@ -37,17 +38,11 @@ export default function ResetSuccess() {
   }
 
   return (
-    <main className="auth-page auth-page--dark">
-      <section className="auth-page__panel">
-        <div className="auth-page__brand">
-          <span><TslIcon /></span>
-          <div>
-            <h1>The Startup Legal</h1>
-            <p>Password Reset</p>
-          </div>
-        </div>
-
-        <div className="auth-page__card">
+    <>
+      <Home />
+      {createPortal(
+        <div className="auth-overlay">
+        <div className="auth-overlay__card">
           <div className="auth-page__success-icon">
             <CheckCircle2 size={52} />
           </div>
@@ -73,15 +68,9 @@ export default function ResetSuccess() {
             {loginLabel}
           </button>
         </div>
-      </section>
-    </main>
-  )
-}
-
-function TslIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v18M5 7h14M6 7l-3 7h6L6 7Zm12 0-3 7h6l-3-7ZM9 21h6" />
-    </svg>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }

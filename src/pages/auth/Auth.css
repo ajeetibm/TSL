@@ -9,56 +9,42 @@
   color: #0d1b2a;
 }
 
-.auth-page--dark {
+/* Overlay — sits fixed on top of the marketing hero page, same as SignInModal */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1.5rem 1rem;
+}
+
+.auth-overlay__card {
   position: relative;
-  background: #0d1b2a;
-  color: #ffffff;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  width: 100%;
+  max-width: 460px;
+  margin-block: auto;
+  display: grid;
+  gap: 22px;
+  border: 1px solid #e5e5e5;
+  border-radius: 28px;
+  padding: 34px;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
-/* Left golden glow — mirrors HeroSection */
-.auth-page--dark::before {
-  content: '';
-  position: absolute;
-  left: -80px;
-  top: 288px;
-  width: 416px;
-  height: 416px;
-  border-radius: 50%;
-  background: rgba(199, 154, 59, 0.15);
-  filter: blur(64px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Right golden glow — mirrors HeroSection */
-.auth-page--dark::after {
-  content: '';
-  position: absolute;
-  right: -96px;
-  top: 448px;
-  width: 432px;
-  height: 432px;
-  border-radius: 50%;
-  background: rgba(199, 154, 59, 0.10);
-  filter: blur(64px);
-  pointer-events: none;
-  z-index: 0;
-}
-
-.auth-page--dark .auth-page__panel {
-  position: relative;
-  z-index: 1;
-}
-
-.auth-page--dark .auth-page__brand {
-  display: none;
+.auth-overlay__card--center {
+  text-align: center;
+  justify-items: center;
 }
 
 .auth-page button,
-.auth-page input {
+.auth-page input,
+.auth-overlay button,
+.auth-overlay input {
   font: inherit;
 }
 
@@ -125,7 +111,8 @@
   justify-items: center;
 }
 
-.auth-page__card h2 {
+.auth-page__card h2,
+.auth-overlay__card h2 {
   margin: 0;
   font-size: 26px;
   font-weight: 800;
@@ -133,7 +120,8 @@
   letter-spacing: -0.3px;
 }
 
-.auth-page__card p {
+.auth-page__card p,
+.auth-overlay__card p {
   margin: 8px 0 0;
   color: #666666;
   font-size: 14px;
@@ -141,7 +129,8 @@
 }
 
 /* ── Fields ── */
-.auth-page__card label {
+.auth-page__card label,
+.auth-overlay__card label {
   display: grid;
   gap: 8px;
   font-size: 13px;

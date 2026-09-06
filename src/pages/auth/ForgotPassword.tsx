@@ -1,7 +1,9 @@
 import { ArrowLeft, CheckCircle2, Mail } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { authApi } from '../../services/tslApi'
+import Home from '../Home'
 import './Auth.css'
 
 export default function ForgotPassword() {
@@ -16,10 +18,8 @@ export default function ForgotPassword() {
   function validateEmail(value: string) {
     const v = value.trim()
     if (!v) return 'Email address is required.'
-    // Must start with a letter or digit, allow alphanumeric + limited special chars (. _ + -) in local part
     if (!/^[a-zA-Z0-9][a-zA-Z0-9._%+\-]*@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(v))
       return 'Enter a valid email address (e.g. name@example.com).'
-    // Local part must not have consecutive dots
     const local = v.split('@')[0]
     if (/\.{2,}/.test(local)) return 'Enter a valid email address (e.g. name@example.com).'
     return ''
@@ -38,7 +38,6 @@ export default function ForgotPassword() {
         setApiError(response.message ?? 'Something went wrong. Please try again.')
         return
       }
-      // Show toast then navigate after a short delay so user sees the confirmation
       setShowToast(true)
       const data = response as unknown as { resetLink?: string }
       setTimeout(() => {
@@ -56,29 +55,24 @@ export default function ForgotPassword() {
   }
 
   return (
-    <main className="auth-page auth-page--dark">
-      {showToast && (
-        <div className="auth-page__toast" role="status">
-          <CheckCircle2 size={18} />
-          Reset link sent to <strong>{email}</strong> — please check your inbox.
-        </div>
-      )}
-      <section className="auth-page__panel">
-        <div className="auth-page__brand">
-          <span><TslIcon /></span>
-          <div>
-            <h1>The Startup Legal</h1>
-            <p>Password Reset</p>
-          </div>
-        </div>
+    <>
+      <Home />
 
-        <form className="auth-page__card" onSubmit={handleSubmit} noValidate>
+      {createPortal(
+        <div className="auth-overlay">
+          {showToast && (
+            <div className="auth-page__toast" role="status">
+              <CheckCircle2 size={18} />
+              Reset link sent to <strong>{email}</strong> — please check your inbox.
+            </div>
+          )}
+
+          <form className="auth-overlay__card" onSubmit={handleSubmit} noValidate>
           <div>
             <h2>Forgot Password?</h2>
             <p>Enter your email address to receive a password reset link.</p>
           </div>
 
-          {/* Email */}
           <label>
             <span>Email Address</span>
             <div className={emailError ? 'auth-page__field auth-page__field--error' : 'auth-page__field'}>
@@ -86,11 +80,11 @@ export default function ForgotPassword() {
               <input
                 type="email"
                 value={email}
-                  onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError('') }}
-                  onBlur={(e) => { const err = validateEmail(e.target.value); if (err) setEmailError(err) }}
-                  placeholder="e.g. name@company.co.za"
-                  autoComplete="email"
-                  autoFocus
+                onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError('') }}
+                onBlur={(e) => { const err = validateEmail(e.target.value); if (err) setEmailError(err) }}
+                placeholder="e.g. name@company.co.za"
+                autoComplete="email"
+                autoFocus
               />
             </div>
             {emailError && <span className="auth-page__field-error">{emailError}</span>}
@@ -115,16 +109,10 @@ export default function ForgotPassword() {
             <ArrowLeft size={16} />
             Back to Login
           </button>
-        </form>
-      </section>
-    </main>
-  )
-}
-
-function TslIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 3v18M5 7h14M6 7l-3 7h6L6 7Zm12 0-3 7h6l-3-7ZM9 21h6" />
-    </svg>
+          </form>
+        </div>,
+        document.body
+      )}
+    </>
   )
 }
