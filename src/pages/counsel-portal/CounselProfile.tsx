@@ -4,6 +4,7 @@ import {
   Briefcase,
   Calendar,
   Camera,
+  CheckCircle2,
   Lock,
   LogOut,
   Mail,
@@ -106,6 +107,7 @@ export default function CounselProfile() {
   const [passwordSaving, setPasswordSaving] = useState(false)
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false)
 
   const [securitySettings, setSecuritySettings] = useState<SecuritySettings>({
     currentPassword: '',
@@ -232,7 +234,7 @@ export default function CounselProfile() {
       confirmPassword: '',
       twoFactorAuth: securitySettings.twoFactorAuth,
     })
-    setPasswordMessage(response.message ?? 'Password changed successfully.')
+    setShowPasswordSuccessModal(true)
   }
 
   return (
@@ -591,11 +593,6 @@ export default function CounselProfile() {
                     {passwordError}
                   </p>
                 )}
-                {passwordMessage && (
-                  <p className="counsel-profile__message counsel-profile__message--success" role="status">
-                    {passwordMessage}
-                  </p>
-                )}
 
                 <button
                   type="submit"
@@ -720,6 +717,36 @@ export default function CounselProfile() {
             className="counsel-profile__lightbox-img"
             onClick={(e) => e.stopPropagation()}
           />
+        </div>
+      )}
+
+      {/* ── Password Updated Successfully Modal ──────────────────────────── */}
+      {showPasswordSuccessModal && (
+        <div className="counsel-profile__dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="counsel-pw-success-title">
+          <div className="counsel-profile__dialog counsel-profile__dialog--success">
+            <div className="counsel-profile__dialog-success-icon">
+              <CheckCircle2 size={40} strokeWidth={1.8} />
+            </div>
+            <h3 id="counsel-pw-success-title" className="counsel-profile__dialog-title">
+              Password Updated Successfully
+            </h3>
+            <p className="counsel-profile__dialog-desc">
+              Your password has been changed successfully. Please sign in again to continue using your account.
+            </p>
+            <div className="counsel-profile__dialog-actions counsel-profile__dialog-actions--center">
+              <button
+                type="button"
+                className="counsel-profile__dialog-primary"
+                onClick={() => {
+                  setShowPasswordSuccessModal(false)
+                  clearAuthSession()
+                  navigate('/counsel/login')
+                }}
+              >
+                Sign In Again
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
