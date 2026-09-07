@@ -39,7 +39,7 @@ import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
 import { useFounderAgreementWizard } from '../../hooks/useFounderAgreementWizard'
 import { useServiceAgreementWizard } from '../../hooks/useServiceAgreementWizard'
-import { useSlaWizard } from '../../hooks/useSlaWizard'
+import { useSlaWizard, calcSlaProgress } from '../../hooks/useSlaWizard'
 import { useBillingSubscription } from '../../hooks/useBillingSubscription'
 import NdaWizardModal from './NdaWizardModal'
 import type { NdaWizardData } from './NdaWizardModal'
@@ -2795,8 +2795,8 @@ export default function Dashboard() {
             onClose={(step, data) => {
               if (justCompletedRef.current) { justCompletedRef.current = false; return }
               const cid = continuingInstanceRef.current
-              if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data); continuingInstanceRef.current = null }
-              else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data) }
+              if (cid) { updateInProgressInstance(cid, step ?? 1, data ? calcSlaProgress(data as SlaWizardData) : 0, data); continuingInstanceRef.current = null }
+              else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, data ? calcSlaProgress(data as SlaWizardData) : 0, data) }
               setIsSLAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
@@ -3464,8 +3464,8 @@ export default function Dashboard() {
           onClose={(step, data) => {
             if (justCompletedRef.current) { justCompletedRef.current = false; return }
             const cid = continuingInstanceRef.current
-            if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data); continuingInstanceRef.current = null }
-            else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, Math.round((((step ?? 1) - 1) / 9) * 100), data) }
+            if (cid) { updateInProgressInstance(cid, step ?? 1, data ? calcSlaProgress(data as SlaWizardData) : 0, data); continuingInstanceRef.current = null }
+            else { decrementQueue('Service Level Agreement (SLA)'); pushInProgressInstance('Service Level Agreement (SLA)', step ?? 1, data ? calcSlaProgress(data as SlaWizardData) : 0, data) }
             setIsSLAModalOpen(false)
           }}
           initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
