@@ -940,13 +940,13 @@ export default function SlaWizardModal({
                   <h3 className="nda-modal__party-title">Backups and restore</h3>
                   <p className="nda-modal__field-hint" style={{ marginBottom: 16 }}>How often data is backed up, and how quickly service and data can be recovered.</p>
 
-                  <div className="nda-modal__two-col" style={{ alignItems: 'end' }}>
+                  <div className="nda-modal__two-col" style={{ alignItems: 'start' }}>
                     <FormGroup label="Backup frequency" required>
                       <SelectInput value={data.backupFrequency}
                         onChange={(v) => set('backupFrequency', v as SlaWizardData['backupFrequency'])}
                         options={['Daily', 'Weekly', 'Continuous', 'Custom']} />
                     </FormGroup>
-                    <FormGroup label="Backup retention (days)" required hint="Days. Default 30." error={errors['backupRetentionDays']}>
+                    <FormGroup label="Backup retention (days)" required hintAfter="Days. Default 30." error={errors['backupRetentionDays']}>
                       <TextInput value={data.backupRetentionDays} onChange={(v) => set('backupRetentionDays', v)}
                         placeholder="30" type="number" min="0" />
                     </FormGroup>
