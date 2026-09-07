@@ -141,6 +141,10 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
   }
   const toggle = (key: 'benefits' | 'conditions', value: string) => {
     const selected = data[key].includes(value) ? data[key].filter((entry) => entry !== value) : [...data[key], value]
+    if (key === 'conditions' && value === 'Medical assessment' && !selected.includes(value)) {
+      setTriedPreview(false)
+      setErrors((prev) => ({ ...prev, medical_justification: undefined }))
+    }
     if (key === 'conditions' && value === 'Valid work authorisation' && !selected.includes(value)) {
       const next = { ...data, conditions: selected, work_permit_type: '', work_permit_expiry: '' }
       setData(next)
@@ -379,8 +383,8 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                 </div>
               </Field>
 
-              {medicalSelected && <Field label="Inherent requirement for the medical" required error={e['medical_justification']}>
-                <textarea className={`nda-modal__textarea${e['medical_justification'] ? ' nda-modal__input--error' : ''}`} value={data.medical_justification} onChange={(event) => set('medical_justification', event.target.value)} />
+              {medicalSelected && <Field label="Inherent requirement for the medical" required error={triedPreview ? e['medical_justification'] : undefined}>
+                <textarea className={`nda-modal__textarea${triedPreview && e['medical_justification'] ? ' nda-modal__input--error' : ''}`} value={data.medical_justification} onChange={(event) => { set('medical_justification', event.target.value); if (e['medical_justification']) setErrors((prev) => ({ ...prev, medical_justification: undefined })) }} />
               </Field>}
 
               {medicalSelected && !data.medical_justification.trim() && triedPreview && (
