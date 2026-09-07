@@ -690,6 +690,9 @@ export default function FounderAgreementWizardModal({
     if (s === 3 && data.vestingApplies === 'Yes') {
       if (!data.goodLeaver.length) { e.goodLeaver = 'Select at least one good leaver definition.'; valid = false }
     }
+    if (s === 4 && data.decisionModel === 'Majority with reserved matters unanimous') {
+      if (!data.reservedMatters.length) { e.reservedMatters = 'Select at least one reserved matter.'; valid = false }
+    }
     if (s === 4 && data.reservedMatters.includes('Take on debt above a threshold')) {
       if (!data.debtThreshold.trim()) { e.debtThreshold = 'Enter a debt threshold value.'; valid = false }
       else if (isNaN(Number(data.debtThreshold.replace(/[R,\s]/g, '')))) { e.debtThreshold = 'Debt threshold must be a valid number.'; valid = false }
@@ -1002,7 +1005,7 @@ export default function FounderAgreementWizardModal({
                   </Field>
 
                   {showReservedMatters && (
-                    <Field label="Reserved matters" optional="(needs unanimous approval)">
+                    <Field label="Reserved matters" required error={errors.reservedMatters}>
                       <MultiChips
                         options={[
                           'Issue new shares', 'Take on debt above a threshold', 'Sell the business',
@@ -1200,7 +1203,7 @@ export default function FounderAgreementWizardModal({
                       message="Restraints running longer than 24 months are harder to enforce. You can still proceed on your own instruction." />
                   )}
                   {showRestraintAreaWarn && (
-                    <Banner type="warn" title="Warn — worldwide restraint"
+                    <Banner type="warn" title="Warn — Worldwide restraint"
                       message="A worldwide restraint is a broad grant and is scrutinised more closely on enforcement. You can still proceed on your own instruction." />
                   )}
 
