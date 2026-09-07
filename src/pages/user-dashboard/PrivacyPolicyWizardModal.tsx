@@ -137,6 +137,7 @@ function TextInput({
   onBlur,
   placeholder,
   type = 'text',
+  min,
   error,
 }: {
   value: string
@@ -144,6 +145,7 @@ function TextInput({
   onBlur?: (value: string) => void
   placeholder?: string
   type?: string
+  min?: string
   error?: boolean
 }) {
   return (
@@ -152,6 +154,7 @@ function TextInput({
       className={`nda-modal__input${error ? ' nda-modal__input--error' : ''}`}
       value={value}
       placeholder={placeholder}
+      min={min}
       onChange={(event) => onChange(event.target.value)}
       onBlur={onBlur ? (event) => onBlur(event.target.value) : undefined}
     />
@@ -983,7 +986,7 @@ export default function PrivacyPolicyWizardModal({
                     </FormGroup>
                     <div className="nda-modal__two-col">
                       <FormGroup label="Effective date" required hint="Version tracked for the verification page." error={errors.effectiveDate}>
-                        <TextInput value={data.effectiveDate} onChange={(value) => set('effectiveDate', value)} type="date" error={Boolean(errors.effectiveDate)} />
+                        <TextInput value={data.effectiveDate} onChange={(value) => set('effectiveDate', value)} type="date" min={new Date().toISOString().split('T')[0]} error={Boolean(errors.effectiveDate)} />
                       </FormGroup>
                       <FormGroup label="Automated decision-making" optional hint='Not one of the 25 Blueprint fields — included here only to demonstrate the "automated decision making with legal effect" Counsel prompt described in the spec.'>
                         <ToggleGroup value={data.automatedDecisions} onChange={(value) => set('automatedDecisions', value)} />
