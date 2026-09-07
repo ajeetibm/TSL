@@ -62,7 +62,7 @@ function PreviewSection({ num, title, onEdit, children }: { num: number; title: 
 }
 
 function StepBar({ step }: { step: Step }) {
-  const labels = ['Role', 'Package', 'Conditions', 'Preview'] as const
+  const labels = ['Role', 'Package', 'Conditions'] as const
   return (
     <div className="nda-modal__steps">
       {labels.map((label, index) => {
@@ -191,6 +191,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
       if (workAuthorisationSelected && !data.work_permit_type) e['work_permit_type'] = 'Select the work authorisation type.'
       if (requiresWorkPermitExpiry && !data.work_permit_expiry) e['work_permit_expiry'] = 'Work authorisation expiry is required.'
       if (!data.offer_expiry) e['offer_expiry'] = 'Offer expiry date is required.'
+      else if (data.offer_expiry < new Date().toISOString().split('T')[0]) e['offer_expiry'] = 'Offer expiry date cannot be in the past.'
     }
     setErrors(e)
     return Object.keys(e).length === 0
@@ -233,7 +234,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
 
         {isGenerating
           ? <div className="nda-modal__generating-overlay"><Loader2 size={36} className="nda-modal__generating-spinner" /><p>Generating Employment Offer Letter…</p></div>
-          : <div className="nda-modal__body"><div className={`nda-modal__step-content${step === 4 ? ' nda-modal__step-content--preview' : ''}`}>
+          : <div className="nda-modal__body"><div className={`nda-modal__step-content`}>
 
             {/* ── Step 1: Role ── */}
             {step === 1 && <section className="nda-modal__party-block">
@@ -410,7 +411,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
 
               <div className="nda-modal__half-col">
                 <Field label="Offer expires" required error={e['offer_expiry']}>
-                  <input className={`nda-modal__input${e['offer_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" value={data.offer_expiry} onChange={(event) => set('offer_expiry', event.target.value)} />
+                  <input className={`nda-modal__input${e['offer_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" min={new Date().toISOString().split('T')[0]} value={data.offer_expiry} onChange={(event) => set('offer_expiry', event.target.value)} />
                 </Field>
               </div>
             </section>}
@@ -466,8 +467,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
             </button>
             <span className="nda-modal__step-counter">Step {step} of 4</span>
             <button type="button" className={`nda-modal__btn${step === 4 ? ' nda-modal__btn--generate' : step === 3 ? ' nda-modal__btn--preview' : ' nda-modal__btn--primary'}`} onClick={next}>
-              {step === 4 ? 'Generate Offer Letter' : step === 3 ? <><Eye size={15} />Preview</> : 'Next Step'}
-              {step !== 3 && <ArrowRight size={15} />}
+              {step === 4 ? 'Generate Offer Letter' : step === 3 ? <><Eye size={15} />Preview</> : <>Next Step <ArrowRight size={15} /></>}
             </button>
           </footer>
         )}
