@@ -160,6 +160,13 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     (data.salary_period === 'Per month' && salaryNum < NMW_MONTHLY) ||
     (data.salary_period === 'Per annum' && salaryNum < NMW_ANNUAL)
   )
+  // Warn when the amount looks like it belongs to the other period type:
+  // e.g. entering an annual-range figure (≥ NMW_ANNUAL) as "Per month",
+  // or entering a monthly-range figure (< NMW_ANNUAL but ≥ NMW_MONTHLY) as "Per annum".
+  const wrongPeriod = salaryNum > 0 && !belowNmw && (
+    (data.salary_period === 'Per month' && salaryNum >= NMW_ANNUAL) ||
+    (data.salary_period === 'Per annum' && salaryNum < NMW_ANNUAL && salaryNum >= NMW_MONTHLY)
+  )
 
   const validate = (): boolean => {
     const e: FieldErrors = {}
@@ -228,7 +235,6 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
             {/* ── Step 1: Role ── */}
             {step === 1 && <section className="nda-modal__party-block">
               <h3 className="nda-modal__party-title">Role</h3>
-              <p className="nda-modal__field-hint">Who the offer is for, and the position being offered.</p>
 
               <div className="nda-modal__form-group">
                 <label className="nda-modal__label">Employer</label>
@@ -288,7 +294,6 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
             {/* ── Step 2: Package ── */}
             {step === 2 && <section className="nda-modal__party-block">
               <h3 className="nda-modal__party-title">Package</h3>
-              <p className="nda-modal__field-hint">Remuneration, benefits, and probation terms.</p>
 
               <div className="nda-modal__two-col">
                 <Field label="Remuneration" required error={e['salary_amount']}>
@@ -309,6 +314,20 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                   <div>
                     <strong>Below the national minimum wage</strong>
                     <p>The remuneration entered is below the current national minimum wage for the stated period. Review before proceeding.</p>
+                  </div>
+                </div>
+              )}
+
+              {wrongPeriod && (
+                <div className="nda-modal__nmw-warning" role="alert">
+                  <span className="nda-modal__nmw-warning-icon">⚠</span>
+                  <div>
+                    <strong>Check the period type</strong>
+                    <p>
+                      {data.salary_period === 'Per month'
+                        ? `R${salaryNum.toLocaleString()} per month is unusually high — did you mean per annum?`
+                        : `R${salaryNum.toLocaleString()} per annum is below the monthly minimum wage — did you mean per month?`}
+                    </p>
                   </div>
                 </div>
               )}
