@@ -349,6 +349,7 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
   if (key === 'security') {
     if (data.securityCommitments.length === 0) e['securityCommitments'] = 'Select at least one commitment.'
     if (!data.breachNoticeHours.trim()) e['breachNoticeHours'] = 'This field is required.'
+    else if (isNaN(Number(data.breachNoticeHours)) || Number(data.breachNoticeHours) < 1) e['breachNoticeHours'] = 'Must be at least 1 hour.'
   }
   if (key === 'credits') {
     const hasCompleteTier = data.creditTiers.some((tier) => tier.uptimeBelow.trim() !== '' && tier.creditPct.trim() !== '')
@@ -360,8 +361,10 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
   }
   if (key === 'legal') {
     if (!data.signatureMethod) e['signatureMethod'] = 'Select a signature method.'
-    if (data.signatories.some((s) => !s.name.trim())) e['signatories'] = 'Every signatory must have a name.'
-    if (data.signatories.some((s) => !s.title.trim())) e['signatories'] = 'Every signatory must have a title.'
+    data.signatories.forEach((s, i) => {
+      if (!s.name.trim()) e[`signatory_${i}_name`] = 'Name is required.'
+      if (!s.title.trim()) e[`signatory_${i}_title`] = 'Title is required.'
+    })
   }
   return e
 }
@@ -983,7 +986,7 @@ export default function SlaWizardModal({
 
                   <FormGroup label="Breach notification period" required hint="Hours. Default 48." error={errors['breachNoticeHours']}>
                     <TextInput value={data.breachNoticeHours} onChange={(v) => set('breachNoticeHours', v)}
-                      placeholder="48" type="number" min="0" />
+                      placeholder="48" type="number" min="1" />
                   </FormGroup>
                 </div>
               </div>
@@ -996,7 +999,7 @@ export default function SlaWizardModal({
                   <h3 className="nda-modal__party-title">Service credits</h3>
                   <p className="nda-modal__field-hint" style={{ marginBottom: 16 }}>The remedy for missing the commitments above.</p>
 
-                  {(noCreditTier || invalidCreditTier) && (
+                  {errors['creditTiers'] && (noCreditTier || invalidCreditTier) && (
                     <GateBanner type="block">
                       <strong>{noCreditTier ? 'No complete credit tier captured' : 'Complete every credit tier'}</strong>
                       {noCreditTier
@@ -1099,18 +1102,28 @@ export default function SlaWizardModal({
                 <div className="nda-modal__party-block">
                   <h3 className="nda-modal__party-title" style={{ margin: '0 0 2px' }}>Signatories <span className="nda-modal__required">*</span></h3>
                   <p className="nda-modal__field-hint" style={{ margin: '0 0 2px' }}>Name and title for each party.</p>
-                  {errors['signatories'] && <p className="nda-modal__field-error" style={{ margin: '0 0 4px' }}>{errors['signatories']}</p>}
                   {/* header */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 34px', gap: 8, padding: '0 4px 6px', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.3px', color: '#6b7280' }}>
                     <span>Name</span><span>Title</span><span />
                   </div>
                   {data.signatories.map((sig, i) => (
-                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 34px', gap: 8, background: '#fff', border: '1px solid #e2e4e9', borderRadius: 10, padding: 12, marginBottom: 8, alignItems: 'center' }}>
-                      <input className="nda-modal__input" placeholder="Name" value={sig.name} onChange={(e) => updateSignatory(i, 'name', e.target.value)} />
-                      <input className="nda-modal__input" placeholder="Title" value={sig.title} onChange={(e) => updateSignatory(i, 'title', e.target.value)} />
-                      <button type="button" onClick={() => removeSignatory(i)}
-                        style={{ background: data.signatories.length <= 2 ? '#f4f5f7' : '#fdecea', color: data.signatories.length <= 2 ? '#aaa' : '#c0392b', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: data.signatories.length <= 2 ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700 }}
-                        aria-label="Remove" disabled={data.signatories.length <= 2}>×</button>
+                    <div key={i} style={{ marginBottom: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 34px', gap: 8, background: '#fff', border: '1px solid #e2e4e9', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                        <input className={`nda-modal__input${errors[`signatory_${i}_name`] ? ' nda-modal__input--error' : ''}`} placeholder="Name" value={sig.name}
+                          onChange={(e) => { updateSignatory(i, 'name', e.target.value); if (errors[`signatory_${i}_name`]) setErrors((p) => { const n = { ...p }; delete n[`signatory_${i}_name`]; return n }) }} />
+                        <input className={`nda-modal__input${errors[`signatory_${i}_title`] ? ' nda-modal__input--error' : ''}`} placeholder="Title" value={sig.title}
+                          onChange={(e) => { updateSignatory(i, 'title', e.target.value); if (errors[`signatory_${i}_title`]) setErrors((p) => { const n = { ...p }; delete n[`signatory_${i}_title`]; return n }) }} />
+                        <button type="button" onClick={() => removeSignatory(i)}
+                          style={{ background: data.signatories.length <= 2 ? '#f4f5f7' : '#fdecea', color: data.signatories.length <= 2 ? '#aaa' : '#c0392b', border: 'none', width: 30, height: 30, borderRadius: 8, cursor: data.signatories.length <= 2 ? 'not-allowed' : 'pointer', fontSize: 14, fontWeight: 700 }}
+                          aria-label="Remove" disabled={data.signatories.length <= 2}>×</button>
+                      </div>
+                      {(errors[`signatory_${i}_name`] || errors[`signatory_${i}_title`]) && (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 34px', gap: 8, padding: '2px 4px 0' }}>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`signatory_${i}_name`] || ''}</p>
+                          <p className="nda-modal__field-error" style={{ margin: 0 }}>{errors[`signatory_${i}_title`] || ''}</p>
+                          <span />
+                        </div>
+                      )}
                     </div>
                   ))}
                   <button type="button" className="nda-modal__btn nda-modal__btn--secondary" onClick={addSignatory} style={{ marginTop: 4 }}>
@@ -1251,7 +1264,7 @@ export default function SlaWizardModal({
               </button>
             ) : (
               <button type="button" className="nda-modal__btn nda-modal__btn--primary"
-                onClick={next} disabled={currentKey === 'credits' && (noCreditTier || invalidCreditTier)}>
+                onClick={next}>
                 Next Step <ArrowRight size={15} />
               </button>
             )}
