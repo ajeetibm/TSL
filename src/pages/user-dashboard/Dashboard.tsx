@@ -88,8 +88,9 @@ type DashboardLocationState = {
   addedCount?: number
   blueprintTopUpSuccess?: boolean
   unitsAdded?: number
+  returnTab?: DashboardTab
   addedWizards?: Array<{ title: string; quantity: number }>
-  topUpSuccess?: boolean
+  topUpSuccess?: number
   creditsAdded?: number
   counselBlueprintReturn?: CounselBlueprintReturn
 }
@@ -1794,7 +1795,7 @@ export default function Dashboard() {
     !isInitialSubscriptionDashboard &&
     dashboardViewMode === 'returning',
   )
-  const defaultTab: DashboardTab = 'new'
+  const defaultTab: DashboardTab = (location.state as DashboardLocationState | null)?.returnTab ?? 'new'
   const [activeTab, setActiveTab] = useState<DashboardTab>(defaultTab)
   const [isNdaModalOpen, setIsNdaModalOpen] = useState(false)
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false)
@@ -3301,6 +3302,8 @@ export default function Dashboard() {
           blueprintName={insufficientUnits.blueprintName}
           pricePerUnit={insufficientUnits.pricePerUnit}
           iconName={insufficientUnits.iconName}
+          returnTo="/dashboard"
+          returnTab="completed"
           onClose={() => setInsufficientUnits(null)}
           onUpgrade={() => { setInsufficientUnits(null); void openBillingUpgradePlans() }}
         />

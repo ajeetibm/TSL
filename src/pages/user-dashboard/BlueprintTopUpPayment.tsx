@@ -33,6 +33,8 @@ export type BlueprintTopUpLocationState = {
   blueprintName: string
   pricePerUnit?: number
   iconName?: string
+  returnTo?: string
+  returnTab?: string
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -152,14 +154,16 @@ export default function BlueprintTopUpPayment() {
     }
 
     setIsPaying(false)
-    // Navigate back to the blueprints page so the updated credit balance
-    // is reflected immediately without a manual refresh.
-    navigate('/dashboard/blueprints', {
+    // Navigate back to where the user came from (default: dashboard Completed tab).
+    const returnTo = state?.returnTo ?? '/dashboard'
+    const returnTab = state?.returnTab ?? 'completed'
+    navigate(returnTo, {
       replace: true,
       state: {
         blueprintTopUpSuccess: true,
         selectedBlueprint: blueprintName,
         unitsAdded: qty,
+        returnTab,
         updatedRunsRemaining: (topUp.data as { usage?: { runsRemaining?: number } } | undefined)?.usage?.runsRemaining ?? null,
       },
     })
@@ -174,8 +178,8 @@ export default function BlueprintTopUpPayment() {
           <button
             type="button"
             className="btu-header__back-btn"
-            aria-label="Back to Dashboard"
-            onClick={() => navigate('/dashboard')}
+            aria-label="Back"
+            onClick={() => navigate(state?.returnTo ?? '/dashboard')}
           >
             <ArrowLeft size={18} />
           </button>

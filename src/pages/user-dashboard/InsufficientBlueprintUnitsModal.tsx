@@ -10,6 +10,8 @@ type Props = {
   required: number
   pricePerUnit: number
   iconName?: string
+  returnTo?: string
+  returnTab?: string
   onClose: () => void
   onUpgrade: () => void
 }
@@ -20,6 +22,8 @@ export default function InsufficientBlueprintUnitsModal({
   required,
   pricePerUnit,
   iconName,
+  returnTo,
+  returnTab,
   onClose,
   onUpgrade,
 }: Props) {
@@ -34,7 +38,14 @@ export default function InsufficientBlueprintUnitsModal({
 
   const handleTopUp = () => {
     onClose()
-    const state: BlueprintTopUpLocationState = { units: quantity, blueprintName, pricePerUnit, iconName }
+    const state: BlueprintTopUpLocationState = {
+      units: quantity,
+      blueprintName,
+      pricePerUnit,
+      iconName,
+      returnTo: returnTo ?? '/dashboard',
+      returnTab: returnTab,
+    }
     navigate('/dashboard/blueprint-topup', { state })
   }
 

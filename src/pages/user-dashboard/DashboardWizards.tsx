@@ -530,6 +530,7 @@ export default function DashboardWizards() {
             required={insufficientUnits.required}
             pricePerUnit={149}
             iconName={insufficientUnits.iconName}
+            returnTo="/dashboard/blueprints"
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => {
               setPendingUpgradeBlueprint(insufficientUnits.title)

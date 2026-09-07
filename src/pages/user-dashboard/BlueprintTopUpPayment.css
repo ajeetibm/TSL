@@ -22,13 +22,13 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-/* Circular back button — matches counsel portal header style */
+/* Circular back button — fixed, overlaps the sidebar edge */
 .btu-header__back-btn {
-  position: absolute;
-  left: -18px;
-  top: 50%;
+  position: fixed;
+  left: calc(220px - 18px);
+  top: 60px;
   transform: translateY(-50%);
-  z-index: 10;
+  z-index: 200;
   width: 36px;
   height: 36px;
   min-width: 36px;

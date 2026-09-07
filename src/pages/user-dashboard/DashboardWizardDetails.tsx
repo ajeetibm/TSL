@@ -1236,6 +1236,7 @@ export default function DashboardWizardDetails() {
             required={insufficientUnits.required}
             pricePerUnit={149}
             iconName={insufficientUnits.iconName}
+            returnTo={location.pathname}
             onClose={() => setInsufficientUnits(null)}
             onUpgrade={() => { setInsufficientUnits(null); setIsPaymentView(true) }}
           />
