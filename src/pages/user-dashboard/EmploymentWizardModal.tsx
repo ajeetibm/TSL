@@ -194,6 +194,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
       if (medicalSelected && !data.medical_justification.trim()) e['medical_justification'] = 'An inherent requirement is needed for a medical assessment.'
       if (workAuthorisationSelected && !data.work_permit_type) e['work_permit_type'] = 'Select the work authorisation type.'
       if (requiresWorkPermitExpiry && !data.work_permit_expiry) e['work_permit_expiry'] = 'Work authorisation expiry is required.'
+      else if (requiresWorkPermitExpiry && data.work_permit_expiry < new Date().toISOString().split('T')[0]) e['work_permit_expiry'] = 'Work authorisation expiry cannot be in the past.'
       if (!data.offer_expiry) e['offer_expiry'] = 'Offer expiry date is required.'
       else if (data.offer_expiry < new Date().toISOString().split('T')[0]) e['offer_expiry'] = 'Offer expiry date cannot be in the past.'
     }
@@ -408,14 +409,14 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
               </Field>}
 
               {requiresWorkPermitExpiry && <div className="nda-modal__half-col">
-                <Field label="Work authorisation expiry" required error={e['work_permit_expiry']}>
-                  <input className={`nda-modal__input${e['work_permit_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" value={data.work_permit_expiry} onChange={(event) => set('work_permit_expiry', event.target.value)} />
+                <Field label="Work authorisation expiry" required error={triedPreview ? e['work_permit_expiry'] : undefined}>
+                  <input className={`nda-modal__input${triedPreview && e['work_permit_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" min={new Date().toISOString().split('T')[0]} value={data.work_permit_expiry} onChange={(event) => set('work_permit_expiry', event.target.value)} />
                 </Field>
               </div>}
 
               <div className="nda-modal__half-col">
-                <Field label="Offer expires" required error={e['offer_expiry']}>
-                  <input className={`nda-modal__input${e['offer_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" min={new Date().toISOString().split('T')[0]} value={data.offer_expiry} onChange={(event) => set('offer_expiry', event.target.value)} />
+                <Field label="Offer expires" required error={triedPreview ? e['offer_expiry'] : undefined}>
+                  <input className={`nda-modal__input${triedPreview && e['offer_expiry'] ? ' nda-modal__input--error' : ''}`} type="date" min={new Date().toISOString().split('T')[0]} value={data.offer_expiry} onChange={(event) => set('offer_expiry', event.target.value)} />
                 </Field>
               </div>
             </section>}
