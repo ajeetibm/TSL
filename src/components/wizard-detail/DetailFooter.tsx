@@ -18,10 +18,13 @@ const sectionAnchors: Record<string, string> = {
 const routeLinks: Record<string, string> = {
   'Get Counsel': '/counsel',
   Playbooks: '/playbooks-insights',
-  Blueprints: '/wizard-catalogue'
+  Blueprints: '/wizard-catalogue',
+  'Privacy Policy': '/privacy-policy',
+  'Terms & Conditions': '/legal/terms-of-service.html',
+  'POPIA Compliance': '/popia-compliance',
 }
 
-const noLink = new Set(['CIPC Services', 'Company Registration', 'Terms & Conditions', 'POPIA Compliance', 'Refund Policy', 'Privacy Policy'])
+const noLink = new Set(['CIPC Services', 'Company Registration', 'Refund Policy'])
 
 function handleSectionClick(sectionId: string) {
   return (e: MouseEvent<HTMLAnchorElement>) => {
@@ -94,11 +97,13 @@ export function DetailFooter() {
                 }
                 const sectionId = sectionAnchors[link]
                 const href = sectionId ? `/#${sectionId}` : (routeLinks[link] ?? '/contact')
+                const isLegal = ['Privacy Policy', 'Terms & Conditions', 'POPIA Compliance'].includes(link)
                 return (
                   <a
                     key={link}
                     href={href}
                     onClick={sectionId ? handleSectionClick(sectionId) : undefined}
+                    {...(isLegal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                   >
                     {link}
                   </a>

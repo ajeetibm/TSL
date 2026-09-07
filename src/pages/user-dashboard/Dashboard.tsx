@@ -417,9 +417,9 @@ const newWizards = [
 
 
 const notices = [
-  { label: 'Terms of Service',         icon: FileText, urlKey: 'termsOfServiceUrl'  as keyof LegalLinks },
-  { label: 'Privacy & POPIA Compliance', icon: Shield, urlKey: 'privacyPolicyUrl'   as keyof LegalLinks },
-  { label: 'Legal Advice Disclaimer',  icon: Info,     urlKey: 'legalDisclaimerUrl' as keyof LegalLinks },
+  { label: 'Terms of Service',          icon: FileText, urlKey: 'termsOfServiceUrl'  as keyof LegalLinks, fallback: '/legal/terms-of-service.html'  },
+  { label: 'Privacy & POPIA Compliance', icon: Shield,  urlKey: 'privacyPolicyUrl'   as keyof LegalLinks, fallback: '/legal/privacy-popia.html'      },
+  { label: 'Legal Advice Disclaimer',   icon: Info,     urlKey: 'legalDisclaimerUrl' as keyof LegalLinks, fallback: '/legal/legal-disclaimer.html'   },
 ]
 
 function relativeUpdated(value?: string) {
@@ -2620,10 +2620,10 @@ export default function Dashboard() {
                 </div>
                 <p>Review important policies</p>
                 <div>
-                  {notices.map(({ label, icon: Icon, urlKey }) => {
-                    const href = legalLinks?.[urlKey] ?? null
-                    const isLoading = legalLinksLoading
-                    const isDisabled = !isLoading && !href
+                  {notices.map(({ label, icon: Icon, fallback }) => {
+                    const href = fallback
+                    const isLoading = false
+                    const isDisabled = !href
                     if (isLoading) {
                       return (
                         <button
