@@ -327,7 +327,15 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
   if (key === 'incident') {
     if (!data.useSeverityModel && data.incidentNarrative.trim().length < 200)
       e['incidentNarrative'] = `At least 200 characters required (${data.incidentNarrative.trim().length} entered).`
-    if (data.escalationContacts.length === 0) e['escalationContacts'] = 'Add at least one escalation contact.'
+    if (data.escalationContacts.length === 0) {
+      e['escalationContacts'] = 'Add at least one escalation contact.'
+    } else {
+      data.escalationContacts.forEach((c, i) => {
+        if (!c.name.trim()) e[`escalation_${i}_name`] = 'Name is required.'
+        if (!c.role.trim()) e[`escalation_${i}_role`] = 'Role is required.'
+        if (!c.email.trim()) e[`escalation_${i}_email`] = 'Email is required.'
+      })
+    }
   }
   if (key === 'maintenance') {
     if (!data.maintenanceWindow.trim()) e['maintenanceWindow'] = 'This field is required.'
