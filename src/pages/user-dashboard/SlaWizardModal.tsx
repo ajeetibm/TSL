@@ -918,12 +918,12 @@ export default function SlaWizardModal({
                       placeholder="e.g. Sundays 02:00 to 06:00 SAST" />
                   </FormGroup>
 
-                  <div className="nda-modal__two-col">
-                    <FormGroup label="Notice before maintenance" required hint="Hours. Default 48." error={errors['maintenanceNoticeHours']}>
+                  <div className="nda-modal__two-col" style={{ alignItems: 'start' }}>
+                    <FormGroup label="Notice before maintenance" required hintAfter="Hours. Default 48." error={errors['maintenanceNoticeHours']}>
                       <TextInput value={data.maintenanceNoticeHours} onChange={(v) => set('maintenanceNoticeHours', v)}
                         placeholder="48" type="number" min="0" />
                     </FormGroup>
-                    <FormGroup label="Emergency maintenance permitted" required hint="Default Yes.">
+                    <FormGroup label="Emergency maintenance permitted" required hintAfter="Default Yes.">
                       <ToggleGroup options={['Yes', 'No']}
                         value={data.emergencyMaintenance ? 'Yes' : 'No'}
                         onChange={(v) => set('emergencyMaintenance', v === 'Yes')} />
