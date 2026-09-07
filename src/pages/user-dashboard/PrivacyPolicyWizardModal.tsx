@@ -430,7 +430,12 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
       errors.cookies = 'Add at least one cookie or cookie category.'
     }
     data.cookies.forEach((row, index) => {
-      if (!hasText(row.name) && !hasText(row.purpose) && !hasText(row.duration)) return
+      const empty = !hasText(row.name) && !hasText(row.purpose) && !hasText(row.duration)
+      if (empty && data.cookies.length > 1) {
+        errors[`cookie.${index}.empty`] = 'Fill in this entry or remove it.'
+        return
+      }
+      if (empty) return
       if (!hasText(row.name)) errors[`cookie.${index}.name`] = 'Enter a name or category.'
       if (!hasText(row.purpose)) errors[`cookie.${index}.purpose`] = 'Enter a purpose.'
       if (!hasText(row.duration)) errors[`cookie.${index}.duration`] = 'Enter a duration.'
@@ -909,22 +914,38 @@ export default function PrivacyPolicyWizardModal({
                     <p>Cookies used across your sites and applications, and how consent is obtained.</p>
                     <FormGroup label="Cookies used" required error={errors.cookies}>
                       <div className="nda-modal__repeat-list">
-                        {data.cookies.map((row, index) => (
-                          <div key={`cookie-${index}`} className="nda-modal__repeat-card">
-                            <div className="nda-modal__repeat-grid nda-modal__repeat-grid--four">
-                              <TextInput value={row.name} onChange={(value) => updateCookie(index, { name: value })} placeholder="e.g. _ga" error={Boolean(errors[`cookie.${index}.name`])} />
-                              <TextInput value={row.purpose} onChange={(value) => updateCookie(index, { purpose: value })} placeholder="e.g. Analytics" error={Boolean(errors[`cookie.${index}.purpose`])} />
-                              <TextInput value={row.duration} onChange={(value) => updateCookie(index, { duration: value })} placeholder="e.g. 13 months" error={Boolean(errors[`cookie.${index}.duration`])} />
-                              <select className="nda-modal__select" value={row.necessary} onChange={(event) => updateCookie(index, { necessary: event.target.value as PrivacyCookieRow['necessary'] })}>
-                                <option value="No">No</option>
-                                <option value="Yes">Yes</option>
-                              </select>
+                        {data.cookies.map((row, index) => {
+                          const cookieEmpty = !hasText(row.name) && !hasText(row.purpose) && !hasText(row.duration)
+                          const isExtraCookie = cookieEmpty && data.cookies.length > 1
+                          return (
+                            <div key={`cookie-${index}`} className="nda-modal__repeat-card">
+                              <div className="nda-modal__repeat-grid nda-modal__repeat-grid--four">
+                                <div>
+                                  <TextInput value={row.name} onChange={(value) => updateCookie(index, { name: value })} placeholder="e.g. _ga" error={Boolean(errors[`cookie.${index}.name`])} />
+                                  {errors[`cookie.${index}.name`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.name`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.purpose} onChange={(value) => updateCookie(index, { purpose: value })} placeholder="e.g. Analytics" error={Boolean(errors[`cookie.${index}.purpose`])} />
+                                  {errors[`cookie.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.purpose`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.duration} onChange={(value) => updateCookie(index, { duration: value })} placeholder="e.g. 13 months" error={Boolean(errors[`cookie.${index}.duration`])} />
+                                  {errors[`cookie.${index}.duration`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.duration`]}</p>}
+                                </div>
+                                <select className="nda-modal__select" value={row.necessary} onChange={(event) => updateCookie(index, { necessary: event.target.value as PrivacyCookieRow['necessary'] })}>
+                                  <option value="No">No</option>
+                                  <option value="Yes">Yes</option>
+                                </select>
+                              </div>
+                              {isExtraCookie && (
+                                <p className="nda-modal__field-error">Fill in this entry or remove it using the ✕ button.</p>
+                              )}
+                              <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('cookies', data.cookies.length > 1 ? data.cookies.filter((_, currentIndex) => currentIndex !== index) : [createEmptyCookie()])} aria-label="Remove cookie">
+                                <X size={16} />
+                              </button>
                             </div>
-                            <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('cookies', data.cookies.length > 1 ? data.cookies.filter((_, currentIndex) => currentIndex !== index) : [createEmptyCookie()])} aria-label="Remove cookie">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       <button type="button" className="nda-modal__add-row" onClick={() => set('cookies', [...data.cookies, createEmptyCookie()])}>
                         + Add another cookie
