@@ -369,7 +369,13 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
       errors.purposes = 'Add at least one purpose.'
     }
     data.purposes.forEach((row, index) => {
-      if (!hasText(row.purpose) && !hasText(row.categories) && !hasText(row.basis) && !hasText(row.liStatement)) return
+      const empty = !hasText(row.purpose) && !hasText(row.categories) && !hasText(row.basis) && !hasText(row.liStatement)
+      // A completely empty extra row must be filled or removed before proceeding
+      if (empty && data.purposes.length > 1) {
+        errors[`purpose.${index}.empty`] = 'Fill in this entry or remove it.'
+        return
+      }
+      if (empty) return
       if (!hasText(row.purpose)) errors[`purpose.${index}.purpose`] = 'Enter a purpose.'
       if (!hasText(row.categories)) errors[`purpose.${index}.categories`] = 'Enter categories used.'
       if (!hasText(row.basis)) errors[`purpose.${index}.basis`] = 'Select a lawful basis.'
@@ -381,7 +387,13 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
       errors.retention = 'Add at least one retention entry.'
     }
     data.retention.forEach((row, index) => {
-      if (!hasText(row.category) && !hasText(row.period) && !hasText(row.reason)) return
+      const empty = !hasText(row.category) && !hasText(row.period) && !hasText(row.reason)
+      // A completely empty extra row must be filled or removed before proceeding
+      if (empty && data.retention.length > 1) {
+        errors[`retention.${index}.empty`] = 'Fill in this entry or remove it.'
+        return
+      }
+      if (empty) return
       if (!hasText(row.category)) errors[`retention.${index}.category`] = 'Enter a category.'
       if (!hasText(row.period)) errors[`retention.${index}.period`] = 'Enter a period.'
       if (!hasText(row.reason)) errors[`retention.${index}.reason`] = 'Enter a reason.'
@@ -718,33 +730,40 @@ export default function PrivacyPolicyWizardModal({
                     <p>Each purpose of processing, its lawful basis, and how long it is retained.</p>
                     <FormGroup label="Purposes" required error={errors.purposes}>
                       <div className="nda-modal__repeat-list">
-                        {data.purposes.map((row, index) => (
-                          <div key={`purpose-${index}`} className="nda-modal__repeat-card">
-                            <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
-                              <div>
-                                <TextInput value={row.purpose} onChange={(value) => updatePurpose(index, { purpose: value })} placeholder="e.g. Processing customer orders" error={Boolean(errors[`purpose.${index}.purpose`])} />
-                                {errors[`purpose.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.purpose`]}</p>}
+                        {data.purposes.map((row, index) => {
+                          const purposeEmpty = !hasText(row.purpose) && !hasText(row.categories) && !hasText(row.basis) && !hasText(row.liStatement)
+                          const isExtraPurpose = purposeEmpty && data.purposes.length > 1
+                          return (
+                            <div key={`purpose-${index}`} className="nda-modal__repeat-card">
+                              <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
+                                <div>
+                                  <TextInput value={row.purpose} onChange={(value) => updatePurpose(index, { purpose: value })} placeholder="e.g. Processing customer orders" error={Boolean(errors[`purpose.${index}.purpose`])} />
+                                  {errors[`purpose.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.purpose`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.categories} onChange={(value) => updatePurpose(index, { categories: value })} placeholder="e.g. Identity, Contact" error={Boolean(errors[`purpose.${index}.categories`])} />
+                                  {errors[`purpose.${index}.categories`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.categories`]}</p>}
+                                </div>
+                                <div>
+                                  <SelectInput value={row.basis} onChange={(value) => updatePurpose(index, { basis: value as PrivacyPurposeRow['basis'], liStatement: value === 'Legitimate interest' ? row.liStatement : '' })} options={PRIVACY_BASIS_OPTIONS} placeholder="Lawful basis" error={Boolean(errors[`purpose.${index}.basis`])} />
+                                  {errors[`purpose.${index}.basis`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.basis`]}</p>}
+                                </div>
                               </div>
-                              <div>
-                                <TextInput value={row.categories} onChange={(value) => updatePurpose(index, { categories: value })} placeholder="e.g. Identity, Contact" error={Boolean(errors[`purpose.${index}.categories`])} />
-                                {errors[`purpose.${index}.categories`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.categories`]}</p>}
-                              </div>
-                              <div>
-                                <SelectInput value={row.basis} onChange={(value) => updatePurpose(index, { basis: value as PrivacyPurposeRow['basis'], liStatement: value === 'Legitimate interest' ? row.liStatement : '' })} options={PRIVACY_BASIS_OPTIONS} placeholder="Lawful basis" error={Boolean(errors[`purpose.${index}.basis`])} />
-                                {errors[`purpose.${index}.basis`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.basis`]}</p>}
-                              </div>
+                              {row.basis === 'Legitimate interest' && (
+                                <div className="nda-modal__repeat-full">
+                                  <TextArea value={row.liStatement} onChange={(value) => updatePurpose(index, { liStatement: value })} placeholder="Explain the legitimate interest relied on" error={Boolean(errors[`purpose.${index}.liStatement`])} />
+                                  {errors[`purpose.${index}.liStatement`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.liStatement`]}</p>}
+                                </div>
+                              )}
+                              {isExtraPurpose && (
+                                <p className="nda-modal__field-error">Fill in this entry or remove it using the ✕ button.</p>
+                              )}
+                              <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('purposes', data.purposes.length > 1 ? data.purposes.filter((_, currentIndex) => currentIndex !== index) : [createEmptyPurpose()])} aria-label="Remove purpose">
+                                <X size={16} />
+                              </button>
                             </div>
-                            {row.basis === 'Legitimate interest' && (
-                              <div className="nda-modal__repeat-full">
-                                <TextArea value={row.liStatement} onChange={(value) => updatePurpose(index, { liStatement: value })} placeholder="Explain the legitimate interest relied on" error={Boolean(errors[`purpose.${index}.liStatement`])} />
-                                {errors[`purpose.${index}.liStatement`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.liStatement`]}</p>}
-                              </div>
-                            )}
-                            <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('purposes', data.purposes.length > 1 ? data.purposes.filter((_, currentIndex) => currentIndex !== index) : [createEmptyPurpose()])} aria-label="Remove purpose">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       <button type="button" className="nda-modal__add-row" onClick={() => set('purposes', [...data.purposes, createEmptyPurpose()])}>
                         + Add another purpose
@@ -752,27 +771,34 @@ export default function PrivacyPolicyWizardModal({
                     </FormGroup>
                     <FormGroup label="Retention" required error={errors.retention}>
                       <div className="nda-modal__repeat-list">
-                        {data.retention.map((row, index) => (
-                          <div key={`retention-${index}`} className="nda-modal__repeat-card">
-                            <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
-                              <div>
-                                <TextInput value={row.category} onChange={(value) => updateRetention(index, { category: value })} placeholder="e.g. Customer records" error={Boolean(errors[`retention.${index}.category`])} />
-                                {errors[`retention.${index}.category`] && <p className="nda-modal__field-error">{errors[`retention.${index}.category`]}</p>}
+                        {data.retention.map((row, index) => {
+                          const retentionEmpty = !hasText(row.category) && !hasText(row.period) && !hasText(row.reason)
+                          const isExtraRetention = retentionEmpty && data.retention.length > 1
+                          return (
+                            <div key={`retention-${index}`} className="nda-modal__repeat-card">
+                              <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
+                                <div>
+                                  <TextInput value={row.category} onChange={(value) => updateRetention(index, { category: value })} placeholder="e.g. Customer records" error={Boolean(errors[`retention.${index}.category`])} />
+                                  {errors[`retention.${index}.category`] && <p className="nda-modal__field-error">{errors[`retention.${index}.category`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.period} onChange={(value) => updateRetention(index, { period: value })} placeholder="e.g. 5 years" error={Boolean(errors[`retention.${index}.period`])} />
+                                  {errors[`retention.${index}.period`] && <p className="nda-modal__field-error">{errors[`retention.${index}.period`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.reason} onChange={(value) => updateRetention(index, { reason: value })} placeholder="e.g. Statutory retention requirement" error={Boolean(errors[`retention.${index}.reason`])} />
+                                  {errors[`retention.${index}.reason`] && <p className="nda-modal__field-error">{errors[`retention.${index}.reason`]}</p>}
+                                </div>
                               </div>
-                              <div>
-                                <TextInput value={row.period} onChange={(value) => updateRetention(index, { period: value })} placeholder="e.g. 5 years" error={Boolean(errors[`retention.${index}.period`])} />
-                                {errors[`retention.${index}.period`] && <p className="nda-modal__field-error">{errors[`retention.${index}.period`]}</p>}
-                              </div>
-                              <div>
-                                <TextInput value={row.reason} onChange={(value) => updateRetention(index, { reason: value })} placeholder="e.g. Statutory retention requirement" error={Boolean(errors[`retention.${index}.reason`])} />
-                                {errors[`retention.${index}.reason`] && <p className="nda-modal__field-error">{errors[`retention.${index}.reason`]}</p>}
-                              </div>
+                              {isExtraRetention && (
+                                <p className="nda-modal__field-error">Fill in this entry or remove it using the ✕ button.</p>
+                              )}
+                              <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('retention', data.retention.length > 1 ? data.retention.filter((_, currentIndex) => currentIndex !== index) : [createEmptyRetention()])} aria-label="Remove retention entry">
+                                <X size={16} />
+                              </button>
                             </div>
-                            <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('retention', data.retention.length > 1 ? data.retention.filter((_, currentIndex) => currentIndex !== index) : [createEmptyRetention()])} aria-label="Remove retention entry">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       <button type="button" className="nda-modal__add-row" onClick={() => set('retention', [...data.retention, createEmptyRetention()])}>
                         + Add another retention entry
