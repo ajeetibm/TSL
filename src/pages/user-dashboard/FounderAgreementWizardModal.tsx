@@ -247,8 +247,25 @@ function validateFounderField(key: string, value: string): string {
     return ''
   }
   if (key === 'idNumber') {
-    if (!value.trim()) return 'ID number is required.'
-    if (!/^\d{13}$/.test(value.trim())) return 'Must be exactly 13 digits.'
+    const v = value.trim()
+    if (!v) return 'ID number is required.'
+    if (!/^\d{13}$/.test(v)) return 'Must be exactly 13 digits.'
+    // Date portion: YYMMDD
+    const mm = parseInt(v.slice(2, 4), 10)
+    const dd = parseInt(v.slice(4, 6), 10)
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return 'ID number contains an invalid date.'
+    // SA ID Luhn checksum
+    // Step 1: sum digits at odd positions (0-based: 0,2,4,6,8,10)
+    let oddSum = 0
+    for (let i = 0; i < 12; i += 2) oddSum += parseInt(v[i], 10)
+    // Step 2: concatenate digits at even positions (0-based: 1,3,5,7,9,11), multiply by 2, sum all digits of result
+    const evenConcat = v[1] + v[3] + v[5] + v[7] + v[9] + v[11]
+    const evenDoubled = String(parseInt(evenConcat, 10) * 2)
+    let evenSum = 0
+    for (const c of evenDoubled) evenSum += parseInt(c, 10)
+    const total = (oddSum + evenSum) % 10
+    const checkDigit = total === 0 ? 0 : 10 - total
+    if (checkDigit !== parseInt(v[12], 10)) return 'ID number is not a valid South African ID.'
     return ''
   }
   if (key === 'role') {
