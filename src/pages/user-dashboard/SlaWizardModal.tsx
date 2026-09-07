@@ -292,7 +292,13 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
     else if (!/^[A-Za-z\s'.,&()-]+$/.test(custName)) e['customer.legalName'] = 'Customer name must contain alphabetic characters only.'
     if (!data.serviceDescription.trim()) e['serviceDescription'] = 'This field is required.'
     if (!data.startDate.trim()) e['startDate'] = 'This field is required.'
-    if (data.termType === 'Fixed end date' && !data.endDate.trim()) e['endDate'] = 'Select an end date.'
+    if (data.termType === 'Fixed end date') {
+      if (!data.endDate.trim()) {
+        e['endDate'] = 'Select an end date.'
+      } else if (data.startDate.trim() && data.endDate <= data.startDate) {
+        e['endDate'] = 'End date must be after the start date.'
+      }
+    }
   }
   if (key === 'modules') {
     if (data.modules.length === 0) e['modules'] = 'Select at least one commitment.'
