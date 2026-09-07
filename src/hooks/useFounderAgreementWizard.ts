@@ -203,9 +203,9 @@ export const FA_EMPTY_DATA: FounderAgreementWizardData = {
   vestingMonths: '48',
   cliffMonths: '12',
   vestingFrequency: 'Monthly',
-  acceleration: '',
+  acceleration: 'None',
   goodLeaver: [],
-  badLeaverEffect: '',
+  badLeaverEffect: 'Unvested forfeited',
 
   decisionModel: 'Majority with reserved matters unanimous',
   reservedMatters: [],

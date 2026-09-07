@@ -274,6 +274,10 @@ function validateFounderField(key: string, value: string): string {
     if (value.length > 60) return 'Role must be 60 characters or fewer.'
     return ''
   }
+  if (key === 'commitment') {
+    if (!value.trim()) return 'Time commitment is required.'
+    return ''
+  }
   if (key === 'equityPct') {
     if (!value.trim()) return 'Equity % is required.'
     const pct = parseFloat(value)
@@ -327,14 +331,15 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTou
           {err.role && <p className="nda-modal__field-error">{err.role}</p>}
         </div>
         <div className="nda-modal__form-group">
-          <label className="nda-modal__label" style={labelStyle}>Time commitment</label>
-          <select className="nda-modal__input" value={founder.commitment}
+          <label className="nda-modal__label" style={labelStyle}>Time commitment <span className="nda-modal__required">*</span></label>
+          <select className={`nda-modal__input${err.commitment ? ' nda-modal__input--error' : ''}`} value={founder.commitment}
             onChange={e => up('commitment', e.target.value as FAFounder['commitment'])} disabled={disabled}>
             <option value="">Select…</option>
             <option>Full time</option>
             <option>Part time</option>
             <option>Advisory</option>
           </select>
+          {err.commitment && <p className="nda-modal__field-error">{err.commitment}</p>}
         </div>
       </div>
       <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr auto', alignItems: 'start' }}>
@@ -674,13 +679,16 @@ export default function FounderAgreementWizardModal({
     if (s === 2) {
       if (!data.founders.some(f => f.fullNames.trim())) { e.founders = 'Add at least one founder.'; valid = false }
       data.founders.forEach((f, i) => {
-        const fields = ['fullNames', 'idNumber', 'role', 'equityPct'] as const
+        const fields = ['fullNames', 'idNumber', 'role', 'commitment', 'equityPct'] as const
         fields.forEach(key => {
           const fieldErr = validateFounderField(key, f[key] as string)
           if (fieldErr) { e[`founder_${i}_${key}`] = fieldErr; valid = false }
         })
       })
       if (!equityValid(data.founders)) { e.equity = 'Equity must total exactly 100%.'; valid = false }
+    }
+    if (s === 3 && data.vestingApplies === 'Yes') {
+      if (!data.goodLeaver.length) { e.goodLeaver = 'Select at least one good leaver definition.'; valid = false }
     }
     if (s === 4 && data.reservedMatters.includes('Take on debt above a threshold')) {
       if (!data.debtThreshold.trim()) { e.debtThreshold = 'Enter a debt threshold value.'; valid = false }
@@ -915,7 +923,7 @@ export default function FounderAgreementWizardModal({
                   </p>
 
                   <Field label="Vesting applies" required
-                    hintAfter="Most investors will expect this. Help text explains why.">
+                    hintAfter="Most investors will expect this. Help text explains why investors expect it.">
                     <ToggleGroup options={['Yes', 'No']} value={data.vestingApplies}
                       onChange={v => set('vestingApplies', v as 'Yes' | 'No')} disabled={ipSectionLocked} />
                   </Field>
@@ -923,7 +931,7 @@ export default function FounderAgreementWizardModal({
                   {data.vestingApplies === 'No' && (
                     <Banner
                       type="warn"
-                      title="Warn — vesting disabled"
+                      title="Warn — Vesting disabled"
                       message="Most investors will require vesting to be added later, and adding it after a raise is harder than agreeing it now. You can still proceed on your own instruction."
                     />
                   )}
@@ -948,10 +956,9 @@ export default function FounderAgreementWizardModal({
                             <option>Quarterly</option>
                           </select>
                         </Field>
-                        <Field label="Acceleration" optional>
+                        <Field label="Acceleration" required>
                           <select className="nda-modal__input" value={data.acceleration}
                             onChange={e => set('acceleration', e.target.value)} disabled={ipSectionLocked}>
-                            <option value="">None selected</option>
                             <option>None</option>
                             <option>On change of control</option>
                             <option>On termination without cause</option>
@@ -959,16 +966,15 @@ export default function FounderAgreementWizardModal({
                           </select>
                         </Field>
                       </div>
-                      <Field label="Good leaver definition" optional>
+                      <Field label="Good leaver definition" required error={errors.goodLeaver}>
                         <MultiChips
                           options={['Death', 'Permanent disability', 'Removal without cause', 'Mutual agreement']}
                           value={data.goodLeaver} onChange={v => set('goodLeaver', v)} disabled={ipSectionLocked}
                         />
                       </Field>
-                      <Field label="Bad leaver consequence" optional>
+                      <Field label="Bad leaver consequence" required>
                         <select className="nda-modal__input" value={data.badLeaverEffect}
                           onChange={e => set('badLeaverEffect', e.target.value)} disabled={ipSectionLocked}>
-                          <option value="">None selected</option>
                           <option>Unvested forfeited</option>
                           <option>Unvested forfeited and vested repurchased at the lower of cost and fair value</option>
                         </select>
