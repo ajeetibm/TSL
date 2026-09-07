@@ -332,16 +332,6 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                 </div>
               )}
 
-              {Number(data.probation_months) > 6 && (
-                <div className="nda-modal__nmw-warning" role="alert">
-                  <span className="nda-modal__nmw-warning-icon">⚠</span>
-                  <div>
-                    <strong>Probation exceeds six months</strong>
-                    <p>Review whether this period is reasonable for the role before proceeding.</p>
-                  </div>
-                </div>
-              )}
-
               <Field label="Benefits" optional>
                 <div className="nda-modal__pill-grid">
                   {BENEFITS.map((benefit) => <button key={benefit} type="button" className={`nda-modal__pill-btn${data.benefits.includes(benefit) ? ' nda-modal__pill-btn--active' : ''}`} onClick={() => toggle('benefits', benefit)}>{benefit}</button>)}
@@ -362,6 +352,16 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                   </div>
                 </Field>
               </div>
+
+              {Number(data.probation_months) > 6 && (
+                <div className="nda-modal__nmw-warning" role="alert">
+                  <span className="nda-modal__nmw-warning-icon">⚠</span>
+                  <div>
+                    <strong>Probation exceeds six months</strong>
+                    <p>Review whether this period is reasonable for the role before proceeding.</p>
+                  </div>
+                </div>
+              )}
             </section>}
 
             {/* ── Step 3: Conditions ── */}
