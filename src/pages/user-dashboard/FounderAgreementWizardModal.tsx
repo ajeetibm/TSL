@@ -242,7 +242,8 @@ function Field({ label, required, optional, hint, hintAfter, error, children }: 
 function validateFounderField(key: string, value: string): string {
   if (key === 'fullNames') {
     if (!value.trim()) return 'Full name is required.'
-    if (/\d/.test(value)) return 'Full name must not contain numbers.'
+    if (value.trim().length > 100) return 'Full name must be 100 characters or fewer.'
+    if (!/^[A-Za-z\s'\-\.]+$/.test(value.trim())) return 'Full name may only contain letters, spaces, hyphens, apostrophes, and dots.'
     return ''
   }
   if (key === 'idNumber') {
@@ -279,6 +280,11 @@ function validateFounderField(key: string, value: string): string {
     if (isNaN(pct) || pct <= 0 || pct > 100) return 'Must be a number between 0 and 100.'
     return ''
   }
+  if (key === 'capital') {
+    if (!value.trim()) return ''
+    if (!/^\d+(\.\d{1,2})?$/.test(value.trim())) return 'Capital contributed must be a valid amount (e.g. 50000 or 50000.00).'
+    return ''
+  }
   return ''
 }
 
@@ -305,7 +311,7 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTou
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Full names <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.fullNames ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. Thandiwe Nkosi"
-            value={founder.fullNames} onChange={e => up('fullNames', e.target.value)} disabled={disabled} />
+            maxLength={100} value={founder.fullNames} onChange={e => up('fullNames', e.target.value)} disabled={disabled} />
           {err.fullNames && <p className="nda-modal__field-error">{err.fullNames}</p>}
         </div>
         <div className="nda-modal__form-group">
@@ -331,7 +337,7 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTou
           </select>
         </div>
       </div>
-      <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr auto' }}>
+      <div className="nda-modal__repeat-grid" style={{ gridTemplateColumns: '1fr 1fr auto', alignItems: 'start' }}>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Equity % <span className="nda-modal__required">*</span></label>
           <input className={`nda-modal__input${err.equityPct ? ' nda-modal__input--error' : ''}`} type="text" placeholder="e.g. 40"
@@ -340,8 +346,9 @@ function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTou
         </div>
         <div className="nda-modal__form-group">
           <label className="nda-modal__label" style={labelStyle}>Capital contributed</label>
-          <input className="nda-modal__input" type="text" placeholder="Optional"
+          <input className={`nda-modal__input${err.capital ? ' nda-modal__input--error' : ''}`} type="text" placeholder="Optional"
             value={founder.capital} onChange={e => up('capital', e.target.value)} disabled={disabled} />
+          {err.capital && <p className="nda-modal__field-error">{err.capital}</p>}
         </div>
         {canRemove && (
           <button type="button" className="nda-modal__row-remove" aria-label={`Remove founder ${index + 1}`}
