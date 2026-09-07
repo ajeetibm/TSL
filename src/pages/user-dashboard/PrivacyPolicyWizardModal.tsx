@@ -29,12 +29,12 @@ type Step = 1 | 2 | 3 | 4 | 5 | 6
 type PrivacyErrors = Record<string, string>
 
 const STEPS: { label: string }[] = [
-  { label: 'Who you are' },
-  { label: 'What you collect' },
-  { label: 'Why & basis' },
-  { label: 'Who else sees it' },
-  { label: 'Cookies' },
-  { label: 'Publication' },
+  { label: 'WHO YOU ARE' },
+  { label: 'WHAT YOU COLLECT' },
+  { label: 'WHY AND ON WHAT BASIS' },
+  { label: 'WHO ELSE SEES IT' },
+  { label: 'COOKIES' },
+  { label: 'PUBLICATION' },
 ]
 
 const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
@@ -637,7 +637,7 @@ export default function PrivacyPolicyWizardModal({
               <div className="nda-modal__step-content nda-modal__step-content--policy">
                 {step === 1 && (
                   <section className="nda-modal__panel">
-                    <h3>Who you are</h3>
+                    <h3>WHO YOU ARE</h3>
                     <p>The responsible party and information officer for this notice.</p>
                     <FormGroup
                       label="Responsible party"
@@ -683,7 +683,7 @@ export default function PrivacyPolicyWizardModal({
 
                 {step === 2 && (
                   <section className="nda-modal__panel">
-                    <h3>What you collect</h3>
+                    <h3>WHAT YOU COLLECT</h3>
                     <p>Categories of personal information processed, including any special categories.</p>
                     <FormGroup label="Categories collected" required error={errors.piCategories}>
                       <ChipMultiSelect options={PRIVACY_CATEGORY_OPTIONS} values={data.piCategories} onChange={(values) => set('piCategories', values)} />
@@ -714,20 +714,30 @@ export default function PrivacyPolicyWizardModal({
 
                 {step === 3 && (
                   <section className="nda-modal__panel">
-                    <h3>Why and on what basis</h3>
+                    <h3>WHY AND ON WHAT BASIS</h3>
                     <p>Each purpose of processing, its lawful basis, and how long it is retained.</p>
                     <FormGroup label="Purposes" required error={errors.purposes}>
                       <div className="nda-modal__repeat-list">
                         {data.purposes.map((row, index) => (
                           <div key={`purpose-${index}`} className="nda-modal__repeat-card">
                             <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
-                              <TextInput value={row.purpose} onChange={(value) => updatePurpose(index, { purpose: value })} placeholder="e.g. Processing customer orders" error={Boolean(errors[`purpose.${index}.purpose`])} />
-                              <TextInput value={row.categories} onChange={(value) => updatePurpose(index, { categories: value })} placeholder="e.g. Identity, Contact" error={Boolean(errors[`purpose.${index}.categories`])} />
-                              <SelectInput value={row.basis} onChange={(value) => updatePurpose(index, { basis: value as PrivacyPurposeRow['basis'], liStatement: value === 'Legitimate interest' ? row.liStatement : '' })} options={PRIVACY_BASIS_OPTIONS} placeholder="Lawful basis" error={Boolean(errors[`purpose.${index}.basis`])} />
+                              <div>
+                                <TextInput value={row.purpose} onChange={(value) => updatePurpose(index, { purpose: value })} placeholder="e.g. Processing customer orders" error={Boolean(errors[`purpose.${index}.purpose`])} />
+                                {errors[`purpose.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.purpose`]}</p>}
+                              </div>
+                              <div>
+                                <TextInput value={row.categories} onChange={(value) => updatePurpose(index, { categories: value })} placeholder="e.g. Identity, Contact" error={Boolean(errors[`purpose.${index}.categories`])} />
+                                {errors[`purpose.${index}.categories`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.categories`]}</p>}
+                              </div>
+                              <div>
+                                <SelectInput value={row.basis} onChange={(value) => updatePurpose(index, { basis: value as PrivacyPurposeRow['basis'], liStatement: value === 'Legitimate interest' ? row.liStatement : '' })} options={PRIVACY_BASIS_OPTIONS} placeholder="Lawful basis" error={Boolean(errors[`purpose.${index}.basis`])} />
+                                {errors[`purpose.${index}.basis`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.basis`]}</p>}
+                              </div>
                             </div>
                             {row.basis === 'Legitimate interest' && (
                               <div className="nda-modal__repeat-full">
                                 <TextArea value={row.liStatement} onChange={(value) => updatePurpose(index, { liStatement: value })} placeholder="Explain the legitimate interest relied on" error={Boolean(errors[`purpose.${index}.liStatement`])} />
+                                {errors[`purpose.${index}.liStatement`] && <p className="nda-modal__field-error">{errors[`purpose.${index}.liStatement`]}</p>}
                               </div>
                             )}
                             <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('purposes', data.purposes.length > 1 ? data.purposes.filter((_, currentIndex) => currentIndex !== index) : [createEmptyPurpose()])} aria-label="Remove purpose">
@@ -745,9 +755,18 @@ export default function PrivacyPolicyWizardModal({
                         {data.retention.map((row, index) => (
                           <div key={`retention-${index}`} className="nda-modal__repeat-card">
                             <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
-                              <TextInput value={row.category} onChange={(value) => updateRetention(index, { category: value })} placeholder="e.g. Customer records" error={Boolean(errors[`retention.${index}.category`])} />
-                              <TextInput value={row.period} onChange={(value) => updateRetention(index, { period: value })} placeholder="e.g. 5 years" error={Boolean(errors[`retention.${index}.period`])} />
-                              <TextInput value={row.reason} onChange={(value) => updateRetention(index, { reason: value })} placeholder="e.g. Statutory retention requirement" error={Boolean(errors[`retention.${index}.reason`])} />
+                              <div>
+                                <TextInput value={row.category} onChange={(value) => updateRetention(index, { category: value })} placeholder="e.g. Customer records" error={Boolean(errors[`retention.${index}.category`])} />
+                                {errors[`retention.${index}.category`] && <p className="nda-modal__field-error">{errors[`retention.${index}.category`]}</p>}
+                              </div>
+                              <div>
+                                <TextInput value={row.period} onChange={(value) => updateRetention(index, { period: value })} placeholder="e.g. 5 years" error={Boolean(errors[`retention.${index}.period`])} />
+                                {errors[`retention.${index}.period`] && <p className="nda-modal__field-error">{errors[`retention.${index}.period`]}</p>}
+                              </div>
+                              <div>
+                                <TextInput value={row.reason} onChange={(value) => updateRetention(index, { reason: value })} placeholder="e.g. Statutory retention requirement" error={Boolean(errors[`retention.${index}.reason`])} />
+                                {errors[`retention.${index}.reason`] && <p className="nda-modal__field-error">{errors[`retention.${index}.reason`]}</p>}
+                              </div>
                             </div>
                             <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('retention', data.retention.length > 1 ? data.retention.filter((_, currentIndex) => currentIndex !== index) : [createEmptyRetention()])} aria-label="Remove retention entry">
                               <X size={16} />
@@ -764,7 +783,7 @@ export default function PrivacyPolicyWizardModal({
 
                 {step === 4 && (
                   <section className="nda-modal__panel">
-                    <h3>Who else sees it</h3>
+                    <h3>WHO ELSE SEES IT</h3>
                     <p>Third parties, cross-border transfers, and direct marketing.</p>
                     <FormGroup label="Third parties" required error={errors.thirdParties}>
                       <div className="nda-modal__repeat-list">
@@ -824,7 +843,7 @@ export default function PrivacyPolicyWizardModal({
 
                 {step === 5 && (
                   <section className="nda-modal__panel">
-                    <h3>Cookies</h3>
+                    <h3>COOKIES</h3>
                     <p>Cookies used across your sites and applications, and how consent is obtained.</p>
                     <FormGroup label="Cookies used" required error={errors.cookies}>
                       <div className="nda-modal__repeat-list">
@@ -866,7 +885,7 @@ export default function PrivacyPolicyWizardModal({
 
                 {step === 6 && (
                   <section className="nda-modal__panel">
-                    <h3>Publication</h3>
+                    <h3>PUBLICATION</h3>
                     <p>How data subjects reach you, your security posture, and the effective date.</p>
                     <div className="nda-modal__two-col">
                       <FormGroup label="Data subject request channel" required error={errors.dsrChannel}>
@@ -904,7 +923,7 @@ export default function PrivacyPolicyWizardModal({
                   <p>Please review all information before generating your published privacy notice and cookies policy.</p>
                 </div>
 
-                <PreviewSection num={1} title="Who you are" onEdit={() => goTo(1)}>
+                <PreviewSection num={1} title="WHO YOU ARE" onEdit={() => goTo(1)}>
                   <PF label="Responsible party" value={data.responsibleParty} />
                   <PF label="Information officer" value={data.officerFullNames} />
                   <PF label="Identity number" value={data.officerIdNumber} />
@@ -913,7 +932,7 @@ export default function PrivacyPolicyWizardModal({
                   <PF label="Domains" value={previewValues.domains} />
                 </PreviewSection>
 
-                <PreviewSection num={2} title="What you collect" onEdit={() => goTo(2)}>
+                <PreviewSection num={2} title="WHAT YOU COLLECT" onEdit={() => goTo(2)}>
                   <PF label="Categories collected" value={previewValues.categories} />
                   <PF label="Special personal information" value={previewValues.specialPi} />
                   <PF label="Special information basis" value={data.specialPiBasis} />
@@ -921,7 +940,7 @@ export default function PrivacyPolicyWizardModal({
                   <PF label="Children consent mechanism" value={data.childrenConsent} />
                 </PreviewSection>
 
-                <PreviewSection num={3} title="Why and on what basis" onEdit={() => goTo(3)}>
+                <PreviewSection num={3} title="WHY AND ON WHAT BASIS" onEdit={() => goTo(3)}>
                   {data.purposes.filter((row) => hasText(row.purpose)).map((row, index) => (
                     <PF key={`preview-purpose-${index}`} label={`Purpose ${index + 1}`} value={`${row.purpose} · ${row.categories} · ${row.basis}${row.liStatement ? ` · ${row.liStatement}` : ''}`} />
                   ))}
@@ -930,7 +949,7 @@ export default function PrivacyPolicyWizardModal({
                   ))}
                 </PreviewSection>
 
-                <PreviewSection num={4} title="Who else sees it" onEdit={() => goTo(4)}>
+                <PreviewSection num={4} title="WHO ELSE SEES IT" onEdit={() => goTo(4)}>
                   {data.thirdParties.filter((row) => hasText(row.name)).map((row, index) => (
                     <PF key={`preview-third-party-${index}`} label={`Third party ${index + 1}`} value={`${row.name} · ${row.purpose} · ${row.country}`} />
                   ))}
@@ -940,7 +959,7 @@ export default function PrivacyPolicyWizardModal({
                   <PF label="Direct marketing conducted" value={boolLabel(data.directMarketing)} />
                 </PreviewSection>
 
-                <PreviewSection num={5} title="Cookies" onEdit={() => goTo(5)}>
+                <PreviewSection num={5} title="COOKIES" onEdit={() => goTo(5)}>
                   {data.cookies.filter((row) => hasText(row.name)).map((row, index) => (
                     <PF key={`preview-cookie-${index}`} label={`Cookie ${index + 1}`} value={`${row.name} · ${row.purpose} · ${row.duration} · Strictly necessary: ${row.necessary}`} />
                   ))}
@@ -948,7 +967,7 @@ export default function PrivacyPolicyWizardModal({
                   <PF label="Analytics provider" value={data.analyticsProvider} />
                 </PreviewSection>
 
-                <PreviewSection num={6} title="Publication" onEdit={() => goTo(6)}>
+                <PreviewSection num={6} title="PUBLICATION" onEdit={() => goTo(6)}>
                   <PF label="Data subject request channel" value={data.dsrChannel} />
                   <PF label="Response commitment" value={data.dsrDays ? `${data.dsrDays} days` : ''} />
                   <PF label="Security measures" value={previewValues.securitySummary} />
