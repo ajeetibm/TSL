@@ -353,10 +353,10 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
               </Field>}
 
               <div className="nda-modal__two-col">
-                <Field label="Probation" optional hint="Months. Default 3.">
+                <Field label="Probation" optional>
                   <input className="nda-modal__input" type="number" min="0" value={data.probation_months} onChange={(event) => set('probation_months', event.target.value)} />
                 </Field>
-                <Field label="Restraint will apply" required error={e['restraint_flag']} hint={e['restraint_flag'] ? undefined : 'Must be disclosed in the offer, not introduced later.'}>
+                <Field label="Restraint will apply" required error={e['restraint_flag']}>
                   <div className="nda-modal__duration-grid">
                     {[true, false].map((choice) => <button key={String(choice)} type="button" className={`nda-modal__duration-btn${data.restraint_flag === choice ? ' nda-modal__duration-btn--active nda-modal__duration-btn--active-dark' : ''}`} onClick={() => set('restraint_flag', choice)}>{choice ? 'Yes' : 'No'}</button>)}
                   </div>

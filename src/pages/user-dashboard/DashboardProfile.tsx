@@ -56,7 +56,9 @@ export default function DashboardProfile() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const entityTypeRef = useRef<HTMLDivElement>(null)
   const idNumberRef = useRef<HTMLDivElement>(null)
+  const regNumberRef = useRef<HTMLDivElement>(null)
   const [idNumberError, setIdNumberError] = useState<string | null>(null)
+  const [regNumberError, setRegNumberError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
@@ -288,6 +290,17 @@ export default function DashboardProfile() {
       return
     }
     setIdNumberError(null)
+    // CIPC registration number format: YYYY/NNNNNN/NN (Company, CC, etc.)
+    if (
+      formData.entityType !== 'Individual' &&
+      formData.registrationNumber &&
+      !/^\d{4}\/\d{6}\/\d{2}$/.test(formData.registrationNumber)
+    ) {
+      setRegNumberError('Enter a CIPC registration number in the format YYYY/NNNNNN/NN.')
+      regNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    setRegNumberError(null)
     if (formData.entityType !== 'Individual' && formData.legalName) {
       if (!LEGAL_NAME_VALID.test(formData.legalName)) {
         setLegalNameError('Legal name must contain at least one letter or number — special characters alone are not allowed.')
@@ -492,12 +505,23 @@ export default function DashboardProfile() {
                         {formData.legalName.length}/{LEGAL_NAME_MAX} characters
                       </p>
                     </div>
-                    <label className="dashboard-profile__field">
-                      <span>Registration number</span>
-                      <div className="dashboard-profile__input-wrap">
-                        <input type="text" maxLength={20} value={formData.registrationNumber} onChange={(e) => handleInputChange('registrationNumber', e.target.value)} />
-                      </div>
-                    </label>
+                    <div ref={regNumberRef}>
+                      <label className="dashboard-profile__field">
+                        <span>Registration number</span>
+                        <div className={`dashboard-profile__input-wrap${regNumberError ? ' dashboard-profile__input-wrap--error' : ''}`}>
+                          <input
+                            type="text"
+                            maxLength={20}
+                            value={formData.registrationNumber}
+                            onChange={(e) => { handleInputChange('registrationNumber', e.target.value); if (regNumberError) setRegNumberError(null) }}
+                          />
+                        </div>
+                      </label>
+                      {regNumberError
+                        ? <p className="dashboard-profile__field-error" role="alert">{regNumberError}</p>
+                        : <p className="dashboard-profile__field-hint">e.g. 2024/259720/07</p>
+                      }
+                    </div>
                     <label className="dashboard-profile__field dashboard-profile__field--wide">
                       <span>Trading name <em>(optional)</em></span>
                       <div className="dashboard-profile__input-wrap">
