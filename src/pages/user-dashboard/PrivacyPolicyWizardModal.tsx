@@ -405,13 +405,22 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
       errors.thirdParties = 'Add at least one third party, or state none.'
     }
     data.thirdParties.forEach((row, index) => {
-      if (!hasText(row.name) && !hasText(row.purpose) && !hasText(row.country)) return
+      const empty = !hasText(row.name) && !hasText(row.purpose) && !hasText(row.country)
+      if (empty && data.thirdParties.length > 1) {
+        errors[`thirdParty.${index}.empty`] = 'Fill in this entry or remove it.'
+        return
+      }
+      if (empty) return
       if (!hasText(row.name)) errors[`thirdParty.${index}.name`] = 'Enter a name or category.'
       if (!hasText(row.purpose)) errors[`thirdParty.${index}.purpose`] = 'Enter a purpose.'
       if (!hasText(row.country)) errors[`thirdParty.${index}.country`] = 'Enter a country.'
     })
     if (data.crossBorder) {
       if (data.crossBorderCountries.filter(hasText).length === 0) errors.crossBorderCountries = 'List the countries data is sent to.'
+      else data.crossBorderCountries.forEach((val, index) => {
+        if (!hasText(val) && data.crossBorderCountries.length > 1)
+          errors[`crossBorderCountry.${index}.empty`] = 'Fill in this country or remove it.'
+      })
       if (!hasText(data.transferBasis)) errors.transferBasis = 'Select a transfer basis.'
     }
   }
@@ -813,18 +822,34 @@ export default function PrivacyPolicyWizardModal({
                     <p>Third parties, cross-border transfers, and direct marketing.</p>
                     <FormGroup label="Third parties" required error={errors.thirdParties}>
                       <div className="nda-modal__repeat-list">
-                        {data.thirdParties.map((row, index) => (
-                          <div key={`third-party-${index}`} className="nda-modal__repeat-card">
-                            <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
-                              <TextInput value={row.name} onChange={(value) => updateThirdParty(index, { name: value })} placeholder="e.g. Payment processor" error={Boolean(errors[`thirdParty.${index}.name`])} />
-                              <TextInput value={row.purpose} onChange={(value) => updateThirdParty(index, { purpose: value })} placeholder="e.g. Processing payments" error={Boolean(errors[`thirdParty.${index}.purpose`])} />
-                              <TextInput value={row.country} onChange={(value) => updateThirdParty(index, { country: value })} placeholder="e.g. South Africa" error={Boolean(errors[`thirdParty.${index}.country`])} />
+                        {data.thirdParties.map((row, index) => {
+                          const tpEmpty = !hasText(row.name) && !hasText(row.purpose) && !hasText(row.country)
+                          const isExtraTp = tpEmpty && data.thirdParties.length > 1
+                          return (
+                            <div key={`third-party-${index}`} className="nda-modal__repeat-card">
+                              <div className="nda-modal__repeat-grid nda-modal__repeat-grid--three">
+                                <div>
+                                  <TextInput value={row.name} onChange={(value) => updateThirdParty(index, { name: value })} placeholder="e.g. Payment processor" error={Boolean(errors[`thirdParty.${index}.name`])} />
+                                  {errors[`thirdParty.${index}.name`] && <p className="nda-modal__field-error">{errors[`thirdParty.${index}.name`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.purpose} onChange={(value) => updateThirdParty(index, { purpose: value })} placeholder="e.g. Processing payments" error={Boolean(errors[`thirdParty.${index}.purpose`])} />
+                                  {errors[`thirdParty.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`thirdParty.${index}.purpose`]}</p>}
+                                </div>
+                                <div>
+                                  <TextInput value={row.country} onChange={(value) => updateThirdParty(index, { country: value })} placeholder="e.g. South Africa" error={Boolean(errors[`thirdParty.${index}.country`])} />
+                                  {errors[`thirdParty.${index}.country`] && <p className="nda-modal__field-error">{errors[`thirdParty.${index}.country`]}</p>}
+                                </div>
+                              </div>
+                              {isExtraTp && (
+                                <p className="nda-modal__field-error">Fill in this entry or remove it using the ✕ button.</p>
+                              )}
+                              <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('thirdParties', data.thirdParties.length > 1 ? data.thirdParties.filter((_, currentIndex) => currentIndex !== index) : [createEmptyThirdParty()])} aria-label="Remove third party">
+                                <X size={16} />
+                              </button>
                             </div>
-                            <button type="button" className="nda-modal__row-remove nda-modal__row-remove--card" onClick={() => set('thirdParties', data.thirdParties.length > 1 ? data.thirdParties.filter((_, currentIndex) => currentIndex !== index) : [createEmptyThirdParty()])} aria-label="Remove third party">
-                              <X size={16} />
-                            </button>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                       <button type="button" className="nda-modal__add-row" onClick={() => set('thirdParties', [...data.thirdParties, createEmptyThirdParty()])}>
                         + Add another third party
@@ -842,18 +867,29 @@ export default function PrivacyPolicyWizardModal({
                       <>
                         <FormGroup label="Countries" required error={errors.crossBorderCountries}>
                           <div className="nda-modal__repeat-list">
-                            {data.crossBorderCountries.length === 0 ? [''].map((country, index) => (
-                              <div key={`country-${index}`} className="nda-modal__repeat-row nda-modal__repeat-row--single">
-                                <TextInput value={country} onChange={(value) => updateStringList('crossBorderCountries', index, value)} placeholder="e.g. United Kingdom" />
-                              </div>
-                            )) : data.crossBorderCountries.map((country, index) => (
-                              <div key={`country-${index}`} className="nda-modal__repeat-row nda-modal__repeat-row--single">
-                                <TextInput value={country} onChange={(value) => updateStringList('crossBorderCountries', index, value)} placeholder="e.g. United Kingdom" />
-                                <button type="button" className="nda-modal__row-remove" onClick={() => removeStringListItem('crossBorderCountries', index)} aria-label="Remove country">
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            ))}
+                            {data.crossBorderCountries.map((country, index) => {
+                              const isExtraCountry = !hasText(country) && data.crossBorderCountries.length > 1
+                              return (
+                                <div key={`country-${index}`} className="nda-modal__repeat-row nda-modal__repeat-row--single">
+                                  <div style={{ flex: 1 }}>
+                                    <TextInput
+                                      value={country}
+                                      onChange={(value) => updateStringList('crossBorderCountries', index, value)}
+                                      placeholder="e.g. United Kingdom"
+                                      error={Boolean(errors[`crossBorderCountry.${index}.empty`])}
+                                    />
+                                    {isExtraCountry && (
+                                      <p className="nda-modal__field-error">Fill in this country or remove it using the ✕ button.</p>
+                                    )}
+                                  </div>
+                                  {data.crossBorderCountries.length > 1 && (
+                                    <button type="button" className="nda-modal__row-remove" onClick={() => removeStringListItem('crossBorderCountries', index)} aria-label="Remove country">
+                                      <X size={16} />
+                                    </button>
+                                  )}
+                                </div>
+                              )
+                            })}
                           </div>
                           <button type="button" className="nda-modal__add-row" onClick={() => addStringListItem('crossBorderCountries')}>
                             + Add another country
