@@ -2,7 +2,7 @@ import { AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, Plus, 
 import { useEffect, useRef, useState } from 'react'
 import {
   calcSlaProgress,
-  SLA_TOTAL_CHECKS,
+  getSlaTotalChecks,
   type CreditTier,
   type EscalationContact,
   type PartyBlock,
@@ -29,8 +29,8 @@ const MODULE_ORDER = [
 type ModuleName = typeof MODULE_ORDER[number]
 
 /* ─── Shared UI helpers ─────────────────────────────────────── */
-function FormGroup({ label, required, hint, error, children }: {
-  label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode
+function FormGroup({ label, required, hint, hintAfter, error, children }: {
+  label: string; required?: boolean; hint?: string; hintAfter?: string; error?: string; children: React.ReactNode
 }) {
   return (
     <div className="nda-modal__form-group">
@@ -39,18 +39,19 @@ function FormGroup({ label, required, hint, error, children }: {
       </label>
       {hint && !error && <p className="nda-modal__field-hint">{hint}</p>}
       {children}
+      {hintAfter && !error && <p className="nda-modal__field-hint">{hintAfter}</p>}
       {error && <p className="nda-modal__field-error">{error}</p>}
     </div>
   )
 }
 
-function TextInput({ id, value, onChange, onBlur, placeholder, type = 'text', min, max, step, error }: {
+function TextInput({ id, value, onChange, onBlur, placeholder, type = 'text', min, max, step, maxLength, error }: {
   id?: string; value: string; onChange: (v: string) => void; onBlur?: (v: string) => void
-  placeholder?: string; type?: string; min?: string; max?: string; step?: string; error?: boolean
+  placeholder?: string; type?: string; min?: string; max?: string; step?: string; maxLength?: number; error?: boolean
 }) {
   return (
     <input id={id} type={type} className={`nda-modal__input${error ? ' nda-modal__input--error' : ''}`} value={value}
-      placeholder={placeholder} min={min} max={max} step={step}
+      placeholder={placeholder} min={min} max={max} step={step} maxLength={maxLength}
       onChange={(e) => onChange(e.target.value)}
       onBlur={onBlur ? (e) => onBlur(e.target.value) : undefined} />
   )
@@ -313,8 +314,15 @@ function validateScreen(key: ScreenKey, data: SlaWizardData): SlaErrors {
     if (data.supportHours === 'Custom' && !data.supportHoursCustom.trim())
       e['supportHoursCustom'] = 'Describe the custom hours.'
     if (data.supportChannels.length === 0) e['supportChannels'] = 'Select at least one channel.'
-    if (data.supportChannels.includes('Other') && !data.supportChannelOther.trim())
-      e['supportChannelOther'] = 'This field is required.'
+    if (data.supportChannels.includes('Other')) {
+      if (!data.supportChannelOther.trim()) {
+        e['supportChannelOther'] = 'This field is required.'
+      } else if (!/^[A-Za-z0-9\s\-\/]+$/.test(data.supportChannelOther.trim())) {
+        e['supportChannelOther'] = 'Other channel may only contain letters, numbers, spaces, hyphens, and slashes.'
+      } else if (data.supportChannelOther.trim().length > 100) {
+        e['supportChannelOther'] = 'Other channel must be 100 characters or fewer.'
+      }
+    }
   }
   if (key === 'incident') {
     if (!data.useSeverityModel && data.incidentNarrative.trim().length < 200)
@@ -407,7 +415,7 @@ export default function SlaWizardModal({
 
   const progress = calcSlaProgress(data)
   const isComplete = progress === 100
-  const totalChecks = SLA_TOTAL_CHECKS
+  const totalChecks = getSlaTotalChecks(data)
   const missingCount = totalChecks - Math.round((progress / 100) * totalChecks)
 
   const onStepChangeRef = useRef(onStepChange)
@@ -777,7 +785,8 @@ export default function SlaWizardModal({
                     <FormGroup label="Other channel" required error={errors['supportChannelOther']}>
                       <TextInput value={data.supportChannelOther}
                         onChange={(v) => set('supportChannelOther', v)}
-                        placeholder="Name the other channel" />
+                        placeholder="Name the other channel"
+                        maxLength={100} />
                     </FormGroup>
                   )}
                 </div>
@@ -935,12 +944,12 @@ export default function SlaWizardModal({
                     </FormGroup>
                   </div>
 
-                  <div className="nda-modal__two-col">
-                    <FormGroup label="Recovery time objective (RTO)" required hint="Hours. Target time to restore service." error={errors['rtoHours']}>
+                  <div className="nda-modal__two-col" style={{ alignItems: 'start' }}>
+                    <FormGroup label="Recovery time objective (RTO)" required hintAfter="Hours. Target time to restore service." error={errors['rtoHours']}>
                       <TextInput value={data.rtoHours} onChange={(v) => set('rtoHours', v)}
                         placeholder="Hours" type="number" min="0" />
                     </FormGroup>
-                    <FormGroup label="Recovery point objective (RPO)" required hint="Hours. Maximum acceptable data loss." error={errors['rpoHours']}>
+                    <FormGroup label="Recovery point objective (RPO)" required hintAfter="Hours. Maximum acceptable data loss." error={errors['rpoHours']}>
                       <TextInput value={data.rpoHours} onChange={(v) => set('rpoHours', v)}
                         placeholder="Hours" type="number" min="0" />
                     </FormGroup>

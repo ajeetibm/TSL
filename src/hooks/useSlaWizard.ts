@@ -145,7 +145,7 @@ export interface SlaWizardState {
 }
 
 /* ─── Progress calculation ───────────────────────────────── */
-export function calcSlaProgress(data: SlaWizardData): number {
+function getSlaScreenCompletion(data: SlaWizardData): boolean[] {
   const hasModule = (m: string) => data.modules.includes(m)
 
   // Resolve customer and provider names from the new Party block or fall back to
@@ -153,63 +153,66 @@ export function calcSlaProgress(data: SlaWizardData): number {
   const customerName = data.customer?.legalName?.trim() || data.customer?.fullNames?.trim() || data.customerName?.trim() || ''
   const providerName = data.provider?.legalName?.trim() || data.provider?.fullNames?.trim() || data.providerName?.trim() || ''
 
-  const checks: boolean[] = [
-    // Screen 1 – Basics (always required)
-    data.providerConfirmed === true,
-    customerName !== '',
-    providerName !== '',
-    data.serviceDescription.trim() !== '',
-    data.startDate.trim() !== '',
-    data.termType !== '',
+  const basicsComplete = data.providerConfirmed === true && providerName !== '' &&
+    customerName !== '' && data.serviceDescription.trim() !== '' &&
+    data.startDate.trim() !== '' && data.termType !== '' &&
+    (data.termType !== 'Fixed end date' || data.endDate.trim() !== '')
 
-    // Screen 2 – Modules
+  const screens: boolean[] = [
+    // Basics and Modules are separate wizard screens.
+    basicsComplete,
     data.modules.length > 0,
-
-    // Screen 3 – Availability
-    !hasModule('Availability') || data.uptimeTarget.trim() !== '',
-    !hasModule('Availability') || data.uptimePeriod !== '',
-    !hasModule('Availability') || data.uptimeExclusions.length > 0,
-
-    // Screen 4 – Support
-    !hasModule('Support') || data.supportHours !== '',
-    !hasModule('Support') || data.supportChannels.length > 0,
-
-    // Screen 5 – Incident Response
-    !hasModule('Incident response') || data.escalationContacts.length > 0,
-    !hasModule('Incident response') || (data.useSeverityModel ? data.severityTargets.length > 0 : data.incidentNarrative.trim().length >= 200),
-
-    // Screen 6 – Maintenance
-    !hasModule('Maintenance') || data.maintenanceWindow.trim() !== '',
-    !hasModule('Maintenance') || data.maintenanceNoticeHours.trim() !== '',
-
-    // Screen 7 – Backups & Restore
-    !hasModule('Backups and restore') || data.backupFrequency !== '',
-    !hasModule('Backups and restore') || data.rtoHours.trim() !== '',
-    !hasModule('Backups and restore') || data.rpoHours.trim() !== '',
-    !hasModule('Backups and restore') || data.backupRetentionDays.trim() !== '',
-
-    // Screen 8 – Security
-    !hasModule('Security') || data.securityCommitments.length > 0,
-    !hasModule('Security') || data.breachNoticeHours.trim() !== '',
-
-    // Screen 9 – Service Credits
-    !hasModule('Service credits') || data.creditTiers.length > 0,
-    !hasModule('Service credits') || data.creditCapPct.trim() !== '',
-    !hasModule('Service credits') || data.creditClaimDays.trim() !== '',
-
-    // Screen 10 – Legal
-    data.governingLaw.trim() !== '',
-    data.disputeForum !== '',
-    data.signatureMethod !== '' && data.signatureMethod != null,
-    // At least one signatory with a name filled — 2 empty-row default must not pass
-    data.signatories.some((s) => s.name.trim() !== ''),
   ]
 
-  const filled = checks.filter(Boolean).length
-  return Math.round((filled / checks.length) * 100)
+  // Each chosen module adds one wizard screen. Unselected modules are neither
+  // complete nor part of the denominator.
+  if (hasModule('Availability')) {
+    screens.push(data.uptimeTarget.trim() !== '' && data.uptimeExclusions.length > 0)
+  }
+  if (hasModule('Support')) {
+    screens.push(data.supportHours !== '' &&
+      (data.supportHours !== 'Custom' || data.supportHoursCustom.trim() !== '') &&
+      data.supportChannels.length > 0 &&
+      (!data.supportChannels.includes('Other') || data.supportChannelOther.trim() !== ''))
+  }
+  if (hasModule('Incident response')) {
+    screens.push(data.escalationContacts.length > 0 &&
+      (data.useSeverityModel || data.incidentNarrative.trim().length >= 200))
+  }
+  if (hasModule('Maintenance')) {
+    screens.push(data.maintenanceWindow.trim() !== '' && data.maintenanceNoticeHours.trim() !== '')
+  }
+  if (hasModule('Backups and restore')) {
+    screens.push(data.rtoHours.trim() !== '' && data.rpoHours.trim() !== '' && data.backupRetentionDays.trim() !== '')
+  }
+  if (hasModule('Security')) {
+    screens.push(data.securityCommitments.length > 0 && data.breachNoticeHours.trim() !== '')
+  }
+  if (hasModule('Service credits')) {
+    const completeTiers = data.creditTiers.length > 0 && data.creditTiers.every((tier) =>
+      tier.uptimeBelow.trim() !== '' && tier.creditPct.trim() !== '')
+    screens.push(completeTiers && data.creditCapPct.trim() !== '' && data.creditClaimDays.trim() !== '')
+  }
+
+  // Legal & signing is the final wizard screen.
+  screens.push(
+    data.governingLaw.trim() !== '' && data.disputeForum !== '' &&
+    data.signatureMethod !== '' && data.signatureMethod != null &&
+    data.signatories.length > 0 && data.signatories.every((s) => s.name.trim() !== '' && s.title.trim() !== ''),
+  )
+
+  return screens
 }
 
-export const SLA_TOTAL_CHECKS = 29
+export function getSlaTotalChecks(data: SlaWizardData): number {
+  return getSlaScreenCompletion(data).length
+}
+
+export function calcSlaProgress(data: SlaWizardData): number {
+  const screens = getSlaScreenCompletion(data)
+  const completedScreens = screens.filter(Boolean).length
+  return Math.round((completedScreens / screens.length) * 100)
+}
 
 /* ─── Default severity targets ──────────────────────────── */
 const DEFAULT_SEVERITY_TARGETS: SeverityTarget[] = [
