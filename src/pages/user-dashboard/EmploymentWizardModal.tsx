@@ -94,6 +94,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
   }))
   const [isGenerating, setIsGenerating] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [triedPreview, setTriedPreview] = useState(false)
 
   useEffect(() => {
     if (data.company_id || initialData?.employer_name || !snapshotEmployerName) return
@@ -197,7 +198,9 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
 
   const next = () => {
     if (step < 4) {
+      if (step === 3) setTriedPreview(true)
       if (!validate()) return
+      setTriedPreview(false)
       setErrors({})
       onStepChange?.(step, data)
       setStep((current) => (current + 1) as Step)
@@ -379,7 +382,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                 <textarea className={`nda-modal__textarea${e['medical_justification'] ? ' nda-modal__input--error' : ''}`} value={data.medical_justification} onChange={(event) => set('medical_justification', event.target.value)} />
               </Field>}
 
-              {medicalSelected && !data.medical_justification.trim() && (
+              {medicalSelected && !data.medical_justification.trim() && triedPreview && (
                 <div className="nda-modal__nmw-warning" role="alert">
                   <span className="nda-modal__nmw-warning-icon">⊘</span>
                   <div>
