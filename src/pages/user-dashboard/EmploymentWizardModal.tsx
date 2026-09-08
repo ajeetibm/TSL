@@ -89,17 +89,22 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
   const [step, setStep] = useState<Step>(Math.min(Math.max(initialStep, 1), 4) as Step)
   const [data, setData] = useState<EmploymentWizardData>(() => ({
     ...EMPLOYMENT_EMPTY_DATA,
-    employer_name: snapshotEmployerName || EMPLOYMENT_EMPTY_DATA.employer_name,
     ...initialData,
+    // Employer is a required Company Snapshot link. The snapshot remains the
+    // source of truth, including when an older draft contains the legacy
+    // "Your company" placeholder.
+    employer_name: snapshotEmployerName || initialData?.employer_name || '',
   }))
   const [isGenerating, setIsGenerating] = useState(false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [triedPreview, setTriedPreview] = useState(false)
 
   useEffect(() => {
-    if (data.company_id || initialData?.employer_name || !snapshotEmployerName) return
-    setData((current) => ({ ...current, employer_name: snapshotEmployerName }))
-  }, [data.company_id, initialData?.employer_name, snapshotEmployerName])
+    if (!snapshotEmployerName) return
+    setData((current) => current.employer_name === snapshotEmployerName
+      ? current
+      : { ...current, employer_name: snapshotEmployerName })
+  }, [snapshotEmployerName])
 
   const validateField = (key: string, value: string) => {
     setErrors((prev) => {
@@ -257,7 +262,18 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                         setErrors((prev) => ({ ...prev, company_id: 'Please complete your Company Snapshot first before confirming the employer.' }))
                         return
                       }
-                      set('company_id', profile.companySnapshotId)
+                      const next = {
+                        ...data,
+                        company_id: profile.companySnapshotId,
+                        employer_name: snapshotEmployerName,
+                      }
+                      setData(next)
+                      onStepChange?.(step, next)
+                      setErrors((prev) => {
+                        const updated = { ...prev }
+                        delete updated.company_id
+                        return updated
+                      })
                     }}
                   >
                     {data.company_id ? 'Confirmed' : 'CONFIRM'}

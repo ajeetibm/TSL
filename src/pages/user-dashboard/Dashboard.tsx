@@ -1694,6 +1694,15 @@ export default function Dashboard() {
     () => (location.state as DashboardLocationState | null)?.counselBlueprintReturn,
   )
   const { profile } = useUserProfile()
+  const resolveEmploymentSnapshot = useCallback((data: EmploymentWizardData): EmploymentWizardData => {
+    // The specification defines Employer as a Company Snapshot link, so use
+    // the linked snapshot name at export time rather than a stale draft value.
+    if (!data.company_id || data.company_id !== profile.companySnapshotId) return data
+    const employerName = profile.entityType === 'Individual'
+      ? profile.individualFullNames.trim()
+      : profile.legalName.trim()
+    return employerName ? { ...data, employer_name: employerName } : data
+  }, [profile])
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -3149,6 +3158,7 @@ export default function Dashboard() {
 
                 if (wizardType === 'Employment Offer Letter') {
                   const empData = data as import('./EmploymentWizardModal').EmploymentWizardData
+                  const resolvedEmpData = resolveEmploymentSnapshot(empData)
                   return (
                     <article className="user-dashboard__completed-card" key={id}>
                       <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
@@ -3158,13 +3168,13 @@ export default function Dashboard() {
                         {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>
                       <div className="user-dashboard__completed-actions">
-                        <button type="button" onClick={() => confirmPdfDownload('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(empData, completedAt))}>
+                        <button type="button" onClick={() => confirmPdfDownload('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(resolvedEmpData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(empData, completedAt))}>
+                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(resolvedEmpData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
-                        <button type="button" onClick={() => void buildEmploymentEvidencePack(empData, completedAt, id).then((pack) => triggerDownload(pack, 'Employment-Evidence-Pack.txt'))}>
+                        <button type="button" onClick={() => void buildEmploymentEvidencePack(resolvedEmpData, completedAt, id).then((pack) => triggerDownload(pack, 'Employment-Evidence-Pack.txt'))}>
                           <FolderOpen size={16} /> Evidence Pack
                         </button>
                       </div>
