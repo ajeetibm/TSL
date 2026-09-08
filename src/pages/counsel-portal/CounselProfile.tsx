@@ -105,7 +105,7 @@ export default function CounselProfile() {
   const [profileMessage, setProfileMessage] = useState<string | null>(null)
   const [profileError, setProfileError] = useState<string | null>(null)
   const [passwordSaving, setPasswordSaving] = useState(false)
-  const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
+  const [_passwordMessage, setPasswordMessage] = useState<string | null>(null)
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false)
 

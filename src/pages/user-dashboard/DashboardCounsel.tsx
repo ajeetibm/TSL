@@ -1,5 +1,5 @@
 import { BackButton } from '../../components/dashboard/BackButton'
-import { CheckCircle2, ChevronRight, CircleDot, DollarSign, FileText, MessageSquare, Scale, Upload, X } from 'lucide-react'
+import { CheckCircle2, ChevronRight, CircleDot, DollarSign, FileText, MessageSquare, Upload, X } from 'lucide-react'
 import { formatDate } from '../../services/dashboardTypes'
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'

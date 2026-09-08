@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ChevronRight,
-  ClipboardCheck,
   Building2,
   Crown,
   Minus,
@@ -108,7 +107,7 @@ function getPlanFromCount(totalCount: number): PlanKey {
   return 'Boardroom'
 }
 
-const includedItems = [
+const _includedItems = [
   'SA-specific mutual or one-way NDA',
   'Plain-language summary of key clauses',
   'Built-in e-signature integration',

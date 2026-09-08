@@ -175,7 +175,7 @@ function buildPlanBenefits(sub: SubscriptionData, _plan: SubscriptionPlan | unde
   ]
 }
 
-const PREVIEW_COUNT = 4
+const _PREVIEW_COUNT = 4
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 
 // Full feature details shown in the "View All Features" modal per plan
@@ -1697,20 +1697,20 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { state: ndaState, startWizard, saveProgress, completeWizard, resetWizard: resetNda } = useNdaWizard()
-  const { state: empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp, resetWizard: resetEmp } = useEmploymentWizard()
+  const { state: _ndaState, startWizard, saveProgress, completeWizard, resetWizard: resetNda } = useNdaWizard()
+  const { state: _empState, startWizard: startEmp, saveProgress: saveEmpProgress, completeWizard: completeEmp, resetWizard: resetEmp } = useEmploymentWizard()
   const mapPrivacyFields = useCallback(
     (data: PrivacyPolicyWizardData) => mapPrivacyPolicyFields(data, profile) as unknown as Record<string, unknown>,
     [profile],
   )
-  const { state: ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
-  const { state: faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
+  const { state: _ppState, startWizard: startPP, saveProgress: savePPProgress, completeWizard: completePP, resetWizard: resetPP } = usePrivacyPolicyWizard(mapPrivacyFields)
+  const { state: _faState, startWizard: startFA, saveProgress: saveFAProgress, completeWizard: completeFA, resetWizard: resetFA } = useFounderAgreementWizard()
   const { state: saState, startWizard: startSA, saveProgress: saveSAProgress, completeWizard: completeSA, resetWizard: resetSA } = useServiceAgreementWizard()
   const mapSlaApiFields = useCallback(
     (data: SlaWizardData) => mapSlaFields(data) as unknown as Record<string, unknown>,
     [],
   )
-  const { state: slaState, startWizard: startSLA, saveProgress: saveSLAProgress, completeWizard: completeSLA, resetWizard: resetSLA } = useSlaWizard(mapSlaApiFields)
+  const { state: _slaState, startWizard: startSLA, saveProgress: saveSLAProgress, completeWizard: completeSLA, resetWizard: resetSLA } = useSlaWizard(mapSlaApiFields)
 
   // ── Billing upgrade flow for Free plan users ──────────────────────────────
   const [upgradePayError, setUpgradePayError] = useState<string | null>(null)
@@ -1923,7 +1923,7 @@ export default function Dashboard() {
   }
 
   // Derived: set of blueprint types that have at least one in-progress instance
-  const inProgressTitles = new Set<string>(inProgressInstances.map((inst) => inst.wizardType))
+  const _inProgressTitles = new Set<string>(inProgressInstances.map((inst) => inst.wizardType))
 
   // Decrement one instance from the New queue and open the corresponding modal.
   const handleStart = (title: string) => {
@@ -1982,8 +1982,8 @@ export default function Dashboard() {
   const [quickLinksLoading, setQuickLinksLoading] = useState(true)
 
   // ── Legal Notices Links ──────────────────────────────────────────────────
-  const [legalLinks, setLegalLinks] = useState<LegalLinks | null>(null)
-  const [legalLinksLoading, setLegalLinksLoading] = useState(true)
+  const [_legalLinks, setLegalLinks] = useState<LegalLinks | null>(null)
+  const [_legalLinksLoading, setLegalLinksLoading] = useState(true)
 
   // ── Live subscription + plan data (drives the plan card benefits) ────────
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
