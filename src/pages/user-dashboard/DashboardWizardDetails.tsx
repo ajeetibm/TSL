@@ -36,6 +36,8 @@ import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import { setPageMetadata } from '../../services/metadata'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
 import type { DocumentCatalogueBlueprint, WizardAccess } from '../../services/tslApi'
+import type { SubscriptionPlan } from '../../services/dashboardTypes'
+import { useSubscriptionPlans } from '../../hooks/useSubscriptionPlans'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import './Dashboard.css'
@@ -149,106 +151,16 @@ const blueprintIdByWizardTitle: Record<string, string> = {
   'Sale of Goods Agreement': 'contractor-agreement',
 }
 
-type PlanKey = 'Launchpad' | 'Operator' | 'Boardroom'
+type PlanKey = string
 
-function recommendedPlanForBlueprintUnits(units: number): PlanKey {
-  if (units <= 4) return 'Launchpad'
-  if (units <= 12) return 'Operator'
-  return 'Boardroom'
+const PLAN_ICONS: Record<string, LucideIcon> = {
+  launchpad: Rocket,
+  operator: Building2,
+  boardroom: Crown,
 }
 
-const plans: Record<PlanKey, {
-  title: string
-  price: string
-  description: string
-  icon: LucideIcon
-  includesLabel: string
-  col1: string[]
-  col2: string[]
-  col3: string[]
-  excluded: string[]
-}> = {
-  Launchpad: {
-    title: 'Launchpad Plan',
-    price: 'R499',
-    description: 'Perfect for startups and individuals with essential legal needs',
-    icon: Rocket,
-    includesLabel: "What's Included in Launchpad:",
-    col1: [
-      'For founders setting the company up and putting the first documents in place',
-      'All five Blueprints',
-      '4 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-    ],
-    col2: [
-      'No Counsel credits included',
-      'Additional Counsel credits: R550 per credit (30 minutes of attorney time)',
-      'Email support: response within 48 business hours',
-      '1 user',
-      'Document storage: 12 months from generation',
-    ],
-    col3: [],
-    excluded: [
-      'Counsel credits',
-      'Additional users',
-    ],
-  },
-  Operator: {
-    title: 'Operator Plan',
-    price: 'R1,499',
-    description: 'For businesses that are trading and hiring, and generating documents regularly',
-    icon: Building2,
-    includesLabel: "What's Included in Operator:",
-    col1: [
-      'For businesses that are trading and hiring, and generating documents regularly',
-      'All five Blueprints',
-      '12 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-    ],
-    col2: [
-      '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end',
-      'Additional Counsel credits: R550 per credit',
-      'Priority support: response within 24 business hours',
-      '3 users',
-      'Document storage: life of the subscription',
-    ],
-    col3: [],
-    excluded: [
-      'Additional users beyond 3',
-    ],
-  },
-  Boardroom: {
-    title: 'Boardroom Plan',
-    price: 'R3,999',
-    description: 'For established companies that need high-volume documents and regular attorney access',
-    icon: Crown,
-    includesLabel: "What's Included in Boardroom:",
-    col1: [
-      'For established companies that need high-volume documents and regular attorney access',
-      'All five Blueprints',
-      '30 Blueprint run units per month',
-      'Additional run units: R149 each',
-      'No run-unit rollover; unused units expire at the end of the billing month',
-    ],
-    col2: [
-      '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end',
-      'Additional Counsel credits: R550 per credit',
-      'Dedicated support with SLA',
-      'Unlimited users',
-      'Document storage: life of the subscription',
-    ],
-    col3: [],
-    excluded: [
-      'Additional users beyond 10',
-    ],
-  },
-}
-
-
-function getPlanAmount(plan: PlanKey) {
-  return Number(plans[plan].price.replace(/[^0-9.]/g, ''))
+function getPlanAmount(planId: string, plans: SubscriptionPlan[]) {
+  return plans.find((plan) => plan.planId === planId)?.price ?? 0
 }
 
 function getStoredUserEmail() {
@@ -260,70 +172,6 @@ function getStoredUserEmail() {
   }
 }
 
-const pricingComparisonPlans = [
-  {
-    title: 'Launchpad',
-    price: 'R499',
-    icon: FileText,
-    highlighted: true,
-    features: [
-      { label: 'All five Blueprints', included: true },
-      { label: '4 Blueprint run units per month', included: true },
-      { label: 'Additional run units: R149 each', included: true },
-      { label: 'No run-unit rollover; unused units expire at end of billing month', included: true },
-      { label: 'No Counsel credits included', included: true },
-      { label: 'Additional Counsel credits: R550 per credit (30 min of attorney time)', included: true },
-      { label: 'Email support: response within 48 business hours', included: true },
-      { label: '1 user', included: true },
-      { label: 'Document storage: 12 months from generation', included: true },
-      { label: 'Counsel credits', included: false },
-      { label: 'Additional users', included: false },
-    ],
-  },
-  {
-    title: 'Operator',
-    price: 'R1,499',
-    icon: ShoppingCart,
-    popular: true,
-    features: [
-      { label: 'All five Blueprints', included: true },
-      { label: '12 Blueprint run units per month', included: true },
-      { label: 'Additional run units: R149 each', included: true },
-      { label: 'No run-unit rollover; unused units expire at end of billing month', included: true },
-      { label: '2 Counsel credits per month (1 hour of attorney time); unused credits expire at month end', included: true },
-      { label: 'Additional Counsel credits: R550 per credit', included: true },
-      { label: 'Priority support: response within 24 business hours', included: true },
-      { label: '3 users', included: true },
-      { label: 'Document storage: life of the subscription', included: true },
-      { label: 'Additional users beyond 3', included: false },
-    ],
-  },
-  {
-    title: 'Boardroom',
-    price: 'R3,999',
-    icon: Crown,
-    features: [
-      { label: 'All five Blueprints', included: true },
-      { label: '30 Blueprint run units per month', included: true },
-      { label: 'Additional run units: R149 each', included: true },
-      { label: 'No run-unit rollover; unused units expire at end of billing month', included: true },
-      { label: '6 Counsel credits per month (3 hours of attorney time); unused credits expire at month end', included: true },
-      { label: 'Additional Counsel credits: R550 per credit', included: true },
-      { label: 'Dedicated support with SLA', included: true },
-      { label: 'Unlimited users', included: true },
-      { label: 'Document storage: life of the subscription', included: true },
-      { label: 'Additional users beyond 10', included: false },
-    ],
-  },
-]
-
-const _includedItems = [
-  'SA-specific mutual or one-way NDA',
-  'Plain-language summary of key clauses',
-  'Built-in e-signature integration',
-  'Tamper-proof evidence pack with timestamps',
-  'QR-verified digital certification',
-]
 
 const startRequirements = [
   'Disclosing party details (name, company, contact)',
@@ -374,6 +222,7 @@ const wizardSteps = [
 export default function DashboardWizardDetails() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { plans } = useSubscriptionPlans()
   const upgradeJourney = Boolean((location.state as WizardLocationState | null)?.forceUpgrade)
 
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
@@ -384,24 +233,20 @@ export default function DashboardWizardDetails() {
       const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { plan?: string; hasSubscription?: boolean } | null
       if (cached?.hasSubscription && cached.plan) {
         const p = cached.plan.toLowerCase()
-        if (p === 'launchpad') return 'Launchpad'
-        if (p === 'operator') return 'Operator'
-        if (p === 'boardroom') return 'Boardroom'
+        return p
       }
     } catch { /* ignore */ }
-    return 'Launchpad'
+    return 'launchpad'
   })
   const [accountPlan, setAccountPlan] = useState<PlanKey | null>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { plan?: string; hasSubscription?: boolean } | null
       if (cached?.hasSubscription && cached.plan) {
         const p = cached.plan.toLowerCase()
-        if (p === 'launchpad') return 'Launchpad'
-        if (p === 'operator') return 'Operator'
-        if (p === 'boardroom') return 'Boardroom'
+        return p
       }
     } catch { /* ignore */ }
-    return null
+      return null
   })
   const [isPlanManuallySelected, setIsPlanManuallySelected] = useState(false)
   const [catalogue, setCatalogue] = useState<DocumentCatalogueBlueprint[]>([])
@@ -414,6 +259,7 @@ export default function DashboardWizardDetails() {
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; iconName?: string } | null>(null)
   const [wizardAccessWarning, setWizardAccessWarning] = useState<string | null>(null)
   const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(null)
+  const [blueprintRunTopUpRate, setBlueprintRunTopUpRate] = useState(0)
   const [isInitializingPayment, setIsInitializingPayment] = useState(false)
   const [quantities, setQuantities] = useState<Record<string, number>>(() => {
     const locationState = location.state as WizardLocationState | null
@@ -474,13 +320,16 @@ export default function DashboardWizardDetails() {
     const blueprint = catalogue.find((item) => item.blueprintId === blueprintId)
     return total + (blueprint?.blueprintUnitWeight ?? 0) * wizard.quantity
   }, 0)
-  const recommendedPlan = recommendedPlanForBlueprintUnits(totalBlueprintUnits)
+  const recommendedPlan = plans.find((plan) => plan.wizardRuns >= totalBlueprintUnits)?.planId
+    ?? plans.at(-1)?.planId
+    ?? 'launchpad'
+  const activePlanDetails = plans.find((plan) => plan.planId === activePlan)
 
   useEffect(() => {
     let hasLoadedAuthoritativeSubscription = false
     paymentApi.wizardAccess().then((response) => {
       const planId = response.success && response.data?.hasSubscription ? response.data.plan?.toLowerCase() : ''
-      const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
+      const plan = plans.some((candidate) => candidate.planId === planId) ? planId : null
       if (response.success && response.data) {
         setWizardAccess(response.data)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
@@ -493,13 +342,14 @@ export default function DashboardWizardDetails() {
     subscriptionApi.get().then((response) => {
       if (response.success && response.data) {
         setRemainingBlueprintUnits(response.data.usage.runsRemaining)
+        setBlueprintRunTopUpRate(response.data.blueprintRunTopUpRate ?? 0)
         hasLoadedAuthoritativeSubscription = true
         const planId = response.data.planId.toLowerCase()
-        const plan = planId === 'launchpad' ? 'Launchpad' : planId === 'boardroom' ? 'Boardroom' : planId === 'operator' ? 'Operator' : null
+        const plan = plans.some((candidate) => candidate.planId === planId) ? planId : null
         if (plan) { setAccountPlan(plan); setActivePlan(plan) }
       }
     })
-  }, [])
+  }, [plans])
 
 
 
@@ -590,7 +440,7 @@ export default function DashboardWizardDetails() {
     setIsInitializingPayment(true)
 
     const paymentPayload = {
-      amount: getPlanAmount(activePlan),
+      amount: getPlanAmount(activePlan, plans),
       currency: 'ZAR',
       email: getStoredUserEmail(),
       paymentMethod: selectedPaymentMethod,
@@ -864,7 +714,7 @@ export default function DashboardWizardDetails() {
                     <h2>{title}</h2>
                     {selectedPaymentMethod === title ? (
                       <div className="dashboard-wizard-details__card-pay-action">
-                        <span>{plans[activePlan].title} - {plans[activePlan].price}/month</span>
+                        <span>{activePlanDetails ? `${activePlanDetails.name} Plan - R${activePlanDetails.price.toLocaleString('en-ZA')}/month` : 'Loading plan…'}</span>
                         <button
                           type="button"
                           className="dashboard-wizard-details__pay-now"
@@ -872,7 +722,7 @@ export default function DashboardWizardDetails() {
                             event.stopPropagation()
                             handlePayNow()
                           }}
-                          disabled={isInitializingPayment || selectedWizards.length === 0}
+                          disabled={isInitializingPayment || selectedWizards.length === 0 || !activePlanDetails}
                         >
                           {isInitializingPayment ? 'Preparing...' : 'Pay Now'}
                           <ArrowRight size={18} />
@@ -1024,20 +874,20 @@ export default function DashboardWizardDetails() {
                 <h2>Pricing for This Blueprint</h2>
               </div>
               <div className="dashboard-wizard-details__tabs" aria-label="Pricing plans">
-                {(['Launchpad', 'Operator', 'Boardroom'] as PlanKey[]).map((plan) => {
-                  const PlanIcon = plans[plan].icon
+                {plans.map((plan) => {
+                  const PlanIcon = PLAN_ICONS[plan.planId] ?? FileText
                   return (
                     <button
-                      key={plan}
+                      key={plan.planId}
                       type="button"
-                      className={activePlan === plan ? 'dashboard-wizard-details__tab-active' : undefined}
+                      className={activePlan === plan.planId ? 'dashboard-wizard-details__tab-active' : undefined}
                       onClick={() => {
                         setIsPlanManuallySelected(true)
-                        setActivePlan(plan)
+                        setActivePlan(plan.planId)
                       }}
                     >
                       <PlanIcon size={13} />
-                      {plan}
+                      {plan.name}
                     </button>
                   )
                 })}
@@ -1045,32 +895,37 @@ export default function DashboardWizardDetails() {
             </div>
 
             {(() => {
-              const plan = plans[activePlan]
-              const PlanIcon = plan.icon
+              const plan = activePlanDetails
+              if (!plan) return <p>Loading plan information…</p>
+              const PlanIcon = PLAN_ICONS[plan.planId] ?? FileText
+              const included = plan.features.filter((feature) => !feature.toLowerCase().startsWith('not included:'))
+              const excluded = plan.features
+                .filter((feature) => feature.toLowerCase().startsWith('not included:'))
+                .map((feature) => feature.replace(/^not included:\s*/i, ''))
               return (
                 <div className="dashboard-wizard-details__plan-card">
                   <div className="dashboard-wizard-details__plan-summary">
                     <div>
                       <h3>
                         <PlanIcon size={20} className="dashboard-wizard-details__plan-title-icon" />
-                        {plan.title}
-                        {accountPlan === activePlan && (
+                        {plan.name} Plan
+                        {accountPlan === plan.planId && (
                           <span className="dashboard-wizard-details__plan-active-badge">Active</span>
                         )}
                       </h3>
-                      <p>{plan.description}</p>
+                      <p>{plan.tagline}</p>
                     </div>
                     <div className="dashboard-wizard-details__price">
-                      <strong>{plan.price}</strong>
+                      <strong>R{plan.price.toLocaleString('en-ZA')}</strong>
                       <span>/month</span>
                     </div>
                   </div>
 
                   <div className="dashboard-wizard-details__operator">
-                    <h5>{plan.includesLabel}</h5>
+                    <h5>What's Included in {plan.name}:</h5>
                     <div className="dashboard-wizard-details__includes-cols">
                       <ul>
-                        {plan.col1.map((item) => (
+                        {included.slice(0, Math.ceil(included.length / 2)).map((item) => (
                           <li key={item}>
                             <ChevronRight size={14} />
                             {item}
@@ -1078,13 +933,13 @@ export default function DashboardWizardDetails() {
                         ))}
                       </ul>
                       <ul>
-                        {plan.col2.map((item) => (
+                        {included.slice(Math.ceil(included.length / 2)).map((item) => (
                           <li key={item}>
                             <ChevronRight size={14} />
                             {item}
                           </li>
                         ))}
-                        {plan.excluded.map((item) => (
+                        {excluded.map((item) => (
                           <li key={item} className="dashboard-wizard-details__includes-excluded">
                             <span>✕</span>
                             {item}
@@ -1176,14 +1031,22 @@ export default function DashboardWizardDetails() {
               </header>
 
               <div className="dashboard-wizard-details__comparison-grid">
-                {pricingComparisonPlans.map(({ title, price, icon: Icon, highlighted, popular, features }) => (
+                {plans.map((plan) => {
+                  const Icon = PLAN_ICONS[plan.planId] ?? FileText
+                  const highlighted = plan.planId === 'launchpad'
+                  const popular = plan.planId === 'operator'
+                  const features = plan.features.map((label) => ({
+                    label: label.replace(/^not included:\s*/i, ''),
+                    included: !label.toLowerCase().startsWith('not included:'),
+                  }))
+                  return (
                   <article
                     className={
                       highlighted
                         ? 'dashboard-wizard-details__comparison-card dashboard-wizard-details__comparison-card--highlighted'
                         : 'dashboard-wizard-details__comparison-card'
                     }
-                    key={title}
+                    key={plan.planId}
                   >
                     {popular && (
                       <span className="dashboard-wizard-details__popular-badge">
@@ -1193,10 +1056,10 @@ export default function DashboardWizardDetails() {
                     )}
                     <h3>
                       <Icon size={20} />
-                      {title}
+                      {plan.name}
                     </h3>
                     <div className="dashboard-wizard-details__comparison-price">
-                      <strong>{price}</strong>
+                      <strong>R{plan.price.toLocaleString('en-ZA')}</strong>
                       <span>/month</span>
                     </div>
                     <ul>
@@ -1215,7 +1078,8 @@ export default function DashboardWizardDetails() {
                       ))}
                     </ul>
                   </article>
-                ))}
+                  )
+                })}
               </div>
 
               <button
@@ -1234,7 +1098,7 @@ export default function DashboardWizardDetails() {
             blueprintName={insufficientUnits.blueprintName}
             remaining={insufficientUnits.remaining}
             required={insufficientUnits.required}
-            pricePerUnit={149}
+            pricePerUnit={blueprintRunTopUpRate}
             iconName={insufficientUnits.iconName}
             returnTo={location.pathname}
             onClose={() => setInsufficientUnits(null)}

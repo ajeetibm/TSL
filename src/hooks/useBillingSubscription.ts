@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { subscriptionService, PLAN_SPECS } from '../services/subscriptionService'
+import { subscriptionService } from '../services/subscriptionService'
 import type {
   BillingHistoryInvoice,
   ProratedUpgradePreview,
@@ -230,8 +230,7 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
     setUpgradeResult(result)
 
     // ── Step 3: apply correct Blueprint run units & Counsel credits ───────
-    const spec = PLAN_SPECS[result.planId.toLowerCase()]
-    const resolvedRuns = spec?.blueprintRunUnits ?? result.wizardRuns
+    const resolvedRuns = result.wizardRuns
 
     // ── Step 4: update subscription state instantly — no page refresh ─────
     setSubscription((prev) => ({
@@ -251,8 +250,8 @@ export function useBillingSubscription(payFn?: UpgradePayFn) {
       nextBillingDate: result.nextBillingDate,
       paymentMethod: prev?.paymentMethod ?? null,
       pendingDowngrade: null,
-      counselCreditsTotal: result.counselCreditsTotal ?? spec?.counselCredits ?? 0,
-      counselCreditsRemaining: result.counselCreditsRemaining ?? spec?.counselCredits ?? 0,
+      counselCreditsTotal: result.counselCreditsTotal ?? 0,
+      counselCreditsRemaining: result.counselCreditsRemaining ?? 0,
     }))
 
     // ── Step 5: update wizardAccess cache so Dashboard unlocks wizard access

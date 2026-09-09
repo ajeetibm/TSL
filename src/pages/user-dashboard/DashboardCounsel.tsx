@@ -11,7 +11,6 @@ import { setPageMetadata } from '../../services/metadata'
 import { useCounselRequests } from '../../context/CounselRequestContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { useBillingSubscription } from '../../hooks/useBillingSubscription'
-import { PLAN_SPECS } from '../../services/subscriptionService'
 import CounselCreditsModal, { type TopUpPlan } from './CounselCreditsModal'
 import { UpgradePlansModal } from './billing/UpgradePlansModal'
 import { UpgradeConfirmModal } from './billing/UpgradeConfirmModal'
@@ -74,7 +73,7 @@ const fallbackCredits: CounselCredits = {
   creditsUsed: 0,
   creditsRemaining: 0,
   usageThisMonth: 0,
-  topUpRate: 500,
+  topUpRate: 0,
   currency: 'ZAR',
   resetDate: '',
 }
@@ -235,10 +234,8 @@ export default function DashboardCounsel() {
     if (!upgradeResult) return
     let cancelled = false
 
-    // First, apply PLAN_SPECS as an instant local update so the UI reflects
-    // the correct credits before the API responds.
-    const spec = PLAN_SPECS[upgradeResult.planId?.toLowerCase() ?? '']
-    const total = upgradeResult.counselCreditsTotal ?? spec?.counselCredits ?? 0
+    // Upgrade responses are derived from the server plan configuration.
+    const total = upgradeResult.counselCreditsTotal ?? 0
     const remaining = upgradeResult.counselCreditsRemaining ?? total
     const optimistic: CounselCredits = {
       ...fallbackCredits,

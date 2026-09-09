@@ -147,6 +147,7 @@ export interface SubscriptionData {
   currency: string
   tagline: string
   wizardRuns: number
+  blueprintRunTopUpRate?: number
   teamMembers: number
   usage: SubscriptionUsage
   nextBillingDate: string

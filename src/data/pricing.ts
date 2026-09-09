@@ -1,33 +1,3 @@
-import type { PricingPlan } from '../types/service'
-
-export const pricingPlans: PricingPlan[] = [
-  {
-    name: 'Launchpad',
-    price: 'R499',
-    period: 'per month',
-    description: 'Perfect for startups testing the waters',
-    features: ['4 Blueprint Units per month', 'Playbooks Lite', 'Essential guides & checklists'],
-    tagline: 'NOT SURE HOW MUCH YOU\'LL NEED?',
-  },
-  {
-    name: 'Operator',
-    price: 'R1,499',
-    period: 'per month',
-    description: 'Complete legal foundation for your business',
-    highlight: true,
-    features: ['12 Blueprint Units per month', 'Playbooks Core', 'Comprehensive legal resources'],
-    tagline: 'BEST FOR MOST STARTUPS',
-  },
-  {
-    name: 'Boardroom',
-    price: 'R3,999',
-    period: 'per month',
-    description: 'Personalized legal infrastructure',
-    features: ['30 Blueprint Units per month', 'Playbooks Pro', 'Full legal library + priority support'],
-    tagline: 'TAILORED SOLUTIONS',
-  },
-]
-
 export const pricingComparison = {
   companyRegistration: {
     title: 'COMPANY REGISTRATION',

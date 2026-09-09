@@ -1,6 +1,7 @@
 import { Check, Info, Sparkles, FileText, Briefcase, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { pricingPlans, pricingComparison } from '../../data/pricing'
+import { pricingComparison } from '../../data/pricing'
+import { useSubscriptionPlans } from '../../hooks/useSubscriptionPlans'
 import { revealUp, staggerContainer } from '../../hooks/useScrollReveal'
 import { cn } from '../../utils/cn'
 import { Container } from '../layout/Container'
@@ -51,6 +52,20 @@ const pricingGridStyle = {
 }
 
 export function PricingSection() {
+  const { plans } = useSubscriptionPlans()
+  const pricingPlans = plans.map((plan) => ({
+    ...plan,
+    period: 'per month',
+    description: plan.tagline,
+    highlight: plan.planId === 'operator',
+    marketingTagline: plan.planId === 'operator' ? 'BEST FOR MOST STARTUPS' : 'NOT SURE HOW MUCH YOU\'LL NEED?',
+  }))
+  const counselRows = [
+    { label: 'Counsel Credits per Month', value: (plan: typeof plans[number]) => `${plan.counselCredits ?? 0} credit${plan.counselCredits === 1 ? '' : 's'}` },
+    { label: 'Response Time (SLA)', value: (plan: typeof plans[number]) => plan.counselSla ?? '—' },
+    { label: 'Top-up Rate per Credit', value: (plan: typeof plans[number]) => `R${(plan.counselTopUpRate ?? 0).toLocaleString('en-ZA')}` },
+  ]
+
   return (
     <section className="bg-white pt-14 lg:pt-16 pb-8 lg:pb-10" id="pricing">
       {/* Section header — scrolls normally off screen */}
@@ -108,7 +123,7 @@ export function PricingSection() {
                     <span
                       style={{ fontFamily: "'Open Sans', sans-serif", fontWeight: 700, fontSize: '12px', lineHeight: '16px', textTransform: 'uppercase', textAlign: 'center', color: plan.highlight ? '#0D1B2A' : 'rgba(51,51,51,0.8)' }}
                     >
-                      {plan.tagline}
+                      {plan.marketingTagline}
                     </span>
                   </div>
                   <div className={cn(
@@ -405,30 +420,18 @@ export function PricingSection() {
               </div>
 
               {/* Counsel Credits data rows */}
-              {[
-                { label: 'Counsel Credits per Month', launchpad: '0 credits',       operator: '2 credits',      boardroom: '6 credits' },
-                { label: 'Response Time (SLA)',        launchpad: '2 business days', operator: '1 business day', boardroom: '8 business hours' },
-                { label: 'Top-up Rate per Credit',     launchpad: 'R550',            operator: 'R500',           boardroom: 'R450' },
-              ].map((row, i, arr) => (
+              {counselRows.map((row, i, arr) => (
                 <div key={row.label} className="contents">
                   <div className={cn('flex items-center px-6 md:px-8 py-6 text-sm font-normal text-[#364153] bg-[#F4EBD8] border-r border-white', i < arr.length - 1 && 'border-b border-[#C8B99A]')}>
                     {row.label}
                   </div>
-                  <div className={cn('flex items-center justify-center px-4 py-6 bg-[#F4EBD8] border-r border-white', i < arr.length - 1 && 'border-b border-[#C8B99A]')}>
-                    <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
-                      {row.launchpad}
-                    </span>
-                  </div>
-                  <div className={cn('flex items-center justify-center px-4 py-6 bg-[#F2E7D0] border-r border-white', i < arr.length - 1 && 'border-b border-[#C8B99A]')}>
-                    <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
-                      {row.operator}
-                    </span>
-                  </div>
-                  <div className={cn('flex items-center justify-center px-4 py-6 bg-[#F4EBD8]', i < arr.length - 1 && 'border-b border-[#C8B99A]')}>
-                    <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
-                      {row.boardroom}
-                    </span>
-                  </div>
+                  {pricingPlans.map((plan, index) => (
+                    <div key={plan.planId} className={cn('flex items-center justify-center px-4 py-6 bg-[#F4EBD8]', index < pricingPlans.length - 1 && 'border-r border-white', i < arr.length - 1 && 'border-b border-[#C8B99A]')}>
+                      <span className="inline-flex items-center justify-center rounded-full bg-[#E0C894] px-5 py-2 text-sm font-normal text-[#3D2E0E]">
+                        {row.value(plan)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               ))}
 

@@ -196,6 +196,7 @@ export default function DashboardWizards() {
   const [remainingBlueprintUnits, setRemainingBlueprintUnits] = useState<number | null>(
     locationState?.updatedRunsRemaining ?? null
   )
+  const [blueprintRunTopUpRate, setBlueprintRunTopUpRate] = useState(0)
   const [topUpToast, setTopUpToast] = useState<string>(
     locationState?.blueprintTopUpSuccess && locationState.unitsAdded
       ? `${locationState.unitsAdded} Blueprint Credit${locationState.unitsAdded !== 1 ? 's' : ''} added successfully.`
@@ -215,7 +216,10 @@ export default function DashboardWizards() {
     // Always re-fetch from server — this also overwrites the seeded value with
     // the authoritative figure once the response arrives.
     subscriptionApi.get().then((res) => {
-      if (res.success && res.data) setRemainingBlueprintUnits(res.data.usage.runsRemaining)
+      if (res.success && res.data) {
+        setRemainingBlueprintUnits(res.data.usage.runsRemaining)
+        setBlueprintRunTopUpRate(res.data.blueprintRunTopUpRate ?? 0)
+      }
     })
     subscriptionApi.blueprints().then((res) => {
       if (res.success && res.data) setCatalogue(res.data)
@@ -528,7 +532,7 @@ export default function DashboardWizards() {
             blueprintName={insufficientUnits.title}
             remaining={0}
             required={insufficientUnits.required}
-            pricePerUnit={149}
+            pricePerUnit={blueprintRunTopUpRate}
             iconName={insufficientUnits.iconName}
             returnTo="/dashboard/blueprints"
             onClose={() => setInsufficientUnits(null)}

@@ -27,18 +27,6 @@ const PLAN_ORDER: Record<string, number> = {
   boardroom: 2,
 }
 
-// ── Per-plan Blueprint run units & Counsel credits ─────────────────────────
-export interface PlanSpec {
-  blueprintRunUnits: number
-  counselCredits: number
-}
-
-export const PLAN_SPECS: Record<string, PlanSpec> = {
-  free:      { blueprintRunUnits: 0,  counselCredits: 0 },
-  launchpad: { blueprintRunUnits: 4,  counselCredits: 0 },
-  operator:  { blueprintRunUnits: 12, counselCredits: 2 },
-  boardroom: { blueprintRunUnits: 30, counselCredits: 6 },
-}
 
 export function planTier(planId: string): number {
   return PLAN_ORDER[planId.toLowerCase()] ?? -1

@@ -278,33 +278,11 @@ function ChipMultiSelect({
   )
 }
 
-function SnapshotField({ value, confirmed, onConfirm }: { value: string; confirmed: boolean; onConfirm: () => void }) {
-  const [snapshotError, setSnapshotError] = useState('')
-  const isEmpty = !value.trim()
-
-  const handleConfirm = () => {
-    if (isEmpty) {
-      setSnapshotError('Please complete your Company Snapshot before confirming the responsible party.')
-      return
-    }
-    setSnapshotError('')
-    onConfirm()
-  }
-
+function SnapshotField({ value }: { value: string }) {
   return (
-    <>
-      <div className={`nda-modal__snapshot-confirm${snapshotError ? ' nda-modal__snapshot-confirm--error' : ''}`}>
-        <span>{value || 'Your company'}</span>
-        <button
-          type="button"
-          className={`nda-modal__snapshot-btn${confirmed ? ' nda-modal__snapshot-btn--confirmed' : ''}`}
-          onClick={handleConfirm}
-        >
-          {confirmed ? 'Confirmed' : 'CONFIRM'}
-        </button>
-      </div>
-      {snapshotError && <p className="nda-modal__field-error" role="alert">{snapshotError}</p>}
-    </>
+    <div className="nda-modal__snapshot-confirm">
+      <span>{value || 'Your company'}</span>
+    </div>
   )
 }
 
@@ -353,7 +331,6 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
 
   if (step === 1) {
     if (!data.responsibleParty.trim()) errors.responsiblePartyConfirmed = 'Set your company name in the Company Snapshot before proceeding.'
-    else if (!data.responsiblePartyConfirmed) errors.responsiblePartyConfirmed = 'Confirm the responsible party.'
     if (!hasText(data.officerFullNames)) errors.officerFullNames = "Enter the information officer's full names."
     if (!isValidSaId(data.officerIdNumber.trim())) errors.officerIdNumber = 'Enter a valid 13-digit South African ID number.'
     if (!EMAIL_RE.test(data.officerEmail.trim())) errors.officerEmail = 'Enter a valid email address.'
@@ -489,6 +466,7 @@ export default function PrivacyPolicyWizardModal({
       ...PP_EMPTY_DATA,
       ...source,
       responsibleParty,
+      responsiblePartyConfirmed: responsibleParty.trim() ? true : (source.responsiblePartyConfirmed ?? false),
       domains: ensureAtLeastOne(source.domains ?? PP_EMPTY_DATA.domains, () => ''),
       purposes: ensureAtLeastOne(source.purposes ?? PP_EMPTY_DATA.purposes, createEmptyPurpose),
       retention: ensureAtLeastOne(source.retention ?? PP_EMPTY_DATA.retention, createEmptyRetention),
@@ -671,12 +649,10 @@ export default function PrivacyPolicyWizardModal({
                     <FormGroup
                       label="Responsible party"
                       required
-                      hint={data.responsibleParty
-                        ? 'Pre-filled from your Company Snapshot. Confirm before it is used.'
-                        : 'Complete the legal entity and legal name in your Company Snapshot before continuing.'}
+                      hint="Pre-filled from your Company Snapshot."
                       error={errors.responsiblePartyConfirmed}
                     >
-                      <SnapshotField value={data.responsibleParty} confirmed={data.responsiblePartyConfirmed} onConfirm={() => set('responsiblePartyConfirmed', true)} />
+                      <SnapshotField value={data.responsibleParty} />
                     </FormGroup>
                     <div className="nda-modal__two-col">
                       <FormGroup label="Information officer — full names" required error={errors.officerFullNames}>

@@ -1,6 +1,6 @@
 import { ArrowLeft, Briefcase, Building2, CheckCircle2, Code2, CreditCard, FileText, Minus, Plus, Shield, UsersRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
@@ -10,7 +10,6 @@ import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './BlueprintTopUpPayment.css'
 
-const PRICE_PER_UNIT = 149
 const VAT_RATE = 0
 const MIN_UNITS = 1
 const MAX_UNITS = 100
@@ -51,7 +50,8 @@ export default function BlueprintTopUpPayment() {
   const navigate = useNavigate()
 
   const state = location.state as BlueprintTopUpLocationState | null
-  const pricePerUnit = state?.pricePerUnit ?? PRICE_PER_UNIT
+  const [configuredRate, setConfiguredRate] = useState<number | null>(null)
+  const pricePerUnit = state?.pricePerUnit ?? configuredRate ?? 0
   const blueprintName = state?.blueprintName ?? 'Blueprint'
   const minimumUnits = Math.max(MIN_UNITS, state?.units ?? MIN_UNITS)
 
@@ -60,6 +60,13 @@ export default function BlueprintTopUpPayment() {
   const [qty, setQty] = useState(minimumUnits)
   const [isPaying, setIsPaying] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (state?.pricePerUnit) return
+    subscriptionApi.get().then((response) => {
+      if (response.success && response.data) setConfiguredRate(response.data.blueprintRunTopUpRate ?? null)
+    })
+  }, [state?.pricePerUnit])
 
   // Guard: must arrive with state
   if (!state) {
@@ -80,7 +87,7 @@ export default function BlueprintTopUpPayment() {
   }
 
   async function handleProceedToPay() {
-    if (isPaying) return
+    if (isPaying || pricePerUnit <= 0) return
     setError('')
     setIsPaying(true)
 
@@ -258,7 +265,7 @@ export default function BlueprintTopUpPayment() {
                     min={minimumUnits}
                     max={MAX_UNITS}
                     value={qty}
-                    disabled={isPaying}
+                  disabled={isPaying || pricePerUnit <= 0}
                     aria-label="Number of Blueprint Units"
                     onChange={(e) => handleQtyInput(e.target.value)}
                     onBlur={() => setQty(clamp(qty))}

@@ -287,7 +287,7 @@ export const subscriptionApi = {
   consumeBlueprintRun: (blueprintId: string, alreadyCharged = false) =>
     request<BlueprintRunConsumption>('/api/v1/subscription/blueprint-runs/consume', 'POST', { blueprintId, alreadyCharged }),
 
-  /** R149 per Blueprint Unit. */
+  /** Server-calculated unit top-up; the configured rate is returned by plans/subscription. */
   topUpBlueprintRuns: (units: number) => request<BlueprintRunTopUp>('/api/v1/subscription/blueprint-runs/top-up', 'POST', { units }),
 
   /** GET  /api/v1/subscription/upgrade/preview?toPlanId=X — prorated charge preview */
