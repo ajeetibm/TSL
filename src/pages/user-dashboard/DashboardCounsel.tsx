@@ -675,9 +675,9 @@ export default function DashboardCounsel() {
                     <option value="" disabled />
                     <option>Non-Disclosure Agreement (NDA)</option>
                     <option>Employment Offer Letter</option>
-                    <option>Privacy Policy (POPIA Compliant)</option>
-                    <option>Founder Agreement</option>
-                    <option>Service Agreement</option>
+                    <option>Privacy &amp; Cookies Policy</option>
+                    <option>Founders agreement and IP assignment</option>
+                    <option>Service Level Agreement (SLA)</option>
                   </select>
                 </label>
 
