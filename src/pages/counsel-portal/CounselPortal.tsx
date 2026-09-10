@@ -561,7 +561,7 @@ function RequestDetailsModal({
               <div><dt>Email</dt><dd>{request.userEmail}</dd></div>
               <div><dt>Assigned by</dt><dd>{request.assignedBy}</dd></div>
               <div><dt>Assigned date</dt><dd>{formatDate(request.assignedAt || request.date)}</dd></div>
-              {request.relatedWizard ? <div><dt>Related wizard</dt><dd>{request.relatedWizard}</dd></div> : null}
+              {request.relatedWizard ? <div><dt>Related blueprint</dt><dd>{request.relatedWizard}</dd></div> : null}
             </dl>
             <h4>Request description</h4>
             <p>{request.description || 'No additional description was provided.'}</p>

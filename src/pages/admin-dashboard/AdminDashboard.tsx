@@ -80,6 +80,8 @@ type AdminDashboardData = {
     assignedCounselName?: string
     rejectionReason?: string
     rejectedAt?: string
+    description?: string | null
+    relatedWizard?: string | null
   }>
   notifications?: Array<{ notificationId: string; type: string; requestId: string; subject: string; message: string; read: boolean; createdAt: string }>
   revenueChart?: {
@@ -1537,11 +1539,7 @@ export default function AdminDashboard() {
 
                   <div className="admin-assignment__detail admin-assignment__detail--paragraph">
                     <span>Description:</span>
-                    <p>
-                      I need a comprehensive review of our new SaaS agreement template. The contract includes
-                      subscription terms, data privacy clauses, and service level agreements. Please ensure compliance
-                      with current regulations and industry best practices.
-                    </p>
+                    <p>{activeRequest.description || '—'}</p>
                   </div>
 
                   {(() => {
@@ -1577,10 +1575,12 @@ export default function AdminDashboard() {
                     )
                   })()}
 
-                  <div className="admin-assignment__detail">
-                    <span>Related Wizard:</span>
-                    <strong>SaaS Contract Generator</strong>
-                  </div>
+                  {activeRequest.relatedWizard && (
+                    <div className="admin-assignment__detail">
+                      <span>Related Blueprint:</span>
+                      <strong>{activeRequest.relatedWizard}</strong>
+                    </div>
+                  )}
                 </section>
 
                 <footer className="admin-assignment__footer">

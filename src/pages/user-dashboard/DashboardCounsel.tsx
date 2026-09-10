@@ -795,7 +795,7 @@ export default function DashboardCounsel() {
                       <div><dt>Request ID</dt><dd>{activeRequest.requestId}</dd></div>
                       <div><dt>Submitted</dt><dd>{activeRequest.date}</dd></div>
                       <div><dt>Status</dt><dd>{activeRequest.status}</dd></div>
-                      {activeRequest.relatedWizard ? <div><dt>Related wizard</dt><dd>{activeRequest.relatedWizard}</dd></div> : null}
+                      {activeRequest.relatedWizard ? <div><dt>Related blueprint</dt><dd>{activeRequest.relatedWizard}</dd></div> : null}
                     </dl>
                     {activeRequest.description ? <p>{activeRequest.description}</p> : null}
                     {activeRequest.attachments?.length ? <FileList title="Your attachments" files={activeRequest.attachments} /> : null}
