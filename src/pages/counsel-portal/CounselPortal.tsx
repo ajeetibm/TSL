@@ -685,7 +685,7 @@ function DashboardView({
   months,
   pendingRequests,
   requests,
-  setRequestStatus,
+  setRequestStatus: _setRequestStatus,
   onOpenRequest,
   summary,
 }: {

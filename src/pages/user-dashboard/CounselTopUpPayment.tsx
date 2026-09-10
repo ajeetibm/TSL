@@ -64,7 +64,7 @@ export default function CounselTopUpPayment() {
   // ── quantity handlers ────────────────────────────────────────────────────
   const clamp = (n: number) => Math.max(MIN_CREDITS, Math.min(MAX_CREDITS, n))
 
-  function handleQtyInput(raw: string) {
+  function _handleQtyInput(raw: string) {
     const n = parseInt(raw, 10)
     if (!Number.isNaN(n)) setQty(clamp(n))
     else if (raw === '') setQty(MIN_CREDITS)
