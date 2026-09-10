@@ -96,10 +96,7 @@ export default function UserDetailsModal({ isOpen, onClose, user, onSaved, onToa
           <div className="user-details-modal__row">
             <div className="user-details-modal__field">
               <label htmlFor="udm-name">Contact Person</label>
-              <input id="udm-name" type="text" value={form.name}
-                onChange={(e) => set('name', e.target.value)}
-                className={errors.name ? 'udm-input--error' : ''} />
-              {err('name')}
+              <input id="udm-name" type="text" value={form.name} readOnly className="udm-input--readonly" />
             </div>
             <div className="user-details-modal__field">
               <label htmlFor="udm-email">Email Address</label>
