@@ -99,7 +99,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
                 >
                   <span className="counsel-credits-modal__price">
-                    {plan.credits === 0 ? '0 credit' : `${plan.credits} credits`}
+                    {plan.credits === 0 ? '0 credit' : `${plan.credits} credits / month`}
                   </span>
                 </div>
               ))}
@@ -128,7 +128,12 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
                   key={plan.name}
                   className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
                 >
-                  <span className="counsel-credits-modal__price">R{plan.ratePerCredit}</span>
+                  <span className="counsel-credits-modal__price">R{plan.ratePerCredit} / credit</span>
+                  {plan.credits > 0 && (
+                    <span className="counsel-credits-modal__rate-total">
+                      = R{plan.ratePerCredit} × {plan.credits} / month
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

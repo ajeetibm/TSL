@@ -198,6 +198,14 @@
   color: #111f2e;
 }
 
+.counsel-credits-modal__rate-total {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
 .counsel-credits-modal__button {
   min-width: 135px;
   min-height: 48px;

@@ -11,8 +11,6 @@ import type { TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './CounselTopUpPayment.css'
 
-const MIN_CREDITS = 1
-const MAX_CREDITS = 20
 function getStoredUserEmail() {
   try {
     const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }

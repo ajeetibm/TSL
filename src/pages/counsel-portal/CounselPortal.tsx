@@ -463,7 +463,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             setSearch={setSearch}
             setStatusFilter={setStatusFilter}
             statusFilter={statusFilter}
-            total={requests.length}
+            _total={requests.length}
             onOpenRequest={setSelectedRequest}
           />
         )}
