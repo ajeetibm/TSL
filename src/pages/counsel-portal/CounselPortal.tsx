@@ -69,7 +69,7 @@ type DashboardData = {
     totalEarnings?: number
     currency?: string
   }
-  availability?: Availability
+  availability?: 'available' | 'unavailable'
   pendingRequests?: DashboardRequest[]
   acceptedRequests?: Array<{
     requestId: string
@@ -463,7 +463,6 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             setSearch={setSearch}
             setStatusFilter={setStatusFilter}
             statusFilter={statusFilter}
-            _total={requests.length}
             onOpenRequest={setSelectedRequest}
           />
         )}
@@ -919,7 +918,6 @@ function RequestsView({
   setSearch: (value: string) => void
   setStatusFilter: (value: 'all' | RequestStatus) => void
   statusFilter: 'all' | RequestStatus
-  _total: number
 }) {
   return (
     <section className="counsel-requests">

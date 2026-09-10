@@ -11,8 +11,6 @@ import type { TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './CounselTopUpPayment.css'
 
-const MIN_CREDITS = 1
-const MAX_CREDITS = 20
 function getStoredUserEmail() {
   try {
     const user = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
@@ -47,7 +45,7 @@ export default function CounselTopUpPayment() {
   // Default qty to the plan's included credits (Operator=2, Boardroom=6) so the
   // user tops up the natural batch size for that tier. Floor at 1 for Launchpad (0 included).
   const defaultQty = Math.max(1, plan?.credits ?? 1)
-  const [qty]      = useState(defaultQty)
+  const [qty, setQty] = useState(defaultQty)
   const [isPaying, setIsPaying] = useState(false)
   const [error,    setError]    = useState('')
 
@@ -137,72 +135,102 @@ export default function CounselTopUpPayment() {
         </header>
 
         <div className="counsel-topup-payment__content">
+          <div className="counsel-topup-payment__card">
 
-          <div className="counsel-topup-payment__layout">
+            {/* ── Top: two-column body ── */}
+            <div className="counsel-topup-payment__card-body">
 
-            {/* ── Plan summary card ── */}
-            <section className="counsel-topup-payment__plan-card">
-              <h2>Selected Counsel Tier</h2>
-              <div className="counsel-topup-payment__plan-name">{plan.name}</div>
-
-              <ul className="counsel-topup-payment__plan-details">
-                <li>
-                  <span>Included monthly credits</span>
-                  <strong>{plan.credits}</strong>
-                </li>
-                <li>
-                  <span>Credits used</span>
-                  <strong>{credits?.creditsUsed ?? 0}</strong>
-                </li>
-                <li>
-                  <span>Credits remaining</span>
-                  <strong>{credits?.creditsRemaining ?? 0}</strong>
-                </li>
-                <li>
-                  <span>Response Time SLA</span>
-                  <strong>{plan.sla}</strong>
-                </li>
-                <li>
-                  <span>Rate per credit</span>
-                  <strong>{fmtZAR(plan.ratePerCredit)}</strong>
-                </li>
-              </ul>
-            </section>
-
-            {/* ── Payment summary card ── */}
-            <section className="counsel-topup-payment__summary-card">
-              <div className="counsel-topup-payment__summary-header">
-                <CreditCard size={22} />
-                <h2>Payment Summary</h2>
+              {/* Left: plan details */}
+              <div className="counsel-topup-payment__plan-col">
+                <h2>Selected Counsel Tier</h2>
+                <div className="counsel-topup-payment__plan-name">{plan.name}</div>
+                <ul className="counsel-topup-payment__plan-details">
+                  <li>
+                    <span>Included monthly credits</span>
+                    <strong>{plan.credits}</strong>
+                  </li>
+                  <li>
+                    <span>Credits used</span>
+                    <strong>{credits?.creditsUsed ?? 0}</strong>
+                  </li>
+                  <li>
+                    <span>Credits remaining</span>
+                    <strong>{credits?.creditsRemaining ?? 0}</strong>
+                  </li>
+                  <li>
+                    <span>Response Time SLA</span>
+                    <strong>{plan.sla}</strong>
+                  </li>
+                  <li>
+                    <span>Rate per credit</span>
+                    <strong>{fmtZAR(plan.ratePerCredit)}</strong>
+                  </li>
+                </ul>
               </div>
 
-              {/* Quantity selector */}
-              <div className="counsel-topup-payment__qty-row">
-                <span className="counsel-topup-payment__qty-label">Credits to purchase</span>
-                <div className="counsel-topup-payment__qty-controls">
-                  <span className="counsel-topup-payment__qty-input counsel-topup-payment__qty-input--static">{qty}</span>
+              {/* Divider */}
+              <div className="counsel-topup-payment__divider" />
+
+              {/* Right: payment summary */}
+              <div className="counsel-topup-payment__summary-col">
+                <div className="counsel-topup-payment__summary-header">
+                  <CreditCard size={22} />
+                  <h2>Payment Summary</h2>
+                </div>
+
+                {/* Quantity selector */}
+                <div className="counsel-topup-payment__qty-row">
+                  <span className="counsel-topup-payment__qty-label">Credits to purchase</span>
+                  <div className="counsel-topup-payment__qty-controls">
+                    <button
+                      type="button"
+                      className="counsel-topup-payment__qty-btn"
+                      onClick={() => setQty(q => Math.max(1, q - 1))}
+                      disabled={qty <= 1}
+                      aria-label="Decrease quantity"
+                    >
+                      −
+                    </button>
+                    <span className="counsel-topup-payment__qty-input">{qty}</span>
+                    <button
+                      type="button"
+                      className="counsel-topup-payment__qty-btn"
+                      onClick={() => setQty(q => Math.min(6, q + 1))}
+                      disabled={qty >= 6}
+                      aria-label="Increase quantity"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                {qty >= 6 && (
+                  <p className="counsel-topup-payment__qty-max-note">
+                    Maximum of 6 credits per top-up. Need more? Complete this purchase and top up again.
+                  </p>
+                )}
+
+                {/* Order breakdown */}
+                <ul className="counsel-topup-payment__summary-rows">
+                  <li>
+                    <span>
+                      {plan.name} Top-Up ({qty} credit{qty !== 1 ? 's' : ''} × {fmtZAR(unitPrice)})
+                    </span>
+                    <span>{fmtZAR(total)}</span>
+                  </li>
+                </ul>
+
+                <div className="counsel-topup-payment__total">
+                  <span>Total</span>
+                  <strong>{fmtZAR(total)}</strong>
                 </div>
               </div>
+            </div>
 
-              {/* Order breakdown */}
-              <ul className="counsel-topup-payment__summary-rows">
-                <li>
-                  <span>
-                    {plan.name} Top-Up ({qty} credit{qty !== 1 ? 's' : ''} × {fmtZAR(unitPrice)})
-                  </span>
-                  <span>{fmtZAR(total)}</span>
-                </li>
-              </ul>
-
-              <div className="counsel-topup-payment__total">
-                <span>Total</span>
-                <strong>{fmtZAR(total)}</strong>
-              </div>
-
+            {/* ── Bottom: pay footer ── */}
+            <div className="counsel-topup-payment__card-footer">
               {error && (
                 <p className="counsel-topup-payment__error" role="alert">{error}</p>
               )}
-
               <button
                 type="button"
                 className="counsel-topup-payment__cta"
@@ -212,11 +240,10 @@ export default function CounselTopUpPayment() {
                 <CheckCircle2 size={18} />
                 {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
               </button>
-
               <p className="counsel-topup-payment__secure-note">
                 Secured via Paystack · ZAR
               </p>
-            </section>
+            </div>
 
           </div>
         </div>

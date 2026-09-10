@@ -48,7 +48,7 @@ export default function Security() {
   // It is null until the first successful API fetch so we can show DEFAULT_POLICY
   // as the in-modal starting point without flashing stale localStorage data.
   const [policy, setPolicy]           = useState<PasswordPolicy>(DEFAULT_POLICY)
-  const [policyLoading, setPolicyLoading] = useState(false)
+  const [policyLoading] = useState(false)
   const [policyError, setPolicyError]     = useState<string | null>(null)
 
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -99,26 +99,6 @@ export default function Security() {
     setBaseline(next)
     setSettings(next)
     showMessage(res.message ?? 'Security settings updated successfully.')
-  }
-
-  // Open password policy modal — fetch current policy from API first
-  const handleOpenPpModal = async () => {
-    setPolicyError(null)
-    setPolicyLoading(true)
-    setPpModalOpen(true)
-
-    const res = await adminSettingsApi.getPasswordPolicy()
-    setPolicyLoading(false)
-
-    if (!res.success || !res.data) {
-      // Keep the modal open so the user can retry or cancel; show the error inline
-      setPolicyError(res.message ?? 'Failed to load password policy. Please try again.')
-      return
-    }
-
-    // Merge API response over DEFAULT_POLICY so any missing keys stay valid
-    const loaded = { ...DEFAULT_POLICY, ...(res.data as Partial<PasswordPolicy>) } as PasswordPolicy
-    setPolicy(loaded)
   }
 
   // Called by PasswordPolicyModal when the user clicks Save Changes
