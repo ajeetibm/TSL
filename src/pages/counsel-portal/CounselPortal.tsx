@@ -506,8 +506,7 @@ function RequestDetailsModal({
   const [reason, setReason] = useState('')
   const [confirmRejection, setConfirmRejection] = useState(false)
   const [error, setError] = useState('')
-  const minimumRejectionReasonLength = 20
-  const canReject = confirmRejection && reason.trim().length >= minimumRejectionReasonLength
+  const canReject = confirmRejection && reason.trim().length > 0
   const [documents, setDocuments] = useState<DocMeta[]>([])
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -530,7 +529,7 @@ function RequestDetailsModal({
     setError(await onComplete(request.requestId, response.trim(), documents))
   }
   const reject = () => {
-    if (reason.trim().length < minimumRejectionReasonLength) return setError(`Please provide at least ${minimumRejectionReasonLength} characters for the reassignment reason.`)
+    if (!reason.trim()) return setError('Please provide a reason for the reassignment.')
     if (!confirmRejection) return setError('Please confirm that the request should be returned to the admin.')
     onReject(request.requestId, reason.trim())
     onClose()
@@ -666,7 +665,6 @@ function RequestDetailsModal({
             <section className="counsel-request-modal__reject">
               <label htmlFor="rejection-reason">Reject request (admin only)</label>
               <textarea id="rejection-reason" value={reason} onChange={(event) => { setReason(event.target.value); setError('') }} placeholder="Mandatory reason for reassignment" aria-describedby="rejection-reason-help" />
-              <span id="rejection-reason-help" className="counsel-request-modal__reject-help">{reason.trim().length}/{minimumRejectionReasonLength} characters minimum</span>
               <label className="counsel-request-modal__reject-confirm"><input type="checkbox" checked={confirmRejection} onChange={(event) => { setConfirmRejection(event.target.checked); setError('') }} /> I confirm this request should be returned to the admin for reassignment.</label>
               <button type="button" className="counsel-request-modal__start" onClick={reject} disabled={!canReject}>Reject &amp; Return to Admin</button>
             </section>
