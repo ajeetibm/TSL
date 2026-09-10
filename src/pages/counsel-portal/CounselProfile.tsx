@@ -20,12 +20,12 @@ import {
 } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { BackButton } from '../../components/dashboard/BackButton'
+import { useCounselAvailability } from '../../context/CounselAvailabilityContext'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 import './CounselProfile.css'
 
 type ProfileTab = 'information' | 'security' | 'preferences'
-type Availability = 'available' | 'unavailable'
 
 type ProfileData = {
   firstName: string
@@ -93,12 +93,12 @@ function profileFromSession(fallback: ProfileData): ProfileData {
 
 export default function CounselProfile() {
   const navigate = useNavigate()
+  const { availability, toggleAvailability } = useCounselAvailability()
   const [activeTab, setActiveTab] = useState<ProfileTab>('information')
   const [counselAvatarSrc, setCounselAvatarSrc] = useState<string | null>(null)
   const [counselAvatarPreview, setCounselAvatarPreview] = useState(false)
   const counselFileInputRef = useRef<HTMLInputElement>(null)
-  const [availability, setAvailability] = useState<Availability>('available')
-  
+
   const [profileData, setProfileData] = useState<ProfileData>(() => profileFromSession(defaultProfileData))
   const [profileBaseline, setProfileBaseline] = useState<ProfileData>(() => profileFromSession(defaultProfileData))
   const [profileSaving, setProfileSaving] = useState(false)
@@ -146,10 +146,6 @@ export default function CounselProfile() {
   const signOut = () => {
     clearAuthSession()
     navigate('/')
-  }
-
-  const toggleAvailability = () => {
-    setAvailability((prev) => (prev === 'available' ? 'unavailable' : 'available'))
   }
 
   const handleProfileChange = (field: keyof ProfileData, value: string) => {

@@ -4274,6 +4274,10 @@
   gap: 20px;
   padding: 32px;
   overflow-y: auto;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .modal-form__group {

@@ -21,11 +21,11 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useCounselAvailability } from '../../context/CounselAvailabilityContext'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 
 type CounselMode = 'dashboard' | 'requests'
-type Availability = 'available' | 'unavailable'
 type RequestStatus = 'pending' | 'in_progress' | 'completed' | 'rejected'
 
 type DashboardRequest = {
@@ -224,10 +224,10 @@ function normalizeRequests(payload: unknown): CounselRequest[] {
 export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const navigate = useNavigate()
   const location = useLocation()
+  const { availability, toggleAvailability } = useCounselAvailability()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [requests, setRequests] = useState<CounselRequest[]>(fallbackRequests)
   const [acceptedRequestsState, setAcceptedRequestsState] = useState<AcceptedEntry[]>(() => readStoredAccepted())
-  const [availability, setAvailability] = useState<Availability>('available')
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
   const [selectedRequest, setSelectedRequest] = useState<CounselRequest | null>(null)
@@ -270,7 +270,6 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       if (!response.success) return
       const data = (response.data ?? null) as DashboardData | null
       setDashboardData(data)
-      setAvailability(data?.availability ?? 'available')
       // Merge API accepted requests with locally-stored ones, deduplicating by requestId.
       // Local entries (accepted in this session before the API refreshed) take precedence.
       if ((data?.acceptedRequests?.length ?? 0) > 0) {
@@ -372,12 +371,6 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
     setRequests((current) => current.map((item) => item.requestId === requestId ? { ...item, status: 'completed', counselResponse: response, supportingDocuments } : item))
     setSelectedRequest(null)
     return ''
-  }
-
-  const toggleAvailability = async () => {
-    const next = availability === 'available' ? 'unavailable' : 'available'
-    setAvailability(next)
-    await counselPortalApi.availability(next)
   }
 
   return (

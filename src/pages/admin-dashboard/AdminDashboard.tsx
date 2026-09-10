@@ -49,7 +49,6 @@ import {
 import AddCounselModal from './components/AddCounselModal'
 import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import type { CounselMember } from './components/CounselManagement'
-import { initialCounselMembers } from './components/CounselManagement'
 import { inviteAdmin } from './services/adminManagementService'
 import {
   getRevenueAxisTicks,
@@ -115,55 +114,83 @@ const quickActions = [
   { label: 'Billing & Invoices', icon: DollarSign },
 ]
 
-const counselMembers = [
+const counselMembers: CounselMember[] = [
   {
+    initials: 'SM',
     name: 'Sarah Mitchell',
     expertise: 'SaaS & Technology Contracts',
     experience: '12 years exp',
-    availability: 'Available',
+    status: 'Available',
+    location: 'San Francisco, CA',
     email: 'sarah.mitchell@legaltech.com',
+    phone: '+1 415 123 4567',
+    completed: 0,
   },
   {
+    initials: 'DT',
     name: 'David Thompson',
     expertise: 'Intellectual Property & IP Law',
     experience: '15 years exp',
-    availability: 'Available',
+    status: 'Available',
+    location: 'New York, NY',
     email: 'david.thompson@legaltech.com',
+    phone: '+1 212 987 6543',
+    completed: 0,
   },
   {
+    initials: 'EC',
     name: 'Emily Chen',
     expertise: 'Employment Law & HR Compliance',
     experience: '8 years exp',
-    availability: 'Busy',
+    status: 'Not Available',
+    location: 'Austin, TX',
     email: 'emily.chen@legaltech.com',
+    phone: '+1 512 345 6789',
+    completed: 0,
   },
   {
+    initials: 'RA',
     name: 'Robert Anderson',
     expertise: 'Corporate Law & M&A',
     experience: '18 years exp',
-    availability: 'Available',
+    status: 'Available',
+    location: 'Chicago, IL',
     email: 'robert.anderson@legaltech.com',
+    phone: '+1 312 234 5678',
+    completed: 0,
   },
   {
+    initials: 'JW',
     name: 'Jennifer Williams',
     expertise: 'Commercial Contracts & Compliance',
     experience: '10 years exp',
-    availability: 'Busy',
+    status: 'Not Available',
+    location: 'Boston, MA',
     email: 'jennifer.williams@legaltech.com',
+    phone: '+1 617 876 5432',
+    completed: 0,
   },
   {
+    initials: 'MR',
     name: 'Marcus Rodriguez',
     expertise: 'SaaS & Technology Contracts',
     experience: '6 years exp',
-    availability: 'Available',
+    status: 'Available',
+    location: 'Miami, FL',
     email: 'marcus.rodriguez@legaltech.com',
+    phone: '+1 305 234 9876',
+    completed: 0,
   },
   {
+    initials: 'OZ',
     name: 'Olivia Zhang',
     expertise: 'Intellectual Property & IP Law',
     experience: '14 years exp',
-    availability: 'Available',
+    status: 'Available',
+    location: 'Seattle, WA',
     email: 'olivia.zhang@legaltech.com',
+    phone: '+1 206 345 6789',
+    completed: 0,
   },
 ]
 
@@ -325,7 +352,7 @@ export default function AdminDashboard() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [inviteToast, setInviteToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
-  const [counselList, setCounselList] = useState<CounselMember[]>(initialCounselMembers)
+  const [counselList, setCounselList] = useState<CounselMember[]>(counselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
 
   // â”€â”€ Admin profile preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -364,19 +391,42 @@ export default function AdminDashboard() {
     adminApi.counsel().then((response) => {
       if (cancelled || !response.success || !response.data) return
       const data = response.data as { counsel?: Array<Record<string, unknown>> }
-      const members = (data.counsel ?? [])
-        .map((member) => ({
-          name: String(member.name || member.fullName || member.email || 'Counsel Member'),
-          expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
-          experience: String(member.experience || '5 years exp'),
-          availability: String(member.availability || member.status || 'Available'),
-          email: String(member.email || '').toLowerCase(),
-        }))
+      const members: CounselMember[] = (data.counsel ?? [])
+        .map((member) => {
+          const name = String(member.name || member.fullName || member.email || 'Counsel Member')
+          const initials = name
+            .replace(/^(Dr\.|Adv\.)\s*/i, '')
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 3)
+            .map((w) => w[0].toUpperCase())
+            .join('')
+          return {
+            initials,
+            name,
+            expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
+            experience: String(member.experience || '5 years exp'),
+            status: String(member.status || member.availability || 'Available'),
+            location: String(member.location || ''),
+            email: String(member.email || '').toLowerCase(),
+            phone: String(member.phone || ''),
+            completed: 0,
+          }
+        })
         .filter((member) => member.email)
 
       if (members.length > 0) {
         setAssignableCounselMembers(members)
         setSelectedCounsel((current) => members.some((member) => member.email === current) ? current : members[0].email)
+        // Sync live statuses into counselList so CounselManagement reflects them.
+        // Preserve any newly added members (those not returned by the API yet).
+        setCounselList((prev) => {
+          const emailToApiMember = new Map(members.map((m) => [m.email, m]))
+          return prev.map((m) => {
+            const live = emailToApiMember.get(m.email)
+            return live ? { ...m, status: live.status } : m
+          })
+        })
       }
     })
 
@@ -412,6 +462,50 @@ export default function AdminDashboard() {
     })
     return () => { cancelled = true }
   }, [])
+
+  // Re-fetch counsel list whenever the admin navigates to the Counsel tab so
+  // availability changes made in the counsel portal are reflected immediately.
+  useEffect(() => {
+    if (activeNav !== 'counsel') return
+    let cancelled = false
+    adminApi.counsel().then((response) => {
+      if (cancelled || !response.success || !response.data) return
+      const data = response.data as { counsel?: Array<Record<string, unknown>> }
+      const members: CounselMember[] = (data.counsel ?? [])
+        .map((member) => {
+          const name = String(member.name || member.fullName || member.email || 'Counsel Member')
+          const initials = name
+            .replace(/^(Dr\.|Adv\.)\s*/i, '')
+            .split(' ')
+            .filter(Boolean)
+            .slice(0, 3)
+            .map((w) => w[0].toUpperCase())
+            .join('')
+          return {
+            initials,
+            name,
+            expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
+            experience: String(member.experience || '5 years exp'),
+            status: String(member.status || member.availability || 'Available'),
+            location: String(member.location || ''),
+            email: String(member.email || '').toLowerCase(),
+            phone: String(member.phone || ''),
+            completed: 0,
+          }
+        })
+        .filter((member) => member.email)
+      if (members.length > 0) {
+        setCounselList((prev) => {
+          const emailToApiMember = new Map(members.map((m) => [m.email, m]))
+          return prev.map((m) => {
+            const live = emailToApiMember.get(m.email)
+            return live ? { ...m, status: live.status } : m
+          })
+        })
+      }
+    })
+    return () => { cancelled = true }
+  }, [activeNav])
 
   useEffect(() => {
     let cancelled = false
@@ -535,7 +629,7 @@ export default function AdminDashboard() {
         (filterExperience === '1-5 Years' && years >= 1 && years < 5)
 
       const matchesAvailability =
-        filterAvailability === 'All Availability' || m.availability === filterAvailability
+        filterAvailability === 'All Availability' || m.status === filterAvailability
 
       return matchesSearch && matchesExpertise && matchesExperience && matchesAvailability
     })
@@ -1650,7 +1744,7 @@ export default function AdminDashboard() {
                     ) : null}
                     {filteredCounselMembers.map((member) => {
                       const selected = selectedCounsel === member.email
-                      const busy = member.availability === 'Busy'
+                      const busy = member.status === 'Not Available'
                       return (
                         <button
                           type="button"
@@ -1668,7 +1762,7 @@ export default function AdminDashboard() {
                             <span>
                               <small>{member.experience}</small>
                               <small className={busy ? 'admin-assignment__busy' : 'admin-assignment__available'}>
-                                {member.availability}
+                                {member.status}
                               </small>
                             </span>
                           </div>

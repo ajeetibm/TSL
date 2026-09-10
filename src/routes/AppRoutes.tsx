@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { NotificationProvider } from '../context/NotificationContext'
 import { UserProfileProvider } from '../context/UserProfileContext'
+import { CounselAvailabilityProvider } from '../context/CounselAvailabilityContext'
 import { CounselRequestProvider } from '../context/CounselRequestContext'
 import { RootLayout } from '../layouts/RootLayout'
 import { ProtectedRoute } from './ProtectedRoute'
@@ -106,9 +107,11 @@ export function AppRoutes() {
             <Route path="admin/dashboard/issues" element={<AdminDashboard />} />
             <Route path="admin/dashboard/settings" element={<AdminDashboard />} />
             <Route path="admin/dashboard/profile" element={<AdminDashboard />} />
-            <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
-            <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
-            <Route path="counsel/profile" element={<CounselProfile />} />
+            <Route element={<CounselAvailabilityProvider><Outlet /></CounselAvailabilityProvider>}>
+              <Route path="counsel/dashboard" element={<CounselPortal mode="dashboard" />} />
+              <Route path="counsel/requests" element={<CounselPortal mode="requests" />} />
+              <Route path="counsel/profile" element={<CounselProfile />} />
+            </Route>
           </Route>
         </Route>
       </Routes>
