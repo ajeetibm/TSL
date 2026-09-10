@@ -56,7 +56,6 @@ export function UpgradePlansModal({
   plansLoading,
   plansError,
   onSelectUpgrade,
-  onSelectDowngrade,
   onClose,
 }: Props) {
   const currentTier = planTier(currentPlanId)

@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useCounselAvailability, type Availability } from '../../context/CounselAvailabilityContext'
+import { useCounselAvailability } from '../../context/CounselAvailabilityContext'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 

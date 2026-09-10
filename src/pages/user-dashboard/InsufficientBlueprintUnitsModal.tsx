@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { X, Zap, ArrowUpCircle } from 'lucide-react'
+import { X, Zap } from 'lucide-react'
 import type { BlueprintTopUpLocationState } from './BlueprintTopUpPayment'
 import './InsufficientBlueprintUnitsModal.css'
 
@@ -24,8 +24,7 @@ export default function InsufficientBlueprintUnitsModal({
   iconName,
   returnTo,
   returnTab,
-  onClose,
-  onUpgrade,
+  onClose
 }: Props) {
   const navigate = useNavigate()
   const minimum = Math.max(0, required - remaining)
