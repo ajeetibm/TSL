@@ -238,6 +238,23 @@
   color: #aaaaaa;
 }
 
+.counsel-topup-payment__qty-input--static {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #e8d5a0;
+  border-radius: 3px;
+  padding: 0 20px;
+  height: 36px;
+  background: #ffffff;
+  box-shadow: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0b1c2f;
+}
+
+
+
 
 .counsel-topup-payment__total {
   display: flex;

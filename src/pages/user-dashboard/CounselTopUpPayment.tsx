@@ -1,4 +1,4 @@
-import { CheckCircle2, CreditCard, Minus, Plus } from 'lucide-react'
+import { CheckCircle2, CreditCard } from 'lucide-react'
 import { BackButton } from '../../components/dashboard/BackButton'
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -189,35 +189,7 @@ export default function CounselTopUpPayment() {
               <div className="counsel-topup-payment__qty-row">
                 <span className="counsel-topup-payment__qty-label">Credits to purchase</span>
                 <div className="counsel-topup-payment__qty-controls">
-                  <button
-                    type="button"
-                    className="counsel-topup-payment__qty-btn"
-                    aria-label="Remove one credit"
-                    disabled={qty <= MIN_CREDITS || isPaying}
-                    onClick={() => setQty((q) => clamp(q - 1))}
-                  >
-                    <Minus size={15} />
-                  </button>
-                  <input
-                    type="number"
-                    className="counsel-topup-payment__qty-input"
-                    min={MIN_CREDITS}
-                    max={MAX_CREDITS}
-                    value={qty}
-                    disabled={isPaying}
-                    aria-label="Number of credits"
-                    onChange={(e) => handleQtyInput(e.target.value)}
-                    onBlur={() => setQty(clamp(qty))}
-                  />
-                  <button
-                    type="button"
-                    className="counsel-topup-payment__qty-btn"
-                    aria-label="Add one credit"
-                    disabled={qty >= MAX_CREDITS || isPaying}
-                    onClick={() => setQty((q) => clamp(q + 1))}
-                  >
-                    <Plus size={15} />
-                  </button>
+                  <span className="counsel-topup-payment__qty-input counsel-topup-payment__qty-input--static">{qty}</span>
                 </div>
               </div>
 
