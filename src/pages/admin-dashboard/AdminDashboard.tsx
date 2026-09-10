@@ -1190,6 +1190,7 @@ export default function AdminDashboard() {
                   <option>All Status</option>
                   <option>Pending</option>
                   <option>In Progress</option>
+                  <option>Rejected</option>
                   <option>Rejected — Reassignment Needed</option>
                   <option>Completed</option>
                 </select>
@@ -1209,8 +1210,9 @@ export default function AdminDashboard() {
                 const filtered = counselRequests.filter((r) => {
                   const q = requestSearch.toLowerCase()
                   const matchSearch = !q || r.subject.toLowerCase().includes(q) || r.fromUser.toLowerCase().includes(q)
-                  const normStatus = r.status.toLowerCase().replace(/_/g, ' ')
-                  const matchStatus = requestFilterStatus === 'All Status' || normStatus === requestFilterStatus.toLowerCase()
+                  const normStatus = r.status.toLowerCase().replace(/_/g, ' ').replace(/\s*—\s*/g, ' ')
+                  const normFilter = requestFilterStatus.toLowerCase().replace(/\s*—\s*/g, ' ')
+                  const matchStatus = requestFilterStatus === 'All Status' || normStatus === normFilter
                   return matchSearch && matchStatus
                 })
                 return (
