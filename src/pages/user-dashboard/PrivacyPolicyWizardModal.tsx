@@ -38,6 +38,7 @@ const STEPS: { label: string }[] = [
 ]
 
 const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
+const SA_PHONE_RE = /^(?:\+27|0)\d{9}$/
 
 /**
  * Validates a South African ID number (YYMMDDSSSSCAZ — 13 digits).
@@ -76,8 +77,13 @@ function isValidSaId(id: string): boolean {
   return checkDigit === parseInt(id[12], 10)
 }
 
+function isValidSaPhone(value: string): boolean {
+  return SA_PHONE_RE.test(value.replace(/[\s()-]/g, ''))
+}
+
 const boolLabel = (value: boolean) => (value ? 'Yes' : 'No')
 const hasText = (value: string) => value.trim().length > 0
+const maskIdentityNumber = (value: string) => value.length === 13 ? `•••••••••${value.slice(-4)}` : ''
 
 function StepBar({ current, isPreview }: { current: Step; isPreview: boolean }) {
   return (
@@ -278,10 +284,27 @@ function ChipMultiSelect({
   )
 }
 
-function SnapshotField({ value }: { value: string }) {
+function SnapshotField({
+  value,
+  confirmed,
+  onConfirm,
+  error,
+}: {
+  value: string
+  confirmed: boolean
+  onConfirm: () => void
+  error?: boolean
+}) {
   return (
-    <div className="nda-modal__snapshot-confirm">
+    <div className={`nda-modal__snapshot-confirm${error ? ' nda-modal__snapshot-confirm--error' : ''}`}>
       <span>{value || 'Your company'}</span>
+      <button
+        type="button"
+        className={`nda-modal__snapshot-btn${confirmed ? ' nda-modal__snapshot-btn--confirmed' : ''}`}
+        onClick={onConfirm}
+      >
+        {confirmed ? 'Confirmed' : 'CONFIRM'}
+      </button>
     </div>
   )
 }
@@ -331,9 +354,12 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
 
   if (step === 1) {
     if (!data.responsibleParty.trim()) errors.responsiblePartyConfirmed = 'Set your company name in the Company Snapshot before proceeding.'
+    else if (!data.responsiblePartyConfirmed) errors.responsiblePartyConfirmed = 'Confirm the responsible party from your Company Snapshot.'
     if (!hasText(data.officerFullNames)) errors.officerFullNames = "Enter the information officer's full names."
     if (!isValidSaId(data.officerIdNumber.trim())) errors.officerIdNumber = 'Enter a valid 13-digit South African ID number.'
     if (!EMAIL_RE.test(data.officerEmail.trim())) errors.officerEmail = 'Enter a valid email address.'
+    if (!hasText(data.officerAddress)) errors.officerAddress = "Enter the information officer's physical address."
+    if (data.officerPhone.trim() && !isValidSaPhone(data.officerPhone)) errors.officerPhone = 'Enter a valid South African telephone number.'
     if (!EMAIL_RE.test(data.privacyEmail.trim())) errors.privacyEmail = 'Enter a valid email address.'
     if (!data.domains.some(hasText)) errors.domains = 'Add at least one domain or application.'
   }
@@ -436,10 +462,14 @@ interface PrivacyPolicyWizardModalProps {
   onClose: (step: number, data: PrivacyPolicyWizardData) => void
   onComplete?: (data: PrivacyPolicyWizardData) => void
   initialStep?: number
-  initialData?: PrivacyPolicyWizardData
+  initialData?: Partial<PrivacyPolicyWizardData>
   onStepChange?: (step: number, data: PrivacyPolicyWizardData) => void
   /** Profile-derived name to use as Responsible party when the saved/initial data has none. */
   responsiblePartyFallback?: string
+  /** Entity type from the Company Snapshot, used to guide officer entry. */
+  snapshotEntityType?: string
+  /** Individual Company Snapshot values offered as editable Information Officer defaults. */
+  informationOfficerDefaults?: Partial<Pick<PrivacyPolicyWizardData, 'officerFullNames' | 'officerIdNumber' | 'officerEmail' | 'officerAddress' | 'officerPhone'>>
 }
 
 export default function PrivacyPolicyWizardModal({
@@ -449,6 +479,8 @@ export default function PrivacyPolicyWizardModal({
   initialData,
   onStepChange,
   responsiblePartyFallback = '',
+  snapshotEntityType = '',
+  informationOfficerDefaults = {},
 }: PrivacyPolicyWizardModalProps) {
   const resolved = Math.min(Math.max(initialStep, 1), 7)
   const [step, setStep] = useState<Step>(resolved > 6 ? 6 : (resolved as Step))
@@ -457,16 +489,20 @@ export default function PrivacyPolicyWizardModal({
   const [errors, setErrors] = useState<PrivacyErrors>({})
   const [data, setData] = useState<PrivacyPolicyWizardData>(() => {
     const source = initialData ?? PP_EMPTY_DATA
-    // If the saved/initial data has no responsible party, seed it from the
-    // profile fallback so continuing in-progress instances also get the value.
-    const responsibleParty = source.responsibleParty?.trim()
-      ? source.responsibleParty
-      : responsiblePartyFallback
+    // The Responsible Party is a Company Snapshot link. Always show the
+    // current Snapshot value instead of an older saved-draft value, then ask
+    // the user to confirm it before they proceed.
+    const responsibleParty = responsiblePartyFallback.trim() || source.responsibleParty?.trim() || ''
     return {
       ...PP_EMPTY_DATA,
       ...source,
       responsibleParty,
-      responsiblePartyConfirmed: responsibleParty.trim() ? true : (source.responsiblePartyConfirmed ?? false),
+      responsiblePartyConfirmed: false,
+      officerFullNames: source.officerFullNames?.trim() || informationOfficerDefaults.officerFullNames || '',
+      officerIdNumber: source.officerIdNumber?.trim() || informationOfficerDefaults.officerIdNumber || '',
+      officerEmail: source.officerEmail?.trim() || informationOfficerDefaults.officerEmail || '',
+      officerAddress: source.officerAddress?.trim() || informationOfficerDefaults.officerAddress || '',
+      officerPhone: source.officerPhone?.trim() || informationOfficerDefaults.officerPhone || '',
       domains: ensureAtLeastOne(source.domains ?? PP_EMPTY_DATA.domains, () => ''),
       purposes: ensureAtLeastOne(source.purposes ?? PP_EMPTY_DATA.purposes, createEmptyPurpose),
       retention: ensureAtLeastOne(source.retention ?? PP_EMPTY_DATA.retention, createEmptyRetention),
@@ -515,6 +551,12 @@ export default function PrivacyPolicyWizardModal({
         } else {
           delete next.officerEmail
         }
+      } else if (key === 'officerPhone') {
+        if (value.trim() && !isValidSaPhone(value)) {
+          next.officerPhone = 'Enter a valid South African telephone number.'
+        } else {
+          delete next.officerPhone
+        }
       } else if (key === 'dsrChannel') {
         if (!value.trim()) {
           next.dsrChannel = 'Enter a valid email address.'
@@ -541,6 +583,21 @@ export default function PrivacyPolicyWizardModal({
     setData(updated)
     onStepChange?.(step, updated)
     if (typeof value === 'string') validateField(key as string, value)
+  }
+
+  const confirmResponsibleParty = () => {
+    if (!data.responsibleParty.trim()) {
+      setErrors((prev) => ({ ...prev, responsiblePartyConfirmed: 'Complete the legal entity and legal name in your Company Snapshot before confirming.' }))
+      return
+    }
+    const updated = { ...data, responsiblePartyConfirmed: true }
+    setData(updated)
+    onStepChange?.(step, updated)
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next.responsiblePartyConfirmed
+      return next
+    })
   }
 
   const updateStringList = (key: 'domains' | 'crossBorderCountries', index: number, value: string) => {
@@ -649,21 +706,39 @@ export default function PrivacyPolicyWizardModal({
                     <FormGroup
                       label="Responsible party"
                       required
-                      hint="Pre-filled from your Company Snapshot."
                       error={errors.responsiblePartyConfirmed}
                     >
-                      <SnapshotField value={data.responsibleParty} />
+                      <SnapshotField
+                        value={data.responsibleParty}
+                        confirmed={data.responsiblePartyConfirmed}
+                        onConfirm={confirmResponsibleParty}
+                        error={Boolean(errors.responsiblePartyConfirmed)}
+                      />
+                      {data.responsibleParty
+                        ? <p className="nda-modal__field-hint">Pre-filled from your Company Snapshot. Confirm before it is used.</p>
+                        : <p className="nda-modal__field-hint">Complete the legal entity and legal name in your Company Snapshot before continuing.</p>}
                     </FormGroup>
+                    {snapshotEntityType && snapshotEntityType !== 'Individual' && (
+                      <NoticeBanner title="Information Officer required">
+                        Your Company Snapshot correctly identifies the legal entity as the Responsible Party. Enter the details of the individual appointed as Information Officer below; do not change the Company Snapshot to Individual.
+                      </NoticeBanner>
+                    )}
                     <div className="nda-modal__two-col">
                       <FormGroup label="Information officer — full names" required error={errors.officerFullNames}>
                         <TextInput value={data.officerFullNames} onChange={(value) => set('officerFullNames', value)} onBlur={(value) => validateField('officerFullNames', value)} placeholder="Enter full names" error={Boolean(errors.officerFullNames)} />
                       </FormGroup>
-                      <FormGroup label="Information officer — identity number" required error={errors.officerIdNumber}>
+                      <FormGroup label="Information officer — identity number" required hint="Used to validate the officer's Party block; it is not shown in the published policy." error={errors.officerIdNumber}>
                         <TextInput value={data.officerIdNumber} onChange={(value) => set('officerIdNumber', value.replace(/\D/g, '').slice(0, 13))} onBlur={(value) => validateField('officerIdNumber', value)} placeholder="13-digit SA ID number" error={Boolean(errors.officerIdNumber)} />
                       </FormGroup>
                     </div>
                     <FormGroup label="Information officer — email" required hint="The information officer must be registered with the Information Regulator." error={errors.officerEmail}>
                       <TextInput value={data.officerEmail} onChange={(value) => set('officerEmail', value)} onBlur={(value) => validateField('officerEmail', value)} placeholder="officer@company.co.za" type="email" error={Boolean(errors.officerEmail)} />
+                    </FormGroup>
+                    <FormGroup label="Information officer — physical address" required error={errors.officerAddress}>
+                      <TextArea value={data.officerAddress} onChange={(value) => set('officerAddress', value)} placeholder="Enter physical address" error={Boolean(errors.officerAddress)} />
+                    </FormGroup>
+                    <FormGroup label="Information officer — telephone" optional hint="South African format is checked when supplied." error={errors.officerPhone}>
+                      <TextInput value={data.officerPhone} onChange={(value) => set('officerPhone', value)} onBlur={(value) => validateField('officerPhone', value)} placeholder="e.g. 012 345 6789" type="tel" error={Boolean(errors.officerPhone)} />
                     </FormGroup>
                     <FormGroup label="Contact email for privacy queries" required error={errors.privacyEmail}>
                       <TextInput value={data.privacyEmail} onChange={(value) => set('privacyEmail', value)} placeholder="privacy@company.co.za" type="email" error={Boolean(errors.privacyEmail)} />
@@ -988,8 +1063,10 @@ export default function PrivacyPolicyWizardModal({
                 <PreviewSection num={1} title="WHO YOU ARE" onEdit={() => goTo(1)}>
                   <PF label="Responsible party" value={data.responsibleParty} />
                   <PF label="Information officer" value={data.officerFullNames} />
-                  <PF label="Identity number" value={data.officerIdNumber} />
+                  <PF label="Identity number" value={maskIdentityNumber(data.officerIdNumber)} />
                   <PF label="Officer email" value={data.officerEmail} />
+                  <PF label="Officer address" value={data.officerAddress} />
+                  <PF label="Officer telephone" value={data.officerPhone} />
                   <PF label="Privacy email" value={data.privacyEmail} />
                   <PF label="Domains" value={previewValues.domains} />
                 </PreviewSection>

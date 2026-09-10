@@ -40,6 +40,8 @@ export interface PrivacyPolicyWizardData {
   officerFullNames: string
   officerIdNumber: string
   officerEmail: string
+  officerAddress: string
+  officerPhone: string
   privacyEmail: string
   domains: string[]
   piCategories: string[]
@@ -172,6 +174,7 @@ export function calcPrivacyPolicyProgress(data: PrivacyPolicyWizardData, reached
       hasText(data.officerFullNames),
       hasText(data.officerIdNumber),
       hasText(data.officerEmail),
+      hasText(data.officerAddress),
       hasText(data.privacyEmail),
       data.domains.some(hasText),
     ],
@@ -213,6 +216,8 @@ export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
   officerFullNames: '',
   officerIdNumber: '',
   officerEmail: '',
+  officerAddress: '',
+  officerPhone: '',
   privacyEmail: '',
   domains: [''],
   piCategories: [],
@@ -237,7 +242,7 @@ export const PP_EMPTY_DATA: PrivacyPolicyWizardData = {
   automatedDecisions: false,
 }
 
-export const PP_TOTAL_REQUIRED = 20
+export const PP_TOTAL_REQUIRED = 21
 
 const defaultState: PrivacyPolicyWizardState = {
   status: 'idle',

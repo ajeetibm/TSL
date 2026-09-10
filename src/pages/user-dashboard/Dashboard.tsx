@@ -843,8 +843,9 @@ function buildPrivacyPolicyPdf(d: PrivacyPolicyWizardData, completedAt: string |
     `Responsible Party     : ${d.responsibleParty || '—'}`,
     `Confirmed             : ${d.responsiblePartyConfirmed ? 'Yes' : 'No'}`,
     `Information Officer   : ${d.officerFullNames || '—'}`,
-    `ID Number             : ${d.officerIdNumber || '—'}`,
     `Officer Email         : ${d.officerEmail || '—'}`,
+    `Officer Address       : ${d.officerAddress || '—'}`,
+    `Officer Telephone     : ${d.officerPhone || '—'}`,
     `Privacy Email         : ${d.privacyEmail || '—'}`,
     `Domains               : ${d.domains.filter(Boolean).join(', ') || '—'}`,
     '',
@@ -935,8 +936,9 @@ function buildPrivacyPolicyEvidencePack(d: PrivacyPolicyWizardData, completedAt:
     `   Responsible Party   : ${d.responsibleParty || '—'}`,
     `   Confirmed           : ${d.responsiblePartyConfirmed ? 'Yes' : 'No'}`,
     `   Information Officer : ${d.officerFullNames || '—'}`,
-    `   ID Number           : ${d.officerIdNumber || '—'}`,
     `   Officer Email       : ${d.officerEmail || '—'}`,
+    `   Officer Address     : ${d.officerAddress || '—'}`,
+    `   Officer Telephone   : ${d.officerPhone || '—'}`,
     `   Privacy Email       : ${d.privacyEmail || '—'}`,
     `   Domains             : ${d.domains.filter(Boolean).join(', ') || '—'}`,
     '',
@@ -1603,6 +1605,18 @@ export default function Dashboard() {
     () => (location.state as DashboardLocationState | null)?.counselBlueprintReturn,
   )
   const { profile } = useUserProfile()
+  const privacyResponsibleParty = profile.entityType === 'Individual'
+    ? profile.individualFullNames.trim()
+    : (profile.legalName || profile.tradingName || '').trim()
+  const privacyInformationOfficerDefaults = profile.entityType === 'Individual'
+    ? {
+        officerFullNames: profile.individualFullNames,
+        officerIdNumber: profile.idNumber,
+        officerEmail: profile.businessEmail || profile.email,
+        officerAddress: profile.physicalAddress,
+        officerPhone: profile.businessPhone || profile.phone,
+      }
+    : undefined
   const resolveEmploymentSnapshot = useCallback((data: EmploymentWizardData): EmploymentWizardData => {
     // The specification defines Employer as a Company Snapshot link, so use
     // the linked snapshot name at export time rather than a stale draft value.
@@ -2650,8 +2664,10 @@ export default function Dashboard() {
               setIsPPModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '') } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
-            responsiblePartyFallback={profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '')}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: privacyResponsibleParty }}
+            responsiblePartyFallback={privacyResponsibleParty}
+            snapshotEntityType={profile.entityType}
+            informationOfficerDefaults={privacyInformationOfficerDefaults}
             onStepChange={(step, data) => savePPProgress(step, data)}
             onComplete={(data) => {
               const cid = continuingInstanceRef.current
@@ -3321,8 +3337,10 @@ export default function Dashboard() {
             setIsPPModalOpen(false)
           }}
           initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
-          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '') } as Partial<PrivacyPolicyWizardData> as PrivacyPolicyWizardData}
-          responsiblePartyFallback={profile.entityType === 'Individual' ? (profile.individualFullNames || '') : (profile.legalName || profile.tradingName || '')}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as PrivacyPolicyWizardData | undefined) : { responsibleParty: privacyResponsibleParty }}
+          responsiblePartyFallback={privacyResponsibleParty}
+          snapshotEntityType={profile.entityType}
+          informationOfficerDefaults={privacyInformationOfficerDefaults}
           onStepChange={(step, data) => savePPProgress(step, data)}
           onComplete={(data) => {
             const cid = continuingInstanceRef.current

@@ -9,7 +9,7 @@ import type { PrivacyPolicyWizardData } from '../hooks/usePrivacyPolicyWizard'
  */
 export interface PrivacyPolicyFieldMap {
   company_id: string | null
-  info_officer: { full_names: string; id_number: string; email: string }
+  info_officer: { full_names: string; id_number: string; email: string; address: string; phone: string | null }
   privacy_email: string
   domains: string[]
   pi_categories: string[]
@@ -48,6 +48,8 @@ export function mapPrivacyPolicyFields(
       full_names: data.officerFullNames.trim(),
       id_number: data.officerIdNumber.trim(),
       email: data.officerEmail.trim(),
+      address: data.officerAddress.trim(),
+      phone: textOrNull(data.officerPhone),
     },
     privacy_email: data.privacyEmail.trim(),
     domains: nonEmpty(data.domains),

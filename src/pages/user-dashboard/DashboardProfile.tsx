@@ -284,7 +284,12 @@ export default function DashboardProfile() {
       entityTypeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
-    if (formData.entityType === 'Individual' && formData.idNumber && !isValidSaId(formData.idNumber)) {
+    if (formData.entityType === 'Individual' && !formData.idNumber) {
+      setIdNumberError('Enter the 13-digit South African ID number for this individual.')
+      idNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
+    }
+    if (formData.entityType === 'Individual' && !isValidSaId(formData.idNumber)) {
       setIdNumberError('Enter a valid 13-digit South African ID number.')
       idNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
