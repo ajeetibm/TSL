@@ -474,7 +474,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             onOpenRequest={setSelectedRequest}
           />
         )}
-        {selectedRequest ? <RequestDetailsModal request={selectedRequest} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => setRequestStatus(id, 'rejected', reason)} /> : null}
+        {selectedRequest ? <RequestDetailsModal request={selectedRequest} initialView={((selectedRequest as CounselRequest & { _initialView?: string })._initialView as 'overview' | 'accept' | 'reject') ?? 'overview'} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => setRequestStatus(id, 'rejected', reason)} /> : null}
       </main>
     </div>
   )
@@ -492,16 +492,17 @@ function readFileAsDataUrl(file: File): Promise<string> {
 }
 
 function RequestDetailsModal({
-  request, onClose, onComplete, onReject, onStartReview,
+  request, onClose, onComplete, onReject, onStartReview, initialView = 'overview',
 }: {
   request: CounselRequest
   onClose: () => void
   onComplete: (id: string, response: string, documents: DocMeta[]) => Promise<string>
   onReject: (id: string, reason: string) => void
   onStartReview: (id: string) => void
+  initialView?: 'overview' | 'accept' | 'reject'
 }) {
   // 'overview' | 'accept' | 'reject'
-  const [view, setView] = useState<'overview' | 'accept' | 'reject'>('overview')
+  const [view, setView] = useState<'overview' | 'accept' | 'reject'>(initialView)
   const [response, setResponse] = useState(request.counselResponse || '')
   const [reason, setReason] = useState('')
   const [confirmRejection, setConfirmRejection] = useState(false)
@@ -743,7 +744,7 @@ function DashboardView({
                         <CircleCheck size={16} />
                         Review
                       </button>
-                      <button type="button" onClick={() => setRequestStatus(request.requestId, 'rejected')}>
+                      <button type="button" onClick={() => onOpenRequest({ ...request, status: 'pending', date: request.assignedAt ?? '', _initialView: 'reject' } as CounselRequest & { _initialView?: string })}>
                         <X size={16} />
                         Reject
                       </button>
@@ -961,7 +962,7 @@ function RequestsView({
                       <CircleCheck size={14} />
                       Review
                     </button>
-                    <button type="button" onClick={(event) => { event.stopPropagation(); onOpenRequest(request) }}>
+                    <button type="button" onClick={(event) => { event.stopPropagation(); onOpenRequest({ ...request, _initialView: 'reject' } as CounselRequest & { _initialView?: string }) }}>
                       <X size={14} />
                       Reject
                     </button>
