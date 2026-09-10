@@ -55,6 +55,12 @@ export interface CounselRequest {
   subject: string
   status: string
   assignedCounsel?: string
+  assignedBy?: string
+  adminName?: string
+  assigned_by?: string
+  assignedAdmin?: string
+  fromUser?: string
+  userEmail?: string
   submittedAt: string
   description?: string
   relatedWizard?: string | null

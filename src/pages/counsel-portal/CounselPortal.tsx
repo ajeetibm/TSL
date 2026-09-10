@@ -209,7 +209,16 @@ function normalizeRequests(payload: unknown): CounselRequest[] {
   const data = payload as { requests?: CounselRequest[] } | CounselRequest[] | undefined
   const raw = Array.isArray(data) ? data : (data?.requests ?? [])
   const list = raw.length ? raw : fallbackRequests
-  return list.map((r) => ({ ...r, status: normalizeStatus(r.status) }))
+  return list.map((r) => {
+    // Support multiple possible field names the API may use for the admin who assigned the request
+    const rec = r as Record<string, unknown>
+    const assignedBy = (rec.assignedBy ?? rec.adminName ?? rec.assigned_by ?? rec.assignedAdmin ?? 'Admin') as string
+    return {
+      ...r,
+      assignedBy,
+      status: normalizeStatus(r.status),
+    }
+  })
 }
 
 export default function CounselPortal({ mode }: { mode: CounselMode }) {

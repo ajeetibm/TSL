@@ -551,10 +551,25 @@ export default function AdminDashboard() {
     if (!activeRequest) return
 
     const selectedMember = assignableCounselMembers.find((member) => member.email === selectedCounsel)
+
+    // Resolve the admin's display name: prefer loaded profile, fall back to localStorage auth user
+    const adminFullName = (() => {
+      const fromProfile = [adminProfile.firstName, adminProfile.lastName].filter(Boolean).join(' ').trim()
+      if (fromProfile) return fromProfile
+      try {
+        const stored = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { fullName?: string; email?: string }
+        return stored.fullName || stored.email || 'Admin'
+      } catch {
+        return 'Admin'
+      }
+    })()
+
     const response = await adminApi.assignCounselRequest(activeRequest.requestId, {
       counselEmail: selectedMember?.email ?? selectedCounsel,
       counselName: selectedMember?.name,
       assignedCounselName: selectedMember?.name,
+      assignedBy: adminFullName,
+      adminName: adminFullName,
     })
 
     if (!response.success) {
