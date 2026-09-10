@@ -543,7 +543,7 @@ export default function DashboardSettings() {
 
                       <div className="dashboard-settings__plan-stats">
                         <div>
-                          <span>Wizard runs</span>
+                          <span>Blueprint runs</span>
                           <strong>{wizardRuns}/month</strong>
                         </div>
                         <div>

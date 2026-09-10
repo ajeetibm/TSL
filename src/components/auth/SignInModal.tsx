@@ -666,11 +666,11 @@ function SignInModalContent({
                   />
                   <span>
                     I agree to the{' '}
-                    <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
+                    <a href="/legal/privacy-policy.html" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
                       Privacy Policy
                     </a>
                     {' '}and consent to data processing under POPIA and TSL's{' '}
-                    <a href="/popia-compliance" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
+                    <a href="/legal/popia-compliance.html" target="_blank" rel="noopener noreferrer" className="signin-modal__consent-link">
                       POPIA Compliance
                     </a>
                     {' '}obligations.

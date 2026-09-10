@@ -2667,6 +2667,10 @@
   font-size: 14px;
   cursor: pointer;
 }
+.admin-settings__link:disabled {
+  color: #b0b7c3;
+  cursor: not-allowed;
+}
 
 .admin-settings__recommendations {
   display: grid;

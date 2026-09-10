@@ -353,7 +353,16 @@
 }
 
 .bs-confirm-modal--sm {
-  width: min(420px, 100%);
+  width: min(480px, 100%);
+  padding: 32px 36px 28px;
+}
+
+.bs-confirm-modal--sm h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0d1b2a;
+  line-height: 1.3;
 }
 
 /* ── Confirm modal header band ─────────────────────────────────────────────── */
