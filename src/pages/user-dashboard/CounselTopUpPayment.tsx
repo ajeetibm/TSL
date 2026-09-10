@@ -47,7 +47,7 @@ export default function CounselTopUpPayment() {
   // Default qty to the plan's included credits (Operator=2, Boardroom=6) so the
   // user tops up the natural batch size for that tier. Floor at 1 for Launchpad (0 included).
   const defaultQty = Math.max(1, plan?.credits ?? 1)
-  const [qty,      setQty]      = useState(defaultQty)
+  const [qty]      = useState(defaultQty)
   const [isPaying, setIsPaying] = useState(false)
   const [error,    setError]    = useState('')
 
@@ -60,15 +60,6 @@ export default function CounselTopUpPayment() {
   // ── order calculations ───────────────────────────────────────────────────
   const unitPrice = plan.ratePerCredit
   const total     = unitPrice * qty
-
-  // ── quantity handlers ────────────────────────────────────────────────────
-  const clamp = (n: number) => Math.max(MIN_CREDITS, Math.min(MAX_CREDITS, n))
-
-  function _handleQtyInput(raw: string) {
-    const n = parseInt(raw, 10)
-    if (!Number.isNaN(n)) setQty(clamp(n))
-    else if (raw === '') setQty(MIN_CREDITS)
-  }
 
   // ── payment handler ──────────────────────────────────────────────────────
   async function handleProceedToPay() {

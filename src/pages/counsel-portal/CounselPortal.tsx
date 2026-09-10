@@ -919,7 +919,7 @@ function RequestsView({
   setSearch,
   setStatusFilter,
   statusFilter,
-  total,
+  _total,
 }: {
   requests: CounselRequest[]
   onOpenRequest: (request: CounselRequest) => void
@@ -927,7 +927,7 @@ function RequestsView({
   setSearch: (value: string) => void
   setStatusFilter: (value: 'all' | RequestStatus) => void
   statusFilter: 'all' | RequestStatus
-  total: number
+  _total: number
 }) {
   return (
     <section className="counsel-requests">
@@ -948,7 +948,7 @@ function RequestsView({
       <div className="counsel-requests__list-card">
         <div className="counsel-requests__heading">
           <h3>All Requests</h3>
-          <p>{total} request(s) found</p>
+          <p>{requests.length} request(s) found</p>
         </div>
 
         <div className="counsel-requests__list">
