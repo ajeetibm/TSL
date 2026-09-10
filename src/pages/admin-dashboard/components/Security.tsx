@@ -101,26 +101,6 @@ export default function Security() {
     showMessage(res.message ?? 'Security settings updated successfully.')
   }
 
-  // Open password policy modal — fetch current policy from API first
-  const handleOpenPpModal = async () => {
-    setPolicyError(null)
-    setPolicyLoading(true)
-    setPpModalOpen(true)
-
-    const res = await adminSettingsApi.getPasswordPolicy()
-    setPolicyLoading(false)
-
-    if (!res.success || !res.data) {
-      // Keep the modal open so the user can retry or cancel; show the error inline
-      setPolicyError(res.message ?? 'Failed to load password policy. Please try again.')
-      return
-    }
-
-    // Merge API response over DEFAULT_POLICY so any missing keys stay valid
-    const loaded = { ...DEFAULT_POLICY, ...(res.data as Partial<PasswordPolicy>) } as PasswordPolicy
-    setPolicy(loaded)
-  }
-
   // Called by PasswordPolicyModal when the user clicks Save Changes
   const handlePolicySave = async (updated: PasswordPolicy): Promise<void> => {
     const res = await adminSettingsApi.savePasswordPolicy(updated as unknown as Record<string, unknown>)
