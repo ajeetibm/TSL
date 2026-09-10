@@ -203,10 +203,10 @@ export default function AdminEditModal({ record, mode, onClose, onSaved, onToast
                 ) : (
                   <select
                     id="adm-status"
-                    className="adm-modal__select"
+                    className="adm-modal__select adm-modal__select--disabled"
                     value={form.status}
                     onChange={(e) => set('status', e.target.value as AdminEditForm['status'])}
-                    disabled={saving}
+                    disabled
                   >
                     <option value="Active">Active</option>
                     <option value="Pending">Pending</option>

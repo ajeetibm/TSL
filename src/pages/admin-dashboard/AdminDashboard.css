@@ -1569,6 +1569,15 @@
 .adm-modal__input[readonly],
 .adm-modal__input:disabled { background: #f7f8fa; color: #57606a; cursor: default; }
 
+.adm-modal__select--disabled,
+.adm-modal__select:disabled {
+  background: #f7f8fa;
+  color: #57606a;
+  cursor: not-allowed;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
 .adm-modal__input--error { border-color: #dc2626 !important; }
 .adm-modal__error { font-size: 12px; color: #dc2626; margin: 0; }
 
@@ -3415,7 +3424,7 @@
 }
 
 .fp-modal {
-  width: min(100%, 1080px);
+  width: min(100%, 1300px);
   max-height: 90vh;
   background: #fff;
   border-radius: 16px;
