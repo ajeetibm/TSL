@@ -21,6 +21,7 @@ interface CounselCreditsModalProps {
 export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTopUp }: CounselCreditsModalProps) {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [plansError, setPlansError] = useState('')
+  const [selectedPlanName, setSelectedPlanName] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isOpen) return
@@ -74,92 +75,95 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
           <div className="counsel-credits-modal__table">
             <div className="counsel-credits-modal__row counsel-credits-modal__row--header">
               <div className="counsel-credits-modal__cell">Feature</div>
-              {counselPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
-                >
-                  <div className="counsel-credits-modal__header-content">
-                    {plan.name}
-                    {isCurrentPlan(plan.name) && (
-                      <span className="counsel-credits-modal__badge">Current Plan</span>
-                    )}
+              {counselPlans.map((plan) => {
+                const isSelected = selectedPlanName
+                  ? plan.name === selectedPlanName
+                  : isCurrentPlan(plan.name)
+                return (
+                  <div
+                    key={plan.name}
+                    className={`counsel-credits-modal__cell${isSelected ? ' counsel-credits-modal__cell--highlight' : ''} counsel-credits-modal__cell--selectable`}
+                    onClick={() => setSelectedPlanName(plan.name)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && setSelectedPlanName(plan.name)}
+                    aria-pressed={isSelected}
+                  >
+                    <div className="counsel-credits-modal__header-content">
+                      {plan.name}
+                      {isCurrentPlan(plan.name) && (
+                        <span className="counsel-credits-modal__badge">Current Plan</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="counsel-credits-modal__row">
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Credits per month
               </div>
-              {counselPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
-                >
-                  <span className="counsel-credits-modal__price">
-                    {plan.credits === 0 ? '0 credit' : `${plan.credits} credits / month`}
-                  </span>
-                </div>
-              ))}
+              {counselPlans.map((plan) => {
+                const isSelected = selectedPlanName ? plan.name === selectedPlanName : isCurrentPlan(plan.name)
+                return (
+                  <div
+                    key={plan.name}
+                    className={`counsel-credits-modal__cell${isSelected ? ' counsel-credits-modal__cell--highlight' : ''} counsel-credits-modal__cell--selectable`}
+                    onClick={() => setSelectedPlanName(plan.name)}
+                  >
+                    <span className="counsel-credits-modal__price">
+                      {plan.credits === 0 ? '0 credit' : `${plan.credits} credits`}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
 
             <div className="counsel-credits-modal__row">
               <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
                 Response Time SLA
               </div>
-              {counselPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
-                >
-                  {plan.sla}
-                </div>
-              ))}
-            </div>
-
-            <div className="counsel-credits-modal__row">
-              <div className="counsel-credits-modal__cell counsel-credits-modal__cell--label">
-                Top-up rate (per credit)
-              </div>
-              {counselPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
-                >
-                  <span className="counsel-credits-modal__price">R{plan.ratePerCredit} / credit</span>
-                  {plan.credits > 0 && (
-                    <span className="counsel-credits-modal__rate-total">
-                      = R{plan.ratePerCredit} × {plan.credits} / month
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="counsel-credits-modal__row counsel-credits-modal__row--actions">
-              <div className="counsel-credits-modal__cell"></div>
-              {counselPlans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`counsel-credits-modal__cell${isCurrentPlan(plan.name) ? ' counsel-credits-modal__cell--highlight' : ''}`}
-                >
-                  <button
-                    type="button"
-                    className={`counsel-credits-modal__button${isCurrentPlan(plan.name) ? ' counsel-credits-modal__button--primary' : ''}`}
-                    onClick={() => {
-                      onClose()
-                      onTopUp(plan)
-                    }}
+              {counselPlans.map((plan) => {
+                const isSelected = selectedPlanName ? plan.name === selectedPlanName : isCurrentPlan(plan.name)
+                return (
+                  <div
+                    key={plan.name}
+                    className={`counsel-credits-modal__cell${isSelected ? ' counsel-credits-modal__cell--highlight' : ''} counsel-credits-modal__cell--selectable`}
+                    onClick={() => setSelectedPlanName(plan.name)}
                   >
-                    Top Up
-                  </button>
-                </div>
-              ))}
+                    {plan.sla}
+                  </div>
+                )
+              })}
             </div>
+
           </div>
           )}
+
+          {counselPlans.length > 0 && (() => {
+            const rate = counselPlans[0]?.ratePerCredit ?? 550
+            const planForTopUp = counselPlans.find(p =>
+              selectedPlanName ? p.name === selectedPlanName : isCurrentPlan(p.name)
+            ) ?? counselPlans[0]
+            return (
+              <div className="counsel-credits-modal__buy-banner">
+                <div className="counsel-credits-modal__buy-banner-text">
+                  <strong>Need more counsel credits top-up?</strong>
+                  <span>
+                    Buying as <em>{planForTopUp.name}</em> tier · R{rate} per credit
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className="counsel-credits-modal__buy-btn"
+                  onClick={() => { onClose(); onTopUp(planForTopUp) }}
+                >
+                  Buy credits
+                </button>
+              </div>
+            )
+          })()}
 
           <div className="counsel-credits-modal__info">
             <h3>

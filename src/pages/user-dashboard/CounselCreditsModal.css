@@ -184,6 +184,21 @@
   white-space: nowrap;
 }
 
+.counsel-credits-modal__cell--selectable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.counsel-credits-modal__cell--selectable:hover:not(.counsel-credits-modal__cell--highlight) {
+  background: #faf7f0;
+}
+
+.counsel-credits-modal__buy-banner-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: #c99125;
+}
+
 .counsel-credits-modal__price {
   color: #111f2e;
   font-size: 16px;
@@ -198,12 +213,58 @@
   color: #111f2e;
 }
 
-.counsel-credits-modal__rate-total {
-  display: block;
-  margin-top: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
+.counsel-credits-modal__buy-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 18px 24px;
+  background: #faf7f0;
+  border: 1.5px solid #e8d9b0;
+  border-radius: 16px;
+}
+
+.counsel-credits-modal__buy-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.counsel-credits-modal__buy-banner-text strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111f2e;
+}
+
+.counsel-credits-modal__buy-banner-text span {
+  font-size: 14px;
+  color: #57606a;
+}
+
+.counsel-credits-modal__buy-banner-text em {
+  font-style: normal;
+  font-weight: 700;
+  color: #c99125;
+}
+
+.counsel-credits-modal__buy-btn {
+  flex-shrink: 0;
+  min-height: 48px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 999px;
+  background: #c99125;
+  color: #ffffff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.counsel-credits-modal__buy-btn:hover {
+  background: #b8832a;
 }
 
 .counsel-credits-modal__button {

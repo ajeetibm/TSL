@@ -48,7 +48,7 @@ export default function Security() {
   // It is null until the first successful API fetch so we can show DEFAULT_POLICY
   // as the in-modal starting point without flashing stale localStorage data.
   const [policy, setPolicy]           = useState<PasswordPolicy>(DEFAULT_POLICY)
-  const [policyLoading, setPolicyLoading] = useState(false)
+  const [policyLoading] = useState(false)
   const [policyError, setPolicyError]     = useState<string | null>(null)
 
   const msgTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
