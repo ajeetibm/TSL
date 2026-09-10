@@ -18,6 +18,72 @@ import type { WizardAccess } from '../../services/tslApi'
 import './Dashboard.css'
 import './DashboardCounsel.css'
 
+// ── Counsel notification helpers ─────────────────────────────────────────────
+const COUNSEL_NOTIF_KEY    = 'tsl-sme-notifications'
+const COUNSEL_STATUS_KEY   = 'tsl-counsel-request-statuses'
+const COUNSEL_NOTIF_EVENT  = 'tsl-sme-notifications-changed'
+
+function loadCounselNotifs(): import('../../services/dashboardTypes').NotificationItem[] {
+  try {
+    const raw = localStorage.getItem(COUNSEL_NOTIF_KEY)
+    return raw ? (JSON.parse(raw) as import('../../services/dashboardTypes').NotificationItem[]) : []
+  } catch { return [] }
+}
+
+function loadSeenStatuses(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem(COUNSEL_STATUS_KEY)
+    return raw ? (JSON.parse(raw) as Record<string, string>) : {}
+  } catch { return {} }
+}
+
+/** Diff current requests against previously seen statuses.
+ *  Writes new notifications for any request that changed to completed/rejected.
+ *  Returns the count of newly added unread notifications. */
+function diffAndNotify(requests: Array<{ requestId: string; title: string; status: string }>): number {
+  const seen = loadSeenStatuses()
+  const existing = loadCounselNotifs()
+  const now = new Date().toISOString()
+  const newNotifs: import('../../services/dashboardTypes').NotificationItem[] = []
+
+  for (const req of requests) {
+    const prev = seen[req.requestId]
+    const curr = req.status.toLowerCase()
+    if (prev === curr) continue                    // no change
+    seen[req.requestId] = curr                     // update seen
+
+    const isCompleted = curr === 'completed' || curr === 'accepted'
+    const isRejected  = curr.includes('rejected')
+    if (!isCompleted && !isRejected) continue      // only notify on terminal states
+
+    // Don't add a duplicate if we already have a notification for this request+status
+    const alreadyNotified = existing.some(
+      n => n.notificationId === `counsel-${req.requestId}-${curr}`
+    )
+    if (alreadyNotified) continue
+
+    newNotifs.push({
+      notificationId: `counsel-${req.requestId}-${curr}`,
+      type: isCompleted ? 'counsel_completed' : 'counsel_rejected',
+      title: isCompleted ? 'Counsel Request Approved' : 'Counsel Request Rejected',
+      message: isCompleted
+        ? `Your request "${req.title}" has been reviewed and approved by counsel.`
+        : `Your request "${req.title}" was not accepted. Please submit a new request if needed.`,
+      isRead: false,
+      createdAt: now,
+    })
+  }
+
+  if (newNotifs.length > 0) {
+    const merged = [...newNotifs, ...existing]
+    localStorage.setItem(COUNSEL_NOTIF_KEY, JSON.stringify(merged))
+    window.dispatchEvent(new Event(COUNSEL_NOTIF_EVENT))
+  }
+  localStorage.setItem(COUNSEL_STATUS_KEY, JSON.stringify(seen))
+
+  return newNotifs.length
+}
+
 const wizardAccessCacheKey = 'tsl-wizard-access-cache'
 const counselCreditsSessionKey = 'tsl-counsel-credits-session'
 
@@ -207,6 +273,25 @@ export default function DashboardCounsel() {
 
   setPageMetadata('Counsel', 'Connect with experienced attorneys for expert guidance.')
 
+  // When user lands on Counsel page, mark all counsel notifications as read
+  // so the sidebar badge clears — they've now seen the status updates.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(COUNSEL_NOTIF_KEY)
+      if (raw) {
+        const items = JSON.parse(raw) as Array<{ isRead: boolean; type: string }>
+        const hasCounselUnread = items.some(n => !n.isRead && (n.type === 'counsel_completed' || n.type === 'counsel_rejected'))
+        if (hasCounselUnread) {
+          const updated = items.map(n =>
+            (n.type === 'counsel_completed' || n.type === 'counsel_rejected') ? { ...n, isRead: true } : n
+          )
+          localStorage.setItem(COUNSEL_NOTIF_KEY, JSON.stringify(updated))
+          window.dispatchEvent(new Event(COUNSEL_NOTIF_EVENT))
+        }
+      }
+    } catch { /* non-critical */ }
+  }, [])
+
   useEffect(() => {
     // Show success toast after returning from top-up payment — run once on mount.
     const state = location.state as { topUpSuccess?: boolean; creditsAdded?: number } | null
@@ -332,7 +417,14 @@ export default function DashboardCounsel() {
       const allRaw = [...apiRaw, ...pfLocalRaw]
       allRaw.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
 
-      setHistory(allRaw.length > 0 ? allRaw.map(toHistoryRequest) : fallbackHistory)
+      const historyItems = allRaw.length > 0 ? allRaw.map(toHistoryRequest) : fallbackHistory
+      setHistory(historyItems)
+
+      // Diff request statuses — write notifications for any newly approved/rejected requests
+      // The Counsel badge in DashboardShell reads localStorage independently via its own state.
+      diffAndNotify(
+        historyItems.map(r => ({ requestId: r.requestId, title: r.title, status: r.status }))
+      )
     }
 
     loadCounselData()

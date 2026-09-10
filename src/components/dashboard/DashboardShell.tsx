@@ -15,6 +15,15 @@ import { useNotificationCount } from '../../context/NotificationContext'
 import { notificationApi } from '../../services/tslApi'
 import { LogoutConfirmModal } from '../auth/LogoutConfirmModal'
 
+function getCounselUnreadCount(): number {
+  try {
+    const raw = localStorage.getItem('tsl-sme-notifications')
+    if (!raw) return 0
+    const items = JSON.parse(raw) as Array<{ isRead: boolean; type: string }>
+    return items.filter(n => !n.isRead && (n.type === 'counsel_completed' || n.type === 'counsel_rejected')).length
+  } catch { return 0 }
+}
+
 type DashboardSection = 'Dashboard' | 'Blueprints' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
 interface DashboardShellProps {
@@ -38,6 +47,7 @@ const sidebarItems = [
 export function DashboardShell({ activeSection, children }: DashboardShellProps) {
   const navigate = useNavigate()
   const { unreadCount, seedUnreadCount } = useNotificationCount()
+  const [counselUnread, setCounselUnread] = useState(getCounselUnreadCount)
 
   const hasSubscription = (() => {
     try {
@@ -58,6 +68,17 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
 
     return () => {
       cancelled = true
+    }
+  }, [])
+
+  // Keep counsel badge in sync with localStorage writes from DashboardCounsel
+  useEffect(() => {
+    function sync() { setCounselUnread(getCounselUnreadCount()) }
+    window.addEventListener('tsl-sme-notifications-changed', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('tsl-sme-notifications-changed', sync)
+      window.removeEventListener('storage', sync)
     }
   }, [])
 
@@ -86,6 +107,7 @@ export function DashboardShell({ activeSection, children }: DashboardShellProps)
               <Icon size={18} />
               <span>{label}</span>
               {label === 'Notifications' && hasSubscription && unreadCount !== null && unreadCount > 0 && <b>{unreadCount}</b>}
+              {label === 'Counsel' && hasSubscription && counselUnread > 0 && <b>{counselUnread}</b>}
             </button>
           ))}
         </nav>
