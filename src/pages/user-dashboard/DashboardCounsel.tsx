@@ -671,9 +671,9 @@ export default function DashboardCounsel() {
                 </div>
 
                 <label className="dashboard-counsel__field">
-                  <span>Related Wizard <span style={{ color: '#c0392b' }}>*</span></span>
+                  <span>Related Blueprint <span style={{ color: '#c0392b' }}>*</span></span>
                   <select
-                    aria-label="Related Wizard"
+                    aria-label="Related Blueprint"
                     value={formData.relatedWizard}
                     onChange={(event) => handleFieldChange('relatedWizard', event.target.value)}
                   >
