@@ -2576,8 +2576,37 @@
 }
 
 .admin-settings__row h3 {
+  font-family: 'Montserrat', var(--font-display), sans-serif;
+  font-style: normal;
+  font-weight: 600;
   font-size: 16px;
   line-height: 24px;
+  color: #0D1B2A;
+}
+
+.admin-settings__session-select {
+  height: 36px;
+  width: 126px;
+  padding: 0 35px 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0d1b2a;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  appearance: auto;
+}
+
+.admin-settings__session-select:focus {
+  border-color: #c79a3b;
+  box-shadow: 0 0 0 2px rgba(199, 154, 59, 0.15);
+}
+
+.admin-settings__session-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .admin-settings__toggle {
@@ -2676,6 +2705,17 @@
   font-weight: 700;
   cursor: pointer;
   transition: opacity 0.15s;
+}
+
+.admin-settings__security-save-btn {
+  font-family: 'Open Sans', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  color: #ffffff;
+  gap: 8px;
 }
 
 .admin-settings__footer button:disabled,

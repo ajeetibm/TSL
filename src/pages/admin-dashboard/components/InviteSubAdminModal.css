@@ -118,6 +118,23 @@
   background: #ffffff;
 }
 
+.invite-admin-modal__input-wrapper--error input {
+  border-color: #e53e3e;
+  background: #fff5f5;
+}
+
+.invite-admin-modal__input-wrapper--error input:focus {
+  border-color: #e53e3e;
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12);
+}
+
+.invite-admin-modal__error {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #e53e3e;
+}
+
 .invite-admin-modal__field input::placeholder {
   color: #999999;
 }

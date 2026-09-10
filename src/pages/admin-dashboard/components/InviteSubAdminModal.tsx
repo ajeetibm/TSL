@@ -8,29 +8,81 @@ interface InviteSubAdminModalProps {
   onSendInvitation: (data: { fullName: string; email: string; message: string }) => void
 }
 
+interface FormErrors {
+  fullName?: string
+  email?: string
+}
+
+const FULL_NAME_RE = /^[A-Za-z\s'-]{2,80}$/
+const EMAIL_RE    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function validate(fullName: string, email: string): FormErrors {
+  const errors: FormErrors = {}
+
+  if (!fullName.trim()) {
+    errors.fullName = 'Full name is required.'
+  } else if (!FULL_NAME_RE.test(fullName.trim())) {
+    errors.fullName = 'Full name may only contain letters, spaces, hyphens or apostrophes.'
+  }
+
+  if (!email.trim()) {
+    errors.email = 'Email address is required.'
+  } else if (!EMAIL_RE.test(email.trim())) {
+    errors.email = 'Please enter a valid email address.'
+  }
+
+  return errors
+}
+
 export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation }: InviteSubAdminModalProps) {
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [message, setMessage] = useState('')
+  const [email, setEmail]       = useState('')
+  const [message, setMessage]   = useState('')
+  const [errors, setErrors]     = useState<FormErrors>({})
+  const [touched, setTouched]   = useState<{ fullName?: boolean; email?: boolean }>({})
 
   if (!isOpen) return null
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSendInvitation({ fullName, email, message })
-    // Reset form
+  const reset = () => {
     setFullName('')
     setEmail('')
     setMessage('')
+    setErrors({})
+    setTouched({})
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const errs = validate(fullName, email)
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
+      setTouched({ fullName: true, email: true })
+      return
+    }
+    onSendInvitation({ fullName: fullName.trim(), email: email.trim(), message })
+    reset()
     onClose()
   }
 
   const handleCancel = () => {
-    // Reset form
-    setFullName('')
-    setEmail('')
-    setMessage('')
+    reset()
     onClose()
+  }
+
+  const handleFullNameChange = (value: string) => {
+    setFullName(value)
+    if (touched.fullName) {
+      const errs = validate(value, email)
+      setErrors((prev) => ({ ...prev, fullName: errs.fullName }))
+    }
+  }
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value)
+    if (touched.email) {
+      const errs = validate(fullName, value)
+      setErrors((prev) => ({ ...prev, email: errs.email }))
+    }
   }
 
   return (
@@ -51,35 +103,57 @@ export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation 
           </button>
         </div>
 
-        <form className="invite-admin-modal__content" onSubmit={handleSubmit}>
+        <form className="invite-admin-modal__content" onSubmit={handleSubmit} noValidate>
           <div className="invite-admin-modal__field">
             <label htmlFor="fullName">Full Name</label>
-            <div className="invite-admin-modal__input-wrapper">
+            <div className={`invite-admin-modal__input-wrapper${errors.fullName && touched.fullName ? ' invite-admin-modal__input-wrapper--error' : ''}`}>
               <User size={18} />
               <input
                 type="text"
                 id="fullName"
                 placeholder="Enter full name"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                required
+                onChange={(e) => handleFullNameChange(e.target.value)}
+                onBlur={() => {
+                  setTouched((prev) => ({ ...prev, fullName: true }))
+                  const errs = validate(fullName, email)
+                  setErrors((prev) => ({ ...prev, fullName: errs.fullName }))
+                }}
+                aria-describedby={errors.fullName ? 'fullName-error' : undefined}
+                aria-invalid={!!errors.fullName && touched.fullName}
               />
             </div>
+            {errors.fullName && touched.fullName && (
+              <p className="invite-admin-modal__error" id="fullName-error" role="alert">
+                {errors.fullName}
+              </p>
+            )}
           </div>
 
           <div className="invite-admin-modal__field">
             <label htmlFor="email">Email Address</label>
-            <div className="invite-admin-modal__input-wrapper">
+            <div className={`invite-admin-modal__input-wrapper${errors.email && touched.email ? ' invite-admin-modal__input-wrapper--error' : ''}`}>
               <Mail size={18} />
               <input
                 type="email"
                 id="email"
                 placeholder="admin@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                onChange={(e) => handleEmailChange(e.target.value)}
+                onBlur={() => {
+                  setTouched((prev) => ({ ...prev, email: true }))
+                  const errs = validate(fullName, email)
+                  setErrors((prev) => ({ ...prev, email: errs.email }))
+                }}
+                aria-describedby={errors.email ? 'email-error' : undefined}
+                aria-invalid={!!errors.email && touched.email}
               />
             </div>
+            {errors.email && touched.email && (
+              <p className="invite-admin-modal__error" id="email-error" role="alert">
+                {errors.email}
+              </p>
+            )}
           </div>
 
           <div className="invite-admin-modal__field">
