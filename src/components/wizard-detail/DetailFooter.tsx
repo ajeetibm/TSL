@@ -19,9 +19,9 @@ const routeLinks: Record<string, string> = {
   'Get Counsel': '/counsel',
   Playbooks: '/playbooks-insights',
   Blueprints: '/wizard-catalogue',
-  'Privacy Policy': '/privacy-policy',
+  'Privacy Policy': '/legal/privacy-policy.html',
   'Terms & Conditions': '/legal/terms-of-service.html',
-  'POPIA Compliance': '/popia-compliance',
+  'POPIA Compliance': '/legal/popia-compliance.html',
 }
 
 const noLink = new Set(['CIPC Services', 'Company Registration', 'Refund Policy'])
