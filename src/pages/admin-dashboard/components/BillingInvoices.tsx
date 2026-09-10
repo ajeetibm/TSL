@@ -10,7 +10,7 @@
  *  - Loading skeleton, empty state, error state
  */
 import { AlertTriangle, CheckCircle2, CircleX, Clock, DollarSign, Download, Loader2, Search, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { AdminBillingData, AdminInvoice } from '../../../services/dashboardTypes'
 import { adminApi } from '../../../services/tslApi'
 import FailedPaymentsModal from './FailedPaymentsModal'
@@ -342,14 +342,13 @@ export default function BillingInvoices() {
   const [exporting, setExporting]       = useState(false)
   const [exportToast, setExportToast]   = useState<ToastState | null>(null)
 
-  // debounce ref for search
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
   // ── fetch ────────────────────────────────────────────────────────────────
-  const fetchBilling = useCallback(async (params?: Parameters<typeof adminApi.billing>[0]) => {
+  // Always fetch the full unfiltered list; filtering is done client-side so
+  // the dropdown options and the full table remain available at all times.
+  const fetchBilling = useCallback(async () => {
     setLoading(true)
     setApiError(null)
-    const response = await adminApi.billing(params)
+    const response = await adminApi.billing()
     setLoading(false)
     if (!response.success) {
       setApiError(response.message ?? 'Unable to load billing data.')
@@ -384,34 +383,42 @@ export default function BillingInvoices() {
     })
   }, [])
 
-  // Debounce search re-fetch
+  // Search operates on local state only — no re-fetch needed
   const handleSearch = (value: string) => {
     setSearchQuery(value)
-    if (debounceRef.current) clearTimeout(debounceRef.current)
-    debounceRef.current = setTimeout(() => {
-      void fetchBilling({ search: value, client: selectedClient, plan: selectedPlan, month: selectedMonth })
-    }, 350)
   }
 
   const handleFilterChange = (
     field: 'client' | 'plan' | 'month',
     value: string,
   ) => {
-    const nextState = { client: selectedClient, plan: selectedPlan, month: selectedMonth, [field]: value }
     if (field === 'client') setSelectedClient(value)
     if (field === 'plan')   setSelectedPlan(value)
     if (field === 'month')  setSelectedMonth(value)
-    void fetchBilling({ search: searchQuery, ...nextState })
   }
 
-  // Build unique filter options from fetched data (or local invoices)
+  // Full unfiltered list — used for building dropdown options
   const allInvoices = billingData?.invoices ?? []
+
+  // Build unique filter options from the full dataset
   const clientOptions = useMemo(() =>
     ['All Clients', ...Array.from(new Set(allInvoices.map((i) => i.client)))], [allInvoices])
   const planOptions = useMemo(() =>
     ['All Plans',   ...Array.from(new Set(allInvoices.map((i) => i.plan)))],   [allInvoices])
   const monthOptions = useMemo(() =>
     ['All Months',  ...Array.from(new Set(allInvoices.map((i) => i.month)))],  [allInvoices])
+
+  // Apply filters client-side so the full list is never lost
+  const filteredInvoices = useMemo(() => {
+    const q = searchQuery.toLowerCase()
+    return allInvoices.filter((inv) => {
+      if (selectedClient !== 'All Clients' && inv.client !== selectedClient) return false
+      if (selectedPlan   !== 'All Plans'   && inv.plan   !== selectedPlan)   return false
+      if (selectedMonth  !== 'All Months'  && inv.month  !== selectedMonth)  return false
+      if (q && !inv.client.toLowerCase().includes(q) && !inv.invoiceId.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [allInvoices, selectedClient, selectedPlan, selectedMonth, searchQuery])
 
   const kpis = billingData?.kpis
   const alert = billingData?.reconciliationAlert
@@ -533,7 +540,7 @@ export default function BillingInvoices() {
               <p>{apiError}</p>
               <button type="button" onClick={() => void fetchBilling()}>Retry</button>
             </div>
-          ) : allInvoices.length === 0 ? (
+          ) : filteredInvoices.length === 0 ? (
             <div className="admin-billing__empty-state">
               <p>No invoices found matching your filters.</p>
             </div>
@@ -550,7 +557,7 @@ export default function BillingInvoices() {
                 </tr>
               </thead>
               <tbody>
-                {allInvoices.map((invoice) => (
+                {filteredInvoices.map((invoice) => (
                   <tr key={invoice.invoiceId}>
                     <td>{invoice.invoiceId}</td>
                     <td>{invoice.client}</td>
