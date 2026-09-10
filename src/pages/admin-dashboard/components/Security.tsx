@@ -229,8 +229,7 @@ export default function Security() {
             <button
               type="button"
               className="admin-settings__link"
-              onClick={handleOpenPpModal}
-              disabled={loadingData}
+              disabled
             >
               Configure
             </button>
