@@ -4,6 +4,7 @@
 .ar-rejection-notification { display: flex; align-items: center; gap: 10px; margin: 16px 28px 0; padding: 12px 14px; border: 1px solid #f2c94c; border-radius: 10px; background: #fff9e8; color: #714f00; }
 .ar-rejection-notification span { flex: 1; }
 .ar-rejection-notification button { border: 0; background: transparent; color: inherit; text-decoration: underline; cursor: pointer; }
+.ar-rejection-notification--new-user { border-color: #6ee7b7; background: #f0fdf4; color: #065f46; }
 .ar-card__rejection-reason { margin-top: 8px; color: #8a3b12; font-size: 13px; line-height: 1.35; }
   height: 100vh;
   overflow: hidden;
@@ -107,11 +108,15 @@
 .admin-dashboard__header {
   position: relative;
   min-height: 120px;
-  display: grid;
-  align-content: center;
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid #dddddd;
   padding: 26px 66px;
   background: #ffffff;
+}
+
+.admin-dashboard__header-text {
+  flex: 1;
 }
 
 /* ── Back-navigation button — fixed at the sidebar/content divider ── */
@@ -143,10 +148,6 @@
 .admin-dashboard__back-btn.dashboard-back-btn:focus-visible {
   outline: 2px solid #d3a038;
   outline-offset: 2px;
-}
-
-.admin-dashboard__header-text {
-  display: contents;
 }
 
 .admin-dashboard__header h1 {

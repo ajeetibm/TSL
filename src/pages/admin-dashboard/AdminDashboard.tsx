@@ -47,6 +47,7 @@ import {
   UsersActivity,
 } from './components'
 import AddCounselModal from './components/AddCounselModal'
+import { AdminNotificationBell } from './components/AdminNotificationBell'
 import { LogoutConfirmModal } from '../../components/auth/LogoutConfirmModal'
 import type { CounselMember } from './components/CounselManagement'
 import { inviteAdmin } from './services/adminManagementService'
@@ -100,12 +101,12 @@ type AdminDashboardData = {
 type AdminCounselRequest = NonNullable<AdminDashboardData['recentCounselRequests']>[number]
 
 const navItems = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'users', label: 'Users & Activity', icon: UsersRound },
-  { key: 'counsel', label: 'Counsel', icon: BriefcaseBusiness },
-  { key: 'counsel-requests', label: 'Counsel Requests', icon: ClipboardList },
-  { key: 'issues', label: 'Issues', icon: AlertTriangle, badge: 23 },
-  { key: 'settings', label: 'Settings', icon: Settings },
+  { key: 'dashboard',         label: 'Dashboard',          icon: LayoutDashboard },
+  { key: 'users',             label: 'Users & Activity',   icon: UsersRound },
+  { key: 'counsel',           label: 'Counsel',            icon: BriefcaseBusiness },
+  { key: 'counsel-requests',  label: 'Counsel Requests',   icon: ClipboardList },
+  { key: 'issues',            label: 'Issues',             icon: AlertTriangle, badge: 23 },
+  { key: 'settings',          label: 'Settings',           icon: Settings },
 ] as const
 
 const quickActions = [
@@ -581,6 +582,7 @@ export default function AdminDashboard() {
     })
   }, [dashboardData])
   const unreadRejectionNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'counsel_request_rejected' && !notification.read), [dashboardData])
+  const unreadNewUserNotifications   = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'new_user' && !notification.read), [dashboardData])
   const dismissNotification = async (notificationId: string) => {
     const response = await adminApi.markNotificationRead(notificationId)
     if (!response.success) return setError(response.message ?? 'Unable to update notification.')
@@ -809,7 +811,9 @@ export default function AdminDashboard() {
         <nav className="admin-dashboard__nav" aria-label="Admin navigation">
           {navItems.map((item) => {
             const Icon = item.icon
-            const badge = 'badge' in item ? item.badge : undefined
+            const staticBadge = 'badge' in item ? item.badge : undefined
+            const dynamicBadge = item.key === 'users' ? (unreadNewUserNotifications.length > 0 ? unreadNewUserNotifications.length : undefined) : undefined
+            const badge = dynamicBadge ?? staticBadge
             return (
               <button
                 type="button"
@@ -855,6 +859,7 @@ export default function AdminDashboard() {
             <h1>{headerTitle}</h1>
             <p>{headerDescription}</p>
           </div>
+          <AdminNotificationBell />
         </header>
 
         {error && <p className="admin-dashboard__error">{error}</p>}
@@ -1205,7 +1210,16 @@ export default function AdminDashboard() {
             </div>
           </section>
         ) : activeNav === 'users' ? (
-          <UsersActivity adminRole={adminRole} />
+          <>
+            {unreadNewUserNotifications.map((notification) => (
+              <div className="ar-rejection-notification ar-rejection-notification--new-user" key={notification.notificationId} role="alert">
+                <UsersRound size={18} />
+                <span><strong>New user registered:</strong> {notification.message}</span>
+                <button type="button" onClick={() => void dismissNotification(notification.notificationId)}>Dismiss</button>
+              </div>
+            ))}
+            <UsersActivity adminRole={adminRole} />
+          </>
         ) : activeNav === 'settings' ? (
           <section className="admin-settings">
             <div className="admin-settings__tabs" aria-label="Settings tabs">
