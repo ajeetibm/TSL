@@ -589,6 +589,16 @@ export default function FounderAgreementWizardModal({
   const [isGenerating, setIsGenerating] = useState(false)
   const [isRoutingToCounsel, setIsRoutingToCounsel] = useState(false)
   const [counselToast, setCounselToast] = useState(false)
+  // Remembers the last approved review so toggling Yes → No → Yes restores it
+  // instead of firing a brand-new counsel round-trip.
+  const lastApprovedReviewRef = useRef<{
+    requestId: string | null
+    reason: string | null
+  } | null>(
+    initialData?.publicFundingReviewStatus === 'approved'
+      ? { requestId: initialData.publicFundingReviewRequestId ?? null, reason: initialData.publicFundingReviewReason ?? null }
+      : null
+  )
 
   const progress = calcFounderAgreementProgress(data, Math.min(step, 6))
   const isComplete = progress === 100 && equityValid(data.founders)
@@ -1098,13 +1108,31 @@ export default function FounderAgreementWizardModal({
                     <Field label="Any of it publicly funded" required
                       hintAfter="Includes university or state grant funded work.">
                       <ToggleGroup options={['Yes', 'No']} value={data.publiclyFunded}
-                        onChange={v => setData((previous) => ({
-                          ...previous,
-                          publiclyFunded: v as 'Yes' | 'No',
-                          publicFundingReviewStatus: v === 'Yes' ? previous.publicFundingReviewStatus : 'not_required',
-                          publicFundingReviewRequestId: v === 'Yes' ? previous.publicFundingReviewRequestId : null,
-                          publicFundingReviewReason: v === 'Yes' ? previous.publicFundingReviewReason : null,
-                        }))} disabled={ipSectionLocked} />
+                        onChange={v => setData((previous) => {
+                          // Snapshot the approval before it gets wiped on → No
+                          if (previous.publicFundingReviewStatus === 'approved') {
+                            lastApprovedReviewRef.current = {
+                              requestId: previous.publicFundingReviewRequestId ?? null,
+                              reason: previous.publicFundingReviewReason ?? null,
+                            }
+                          }
+                          const restoredApproval = v === 'Yes' ? lastApprovedReviewRef.current : null
+                          return {
+                            ...previous,
+                            publiclyFunded: v as 'Yes' | 'No',
+                            // Restore a prior approval when toggling back to Yes so no
+                            // redundant second counsel round-trip is triggered.
+                            publicFundingReviewStatus: v === 'Yes'
+                              ? (restoredApproval ? 'approved' : previous.publicFundingReviewStatus)
+                              : 'not_required',
+                            publicFundingReviewRequestId: v === 'Yes'
+                              ? (restoredApproval?.requestId ?? previous.publicFundingReviewRequestId)
+                              : null,
+                            publicFundingReviewReason: v === 'Yes'
+                              ? (restoredApproval?.reason ?? previous.publicFundingReviewReason)
+                              : null,
+                          }
+                        })} disabled={ipSectionLocked} />
                     </Field>
                     <Field label="Any of it created while employed elsewhere" required>
                       <ToggleGroup options={['Yes', 'No']} value={data.createdAtEmployer}
