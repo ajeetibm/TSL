@@ -129,10 +129,6 @@ export default function InsufficientBlueprintUnitsModal({
           <button type="button" className="ibum__btn ibum__btn--cancel" onClick={onClose}>
             Cancel
           </button>
-          <button type="button" className="ibum__btn ibum__btn--upgrade" onClick={onUpgrade}>
-            <ArrowUpCircle size={15} />
-            Upgrade
-          </button>
           <button
             type="button"
             className="ibum__btn ibum__btn--topup"

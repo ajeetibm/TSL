@@ -4,10 +4,10 @@
  * Shows all three plans with:
  *  - Current plan  → disabled "Current plan" badge button
  *  - Higher tier   → golden "Upgrade" button
- *  - Lower tier    → "Downgrade" button
+ *  - Lower tier    → no action (not shown)
  *
- * Clicking Upgrade/Downgrade passes the selected plan back to the page
- * which then opens the appropriate confirmation modal.
+ * Clicking Upgrade passes the selected plan back to the page
+ * which then opens the upgrade confirmation modal.
  */
 
 import { CheckCircle2, FileText, Loader2, Sparkles, X } from 'lucide-react'
@@ -21,7 +21,7 @@ interface Props {
   plansLoading: boolean
   plansError: string | null
   onSelectUpgrade: (plan: SubscriptionPlan) => void
-  onSelectDowngrade: (plan: SubscriptionPlan) => void
+  onSelectDowngrade?: (plan: SubscriptionPlan) => void
   onClose: () => void
 }
 
@@ -87,7 +87,7 @@ export function UpgradePlansModal({
         {/* ── Header ───────────────────────────────────────────────── */}
         <header className="bs-modal-header">
           <h2 id="upgrade-plans-title">Choose a Plan</h2>
-          <p>Select a plan to upgrade or downgrade your current subscription.</p>
+          <p>Select a plan to upgrade your current subscription.</p>
         </header>
 
         {/* ── Loading ──────────────────────────────────────────────── */}
@@ -115,7 +115,6 @@ export function UpgradePlansModal({
               const features   = plan.features
               const isCurrent  = plan.planId.toLowerCase() === currentPlanId.toLowerCase()
               const canUpgrade = tier > currentTier
-              const canDowngrade = tier < currentTier
 
               return (
                 <div key={plan.planId} className="bs-compare-card-wrapper">
@@ -179,15 +178,6 @@ export function UpgradePlansModal({
                           onClick={() => onSelectUpgrade(plan)}
                         >
                           Upgrade
-                        </button>
-                      )}
-                      {canDowngrade && (
-                        <button
-                          type="button"
-                          className="bs-upm-btn bs-upm-btn--downgrade"
-                          onClick={() => onSelectDowngrade(plan)}
-                        >
-                          Downgrade
                         </button>
                       )}
                     </div>

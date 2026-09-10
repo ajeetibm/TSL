@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { counselPortalApi } from '../services/tslApi'
 
-type Availability = 'available' | 'unavailable'
+export type Availability = 'available' | 'unavailable'
 
 interface CounselAvailabilityContextValue {
   availability: Availability

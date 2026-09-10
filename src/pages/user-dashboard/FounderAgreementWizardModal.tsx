@@ -292,17 +292,23 @@ function validateFounderField(key: string, value: string): string {
   return ''
 }
 
-function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTouch, submitErrors, disabled }: {
+function FounderRow({ founder, index, canRemove, onChange, onRemove, onEquityTouch, submitErrors, disabled, otherIdNumbers }: {
   founder: FAFounder; index: number; canRemove: boolean
   onChange: (f: FAFounder) => void; onRemove: () => void; onEquityTouch?: () => void
-  submitErrors?: Record<string, string>; disabled?: boolean
+  submitErrors?: Record<string, string>; disabled?: boolean; otherIdNumbers?: string[]
 }) {
   const [liveErrors, setLiveErrors] = useState<Record<string, string>>({})
   const labelStyle: React.CSSProperties = { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.03em', color: '#888' }
 
   const up = <K extends keyof FAFounder>(key: K, val: FAFounder[K]) => {
     onChange({ ...founder, [key]: val })
-    const err = validateFounderField(key as string, val as string)
+    let err = validateFounderField(key as string, val as string)
+    if (key === 'idNumber' && !err) {
+      const trimmed = (val as string).trim()
+      if (trimmed && otherIdNumbers?.some(id => id.trim() === trimmed)) {
+        err = 'This ID number is already used by another founder.'
+      }
+    }
     setLiveErrors(prev => ({ ...prev, [key as string]: err }))
     if (key === 'equityPct') onEquityTouch?.()
   }
@@ -695,6 +701,22 @@ export default function FounderAgreementWizardModal({
           if (fieldErr) { e[`founder_${i}_${key}`] = fieldErr; valid = false }
         })
       })
+      // Cross-founder duplicate ID check
+      const idsSeen = new Map<string, number>()
+      data.founders.forEach((f, i) => {
+        const id = f.idNumber.trim()
+        if (!id) return
+        if (idsSeen.has(id)) {
+          const firstIdx = idsSeen.get(id)!
+          e[`founder_${i}_idNumber`] = 'This ID number is already used by another founder.'
+          if (!e[`founder_${firstIdx}_idNumber`]) {
+            e[`founder_${firstIdx}_idNumber`] = 'This ID number is already used by another founder.'
+          }
+          valid = false
+        } else {
+          idsSeen.set(id, i)
+        }
+      })
       if (!equityValid(data.founders)) { e.equity = 'Equity must total exactly 100%.'; valid = false }
     }
     if (s === 3 && data.vestingApplies === 'Yes') {
@@ -919,6 +941,7 @@ export default function FounderAgreementWizardModal({
                           onChange={updated => updateFounder(i, updated)} onRemove={() => removeFounder(i)}
                           onEquityTouch={handleEquityTouch}
                           submitErrors={Object.fromEntries(Object.entries(errors).filter(([k]) => k.startsWith(`founder_${i}_`)).map(([k, v]) => [k.replace(`founder_${i}_`, ''), v]))}
+                          otherIdNumbers={data.founders.filter((_, j) => j !== i).map(f => f.idNumber)}
                           disabled={ipSectionLocked} />
                       ))}
                     </div>

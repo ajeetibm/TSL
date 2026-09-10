@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { useCounselAvailability } from '../../context/CounselAvailabilityContext'
+import { useCounselAvailability, type Availability } from '../../context/CounselAvailabilityContext'
 import { clearAuthSession, counselPortalApi } from '../../services/tslApi'
 import './CounselPortal.css'
 
@@ -463,7 +463,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             setSearch={setSearch}
             setStatusFilter={setStatusFilter}
             statusFilter={statusFilter}
-            total={requests.length}
+            _total={requests.length}
             onOpenRequest={setSelectedRequest}
           />
         )}
@@ -911,8 +911,7 @@ function RequestsView({
   search,
   setSearch,
   setStatusFilter,
-  statusFilter,
-  _total,
+  statusFilter
 }: {
   requests: CounselRequest[]
   onOpenRequest: (request: CounselRequest) => void
@@ -932,7 +931,6 @@ function RequestsView({
         <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as 'all' | RequestStatus)}>
           <option value="all">All Status</option>
           <option value="pending">Pending</option>
-          <option value="in_progress">In Progress</option>
           <option value="completed">Completed</option>
           <option value="rejected">Rejected</option>
         </select>
