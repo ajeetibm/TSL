@@ -397,11 +397,6 @@ export default function DashboardCounsel() {
       return
     }
 
-    if (!formData.relatedWizard) {
-      setErrorMessage('Choose the wizard document to be reviewed before submitting a counsel request.')
-      return
-    }
-
     const creditsRequired = 1
     if (credits.creditsRemaining < creditsRequired) {
       setErrorMessage('You do not have any counsel credits remaining. Please top up before submitting.')
@@ -671,7 +666,7 @@ export default function DashboardCounsel() {
                 </div>
 
                 <label className="dashboard-counsel__field">
-                  <span>Related Blueprint <span style={{ color: '#c0392b' }}>*</span></span>
+                  <span>Related Blueprint <span style={{ color: '#57606a', fontSize: '0.85em' }}>(optional)</span></span>
                   <select
                     aria-label="Related Blueprint"
                     value={formData.relatedWizard}
