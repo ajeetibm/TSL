@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import {
   Award,
   CheckCircle,
+  CheckCircle2,
   ChevronDown,
   Clock,
   Mail,
@@ -10,6 +11,7 @@ import {
   Plus,
   Scale,
   Search,
+  X,
 } from 'lucide-react'
 import AddCounselModal from './AddCounselModal'
 import CounselProfileModal from './CounselProfileModal'
@@ -107,6 +109,8 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('')
@@ -141,6 +145,12 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
     setIsProfileModalOpen(true)
   }
 
+  const showToast = (msg: string) => {
+    setToast(msg)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  }
+
   const handleAddCounsel = async (newCounsel: CounselMember) => {
     await adminApi.addCounsel({
       fullName: newCounsel.name,
@@ -153,6 +163,7 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
 
     onCounselAdded(newCounsel)
     setIsAddModalOpen(false)
+    showToast('New Counsel added successfully.')
   }
 
   // Filter counsel members based on search and filters
@@ -477,6 +488,21 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
         )}
       </div>
     </section>
+
+    {toast && (
+      <div className="adm-toast adm-toast--success" role="status" aria-live="polite">
+        <span className="adm-toast__icon"><CheckCircle2 size={18} /></span>
+        <p className="adm-toast__msg">{toast}</p>
+        <button
+          type="button"
+          className="adm-toast__close"
+          onClick={() => setToast(null)}
+          aria-label="Dismiss notification"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    )}
     </>
   )
 }
