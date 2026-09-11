@@ -15,6 +15,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { billingApi, paymentApi } from '../../services/tslApi'
 import type { WizardAccess } from '../../services/tslApi'
@@ -44,11 +45,68 @@ function downloadInvoicePdf(inv: BillingHistoryInvoice) {
     ? `${inv.paymentMethod.brand} •••• ${inv.paymentMethod.last4}`
     : '—'
 
-  const changeRow = inv.type === 'upgrade'
-    ? `Upgrade: ${inv.previousPlan} → ${inv.newPlan}`
-    : inv.type === 'downgrade'
-      ? `Downgrade: ${inv.previousPlan} → ${inv.newPlan}`
-      : `Subscription: ${inv.plan}`
+  const isCounselTopUp = inv.type === 'counsel-topup'
+
+  // ── Counsel top-up PDF ───────────────────────────────────────────────────
+  if (isCounselTopUp) {
+    const credits      = inv.creditsTopUp ?? 0
+    const rate         = inv.ratePerCredit ?? 0
+    const tier         = inv.counselTier ?? inv.plan
+    const lineDesc     = `${tier} Top-Up (${credits} credit${credits !== 1 ? 's' : ''} × ${fmtZAR(rate)})`
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>${inv.invoiceNumber}</title>
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; color: #0d1b2a; padding: 40px; max-width: 680px; margin: 0 auto; }
+  h1  { font-size: 26px; margin: 0 0 4px; }
+  .sub{ color: #6b7280; font-size: 14px; margin: 0 0 32px; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+  td  { padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
+  td:last-child { text-align: right; }
+  .label { color: #6b7280; }
+  .total td { font-weight: 700; font-size: 16px; border-bottom: none; padding-top: 16px; }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; background: #edfaf3; color: #1a7a45; font-size: 12px; font-weight: 700; }
+  .logo { font-size: 20px; font-weight: 800; color: #cf9b2f; margin-bottom: 32px; }
+  @media print { body { padding: 20px; } }
+</style>
+</head>
+<body>
+  <div class="logo">The Startup Legal</div>
+  <h1>${inv.invoiceNumber}</h1>
+  <p class="sub">${inv.invoiceDate} &nbsp;·&nbsp; <span class="badge">Paid</span></p>
+  <table>
+    <tr><td class="label">Transaction ID</td><td>${inv.transactionId}</td></tr>
+    <tr><td class="label">Type</td><td>Top Up Credits</td></tr>
+    <tr><td class="label">Counsel tier</td><td>${tier}</td></tr>
+    <tr><td class="label">Credits purchased</td><td>${credits}</td></tr>
+    <tr><td class="label">Rate per credit</td><td>${fmtZAR(rate)}</td></tr>
+    <tr><td class="label">Payment method</td><td>${pm}</td></tr>
+  </table>
+  <table>
+    <tr><td class="label">${lineDesc}</td><td>${fmtZAR(inv.amount)}</td></tr>
+    <tr><td class="label">VAT (not charged)</td><td>${fmtZAR(inv.tax)}</td></tr>
+    <tr class="total"><td>Total</td><td>${fmtZAR(inv.total)}</td></tr>
+  </table>
+</body>
+</html>`
+    const iframe = document.createElement('iframe')
+    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:0'
+    document.body.appendChild(iframe)
+    iframe.contentDocument!.open()
+    iframe.contentDocument!.write(html)
+    iframe.contentDocument!.close()
+    iframe.contentWindow!.focus()
+    iframe.contentWindow!.print()
+    setTimeout(() => document.body.removeChild(iframe), 2000)
+    return
+  }
+
+  // ── Subscription / upgrade / downgrade PDF ───────────────────────────────
+  const planLabel = inv.type === 'upgrade' || inv.type === 'downgrade'
+    ? inv.newPlan
+    : inv.plan
 
   const html = `<!DOCTYPE html>
 <html>
@@ -75,7 +133,7 @@ function downloadInvoicePdf(inv: BillingHistoryInvoice) {
   <p class="sub">${inv.invoiceDate} &nbsp;·&nbsp; <span class="badge">Paid</span></p>
   <table>
     <tr><td class="label">Transaction ID</td><td>${inv.transactionId}</td></tr>
-    <tr><td class="label">Plan change</td><td>${changeRow}</td></tr>
+    <tr><td class="label">Plan</td><td>${planLabel}</td></tr>
     <tr><td class="label">Billing period</td><td>${inv.billingPeriod}</td></tr>
     <tr><td class="label">Payment method</td><td>${pm}</td></tr>
   </table>
@@ -138,7 +196,11 @@ function cardDetail(method: PaymentMethod): string {
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function DashboardSettings() {
-  const [activeTab, setActiveTab] = useState<'billing' | 'history'>('billing')
+  const location = useLocation()
+  const initialTab = (location.state as { activeTab?: string } | null)?.activeTab === 'history'
+    ? 'history'
+    : 'billing'
+  const [activeTab, setActiveTab] = useState<'billing' | 'history'>(initialTab)
 
   // ── Payment callback injected into the subscription hook ─────────────────
   // Opens Paystack checkout for the prorated amount, verifies server-side,
@@ -390,8 +452,20 @@ export default function DashboardSettings() {
 
   const progressPct = runsTotal > 0 ? Math.min(100, Math.round((runsUsed / runsTotal) * 100)) : 0
 
-  // Non-subscribers see no invoices regardless of what the server returns
-  const visibleInvoices = hasSubscription ? invoices : []
+  // Non-subscribers see no invoices regardless of what the server returns.
+  // Counsel top-up invoices are stored locally in sessionStorage after payment.
+  const counselTopUpInvoices: BillingHistoryInvoice[] = (() => {
+    try {
+      const stored = sessionStorage.getItem('tsl-counsel-topup-invoices')
+      return stored ? (JSON.parse(stored) as BillingHistoryInvoice[]) : []
+    } catch { return [] }
+  })()
+
+  const visibleInvoices = hasSubscription
+    ? [...counselTopUpInvoices, ...invoices].sort(
+        (a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime(),
+      )
+    : counselTopUpInvoices
 
   return (
     <DashboardShell activeSection="Settings">
@@ -715,7 +789,11 @@ export default function DashboardSettings() {
                         </span>
                         <div className="bs-invoice-info">
                           <h3>{invoice.invoiceNumber}</h3>
-                          <p>{invoice.plan} · {invoice.invoiceDate}</p>
+                          <p>
+                            {invoice.type === 'counsel-topup'
+                              ? `Top Up Credits · ${invoice.invoiceDate}`
+                              : `${invoice.plan} · ${invoice.invoiceDate}`}
+                          </p>
                         </div>
                         <div className="bs-invoice-amount">
                           <strong>R{invoice.total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>

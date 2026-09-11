@@ -6,10 +6,58 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { paymentApi } from '../../services/tslApi'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { setPageMetadata } from '../../services/metadata'
-import type { CounselCredits } from '../../services/dashboardTypes'
+import type { BillingHistoryInvoice, CounselCredits } from '../../services/dashboardTypes'
 import type { TopUpPlan } from './CounselCreditsModal'
 import './Dashboard.css'
 import './CounselTopUpPayment.css'
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function buildTopUpInvoice(
+  reference: string,
+  plan: TopUpPlan,
+  qty: number,
+  total: number,
+): BillingHistoryInvoice {
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)   // "YYYY-MM-DD"
+  // Sequential invoice number derived from timestamp
+  const seq = String(now.getFullYear()).slice(-2) + String(now.getMonth() + 1).padStart(2, '0')
+  const rand = Math.floor(Math.random() * 900 + 100)
+  return {
+    invoiceId:     `topup-${reference}`,
+    invoiceNumber: `INV-${now.getFullYear()}-TU${seq}${rand}`,
+    invoiceDate:   dateStr,
+    transactionId: reference,
+    type:          'counsel-topup',
+    previousPlan:  plan.name,
+    newPlan:       plan.name,
+    billingPeriod: dateStr,
+    plan:          plan.name,
+    amount:        total,
+    tax:           0,
+    total,
+    status:        'paid',
+    paymentMethod: null,   // Paystack card details not available client-side
+    date:          dateStr,
+    creditsTopUp:  qty,
+    ratePerCredit: plan.ratePerCredit,
+    counselTier:   plan.name,
+  }
+}
+
+function storeCounselTopUpInvoice(invoice: BillingHistoryInvoice) {
+  try {
+    const key = 'tsl-counsel-topup-invoices'
+    const existing: BillingHistoryInvoice[] = (() => {
+      try { return JSON.parse(sessionStorage.getItem(key) ?? '[]') as BillingHistoryInvoice[] }
+      catch { return [] }
+    })()
+    // Deduplicate by invoiceId
+    const updated = [invoice, ...existing.filter((i) => i.invoiceId !== invoice.invoiceId)]
+    sessionStorage.setItem(key, JSON.stringify(updated))
+  } catch { /* storage unavailable */ }
+}
 
 function getStoredUserEmail() {
   try {
@@ -112,6 +160,10 @@ export default function CounselTopUpPayment() {
       }
       sessionStorage.setItem('tsl-counsel-credits-session', JSON.stringify(updatedCredits))
     }
+
+    // Build and persist the top-up invoice so it appears in Billing History
+    const invoice = buildTopUpInvoice(result.reference, plan!, qty, total)
+    storeCounselTopUpInvoice(invoice)
 
     navigate(returnTo?.pathname ?? '/dashboard/counsel', {
       replace: true,

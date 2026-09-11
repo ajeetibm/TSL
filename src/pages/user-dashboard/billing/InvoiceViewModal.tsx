@@ -24,10 +24,10 @@ function fmtZAR(n: number) {
   return `R${n.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function planChangeLabel(type: BillingHistoryInvoice['type'], prev: string, next: string): string {
-  if (type === 'upgrade')   return `Upgrade — ${prev} → ${next}`
-  if (type === 'downgrade') return `Downgrade — ${prev} → ${next}`
-  return `Subscription — ${prev}`
+function planLabel(invoice: BillingHistoryInvoice): string {
+  return invoice.type === 'upgrade' || invoice.type === 'downgrade'
+    ? invoice.newPlan
+    : invoice.plan
 }
 
 export function InvoiceViewModal({ invoice, onClose, onDownload }: Props) {
@@ -88,14 +88,39 @@ export function InvoiceViewModal({ invoice, onClose, onDownload }: Props) {
               <dt>Transaction ID</dt>
               <dd className="bs-inv-modal__txid">{invoice.transactionId}</dd>
             </div>
-            <div className="bs-inv-modal__detail-row">
-              <dt>Plan change</dt>
-              <dd>{planChangeLabel(invoice.type, invoice.previousPlan, invoice.newPlan)}</dd>
-            </div>
-            <div className="bs-inv-modal__detail-row">
-              <dt>Billing period</dt>
-              <dd>{invoice.billingPeriod}</dd>
-            </div>
+
+            {invoice.type === 'counsel-topup' ? (
+              <>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Type</dt>
+                  <dd>Top Up Credits</dd>
+                </div>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Counsel tier</dt>
+                  <dd>{invoice.counselTier ?? invoice.plan}</dd>
+                </div>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Credits purchased</dt>
+                  <dd>{invoice.creditsTopUp ?? 0}</dd>
+                </div>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Rate per credit</dt>
+                  <dd>{fmtZAR(invoice.ratePerCredit ?? 0)}</dd>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Plan</dt>
+                  <dd>{planLabel(invoice)}</dd>
+                </div>
+                <div className="bs-inv-modal__detail-row">
+                  <dt>Billing period</dt>
+                  <dd>{invoice.billingPeriod}</dd>
+                </div>
+              </>
+            )}
+
             <div className="bs-inv-modal__detail-row">
               <dt>Payment method</dt>
               <dd>
@@ -108,10 +133,19 @@ export function InvoiceViewModal({ invoice, onClose, onDownload }: Props) {
 
           {/* Amount breakdown */}
           <div className="bs-inv-modal__breakdown">
-            <div className="bs-inv-modal__breakdown-row">
-              <span>Subscription amount</span>
-              <span>{fmtZAR(invoice.amount)}</span>
-            </div>
+            {invoice.type === 'counsel-topup' ? (
+              <div className="bs-inv-modal__breakdown-row">
+                <span>
+                  {invoice.counselTier ?? invoice.plan} Top-Up ({invoice.creditsTopUp ?? 0} credit{(invoice.creditsTopUp ?? 0) !== 1 ? 's' : ''} × {fmtZAR(invoice.ratePerCredit ?? 0)})
+                </span>
+                <span>{fmtZAR(invoice.amount)}</span>
+              </div>
+            ) : (
+              <div className="bs-inv-modal__breakdown-row">
+                <span>Subscription amount</span>
+                <span>{fmtZAR(invoice.amount)}</span>
+              </div>
+            )}
             <div className="bs-inv-modal__breakdown-row">
               <span>VAT (not charged)</span>
               <span>{fmtZAR(invoice.tax)}</span>

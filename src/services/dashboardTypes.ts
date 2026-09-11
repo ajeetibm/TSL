@@ -210,7 +210,8 @@ export interface DowngradeResult {
 }
 
 // ── Billing History Invoice ────────────────────────────────────────────────
-// Returned by GET /api/v1/subscription/invoices.
+// Returned by GET /api/v1/subscription/invoices, or constructed locally
+// for counsel credit top-up purchases.
 // All fields present for upgrade/downgrade invoices; seed invoices may have
 // previousPlan === newPlan when the plan did not change.
 
@@ -219,7 +220,7 @@ export interface BillingHistoryInvoice {
   invoiceNumber: string
   invoiceDate:   string   // ISO date string  e.g. "2025-12-01"
   transactionId: string
-  type:          'upgrade' | 'downgrade' | 'subscription'
+  type:          'upgrade' | 'downgrade' | 'subscription' | 'counsel-topup'
   previousPlan:  string
   newPlan:       string
   billingPeriod: string   // e.g. "2025-12-01 – 2025-12-31"
@@ -230,6 +231,10 @@ export interface BillingHistoryInvoice {
   status:        'paid' | 'pending' | 'failed'
   paymentMethod: { brand: string; last4: string } | null
   date:          string   // display date (ISO)
+  // counsel-topup only fields
+  creditsTopUp?:   number   // number of credits purchased
+  ratePerCredit?:  number   // ZAR per credit (e.g. 550)
+  counselTier?:    string   // tier name for the purchase (e.g. "Operator")
 }
 
 // ── Admin Billing & Invoices ───────────────────────────────────────────────
