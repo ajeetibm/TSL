@@ -355,6 +355,8 @@ export default function AdminDashboard() {
   const [isAddCounselModalOpen, setIsAddCounselModalOpen] = useState(false)
   const [counselList, setCounselList] = useState<CounselMember[]>(counselMembers)
   const [adminRole, setAdminRole] = useState<string | null>(null)
+  const [adminJoinedAt, setAdminJoinedAt] = useState<string>('2025-12-01')
+  const [adminLastLogin, setAdminLastLogin] = useState<string>('')
 
   // â”€â”€ Admin profile preferences â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   type AdminPrefs = { workflowUpdates: boolean; weeklySummary: boolean; productUpdates: boolean }
@@ -374,7 +376,7 @@ export default function AdminDashboard() {
 
     adminApi.profile().then((response) => {
       if (cancelled || !response.success || !response.data) return
-      const data = response.data as Partial<AdminProfileForm> & { role?: string }
+      const data = response.data as Partial<AdminProfileForm> & { role?: string; joinedAt?: string; lastLogin?: string }
       const nextProfile = {
         ...defaultAdminProfile,
         firstName: typeof data.firstName === 'string' ? data.firstName : defaultAdminProfile.firstName,
@@ -387,6 +389,8 @@ export default function AdminDashboard() {
       setAdminProfile(nextProfile)
       setAdminProfileBaseline(nextProfile)
       if (typeof data.role === 'string') setAdminRole(data.role)
+      if (typeof data.joinedAt === 'string') setAdminJoinedAt(data.joinedAt)
+      if (typeof data.lastLogin === 'string') setAdminLastLogin(data.lastLogin)
     })
 
     adminApi.counsel().then((response) => {
@@ -932,7 +936,13 @@ export default function AdminDashboard() {
                           onClick={() => setAdminAvatarPreview(true)}
                         />
                       ) : (
-                        <span>FG</span>
+                        <span>
+                          {[adminProfile.firstName, adminProfile.lastName]
+                            .filter(Boolean)
+                            .map(s => s[0].toUpperCase())
+                            .join('')
+                            || 'A'}
+                        </span>
                       )}
                       <button
                         type="button"
@@ -956,9 +966,24 @@ export default function AdminDashboard() {
                       />
                     </div>
                     <div className="admin-profile__identity">
-                      <h2>Given</h2>
-                      <p>Super Admin - Member since December 2025</p>
-                      <em>Last Login: January 9, 2026 - 14:23</em>
+                      <h2>{adminProfile.firstName || 'Admin'}</h2>
+                      <p>
+                        {adminRole === 'super_admin' ? 'Super Admin' : 'Sub Admin'}
+                        {' - Member since '}
+                        {adminJoinedAt
+                          ? new Date(adminJoinedAt).toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })
+                          : 'December 2025'}
+                      </p>
+                      <em>Last Login: {adminLastLogin
+                        ? (() => {
+                            const d = new Date(adminLastLogin)
+                            return isNaN(d.getTime())
+                              ? adminLastLogin  // already a human string from old data
+                              : d.toLocaleDateString('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' })
+                                + ' - '
+                                + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: false })
+                          })()
+                        : 'Not recorded'}</em>
                     </div>
                   </div>
 
