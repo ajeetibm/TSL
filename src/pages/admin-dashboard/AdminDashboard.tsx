@@ -1055,7 +1055,8 @@ export default function AdminDashboard() {
                         <input
                           type="text"
                           value={adminProfile.jobTitle}
-                          onChange={(event) => updateAdminProfile('jobTitle', event.target.value)}
+                          readOnly
+                          disabled
                         />
                       </div>
                     </label>

@@ -5267,6 +5267,13 @@
   outline: 0;
 }
 
+.admin-profile__input-wrap input:disabled {
+  background: transparent;
+  color: #b0b8c1;
+  cursor: not-allowed;
+  user-select: none;
+}
+
 .admin-profile__password-form input {
   display: block;
   border: 1px solid #d7d7d7;
