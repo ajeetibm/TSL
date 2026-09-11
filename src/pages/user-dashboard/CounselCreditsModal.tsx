@@ -142,10 +142,10 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
           )}
 
           {counselPlans.length > 0 && (() => {
-            const rate = counselPlans[0]?.ratePerCredit ?? 550
             const planForTopUp = counselPlans.find(p =>
               selectedPlanName ? p.name === selectedPlanName : isCurrentPlan(p.name)
             ) ?? counselPlans[0]
+            const rate = planForTopUp.ratePerCredit ?? 550
             return (
               <div className="counsel-credits-modal__buy-banner">
                 <div className="counsel-credits-modal__buy-banner-text">
@@ -175,8 +175,7 @@ export default function CounselCreditsModal({ isOpen, onClose, currentPlan, onTo
               <li>Standard scope: 30 minutes, up to 10 pages or 1,500 words, five clause changes, and one counterparty round</li>
               <li>Credits reset monthly on your billing date</li>
               <li>Unused credits do not roll over to the next month</li>
-              <li>Top-up credits can be purchased anytime at the tier rate you select</li>
-              <li>Response times are business hours (Mon-Fri, 9am-5pm SAST)</li>
+              <li>Top-up credits can be purchased anytime at your plan's rate per credit</li>
             </ul>
           </div>
         </div>

@@ -486,20 +486,34 @@ export function ContactSection() {
               transition={{ duration: 0.65, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
               className="grid content-start gap-7"
             >
-              {contactCards.map(({ label, value, icon: Icon }) => (
-                <article
-                  key={label}
-                  className="flex min-h-[110px] items-center gap-6 rounded-[24px] border border-white/15 bg-[#253342] px-8 shadow-[0_16px_32px_rgba(0,0,0,0.18)]"
-                >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold text-white">
-                    <Icon size={20} strokeWidth={2.2} />
-                  </span>
-                  <div>
-                    <p className="text-xs font-normal text-white/45">{label}</p>
-                    <p className="mt-3 text-sm font-bold leading-5 text-white">{value}</p>
-                  </div>
-                </article>
-              ))}
+              {contactCards.map(({ label, value, icon: Icon }) => {
+                const isHighlighted = label === 'Email' || label === 'Office'
+                return (
+                  <article
+                    key={label}
+                    className="flex min-h-[110px] items-center gap-6 rounded-[24px] border border-white/15 bg-[#253342] px-8 shadow-[0_16px_32px_rgba(0,0,0,0.18)]"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold text-white">
+                      <Icon size={20} strokeWidth={2.2} />
+                    </span>
+                    <div>
+                      <p className="text-xs font-normal text-white/45">{label}</p>
+                      <p
+                        className="mt-3 leading-5 text-white"
+                        style={isHighlighted ? {
+                          fontFamily: "'Open Sans', sans-serif",
+                          fontStyle: 'normal',
+                          fontWeight: 600,
+                          fontSize: '14px',
+                          lineHeight: '20px',
+                        } : { fontWeight: 700, fontSize: '14px' }}
+                      >
+                        {value}
+                      </p>
+                    </div>
+                  </article>
+                )
+              })}
 
               <article className="rounded-[24px] border border-white/15 bg-[#253342] p-8 shadow-[0_16px_32px_rgba(0,0,0,0.18)]">
                 <h3 className="text-base font-bold text-white">Quick Response</h3>
