@@ -69,11 +69,6 @@ export default function ResetSuccess() {
                   Your password has been updated successfully. You can now sign in
                   using your new password.
                 </p>
-                {role && (
-                  <p className="auth-page__success-note">
-                    Your new password will remain active until the mock server is restarted.
-                  </p>
-                )}
               </div>
 
               <button
