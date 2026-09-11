@@ -508,6 +508,30 @@ export default function AdminDashboard() {
     return () => { cancelled = true }
   }, [activeNav])
 
+  // When admin opens Counsel Requests, mark all counsel-request notifications as
+  // read so the sidebar badge clears — they have now seen the status updates.
+  useEffect(() => {
+    if (activeNav !== 'counsel-requests') return
+    const unread = (dashboardData?.notifications ?? []).filter(
+      (n) => ['counsel_request_rejected', 'counsel_request_completed', 'counsel_request_accepted'].includes(n.type) && !n.read
+    )
+    if (unread.length === 0) return
+    // Fire-and-forget — dismiss each unread notification silently
+    unread.forEach((n) => void adminApi.markNotificationRead(n.notificationId))
+    setDashboardData((current) =>
+      current
+        ? {
+            ...current,
+            notifications: (current.notifications ?? []).map((n) =>
+              ['counsel_request_rejected', 'counsel_request_completed', 'counsel_request_accepted'].includes(n.type)
+                ? { ...n, read: true }
+                : n
+            ),
+          }
+        : current
+    )
+  }, [activeNav]) // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     let cancelled = false
     adminApi.getSessions().then((res) => {
@@ -581,8 +605,10 @@ export default function AdminDashboard() {
       return true
     })
   }, [dashboardData])
-  const unreadRejectionNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'counsel_request_rejected' && !notification.read), [dashboardData])
-  const unreadNewUserNotifications   = useMemo(() => (dashboardData?.notifications ?? []).filter((notification) => notification.type === 'new_user' && !notification.read), [dashboardData])
+  const COUNSEL_REQ_NOTIF_TYPES = ['counsel_request_rejected', 'counsel_request_completed', 'counsel_request_accepted']
+  const unreadRejectionNotifications     = useMemo(() => (dashboardData?.notifications ?? []).filter((n) => n.type === 'counsel_request_rejected' && !n.read), [dashboardData])
+  const unreadCounselRequestsNotifications = useMemo(() => (dashboardData?.notifications ?? []).filter((n) => COUNSEL_REQ_NOTIF_TYPES.includes(n.type) && !n.read), [dashboardData])  // eslint-disable-line react-hooks/exhaustive-deps
+  const unreadNewUserNotifications       = useMemo(() => (dashboardData?.notifications ?? []).filter((n) => n.type === 'new_user' && !n.read), [dashboardData])
   const dismissNotification = async (notificationId: string) => {
     const response = await adminApi.markNotificationRead(notificationId)
     if (!response.success) return setError(response.message ?? 'Unable to update notification.')
@@ -812,7 +838,10 @@ export default function AdminDashboard() {
           {navItems.map((item) => {
             const Icon = item.icon
             const staticBadge = 'badge' in item ? item.badge : undefined
-            const dynamicBadge = item.key === 'users' ? (unreadNewUserNotifications.length > 0 ? unreadNewUserNotifications.length : undefined) : undefined
+            const dynamicBadge =
+              item.key === 'users'            ? (unreadNewUserNotifications.length         > 0 ? unreadNewUserNotifications.length         : undefined)
+            : item.key === 'counsel-requests' ? (unreadCounselRequestsNotifications.length > 0 ? unreadCounselRequestsNotifications.length : undefined)
+            : undefined
             const badge = dynamicBadge ?? staticBadge
             return (
               <button
