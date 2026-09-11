@@ -65,13 +65,17 @@ function validateStep(step: Step, data: NdaWizardData): Errors {
     validateParty('party_b', data.party_b, partyTypeToEntity(data.party_b_type), errors)
   }
   if (step === 2) {
-    if (!data.purpose.trim()) errors['purpose'] = 'This field is required.'
+    if (!data.purpose.trim()) errors['purpose'] = 'Please describe the purpose of this disclosure.'
+    if (data.ci_definition === 'Broad with standard exclusions' && data.ci_exclusions.length === 0)
+      errors['ci_exclusions'] = 'Select at least one standard exclusion.'
     if (data.ci_definition === 'Specified categories only' && data.ci_categories.length === 0)
       errors['ci_categories'] = 'Select at least one category.'
   }
   if (step === 3) {
     if (!data.duration_years || data.duration_years < 1 || data.duration_years > 10)
       errors['duration_years'] = 'Enter a value between 1 and 10.'
+    if (data.permitted_recipients.length === 0)
+      errors['permitted_recipients'] = 'Select at least one permitted recipient.'
     if (data.non_solicit && (!data.non_solicit_months || data.non_solicit_months < 1))
       errors['non_solicit_months'] = 'This field is required.'
   }
@@ -132,7 +136,7 @@ function FormGroup({
         {optional && <span className="nda-modal__optional"> (optional)</span>}
       </label>
       {children}
-      {help && !error && <p className="nda-modal__field-hint" style={{ margin: '4px 0 0', fontSize: '11.5px' }}>{help}</p>}
+      {help && !error && <p className="nda-modal__field-hint">{help}</p>}
       {error && <p className="nda-modal__field-error">{error}</p>}
     </div>
   )
@@ -936,13 +940,15 @@ export default function NdaWizardModal({
                     </FormGroup>
                   )}
 
-                  <FormGroup label="Standard exclusions" required>
-                    <MultiSelect
-                      values={data.ci_exclusions}
-                      options={['Already public', 'Independently developed', 'Lawfully received from a third party', 'Required to be disclosed by law']}
-                      onChange={(v) => setTop('ci_exclusions', v)}
-                    />
-                  </FormGroup>
+                  {data.ci_definition === 'Broad with standard exclusions' && (
+                    <FormGroup label="Standard exclusions" required error={errors['ci_exclusions']}>
+                      <MultiSelect
+                        values={data.ci_exclusions}
+                        options={['Already public', 'Independently developed', 'Lawfully received from a third party', 'Required to be disclosed by law']}
+                        onChange={(v) => setTop('ci_exclusions', v)}
+                      />
+                    </FormGroup>
+                  )}
 
                   <ToggleRow
                     label="Information must be marked confidential"
@@ -994,7 +1000,7 @@ export default function NdaWizardModal({
                 {/* Permitted recipients */}
                 <div className="nda-modal__card">
                   <h3 className="nda-modal__card-title">Who may receive the information</h3>
-                  <FormGroup label="Permitted recipients" required>
+                  <FormGroup label="Permitted recipients" required error={errors['permitted_recipients']}>
                     <MultiSelect
                       values={data.permitted_recipients}
                       options={['Employees', 'Directors', 'Professional advisers', 'Affiliates', 'Subcontractors']}
