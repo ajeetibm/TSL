@@ -16,6 +16,7 @@ const LIVE_BLUEPRINTS = new Set([
   'Non-Disclosure Agreement (NDA)',
   'Employment Offer Letter',
   'Privacy & Cookies Policy',
+  'Founders Agreement & IP Assignment',
   'Founders Agreement and IP Assignment',
   'Founders agreement and IP assignment',
   'Service Level Agreement (SLA)',
