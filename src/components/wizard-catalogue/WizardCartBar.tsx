@@ -34,7 +34,7 @@ export function WizardCartBar({ selectedWizards, totalItems, onClear }: WizardCa
     // legacy return flag so a previous guest session cannot send the user
     // back to the public catalogue after signing in.
     localStorage.removeItem('tsl-from-catalogue')
-    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signup', redirectTo: '/dashboard/wizard-details' } }))
+    window.dispatchEvent(new CustomEvent('tsl-open-auth-modal', { detail: { mode: 'signin', redirectTo: '/dashboard/wizard-details' } }))
   }
 
   return createPortal(
