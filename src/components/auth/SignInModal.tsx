@@ -54,6 +54,17 @@ function validateEmail(v: string): string {
   return ''
 }
 
+/** Extra check used only during sign-up — blocks reserved admin/sub-admin addresses. */
+function validateSignupEmail(v: string): string {
+  const base = validateEmail(v)
+  if (base) return base
+  const lower = v.trim().toLowerCase()
+  if (lower.includes('thestartuplegal') || lower.includes('@admin')) {
+    return 'This email address is reserved for admin or sub-admin accounts and cannot be used to create a user profile. Please use a personal email address.'
+  }
+  return ''
+}
+
 interface PasswordRules {
   minLength: boolean
   hasUpper: boolean
@@ -262,9 +273,9 @@ function SignInModalContent({
     setFormData(prev => ({ ...prev, email: value }))
     if (formError) setFormError('')
     if (touched.email || value.length > 0) {
-      setFieldErrors(prev => ({ ...prev, email: validateEmail(value) }))
+      setFieldErrors(prev => ({ ...prev, email: mode === 'signup' ? validateSignupEmail(value) : validateEmail(value) }))
     }
-  }, [touched.email, formError])
+  }, [touched.email, formError, mode])
 
   const handlePasswordChange = useCallback((value: string) => {
     if (formError) setFormError('')
@@ -306,7 +317,7 @@ function SignInModalContent({
         case 'fullName':
           return { ...prev, fullName: validateFullName(formData.fullName) }
         case 'email':
-          return { ...prev, email: validateEmail(formData.email) }
+          return { ...prev, email: mode === 'signup' ? validateSignupEmail(formData.email) : validateEmail(formData.email) }
         case 'password':
           return {
             ...prev,
@@ -330,7 +341,7 @@ function SignInModalContent({
   const runFullValidation = () => {
     const errs = {
       fullName:        mode === 'signup' ? validateFullName(formData.fullName) : '',
-      email:           validateEmail(formData.email),
+      email:           mode === 'signup' ? validateSignupEmail(formData.email) : validateEmail(formData.email),
       password:        mode === 'signup'
                          ? validatePassword(formData.password)
                          : formData.password.trim() ? '' : 'Password is required.',
@@ -443,6 +454,17 @@ function SignInModalContent({
     setShowConfirmPassword(false)
     setAcceptedPolicy(false)
   }
+
+  // ─── Admin sign-in hint (sign-in mode only) ──────────────────────────────
+  // Mirrors mock server logic: thestartuplegal → super_admin or admin role
+  const adminSignInHint = (() => {
+    if (mode !== 'signin') return ''
+    const lower = formData.email.trim().toLowerCase()
+    if (!lower) return ''
+    if (lower === 'super@thestartuplegal.co.za') return 'You are signing in as a Super Admin.'
+    if (lower.includes('thestartuplegal') || lower.includes('@admin')) return 'You are signing in as an Admin / Sub-Admin account.'
+    return ''
+  })()
 
   // Input border class helper
   const inputCls = (field: keyof typeof fieldErrors) =>
@@ -607,6 +629,9 @@ function SignInModalContent({
                     <Mail className="signin-modal__input-icon" size={16} />
                   </div>
                   <FieldError message={touched.email ? fieldErrors.email : ''} />
+                  {adminSignInHint && (
+                    <p className="signin-modal__admin-hint" role="status">{adminSignInHint}</p>
+                  )}
                 </div>
 
                 <div className="signin-modal__field">
