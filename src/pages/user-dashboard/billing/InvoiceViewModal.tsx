@@ -21,7 +21,7 @@ interface Props {
 }
 
 function fmtZAR(n: number) {
-  return `R${n.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  return `R${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function planLabel(invoice: BillingHistoryInvoice): string {
@@ -146,10 +146,6 @@ export function InvoiceViewModal({ invoice, onClose, onDownload }: Props) {
                 <span>{fmtZAR(invoice.amount)}</span>
               </div>
             )}
-            <div className="bs-inv-modal__breakdown-row">
-              <span>VAT (not charged)</span>
-              <span>{fmtZAR(invoice.tax)}</span>
-            </div>
             <div className="bs-inv-modal__breakdown-row bs-inv-modal__breakdown-row--total">
               <strong>Total</strong>
               <strong>{fmtZAR(invoice.total)}</strong>
