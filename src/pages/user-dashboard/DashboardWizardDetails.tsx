@@ -149,6 +149,9 @@ const blueprintIdByWizardTitle: Record<string, string> = {
   'Shareholders Agreement': 'shareholders-agreement',
   'Commercial Lease Agreement': 'contractor-agreement',
   'Sale of Goods Agreement': 'contractor-agreement',
+  'Service Level Agreement (SLA)': 'service-level-agreement',
+  'Founders Agreement & IP Assignment': 'founders-agreement-ip',
+  'Founders Agreement and IP Assignment': 'founders-agreement-ip',
 }
 
 type PlanKey = string
