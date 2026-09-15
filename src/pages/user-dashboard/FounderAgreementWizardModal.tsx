@@ -63,14 +63,23 @@ function PreviewSection({ num, title, onEdit, children }: {
 
 /* ─── Step bar ───────────────────────────────────────────── */
 function StepBar({ current, isPreview }: { current: Step; isPreview: boolean }) {
+  const stripRef = useRef<HTMLDivElement>(null)
+  const activeRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (activeRef.current && stripRef.current) {
+      activeRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    }
+  }, [current, isPreview])
+
   return (
-    <div className="nda-modal__steps fa-steps">
+    <div className="nda-modal__steps fa-steps" ref={stripRef}>
       {STEPS.map((label, i) => {
         const num = (i + 1) as Step
         const done = isPreview || num < current
         const active = !isPreview && num === current
         return (
-          <div key={label} className="nda-modal__step-item fa-step-item">
+          <div key={label} className="nda-modal__step-item fa-step-item" ref={active ? activeRef : undefined}>
             {i > 0 && <div className="fa-step-connector" />}
             <span className={[
               'nda-modal__step-dot',

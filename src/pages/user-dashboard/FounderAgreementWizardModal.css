@@ -9,18 +9,24 @@
   max-width: 960px;
 }
 
-/* ── Step bar: 7-step compact layout ─────────────────────── */
+/* ── Step bar: scrollable strip so full labels always show ── */
 .fa-steps {
   gap: 0;
   align-items: center;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scroll-behavior: smooth;
 }
 
-/* Each step item: dot + label, shrinkable */
+.fa-steps::-webkit-scrollbar {
+  display: none;
+}
+
+/* Each step item: dot + label, no shrink so text never truncates */
 .fa-step-item {
   display: flex;
   align-items: center;
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
   padding: 12px 4px 12px 0;
   gap: 6px;
   white-space: nowrap;
@@ -30,6 +36,7 @@
 .nda-modal__steps.fa-steps .nda-modal__step-item {
   padding: 12px 4px 12px 0;
   gap: 6px;
+  flex: 0 0 auto;
 }
 
 /* Shrink dots slightly */
@@ -40,21 +47,19 @@
   flex-shrink: 0;
 }
 
-/* Smaller step labels, allow truncation */
+/* Full labels — no truncation */
 .nda-modal__steps.fa-steps .nda-modal__step-label {
   font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
 }
 
 /* Connector line between steps */
 .fa-step-connector {
-  flex: 1 1 0;
+  flex: 0 0 16px;
   height: 1px;
   background: rgba(255, 255, 255, 0.2);
-  min-width: 6px;
-  max-width: 24px;
 }
 
 /* ── Locked field (IP assignment — cannot be disabled) ────── */
