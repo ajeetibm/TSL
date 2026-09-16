@@ -1254,7 +1254,6 @@ export default function FounderAgreementWizardModal({
                       <select className="nda-modal__input" value={data.disputeForum}
                         onChange={e => set('disputeForum', e.target.value)} disabled={ipSectionLocked}>
                         <option>Arbitration under AFSA rules</option>
-                        <option>South African courts</option>
                       </select>
                     </Field>
                     <Field label="Governing law" required>

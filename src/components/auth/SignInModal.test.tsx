@@ -165,7 +165,7 @@ describe('SignInModal', () => {
       expect(mockOnClose).toHaveBeenCalledTimes(1)
     })
 
-    it('should close modal when clicking outside the panel', async () => {
+    it('should not close modal when clicking outside the panel (backdrop click disabled)', async () => {
       const user = userEvent.setup()
       renderWithRouter(
         <SignInModal isOpen={true} onClose={mockOnClose} />
@@ -174,7 +174,7 @@ describe('SignInModal', () => {
       const backdrop = screen.getByText('Get Started with TSL').closest('.signin-modal')
       if (backdrop) {
         await user.click(backdrop)
-        expect(mockOnClose).toHaveBeenCalledTimes(1)
+        expect(mockOnClose).not.toHaveBeenCalled()
       }
     })
 

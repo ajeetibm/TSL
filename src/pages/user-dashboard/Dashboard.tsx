@@ -3123,7 +3123,7 @@ export default function Dashboard() {
                     <article className="user-dashboard__completed-card" key={id}>
                       <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
                       <div className="user-dashboard__completed-copy">
-                        <h3>Privacy Policy (POPIA Compliant)</h3>
+                        <h3>Privacy & Cookies Policy</h3>
                         <p>Completed {displayDate}</p>
                         {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
                       </div>

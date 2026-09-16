@@ -471,8 +471,8 @@ function SignInModalContent({
     `signin-modal__input${touched[field] && fieldErrors[field] ? ' signin-modal__input--error' : ''}`
 
   return (
-    <div className="signin-modal" onClick={onClose}>
-      <div className="signin-modal__panel" onClick={(e) => e.stopPropagation()}>
+    <div className="signin-modal">
+      <div className="signin-modal__panel">
         <div className="signin-modal__header">
           <button onClick={onClose} className="signin-modal__close" aria-label="Close modal">
             <X size={18} />
