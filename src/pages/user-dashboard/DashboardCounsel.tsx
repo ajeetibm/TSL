@@ -182,13 +182,16 @@ function formatStatus(status?: string) {
 
 function toHistoryRequest(request: CounselRequest | CreatedCounselRequest): CounselHistoryRequest {
   const rawStatus = (request.status ?? '').toLowerCase()
-  // Normalise legacy / API statuses so the user never sees "Assigned" or "Accepted"
+  // Normalise legacy / API statuses so the user never sees "Assigned" or "Accepted".
+  // Rejected statuses are also treated as pending — the user should always see the
+  // original "Pending" message; rejection is handled silently in the FA modal only.
   const normalisedStatus =
     rawStatus === 'assigned' ? 'in_progress' :
     rawStatus === 'accepted' ? 'completed' :
+    rawStatus.includes('rejected') ? 'pending' :
     request.status ?? 'pending'
   const status = formatStatus(normalisedStatus)
-  const isPending = rawStatus === 'pending'
+  const isPending = rawStatus === 'pending' || rawStatus.includes('rejected')
   const reviewer = request.assignedCounsel
     ? `Reviewed by ${request.assignedCounsel}`
     : isPending
@@ -792,7 +795,7 @@ export default function DashboardCounsel() {
                 {successMessage ? (
                   <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
                 ) : null}
-                {history.filter((request) => !request.status.toLowerCase().includes('rejected')).map((request) => {
+                {history.map((request) => {
                   const statusKey = request.status.toLowerCase()
                   const isCompleted = statusKey === 'completed'
                   const isRejected = statusKey.includes('rejected')

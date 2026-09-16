@@ -130,6 +130,36 @@ interface InProgressInstance {
   data: unknown
 }
 
+/**
+ * A public-funding Counsel review crosses the top-up flow. It has a draft key
+ * before payment and a request id after payment; both identify one Founder
+ * Agreement run and must never create separate In Progress cards.
+ */
+function founderAgreementReviewIdentity(data: unknown): string | null {
+  if (!data || typeof data !== 'object') return null
+  const review = data as {
+    publicFundingReviewRequestId?: unknown
+    publicFundingReviewDraftKey?: unknown
+  }
+  const value = review.publicFundingReviewRequestId ?? review.publicFundingReviewDraftKey
+  return typeof value === 'string' && value.trim() ? value : null
+}
+
+function dedupeFounderAgreementInstances(instances: InProgressInstance[]): InProgressInstance[] {
+  const seenReviewIdentities = new Set<string>()
+
+  // Retain the newest saved snapshot. This also removes duplicates saved by
+  // older versions of the top-up return flow.
+  return [...instances].reverse().filter((instance) => {
+    if (instance.wizardType !== 'Founders agreement and IP assignment') return true
+    const identity = founderAgreementReviewIdentity(instance.data)
+    if (!identity) return true
+    if (seenReviewIdentities.has(identity)) return false
+    seenReviewIdentities.add(identity)
+    return true
+  }).reverse()
+}
+
 // Per-plan benefit lines shown in the top-right hero card.
 // Numeric values (runs, team members) come from the live SubscriptionData so they
 // stay accurate after an upgrade/downgrade without any frontend changes.
@@ -1840,9 +1870,21 @@ export default function Dashboard() {
   const [inProgressInstances, setInProgressInstances] = useState<InProgressInstance[]>(() => {
     try {
       const raw = localStorage.getItem('tsl-dashboard-inprogress-instances')
-      return raw ? (JSON.parse(raw) as InProgressInstance[]) : []
+      const saved = raw ? (JSON.parse(raw) as InProgressInstance[]) : []
+      const deduped = dedupeFounderAgreementInstances(saved)
+      if (raw && deduped.length !== saved.length) {
+        localStorage.setItem(inProgressInstancesKey, JSON.stringify(deduped))
+      }
+      return deduped
     } catch { return [] }
   })
+  const inProgressInstancesRef = useRef(inProgressInstances)
+
+  const commitInProgressInstances = (next: InProgressInstance[]) => {
+    inProgressInstancesRef.current = next
+    localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
+    setInProgressInstances(next)
+  }
 
   // Ref tracking which in-progress instance is currently being continued so
   // onClose/onComplete handlers can update or remove it.
@@ -1852,30 +1894,39 @@ export default function Dashboard() {
   const justCompletedRef = useRef(false)
 
   const pushInProgressInstance = (wizardType: string, step: number, progress: number, data: unknown): string => {
+    const reviewIdentity = wizardType === 'Founders agreement and IP assignment'
+      ? founderAgreementReviewIdentity(data)
+      : null
+    const existing = reviewIdentity
+      ? inProgressInstancesRef.current.find((instance) =>
+          instance.wizardType === wizardType &&
+          founderAgreementReviewIdentity(instance.data) === reviewIdentity,
+        )
+      : undefined
+
+    // A returning top-up uses the same review draft. Upgrade the original
+    // card to the now-pending Counsel request instead of adding a second one.
+    if (existing) {
+      commitInProgressInstances(inProgressInstancesRef.current.map((instance) =>
+        instance.id === existing.id ? { ...instance, step, progress, data } : instance,
+      ))
+      return existing.id
+    }
+
     const id = `${wizardType}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`
     const entry: InProgressInstance = { id, wizardType, step, progress, startedAt: new Date().toISOString(), data }
-    setInProgressInstances((prev) => {
-      const next = [...prev, entry]
-      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
-      return next
-    })
+    commitInProgressInstances([...inProgressInstancesRef.current, entry])
     return id
   }
 
   const updateInProgressInstance = (id: string, step: number, progress: number, data: unknown) => {
-    setInProgressInstances((prev) => {
-      const next = prev.map((inst) => inst.id === id ? { ...inst, step, progress, data } : inst)
-      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
-      return next
-    })
+    commitInProgressInstances(inProgressInstancesRef.current.map((inst) =>
+      inst.id === id ? { ...inst, step, progress, data } : inst,
+    ))
   }
 
   const removeInProgressInstance = (id: string) => {
-    setInProgressInstances((prev) => {
-      const next = prev.filter((inst) => inst.id !== id)
-      localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
-      return next
-    })
+    commitInProgressInstances(inProgressInstancesRef.current.filter((inst) => inst.id !== id))
   }
 
   // Decrement one instance from the New queue and open the corresponding modal.
