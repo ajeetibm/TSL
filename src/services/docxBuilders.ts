@@ -477,8 +477,6 @@ export async function buildSlaDocx(d: SlaWizardData, completedAt: string | null)
     row('Governing Law', d.governingLaw),
     row('Dispute Forum', d.disputeForum),
     ...(d.disputeForum === 'South African courts' ? [row('Jurisdiction', d.jurisdictionCity)] : []),
-    row('Signature Method', d.signatureMethod),
-    ...(d.signatureMethod === 'Platform signature' ? [row('Signing Order', d.signingOrder)] : []),
     row('Signatories', d.signatories.filter((s) => s.name).map((s) => `${s.name} (${s.title})`).join(', ') || '—'),
     sep(),
     disclaimer(),

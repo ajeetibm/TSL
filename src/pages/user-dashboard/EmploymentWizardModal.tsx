@@ -486,7 +486,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
             <button type="button" className="nda-modal__btn nda-modal__btn--secondary" disabled={step === 1} onClick={prev}>
               <ArrowLeft size={15} />Previous
             </button>
-            <span className="nda-modal__step-counter">Step {step} of 4</span>
+            <span className="nda-modal__step-counter">{step <= 3 ? `Step ${step} of 3` : 'Preview'}</span>
             <button type="button" className={`nda-modal__btn${step === 4 ? ' nda-modal__btn--generate' : step === 3 ? ' nda-modal__btn--preview' : ' nda-modal__btn--primary'}`} onClick={next}>
               {step === 4 ? 'Generate Offer Letter' : step === 3 ? <><Eye size={15} />Preview</> : <>Next Step <ArrowRight size={15} /></>}
             </button>

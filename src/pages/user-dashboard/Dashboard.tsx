@@ -1500,8 +1500,6 @@ function buildSlaPdf(d: SlaWizardData, completedAt: string | null): Blob {
     `Governing Law       : ${v(d.governingLaw)}`,
     `Dispute Forum       : ${v(d.disputeForum)}`,
     ...(d.disputeForum === 'South African courts' ? [`Jurisdiction        : ${v(d.jurisdictionCity)}`] : []),
-    `Signature Method    : ${v(d.signatureMethod)}`,
-    ...(d.signatureMethod === 'Platform signature' ? [`Signing Order       : ${v(d.signingOrder)}`] : []),
     `Signatories         : ${d.signatories.filter((s) => s.name).map((s) => `${s.name} (${s.title})`).join(', ') || '—'}`,
     '',
     '─────────────────────────────────────────',
