@@ -1432,7 +1432,15 @@ export default function FounderAgreementWizardModal({
                       <PreviewField label="Dispute resolution" value={fmt(data.disputeForum)} />
                       <PreviewField label="Governing law" value={fmt(data.governingLaw)} />
                     </div>
-                    <PreviewField label="Signatories" value={data.signatories.map(sig => sig.name).filter(Boolean).join(', ') || '—'} />
+                    {data.signatories.filter(sig => sig.name).length === 0
+                      ? <PreviewField label="Signatories" value="—" />
+                      : data.signatories.filter(sig => sig.name).map((sig, i) => (
+                          <div key={i} className="nda-modal__preview-row">
+                            <PreviewField label="Name" value={sig.name} />
+                            <PreviewField label="Signing as" value={sig.capacity || '—'} />
+                          </div>
+                        ))
+                    }
                   </PreviewSection>
               </div>
             )}
