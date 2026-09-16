@@ -39,6 +39,9 @@ const STEPS: { label: string }[] = [
 
 const EMAIL_RE = /^[a-zA-Z0-9_%+\-]+([a-zA-Z0-9._%+\-]*[a-zA-Z0-9_%+\-]+)?@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
 const SA_PHONE_RE = /^(?:\+27|0)\d{9}$/
+const COOKIE_NAME_RE = /^[a-zA-Z0-9._\-\s]+$/
+const COOKIE_PURPOSE_RE = /^[a-zA-Z0-9\s.,'\-()&]+$/
+const COOKIE_DURATION_RE = /^[a-zA-Z0-9\s.\-]+$/
 
 /**
  * Validates a South African ID number (YYMMDDSSSSCAZ — 13 digits).
@@ -452,8 +455,11 @@ function validateScreen(step: Step, data: PrivacyPolicyWizardData): PrivacyError
       }
       if (empty) return
       if (!hasText(row.name)) errors[`cookie.${index}.name`] = 'Enter a name or category.'
+      else if (!COOKIE_NAME_RE.test(row.name.trim())) errors[`cookie.${index}.name`] = 'Use only letters, numbers, underscores, hyphens and dots.'
       if (!hasText(row.purpose)) errors[`cookie.${index}.purpose`] = 'Enter a purpose.'
+      else if (!COOKIE_PURPOSE_RE.test(row.purpose.trim())) errors[`cookie.${index}.purpose`] = 'Use only letters, numbers, spaces and basic punctuation.'
       if (!hasText(row.duration)) errors[`cookie.${index}.duration`] = 'Enter a duration.'
+      else if (!COOKIE_DURATION_RE.test(row.duration.trim())) errors[`cookie.${index}.duration`] = 'Use only letters, numbers, spaces and hyphens (e.g. 13 months, Session).'
     })
     if (hasText(data.analyticsProvider) && !/^[a-zA-Z0-9\s\-_.()&]+$/.test(data.analyticsProvider.trim())) {
       errors.analyticsProvider = 'Only letters, numbers, spaces and basic punctuation are allowed.'
@@ -988,15 +994,57 @@ export default function PrivacyPolicyWizardModal({
                             <div key={`cookie-${index}`} className="nda-modal__repeat-card">
                               <div className="nda-modal__repeat-grid nda-modal__repeat-grid--cookie">
                                 <div>
-                                  <TextInput value={row.name} onChange={(value) => updateCookie(index, { name: value })} placeholder="e.g. _ga" error={Boolean(errors[`cookie.${index}.name`])} />
+                                  <TextInput
+                                    value={row.name}
+                                    onChange={(value) => updateCookie(index, { name: value.replace(/[^a-zA-Z0-9._\-\s]/g, '') })}
+                                    onBlur={(value) => {
+                                      setErrors((prev) => {
+                                        const next = { ...prev }
+                                        if (!value.trim()) next[`cookie.${index}.name`] = 'Enter a name or category.'
+                                        else if (!COOKIE_NAME_RE.test(value.trim())) next[`cookie.${index}.name`] = 'Use only letters, numbers, underscores, hyphens and dots.'
+                                        else delete next[`cookie.${index}.name`]
+                                        return next
+                                      })
+                                    }}
+                                    placeholder="e.g. _ga"
+                                    error={Boolean(errors[`cookie.${index}.name`])}
+                                  />
                                   {errors[`cookie.${index}.name`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.name`]}</p>}
                                 </div>
                                 <div>
-                                  <TextInput value={row.purpose} onChange={(value) => updateCookie(index, { purpose: value })} placeholder="e.g. Analytics" error={Boolean(errors[`cookie.${index}.purpose`])} />
+                                  <TextInput
+                                    value={row.purpose}
+                                    onChange={(value) => updateCookie(index, { purpose: value.replace(/[^a-zA-Z0-9\s.,'\-()&]/g, '') })}
+                                    onBlur={(value) => {
+                                      setErrors((prev) => {
+                                        const next = { ...prev }
+                                        if (!value.trim()) next[`cookie.${index}.purpose`] = 'Enter a purpose.'
+                                        else if (!COOKIE_PURPOSE_RE.test(value.trim())) next[`cookie.${index}.purpose`] = 'Use only letters, numbers, spaces and basic punctuation.'
+                                        else delete next[`cookie.${index}.purpose`]
+                                        return next
+                                      })
+                                    }}
+                                    placeholder="e.g. Analytics"
+                                    error={Boolean(errors[`cookie.${index}.purpose`])}
+                                  />
                                   {errors[`cookie.${index}.purpose`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.purpose`]}</p>}
                                 </div>
                                 <div>
-                                  <TextInput value={row.duration} onChange={(value) => updateCookie(index, { duration: value })} placeholder="e.g. 13 months" error={Boolean(errors[`cookie.${index}.duration`])} />
+                                  <TextInput
+                                    value={row.duration}
+                                    onChange={(value) => updateCookie(index, { duration: value.replace(/[^a-zA-Z0-9\s.\-]/g, '') })}
+                                    onBlur={(value) => {
+                                      setErrors((prev) => {
+                                        const next = { ...prev }
+                                        if (!value.trim()) next[`cookie.${index}.duration`] = 'Enter a duration.'
+                                        else if (!COOKIE_DURATION_RE.test(value.trim())) next[`cookie.${index}.duration`] = 'Use only letters, numbers, spaces and hyphens (e.g. 13 months, Session).'
+                                        else delete next[`cookie.${index}.duration`]
+                                        return next
+                                      })
+                                    }}
+                                    placeholder="e.g. 13 months"
+                                    error={Boolean(errors[`cookie.${index}.duration`])}
+                                  />
                                   {errors[`cookie.${index}.duration`] && <p className="nda-modal__field-error">{errors[`cookie.${index}.duration`]}</p>}
                                 </div>
                                 <select className="nda-modal__select" value={row.necessary} onChange={(event) => updateCookie(index, { necessary: event.target.value as PrivacyCookieRow['necessary'] })}>
