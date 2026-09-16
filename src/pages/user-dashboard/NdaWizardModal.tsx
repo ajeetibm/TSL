@@ -21,10 +21,10 @@ export type { NdaWizardData }
 type Step = 1 | 2 | 3 | 4
 
 const STEPS = [
-  { label: 'Parties' },
-  { label: 'Purpose & Scope' },
-  { label: 'Obligations' },
-  { label: 'Legal + Signing' },
+  { label: 'PARTIES' },
+  { label: 'PURPOSE & SCOPE' },
+  { label: 'OBLIGATIONS' },
+  { label: 'LEGAL + SIGNING' },
 ]
 
 /* ─── Validation ─────────────────────────────────────────── */

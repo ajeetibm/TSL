@@ -62,7 +62,7 @@ function PreviewSection({ num, title, onEdit, children }: { num: number; title: 
 }
 
 function StepBar({ step }: { step: Step }) {
-  const labels = ['Role', 'Package', 'Conditions'] as const
+  const labels = ['ROLE', 'PACKAGE', 'CONDITIONS'] as const
   return (
     <div className="nda-modal__steps">
       {labels.map((label, index) => {
