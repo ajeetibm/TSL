@@ -1,4 +1,4 @@
-import { Check, Info, Sparkles, Briefcase } from 'lucide-react'
+import { Check, Info, Sparkles, Briefcase, FileText, Building2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { pricingComparison } from '../../data/pricing'
 import { useSubscriptionPlans } from '../../hooks/useSubscriptionPlans'
@@ -58,7 +58,8 @@ export function PricingSection() {
     period: 'per month',
     description: plan.tagline,
     highlight: plan.planId === 'operator',
-    marketingTagline: plan.planId === 'operator' ? 'BEST FOR MOST STARTUPS' : 'NOT SURE HOW MUCH YOU\'LL NEED?',
+    marketingTagline: plan.planId === 'operator' ? 'BEST FOR MOST STARTUPS' : plan.planId === 'boardroom' ? 'TAILORED SOLUTIONS' : 'NOT SURE HOW MUCH YOU\'LL NEED?',
+    PlanIcon: plan.planId === 'launchpad' ? FileText : plan.planId === 'boardroom' ? Building2 : Briefcase,
   }))
   const counselRows = [
     { label: 'Counsel Credits per Month', value: (plan: typeof plans[number]) => `${plan.counselCredits ?? 0} credit${plan.counselCredits === 1 ? '' : 's'}` },
@@ -130,7 +131,7 @@ export function PricingSection() {
                     'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
                     plan.highlight ? 'bg-gold' : 'bg-[#E5E7EB]'
                   )}>
-                    <Briefcase size={20} className={plan.highlight ? "text-white" : "text-[#4A5565]"} strokeWidth={1.8} />
+                    <plan.PlanIcon size={20} className={plan.highlight ? "text-white" : "text-[#4A5565]"} strokeWidth={1.8} />
                   </div>
                 </motion.div>
               ))}
