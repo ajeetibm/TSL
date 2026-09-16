@@ -430,7 +430,7 @@ function buildLegalDocumentPdf(lines: string[]): Blob {
     }
 
     const separatorIndex = line.indexOf(':')
-    if (separatorIndex > 0 && separatorIndex < 30) {
+    if (separatorIndex > 0 && separatorIndex < 40) {
       const label = line.slice(0, separatorIndex).trim()
       const value = line.slice(separatorIndex + 1).trim() || '-'
       const valueLines = wrap(value, 58)
@@ -538,7 +538,7 @@ function buildNdaPdf(data: import('./NdaWizardModal').NdaWizardData, completedAt
     '─────────────────────────────────────────',
     `Purpose      : ${data.purpose || '—'}`,
     `CI Definition: ${data.ci_definition || '—'}`,
-    `Info marked confidential: ${data.marking_required ? 'Yes' : 'No'}`,
+    `Information must be marked confidential: ${data.marking_required ? 'Yes' : 'No'}`,
     '',
     '─────────────────────────────────────────',
     '3. OBLIGATIONS',
