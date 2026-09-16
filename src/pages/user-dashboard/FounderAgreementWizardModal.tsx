@@ -1369,10 +1369,19 @@ export default function FounderAgreementWizardModal({
 
                   <PreviewSection num={2} title="FOUNDERS & EQUITY" onEdit={() => goTo(2)}>
                     {data.founders.map((founder, index) => (
-                      <div key={founder.id} className="nda-modal__preview-row">
-                        <PreviewField label={`Founder ${index + 1}`} value={fmt(founder.fullNames)} />
-                        <PreviewField label="Equity %" value={fmt(founder.equityPct)} />
-                        <PreviewField label="Role" value={fmt(founder.role)} />
+                      <div key={founder.id} style={{ marginBottom: index < data.founders.length - 1 ? 16 : 0 }}>
+                        <div className="nda-modal__preview-row" style={{ marginBottom: 12 }}>
+                          <PreviewField label={`Founder ${index + 1}`} value={fmt(founder.fullNames)} />
+                          <PreviewField label="Identity number" value={fmt(founder.idNumber)} />
+                        </div>
+                        <div className="nda-modal__preview-row" style={{ marginBottom: 12 }}>
+                          <PreviewField label="Role" value={fmt(founder.role)} />
+                          <PreviewField label="Time commitment" value={fmt(founder.commitment)} />
+                        </div>
+                        <div className="nda-modal__preview-row">
+                          <PreviewField label="Equity %" value={fmt(founder.equityPct)} />
+                          {founder.capital && <PreviewField label="Capital contributed" value={fmt(founder.capital)} />}
+                        </div>
                       </div>
                     ))}
                   </PreviewSection>
