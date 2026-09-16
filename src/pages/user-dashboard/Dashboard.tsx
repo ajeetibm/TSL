@@ -2366,15 +2366,14 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  You're all set up with your{' '}
-                  <strong>
-                    {wizardAccess?.hasSubscription
-                      ? `${wizardAccess.plan ?? ''} Plan`
-                      : 'no active subscription'}
-                  </strong>.{' '}
-                  {wizardAccess?.hasSubscription
-                    ? 'Select your wizards to start creating documents.'
-                    : 'Choose a plan and select your wizards to start creating documents.'}
+                  {wizardAccess?.hasSubscription ? (
+                    <>
+                      You're all set up with your{' '}
+                      <strong>{`${wizardAccess.plan ?? ''} Plan`}</strong>. Select your wizards to start creating documents.
+                    </>
+                  ) : (
+                    <>You're all set up, but you don't have an active subscription yet. Choose a plan and select a Blueprint to start creating documents.</>
+                  )}
                 </>
               )}
             </p>

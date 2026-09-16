@@ -1,4 +1,4 @@
-import { Check, Info, Sparkles, FileText, Briefcase, Building2 } from 'lucide-react'
+import { Check, Info, Sparkles, Briefcase } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { pricingComparison } from '../../data/pricing'
 import { useSubscriptionPlans } from '../../hooks/useSubscriptionPlans'
@@ -130,9 +130,7 @@ export function PricingSection() {
                     'flex items-center justify-center w-10 h-10 rounded-full shrink-0',
                     plan.highlight ? 'bg-gold' : 'bg-[#E5E7EB]'
                   )}>
-                    {plan.name === 'Launchpad' && <FileText size={20} className="text-[#4A5565]" strokeWidth={1.8} />}
-                    {plan.name === 'Operator'  && <Briefcase size={20} className="text-white" strokeWidth={1.8} />}
-                    {plan.name === 'Boardroom' && <Building2 size={20} className="text-[#4A5565]" strokeWidth={1.8} />}
+                    <Briefcase size={20} className={plan.highlight ? "text-white" : "text-[#4A5565]"} strokeWidth={1.8} />
                   </div>
                 </motion.div>
               ))}
