@@ -316,7 +316,7 @@ export async function buildFounderAgreementDocx(d: FounderAgreementWizardData, c
     sep(),
     h2('5. Intellectual Property'),
     row('IP assignment', 'Yes — assignment applies'),
-    row('Assignment covers pre-incorporation work', d.ipPreIncorporation),
+    row('Assignment covers work created before incorporation', d.ipPreIncorporation),
     ...priorIpRows,
     row('Publicly funded', d.publiclyFunded),
     row('Created while employed elsewhere', d.createdAtEmployer),

@@ -1415,8 +1415,8 @@ export default function FounderAgreementWizardModal({
                   </PreviewSection>
 
                   <PreviewSection num={5} title="INTELLECTUAL PROPERTY" onEdit={() => goTo(5)}>
+                    <PreviewField label="Assignment covers work created before incorporation" value={fmt(data.ipPreIncorporation)} />
                     <div className="nda-modal__preview-row">
-                      <PreviewField label="Pre-incorporation IP assigned" value={fmt(data.ipPreIncorporation)} />
                       <PreviewField label="Publicly funded" value={fmt(data.publiclyFunded)} />
                       <PreviewField label="Created while employed elsewhere" value={fmt(data.createdAtEmployer)} />
                     </div>
