@@ -511,9 +511,9 @@ function PreviewField({ label, value }: { label: string; value: string }) {
   )
 }
 
-function PreviewAddress({ addr }: { addr: NdaAddress }) {
+function PreviewAddress({ addr, label = 'Address' }: { addr: NdaAddress; label?: string }) {
   const parts = [addr.street_number, addr.building, addr.street_name, addr.suburb, addr.city, addr.province, addr.postal_code, addr.country].filter(Boolean)
-  return <PreviewField label="Address" value={parts.join(', ')} />
+  return <PreviewField label={label} value={parts.join(', ')} />
 }
 
 function PreviewPartyBlock({ title, party }: { title: string; party: NdaParty }) {
@@ -1173,7 +1173,7 @@ export default function NdaWizardModal({
                     <PreviewField label="Duration" value={`${data.duration_years} year${data.duration_years !== 1 ? 's' : ''}, from ${data.duration_start.toLowerCase()}`} />
                     <PreviewField label="Return / destroy" value={data.return_or_destroy} />
                   </div>
-                  <PreviewField label="Permitted recipients" value={data.permitted_recipients.join(', ')} />
+                  <PreviewField label="Who may receive information" value={data.permitted_recipients.join(', ')} />
                   {data.archival_copy && <p className="nda-modal__preview-check"><Check size={14} /> One archival copy may be kept</p>}
                   {data.non_solicit && <p className="nda-modal__preview-check"><Check size={14} /> Non-solicitation: {data.non_solicit_months} months</p>}
                 </PreviewSection>
@@ -1184,8 +1184,8 @@ export default function NdaWizardModal({
                     <PreviewField label="Dispute forum" value={data.dispute_forum} />
                   </div>
                   <div className="nda-modal__preview-row">
-                    <PreviewAddress addr={data.domicilium_a} />
-                    <PreviewAddress addr={data.domicilium_b} />
+                    <PreviewAddress addr={data.domicilium_a} label="Address for notices" />
+                    <PreviewAddress addr={data.domicilium_b} label="Address for notices" />
                   </div>
                   <div className="nda-modal__preview-row">
                     <PreviewField label="Signature method" value={data.signature_method} />

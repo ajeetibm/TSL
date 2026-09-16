@@ -430,7 +430,7 @@ function buildLegalDocumentPdf(lines: string[]): Blob {
     }
 
     const separatorIndex = line.indexOf(':')
-    if (separatorIndex > 0 && separatorIndex < 28) {
+    if (separatorIndex > 0 && separatorIndex < 30) {
       const label = line.slice(0, separatorIndex).trim()
       const value = line.slice(separatorIndex + 1).trim() || '-'
       const valueLines = wrap(value, 58)
@@ -543,23 +543,24 @@ function buildNdaPdf(data: import('./NdaWizardModal').NdaWizardData, completedAt
     '─────────────────────────────────────────',
     '3. OBLIGATIONS',
     '─────────────────────────────────────────',
-    `Duration              : ${data.duration_years} years, from ${data.duration_start}`,
-    `Return / Destroy      : ${data.return_or_destroy}`,
-    `Archival copy allowed : ${data.archival_copy ? 'Yes' : 'No'}`,
-    `Non-solicitation      : ${data.non_solicit ? `Yes (${data.non_solicit_months} months)` : 'No'}`,
+    `Duration: ${data.duration_years} years, from ${data.duration_start}`,
+    `Return / Destroy: ${data.return_or_destroy}`,
+    `Who may receive information: ${data.permitted_recipients.length ? data.permitted_recipients.join(', ') : '—'}`,
+    `Archival copy allowed: ${data.archival_copy ? 'Yes' : 'No'}`,
+    `Non-solicitation: ${data.non_solicit ? `Yes (${data.non_solicit_months} months)` : 'No'}`,
     '',
     '─────────────────────────────────────────',
     '4. LEGAL + SIGNING',
     '─────────────────────────────────────────',
-    `Governing Law         : ${data.governing_law || '—'}`,
-    `Dispute Forum         : ${data.dispute_forum || '—'}`,
-    `Signature Method      : ${data.signature_method || '—'}`,
-    `Signing Order         : ${data.signing_order || '—'}`,
+    `Governing Law: ${data.governing_law || '—'}`,
+    `Dispute Forum: ${data.dispute_forum || '—'}`,
+    `Your address for notices: ${fmtAddr(data.domicilium_a)}`,
+    `Their address for notices: ${fmtAddr(data.domicilium_b)}`,
+    `Signature Method: ${data.signature_method || '—'}`,
+    `Signing Order: ${data.signing_order || '—'}`,
     '',
     '─────────────────────────────────────────',
-    'DISCLAIMER: This document is generated for',
-    'reference purposes only. It does not constitute',
-    'legal advice. Consult a qualified attorney.',
+    'Disclaimer: This document is generated for reference purposes only. It does not constitute legal advice. Consult a qualified attorney.',
     '─────────────────────────────────────────',
   ]
 
