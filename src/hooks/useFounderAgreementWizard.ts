@@ -104,6 +104,8 @@ export interface FounderAgreementWizardData {
   priorIp: FAPriorIp[]
   priorIpNil: boolean
   publiclyFunded: 'Yes' | 'No' | ''
+  /** Stable client-side identity used to make the counsel-review submission idempotent. */
+  publicFundingReviewDraftKey: string | null
   publicFundingReviewStatus: 'not_required' | 'pending' | 'approved' | 'rejected'
   publicFundingReviewRequestId: string | null
   publicFundingReviewReason: string | null
@@ -245,6 +247,7 @@ export const FA_EMPTY_DATA: FounderAgreementWizardData = {
   priorIp: [makePriorIp('ip1')],
   priorIpNil: false,
   publiclyFunded: 'No',
+  publicFundingReviewDraftKey: null,
   publicFundingReviewStatus: 'not_required',
   publicFundingReviewRequestId: null,
   publicFundingReviewReason: null,

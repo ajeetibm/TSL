@@ -792,7 +792,7 @@ export default function DashboardCounsel() {
                 {successMessage ? (
                   <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
                 ) : null}
-                {history.map((request) => {
+                {history.filter((request) => !request.status.toLowerCase().includes('rejected')).map((request) => {
                   const statusKey = request.status.toLowerCase()
                   const isCompleted = statusKey === 'completed'
                   const isRejected = statusKey.includes('rejected')

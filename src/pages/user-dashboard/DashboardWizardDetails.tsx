@@ -830,6 +830,36 @@ export default function DashboardWizardDetails() {
               </span>
             </div>
 
+            {!accountPlan && totalBlueprintUnits > 0 && (() => {
+              const rec = plans.find((p) => p.wizardRuns >= totalBlueprintUnits) ?? plans.at(-1)
+              const selectedPlan = plans.find((p) => p.planId === activePlan)
+              const planLimit = selectedPlan?.wizardRuns ?? 0
+              const isCovered = planLimit === -1 || planLimit >= totalBlueprintUnits
+              const selectionCreditsLabel = `credit${totalBlueprintUnits === 1 ? '' : 's'}`
+              const planCreditsLabel = `credit${planLimit === 1 ? '' : 's'}`
+
+              return (
+                <div className="dashboard-wizard-details__plan-recommendation">
+                  <Zap size={13} />
+                  {isPlanManuallySelected && selectedPlan ? (
+                    isCovered ? (
+                      <span>
+                        Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong> — your <strong>{selectedPlan.name} Plan</strong> includes enough credits to proceed.
+                      </span>
+                    ) : (
+                      <span>
+                        Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong>, but your <strong>{selectedPlan.name} Plan</strong> includes <strong>{planLimit} {planCreditsLabel}</strong>. {rec ? <>Upgrade to the <strong>{rec.name} Plan</strong> to cover this selection.</> : null}
+                      </span>
+                    )
+                  ) : rec ? (
+                    <span>
+                      Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong> — the <strong>{rec.name} Plan</strong> includes enough credits to proceed.
+                    </span>
+                  ) : null}
+                </div>
+              )
+            })()}
+
             {selectedWizards.length > 0 ? (
               <div className="dashboard-wizard-details__list">
                 {selectedWizards.map(({ title, note, quantity, icon: Icon }) => (
@@ -838,25 +868,38 @@ export default function DashboardWizardDetails() {
                         <Icon size={22} />
                       </span>
                       <div>
-                        <h2>{title}</h2>
+                        <h2>
+                          {title}
+                          {(() => {
+                            const blueprintId = blueprintIdByWizardTitle[title]
+                            const weight = catalogue.find((item) => item.blueprintId === blueprintId)?.blueprintUnitWeight
+                            return weight ? (
+                              <span className="dashboard-wizard-details__unit-badge">
+                                {weight} credit{weight === 1 ? '' : 's'}
+                              </span>
+                            ) : null
+                          })()}
+                        </h2>
                         <p>{note}</p>
                       </div>
-                      <div className="dashboard-wizard-details__quantity" aria-label={`${title} quantity ${quantity}`}>
-                        <button
-                          type="button"
-                          aria-label={`Remove one ${title}`}
-                          onClick={() => updateQuantity(title, quantity - 1)}
-                        >
-                          <Minus size={16} />
-                        </button>
-                        <strong>{quantity}</strong>
-                        <button
-                          type="button"
-                          aria-label={`Add one ${title}`}
-                          onClick={() => updateQuantity(title, quantity + 1)}
-                        >
-                          <Plus size={16} />
-                        </button>
+                      <div className="dashboard-wizard-details__quantity-wrap">
+                        <div className="dashboard-wizard-details__quantity" aria-label={`${title} quantity ${quantity}`}>
+                          <button
+                            type="button"
+                            aria-label={`Remove one ${title}`}
+                            onClick={() => updateQuantity(title, quantity - 1)}
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <strong>{quantity}</strong>
+                          <button
+                            type="button"
+                            aria-label={`Add one ${title}`}
+                            onClick={() => updateQuantity(title, quantity + 1)}
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </div>
                       </div>
                     </article>
                   ))}

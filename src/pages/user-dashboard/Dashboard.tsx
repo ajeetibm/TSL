@@ -23,7 +23,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
-import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
+import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan, SubscriptionUsage } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import { appendPfReviewRequest } from '../../services/pfReviewStore'
@@ -88,6 +88,8 @@ type DashboardLocationState = {
   addedCount?: number
   blueprintTopUpSuccess?: boolean
   unitsAdded?: number
+  updatedRunsRemaining?: number | null
+  updatedUsage?: SubscriptionUsage | null
   returnTab?: DashboardTab
   addedWizards?: Array<{ title: string; quantity: number }>
   topUpSuccess?: number
@@ -1614,6 +1616,18 @@ export default function Dashboard() {
   const [counselBlueprintReturn, setCounselBlueprintReturn] = useState(
     () => (location.state as DashboardLocationState | null)?.counselBlueprintReturn,
   )
+  // A counsel top-up returns here once to reopen the saved Founder Agreement.
+  // Consume that navigation state immediately so a browser refresh cannot
+  // reopen the modal or create another in-progress card.
+  useEffect(() => {
+    const state = location.state as DashboardLocationState | null
+    if (!state?.counselBlueprintReturn) return
+    const { counselBlueprintReturn: _returnState, ...remainingState } = state
+    navigate(`${location.pathname}${location.search}${location.hash}`, {
+      replace: true,
+      state: Object.keys(remainingState).length ? remainingState : null,
+    })
+  }, [location.hash, location.pathname, location.search, location.state, navigate])
   const { profile } = useUserProfile()
   const privacyResponsibleParty = profile.entityType === 'Individual'
     ? profile.individualFullNames.trim()
@@ -1915,6 +1929,24 @@ export default function Dashboard() {
     addToastTimerRef.current = setTimeout(() => setAddToast(''), 5000)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addToast])
+
+  // ── Sync the server's usage after a Blueprint top-up ────────────────────
+  // Top-up credits have their own purchased/remaining balance. Do not derive
+  // a new total from monthly runs used, as that mixes the plan allocation and
+  // the purchased top-up balance in the dashboard card.
+  useEffect(() => {
+    if (!locationState?.blueprintTopUpSuccess) return
+    const updatedUsage = locationState.updatedUsage
+    if (!updatedUsage) return
+    setSubscription((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        usage: updatedUsage,
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Quick Access Links ───────────────────────────────────────────────────
   const [quickLinks, setQuickLinks] = useState<QuickAccessLinks | null>(null)
@@ -2229,6 +2261,16 @@ export default function Dashboard() {
   }
 
   const routeFounderPublicFundingToCounsel = useCallback(async (fields: FounderAgreementFieldMap, step: number, data: FounderAgreementWizardData) => {
+    // A pending/approved review belongs to this exact draft. Reuse it if this
+    // handler is re-entered after closing, reopening, or a network retry.
+    if (data.publicFundingReviewRequestId && data.publicFundingReviewStatus !== 'not_required') {
+      return {
+        requestId: data.publicFundingReviewRequestId,
+        status: data.publicFundingReviewStatus,
+        rejectionReason: data.publicFundingReviewReason,
+      }
+    }
+    saveFAProgress(step, data, true)
     // Use the session-persisted credit count so in-session decrements are
     // respected. Only fall back to a live API call when no session value exists.
     let credits = readSessionCounselCredits()
@@ -2248,28 +2290,42 @@ export default function Dashboard() {
       subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
       company: fields.intended_name || 'Founder company',
       wizard_data: fields as unknown as Record<string, unknown>,
+      review_draft_key: data.publicFundingReviewDraftKey,
     })
     if (!response.success || !response.data) {
       showNdaToast(response.message || 'Unable to submit this review to admin.')
       return null
     }
-    // Persist to localStorage so Request History always shows this entry —
-    // even if the backend list endpoint doesn't return it yet.
-    appendPfReviewRequest({
-      requestId: response.data.requestId,
-      subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
-      status: response.data.status ?? 'pending',
-      submittedAt: new Date().toISOString(),
-    })
-    // Decrement the session credit counter so the next request in this session
-    // sees the updated balance — both here and on the /dashboard/counsel page.
-    const updated: CounselCredits = {
-      ...credits,
-      creditsRemaining: Math.max(credits.creditsRemaining - 1, 0),
-      creditsUsed: credits.creditsUsed + 1,
-      usageThisMonth: credits.usageThisMonth + 1,
+    if (response.data.duplicate) {
+      // The server recognised a retry for the same draft. Refresh instead of
+      // decrementing the cached balance a second time.
+      const creditsRes = await counselApi.credits()
+      if (creditsRes.success && creditsRes.data) writeSessionCounselCredits(creditsRes.data)
+    } else {
+      // Persist to localStorage so Request History always shows this entry —
+      // even if the backend list endpoint doesn't return it yet.
+      appendPfReviewRequest({
+        requestId: response.data.requestId,
+        subject: "Founders' Agreement & IP Assignment - Publicly Funded IP Review",
+        status: response.data.status ?? 'pending',
+        submittedAt: new Date().toISOString(),
+      })
+      // Decrement the session credit counter so the next request in this session
+      // sees the updated balance — both here and on the /dashboard/counsel page.
+      const updated: CounselCredits = {
+        ...credits,
+        creditsRemaining: Math.max(credits.creditsRemaining - 1, 0),
+        creditsUsed: credits.creditsUsed + 1,
+        usageThisMonth: credits.usageThisMonth + 1,
+      }
+      writeSessionCounselCredits(updated)
     }
-    writeSessionCounselCredits(updated)
+    saveFAProgress(step, {
+      ...data,
+      publicFundingReviewRequestId: response.data.requestId,
+      publicFundingReviewStatus: response.data.status,
+      publicFundingReviewReason: response.data.rejectionReason ?? null,
+    }, true)
     showNdaToast('Your publicly funded IP review has been sent to admin for counsel assignment.')
     return response.data
   }, [saveFAProgress])
@@ -2277,6 +2333,54 @@ export default function Dashboard() {
   const refreshFounderPublicFundingReview = useCallback(async (requestId: string) => {
     const response = await counselApi.publicFundingReviewStatus(requestId)
     return response.success && response.data ? response.data : null
+  }, [])
+
+  const persistFounderAgreementStep = useCallback((step: number, data: FounderAgreementWizardData) => {
+    saveFAProgress(step, data, true)
+
+    // A public-funding review is already an active workflow, even while its
+    // modal remains open. Persist the In Progress instance as soon as Counsel
+    // receives it so closing, reopening, or refreshing cannot lose the
+    // Awaiting Counsel Approval state.
+    if (data.publicFundingReviewStatus !== 'pending' || !data.publicFundingReviewRequestId) return
+
+    const progress = Math.round(((step - 1) / 7) * 100)
+    const currentId = continuingInstanceRef.current
+    if (currentId) {
+      updateInProgressInstance(currentId, step, progress, data)
+      return
+    }
+
+    continuingInstanceRef.current = pushInProgressInstance(
+      'Founders agreement and IP assignment',
+      step,
+      progress,
+      data,
+    )
+  }, [saveFAProgress])
+
+  const recoverFounderPublicFundingReview = useCallback(async (draftKey: string | null) => {
+    const response = await counselApi.publicFundingRequests()
+    if (!response.success || !response.data) return null
+
+    const isReviewStatus = (status: string): status is 'pending' | 'approved' | 'rejected' => (
+      status === 'pending' || status === 'approved' || status === 'rejected'
+    )
+    const reviews = response.data.filter((review) => isReviewStatus(review.status))
+    // A keyed draft can always be restored. For an older draft without a key,
+    // recover only when the account has exactly one public-funding review;
+    // otherwise leave it unlinked rather than attaching the wrong agreement.
+    const review = draftKey
+      ? reviews.find((candidate) => candidate.reviewDraftKey === draftKey)
+      : reviews.length === 1 ? reviews[0] : undefined
+    if (!review || !isReviewStatus(review.status)) return null
+
+    return {
+      requestId: review.requestId,
+      status: review.status,
+      rejectionReason: review.counselResponse ?? null,
+      draftKey: review.reviewDraftKey ?? draftKey,
+    }
   }, [])
 
   const handleSAComplete = (data: ServiceAgreementWizardData) => {
@@ -2344,8 +2448,14 @@ export default function Dashboard() {
     }),
     ...queueOnlyEntries,
   ]
-  const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
-  const paidRunsTotal = subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
+  const topUpRunsPurchased = subscription?.usage.topUpRunsPurchased ?? 0
+  const isShowingTopUpBalance = topUpRunsPurchased > 0
+  const paidRunsRemaining = isShowingTopUpBalance
+    ? subscription?.usage.topUpRunsRemaining ?? 0
+    : subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
+  const paidRunsTotal = isShowingTopUpBalance
+    ? topUpRunsPurchased
+    : subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
   const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   const isFreePlan = (subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'
@@ -2694,19 +2804,25 @@ export default function Dashboard() {
               const cid = continuingInstanceRef.current
               if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data); continuingInstanceRef.current = null }
               else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
+              // The top-up return data is a one-time hand-off. Once this modal
+              // closes, use the persisted In Progress record on the next open;
+              // otherwise the old pre-top-up snapshot would win and re-offer
+              // Route to Counsel.
+              setCounselBlueprintReturn(undefined)
               setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
             initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
-            onStepChange={(step, data) => saveFAProgress(step, data)}
+            onStepChange={persistFounderAgreementStep}
             onComplete={(data) => {
               const cid = continuingInstanceRef.current
               justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
               else { decrementQueue('Founders agreement and IP assignment') }
-              handleFAComplete(data); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+              handleFAComplete(data); setCounselBlueprintReturn(undefined); setIsFAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
             }}
             onRouteToCounsel={routeFounderPublicFundingToCounsel}
             onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
+            onRecoverPublicFundingReview={recoverFounderPublicFundingReview}
           />
         )}
 
@@ -2858,7 +2974,9 @@ export default function Dashboard() {
                 {paidRunsRemaining} <span>of {paidRunsTotal}</span>
               </div>
               <div className="user-dashboard__stat-label">Credits Remaining</div>
-              <div className="user-dashboard__stat-sublabel">This billing period</div>
+              <div className="user-dashboard__stat-sublabel">
+                {isShowingTopUpBalance ? 'Top-up credits this billing period' : 'This billing period'}
+              </div>
             </div>
           </article>
 
@@ -3367,19 +3485,23 @@ export default function Dashboard() {
             const cid = continuingInstanceRef.current
             if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data); continuingInstanceRef.current = null }
             else { decrementQueue('Founders agreement and IP assignment'); pushInProgressInstance('Founders agreement and IP assignment', step ?? 1, Math.round((((step ?? 1) - 1) / 7) * 100), data) }
+            // See the matching landing-dashboard handler: discard the one-time
+            // top-up return snapshot after the workflow is persisted.
+            setCounselBlueprintReturn(undefined)
             setIsFAModalOpen(false)
           }}
           initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
           initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
-          onStepChange={(step, data) => saveFAProgress(step, data)}
+          onStepChange={persistFounderAgreementStep}
           onComplete={(data) => {
             const cid = continuingInstanceRef.current
             justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
             else { decrementQueue('Founders agreement and IP assignment') }
-            handleFAComplete(data); setIsFAModalOpen(false)
+            handleFAComplete(data); setCounselBlueprintReturn(undefined); setIsFAModalOpen(false)
           }}
           onRouteToCounsel={routeFounderPublicFundingToCounsel}
           onRefreshPublicFundingReview={refreshFounderPublicFundingReview}
+          onRecoverPublicFundingReview={recoverFounderPublicFundingReview}
         />
       )}
 

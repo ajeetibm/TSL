@@ -220,6 +220,45 @@
   line-height: 20px;
 }
 
+.dashboard-wizard-details__unit-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cf9b2f;
+  background: rgba(207, 155, 47, 0.1);
+  border: 1px solid rgba(207, 155, 47, 0.35);
+  border-radius: 999px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dashboard-wizard-details__quantity-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.dashboard-wizard-details__plan-recommendation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: #92680f;
+  background: rgba(207, 155, 47, 0.08);
+  border: 1px solid rgba(207, 155, 47, 0.25);
+  border-radius: 8px;
+}
+
+.dashboard-wizard-details__plan-recommendation svg {
+  flex-shrink: 0;
+  color: #cf9b2f;
+}
+
 .dashboard-wizard-details__quantity {
   width: 126px;
   height: 32px;

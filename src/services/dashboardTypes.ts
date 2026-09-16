@@ -65,6 +65,8 @@ export interface CounselRequest {
   submittedAt: string
   description?: string
   relatedWizard?: string | null
+  /** Stable id of a Founder Agreement public-funding review draft. */
+  reviewDraftKey?: string | null
   attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
   counselResponse?: string | null
   responseDate?: string | null
@@ -138,6 +140,10 @@ export interface SubscriptionUsage {
   runsUsed: number
   runsTotal: number
   runsRemaining: number
+  /** Blueprint units purchased as top-ups in the current billing period. */
+  topUpRunsPurchased?: number
+  /** Unused portion of the current billing period's Blueprint top-ups. */
+  topUpRunsRemaining?: number
   teamMembers: number
 }
 
