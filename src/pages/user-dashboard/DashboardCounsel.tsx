@@ -792,11 +792,20 @@ export default function DashboardCounsel() {
                 {successMessage ? (
                   <p className="dashboard-counsel__message dashboard-counsel__message--success">{successMessage}</p>
                 ) : null}
-                {history.filter((request) => request.status.toLowerCase() !== 'rejected').map((request) => {
+                {history.map((request) => {
                   const statusKey = request.status.toLowerCase()
                   const isCompleted = statusKey === 'completed'
                   const isRejected = statusKey.includes('rejected')
                   const StatusIcon = isCompleted ? CheckCircle2 : CircleDot
+
+                  // When counsel rejects a request it returns to the admin for
+                  // reassignment — show it to the user as "Pending" (amber badge)
+                  // with the same sub-text used for brand-new pending requests.
+                  const displayStatus = isRejected ? 'Pending' : request.status
+                  const displayReviewer = isRejected ? 'Awaiting admin assignment' : request.reviewer
+                  const statusClass = isCompleted
+                    ? 'dashboard-counsel__status dashboard-counsel__status--completed'
+                    : 'dashboard-counsel__status dashboard-counsel__status--progress'
 
                   return (
                     <article className="dashboard-counsel__history-card" key={request.requestId}>
@@ -805,21 +814,13 @@ export default function DashboardCounsel() {
                         <p>
                           <span>{request.date}</span>
                           <b>•</b>
-                          <span>{request.reviewer}</span>
+                          <span>{displayReviewer}</span>
                         </p>
                       </div>
 
-                      <span
-                        className={
-                          isCompleted
-                            ? 'dashboard-counsel__status dashboard-counsel__status--completed'
-                            : isRejected
-                            ? 'dashboard-counsel__status dashboard-counsel__status--rejected'
-                            : 'dashboard-counsel__status dashboard-counsel__status--progress'
-                        }
-                      >
+                      <span className={statusClass}>
                         <StatusIcon size={16} />
-                        {request.status}
+                        {displayStatus}
                       </span>
 
                       <button type="button" className="dashboard-counsel__response" onClick={() => setActiveRequest(request)}>
