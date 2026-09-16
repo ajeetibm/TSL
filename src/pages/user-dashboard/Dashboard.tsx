@@ -23,7 +23,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
-import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan } from '../../services/dashboardTypes'
+import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan, SubscriptionUsage } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
 import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import { appendPfReviewRequest } from '../../services/pfReviewStore'
@@ -88,6 +88,8 @@ type DashboardLocationState = {
   addedCount?: number
   blueprintTopUpSuccess?: boolean
   unitsAdded?: number
+  updatedRunsRemaining?: number | null
+  updatedUsage?: SubscriptionUsage | null
   returnTab?: DashboardTab
   addedWizards?: Array<{ title: string; quantity: number }>
   topUpSuccess?: number
@@ -1916,6 +1918,24 @@ export default function Dashboard() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [addToast])
 
+  // ── Sync the server's usage after a Blueprint top-up ────────────────────
+  // Top-up credits have their own purchased/remaining balance. Do not derive
+  // a new total from monthly runs used, as that mixes the plan allocation and
+  // the purchased top-up balance in the dashboard card.
+  useEffect(() => {
+    if (!locationState?.blueprintTopUpSuccess) return
+    const updatedUsage = locationState.updatedUsage
+    if (!updatedUsage) return
+    setSubscription((current) => {
+      if (!current) return current
+      return {
+        ...current,
+        usage: updatedUsage,
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Quick Access Links ───────────────────────────────────────────────────
   const [quickLinks, setQuickLinks] = useState<QuickAccessLinks | null>(null)
   const [quickLinksLoading, setQuickLinksLoading] = useState(true)
@@ -2344,8 +2364,14 @@ export default function Dashboard() {
     }),
     ...queueOnlyEntries,
   ]
-  const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
-  const paidRunsTotal = subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
+  const topUpRunsPurchased = subscription?.usage.topUpRunsPurchased ?? 0
+  const isShowingTopUpBalance = topUpRunsPurchased > 0
+  const paidRunsRemaining = isShowingTopUpBalance
+    ? subscription?.usage.topUpRunsRemaining ?? 0
+    : subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
+  const paidRunsTotal = isShowingTopUpBalance
+    ? topUpRunsPurchased
+    : subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
   const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   const isFreePlan = (subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'
@@ -2858,7 +2884,9 @@ export default function Dashboard() {
                 {paidRunsRemaining} <span>of {paidRunsTotal}</span>
               </div>
               <div className="user-dashboard__stat-label">Credits Remaining</div>
-              <div className="user-dashboard__stat-sublabel">This billing period</div>
+              <div className="user-dashboard__stat-sublabel">
+                {isShowingTopUpBalance ? 'Top-up credits this billing period' : 'This billing period'}
+              </div>
             </div>
           </article>
 

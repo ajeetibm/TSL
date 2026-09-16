@@ -172,6 +172,7 @@ export default function BlueprintTopUpPayment() {
         unitsAdded: qty,
         returnTab,
         updatedRunsRemaining: (topUp.data as { usage?: { runsRemaining?: number } } | undefined)?.usage?.runsRemaining ?? null,
+        updatedUsage: topUp.data?.usage ?? null,
       },
     })
   }
