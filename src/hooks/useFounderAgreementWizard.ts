@@ -54,7 +54,7 @@ export function deriveFounderAgreementSignatories(
     .map((founder) => ({
       id: `founder-${founder.id}`,
       name: founder.fullNames.trim(),
-      capacity: 'Founder — personal capacity',
+      capacity: 'Founder',
     }))
 
   if (isIncorporated !== 'Yes') return founderSignatories

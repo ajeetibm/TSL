@@ -288,10 +288,6 @@ export default function BlueprintTopUpPayment() {
                   <span>Blueprint Credits ({qty} × {fmtZAR(pricePerUnit)})</span>
                   <span>{fmtZAR(subtotal)}</span>
                 </li>
-                <li>
-                  <span>VAT (not charged)</span>
-                  <span>{fmtZAR(vat)}</span>
-                </li>
               </ul>
 
               <div className="btu-total">
@@ -316,7 +312,7 @@ export default function BlueprintTopUpPayment() {
               {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
             </button>
             <p className="btu-secure-note">
-              Secured via Paystack · ZAR · No VAT charged
+              Secured via Paystack · ZAR
             </p>
           </div>
 
