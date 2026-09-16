@@ -451,6 +451,8 @@ export default function DashboardSettings() {
   const effectivePlanId = hasSubscription ? (subscription?.planId ?? 'free') : 'free'
 
   const progressPct = runsTotal > 0 ? Math.min(100, Math.round((runsUsed / runsTotal) * 100)) : 0
+  const counselCreditsUsed = counselCreditsTotal - counselCreditsRemaining
+  const counselProgressPct = counselCreditsTotal > 0 ? Math.min(100, Math.round((counselCreditsUsed / counselCreditsTotal) * 100)) : 0
 
   // Non-subscribers see no invoices regardless of what the server returns.
   // Counsel top-up invoices are stored locally in sessionStorage after payment.
@@ -860,10 +862,16 @@ export default function DashboardSettings() {
               <p className="dashboard-settings__remaining">{runsRemaining} runs remaining</p>
 
               {hasSubscription && (
-                <div className="dashboard-settings__usage-copy" style={{ marginTop: '12px' }}>
-                  <span>Counsel Credits</span>
-                  <strong>{counselCreditsRemaining} of {counselCreditsTotal}</strong>
-                </div>
+                <>
+                  <div className="dashboard-settings__usage-copy" style={{ marginTop: '12px' }}>
+                    <span>Counsel Credits</span>
+                    <strong>{counselCreditsUsed} of {counselCreditsTotal}</strong>
+                  </div>
+                  <div className="dashboard-settings__progress">
+                    <span style={{ width: `${counselProgressPct}%` }} />
+                  </div>
+                  <p className="dashboard-settings__remaining">{counselCreditsRemaining} credit{counselCreditsRemaining !== 1 ? 's' : ''} remaining</p>
+                </>
               )}
             </section>
           </aside>
