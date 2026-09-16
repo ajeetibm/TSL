@@ -24,7 +24,8 @@ export default function InsufficientBlueprintUnitsModal({
   iconName,
   returnTo,
   returnTab,
-  onClose
+  onClose,
+  onUpgrade,
 }: Props) {
   const navigate = useNavigate()
   const minimum = Math.max(0, required - remaining)
@@ -123,10 +124,10 @@ export default function InsufficientBlueprintUnitsModal({
           </div>
         </div>
 
-        {/* Actions — 3 buttons in a row */}
+        {/* Actions */}
         <div className="ibum__actions">
-          <button type="button" className="ibum__btn ibum__btn--cancel" onClick={onClose}>
-            Cancel
+          <button type="button" className="ibum__btn ibum__btn--upgrade" onClick={() => { onClose(); onUpgrade?.() }}>
+            Upgrade Plan
           </button>
           <button
             type="button"
