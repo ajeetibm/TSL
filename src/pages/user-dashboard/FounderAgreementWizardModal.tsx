@@ -507,6 +507,7 @@ interface FounderAgreementWizardModalProps {
   onStepChange?: (step: number, data: FounderAgreementWizardData) => void
   onRouteToCounsel?: (fields: FounderAgreementFieldMap, step: number, data: FounderAgreementWizardData) => Promise<{ requestId: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
   onRefreshPublicFundingReview?: (requestId: string) => Promise<{ status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null } | null>
+  onRecoverPublicFundingReview?: (draftKey: string | null) => Promise<{ requestId: string; status: 'pending' | 'approved' | 'rejected'; rejectionReason?: string | null; draftKey?: string | null } | null>
 }
 
 const fmt = (v: string | undefined | null) => v?.trim() || '—'
@@ -527,6 +528,10 @@ function sameSignatories(
   ))
 }
 
+function createPublicFundingReviewDraftKey() {
+  return `founder-public-funding-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+}
+
 export default function FounderAgreementWizardModal({
   onClose,
   onComplete,
@@ -535,6 +540,7 @@ export default function FounderAgreementWizardModal({
   onStepChange,
   onRouteToCounsel,
   onRefreshPublicFundingReview,
+  onRecoverPublicFundingReview,
 }: FounderAgreementWizardModalProps) {
   const { profile } = useUserProfile()
   const snapshotCompanyName = profile.entityType === 'Individual'
@@ -552,6 +558,10 @@ export default function FounderAgreementWizardModal({
     companyName: snapshotCompanyName || FA_EMPTY_DATA.companyName,
     ...initialData,
   }))
+  // The close button can be pressed immediately after an async Counsel request
+  // resolves. Keep the latest data synchronously so that close cannot hand the
+  // Dashboard a stale pre-request snapshot and erase the pending review.
+  const dataRef = useRef(data)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [equityTouched, setEquityTouched] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -576,6 +586,10 @@ export default function FounderAgreementWizardModal({
       ? { requestId: initialData.publicFundingReviewRequestId ?? null, reason: initialData.publicFundingReviewReason ?? null }
       : null
   )
+  // Drafts saved before reviewDraftKey was introduced have no request id to
+  // restore when reopened. Attempt this recovery once, rather than allowing
+  // the user to submit (and pay for) the same review a second time.
+  const hasAttemptedLegacyReviewRecovery = useRef(false)
 
   const progress = calcFounderAgreementProgress(data, Math.min(step, 6))
   const isComplete = progress === 100 && equityValid(data.founders)
@@ -585,6 +599,7 @@ export default function FounderAgreementWizardModal({
 
   const onStepChangeRef = useRef(onStepChange)
   useEffect(() => { onStepChangeRef.current = onStepChange }, [onStepChange])
+  useEffect(() => { dataRef.current = data }, [data])
   useEffect(() => {
     onStepChangeRef.current?.(step, data)
   }, [data, step])
@@ -622,6 +637,45 @@ export default function FounderAgreementWizardModal({
     const intervalId = window.setInterval(() => { void refresh() }, 15_000)
     return () => { active = false; window.clearInterval(intervalId) }
   }, [data.publiclyFunded, data.publicFundingReviewRequestId, data.publicFundingReviewStatus, onRefreshPublicFundingReview])
+
+  useEffect(() => {
+    const isLegacyPendingDraft = initialData?.publiclyFunded === 'Yes'
+      && !initialData.publicFundingReviewRequestId
+      && !initialData.publicFundingReviewDraftKey
+    if (
+      !isLegacyPendingDraft
+      || hasAttemptedLegacyReviewRecovery.current
+      || data.publiclyFunded !== 'Yes'
+      || data.publicFundingReviewRequestId
+      || data.publicFundingReviewStatus !== 'not_required'
+      || !onRecoverPublicFundingReview
+    ) return
+
+    hasAttemptedLegacyReviewRecovery.current = true
+    let active = true
+    void onRecoverPublicFundingReview(null).then((review) => {
+      if (!active || !review) return
+      setData((previous) => {
+        if (previous.publiclyFunded !== 'Yes' || previous.publicFundingReviewRequestId) return previous
+        return {
+          ...previous,
+          publicFundingReviewDraftKey: review.draftKey ?? previous.publicFundingReviewDraftKey,
+          publicFundingReviewRequestId: review.requestId,
+          publicFundingReviewStatus: review.status,
+          publicFundingReviewReason: review.rejectionReason ?? null,
+        }
+      })
+    })
+    return () => { active = false }
+  }, [
+    data.publicFundingReviewRequestId,
+    data.publicFundingReviewStatus,
+    data.publiclyFunded,
+    initialData?.publicFundingReviewDraftKey,
+    initialData?.publicFundingReviewRequestId,
+    initialData?.publiclyFunded,
+    onRecoverPublicFundingReview,
+  ])
 
   useEffect(() => {
     if (initialData?.companyName || !snapshotCompanyName) return
@@ -774,14 +828,28 @@ export default function FounderAgreementWizardModal({
   const routeToCounsel = async () => {
     if (!onRouteToCounsel || isRoutingToCounsel) return
     setIsRoutingToCounsel(true)
-    const review = await onRouteToCounsel(mapFounderAgreementFields(dataWithDerivedSignatories, profile), step, dataWithDerivedSignatories)
+    // Store a stable key before making the request. This survives a refresh or
+    // retry and lets the API return the existing review rather than deducting
+    // another counsel credit for the same agreement draft.
+    const reviewData: FounderAgreementWizardData = {
+      ...dataWithDerivedSignatories,
+      publicFundingReviewDraftKey: data.publicFundingReviewDraftKey ?? createPublicFundingReviewDraftKey(),
+    }
+    dataRef.current = reviewData
+    setData(reviewData)
+    onStepChangeRef.current?.(step, reviewData)
+    const review = await onRouteToCounsel(mapFounderAgreementFields(reviewData, profile), step, reviewData)
     if (review) {
-      setData((previous) => ({
-        ...previous,
+      const reviewedData: FounderAgreementWizardData = {
+        ...reviewData,
         publicFundingReviewRequestId: review.requestId,
         publicFundingReviewStatus: review.status,
         publicFundingReviewReason: review.rejectionReason ?? null,
-      }))
+      }
+      dataRef.current = reviewedData
+      setData(reviewedData)
+      // Persist the pending request before the user can close the modal.
+      onStepChangeRef.current?.(step, reviewedData)
       setCounselToast(true)
       setTimeout(() => setCounselToast(false), 4000)
     }
@@ -797,7 +865,7 @@ export default function FounderAgreementWizardModal({
   const showRestraintAreaWarn = data.restraint === 'Yes' && data.restraintArea === 'Worldwide'
 
   return (
-    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating ? undefined : () => onClose(step, data)}>
+    <div className="nda-modal__backdrop" role="presentation" onClick={isGenerating || isRoutingToCounsel ? undefined : () => onClose(step, dataRef.current)}>
       <div
         className="nda-modal nda-modal--wide"
         role="dialog"
@@ -815,7 +883,7 @@ export default function FounderAgreementWizardModal({
               </p>
             </div>
             <button type="button" className="nda-modal__close" aria-label="Close"
-              onClick={isGenerating ? undefined : () => onClose(step, data)} disabled={isGenerating}>
+              onClick={isGenerating || isRoutingToCounsel ? undefined : () => onClose(step, dataRef.current)} disabled={isGenerating || isRoutingToCounsel}>
               <X size={16} />
             </button>
           </div>

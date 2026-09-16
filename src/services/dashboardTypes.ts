@@ -65,6 +65,8 @@ export interface CounselRequest {
   submittedAt: string
   description?: string
   relatedWizard?: string | null
+  /** Stable id of a Founder Agreement public-funding review draft. */
+  reviewDraftKey?: string | null
   attachments?: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>
   counselResponse?: string | null
   responseDate?: string | null
