@@ -129,7 +129,71 @@ function emitAuthSessionChanged() {
   }
 }
 
+// The dashboard keeps draft UI state locally so that a user can resume work.
+// Store that state per account during sign-out; otherwise a normal logout
+// makes the same subscriber look like a first-time user on the next login, or
+// risks leaving one user's workflow visible to the next person on the browser.
+const DASHBOARD_WORKSPACE_KEYS = [
+  'tsl-dashboard-view-mode',
+  'tsl-wizard-access-cache',
+  'tsl-dashboard-queue',
+  'tsl-selected-dashboard-wizards',
+  'tsl-dashboard-completed-instances',
+  'tsl-dashboard-inprogress-instances',
+  'tsl-founder-agreement-wizard-state',
+  'tsl-nda-wizard-state',
+  'tsl-employment-wizard-state',
+  'tsl-privacy-policy-wizard-state',
+  'tsl-service-agreement-wizard-state',
+  'tsl-sla-wizard-state',
+] as const
+
+function dashboardWorkspaceKey(email: string) {
+  return `tsl-dashboard-workspace:${encodeURIComponent(email.trim().toLowerCase())}`
+}
+
+function readStoredAuthEmail() {
+  try {
+    return (JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }).email?.trim().toLowerCase() ?? ''
+  } catch {
+    return ''
+  }
+}
+
+function clearActiveDashboardWorkspace() {
+  for (const key of DASHBOARD_WORKSPACE_KEYS) localStorage.removeItem(key)
+}
+
+function saveDashboardWorkspace(email: string) {
+  if (!email) return
+  const workspace: Record<string, string | null> = {}
+  for (const key of DASHBOARD_WORKSPACE_KEYS) workspace[key] = localStorage.getItem(key)
+
+  // Existing accounts may have an old, unscoped In Progress item but no view
+  // mode because an earlier logout cleared it. Treat that as a returning user.
+  const hasWorkflow = ['tsl-dashboard-queue', 'tsl-dashboard-completed-instances', 'tsl-dashboard-inprogress-instances']
+    .some((key) => {
+      try { return (JSON.parse(workspace[key] ?? '[]') as unknown[]).length > 0 } catch { return false }
+    })
+  if (hasWorkflow) workspace['tsl-dashboard-view-mode'] = 'returning'
+
+  localStorage.setItem(dashboardWorkspaceKey(email), JSON.stringify(workspace))
+}
+
+function restoreDashboardWorkspace(email: string) {
+  clearActiveDashboardWorkspace()
+  if (!email) return
+  try {
+    const workspace = JSON.parse(localStorage.getItem(dashboardWorkspaceKey(email)) ?? '{}') as Record<string, string | null>
+    for (const key of DASHBOARD_WORKSPACE_KEYS) {
+      const value = workspace[key]
+      if (typeof value === 'string') localStorage.setItem(key, value)
+    }
+  } catch { /* a malformed snapshot behaves like a new workspace */ }
+}
+
 export function saveAuthSession(user?: AuthUser) {
+  if (user?.email) restoreDashboardWorkspace(user.email)
   localStorage.setItem('tsl-authenticated', 'true')
 
   if (user?.token) {
@@ -144,15 +208,13 @@ export function saveAuthSession(user?: AuthUser) {
 }
 
 export function clearAuthSession() {
+  const email = readStoredAuthEmail()
+  saveDashboardWorkspace(email)
   localStorage.removeItem('tsl-authenticated')
   localStorage.removeItem('tsl-auth-token')
   localStorage.removeItem('tsl-auth-user')
   localStorage.removeItem('tsl-dashboard-payment-complete')
-  localStorage.removeItem('tsl-dashboard-view-mode')
-  localStorage.removeItem('tsl-wizard-access-cache')
-  localStorage.removeItem('tsl-dashboard-queue')
-  localStorage.removeItem('tsl-selected-dashboard-wizards')
-  localStorage.removeItem('tsl-dashboard-completed-instances')
+  clearActiveDashboardWorkspace()
   // Clear in-session counsel credit cache so the next login starts fresh
   try { sessionStorage.removeItem('tsl-counsel-credits-session') } catch { /* ignore */ }
   emitAuthSessionChanged()
