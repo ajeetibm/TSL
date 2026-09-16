@@ -148,7 +148,7 @@ export default function AddCounselModal({ isOpen, onClose, onAdd }: AddCounselMo
         <form className="modal-form" onSubmit={handleSubmit} noValidate>
           {/* Full Name */}
           <div className="modal-form__group modal-form__group--full">
-            <label htmlFor="fullName">Full Name</label>
+            <label htmlFor="fullName">Full Name <span className="modal-form__required">*</span></label>
             <input
               type="text"
               id="fullName"
@@ -171,7 +171,7 @@ export default function AddCounselModal({ isOpen, onClose, onAdd }: AddCounselMo
           {/* Email + Phone */}
           <div className="modal-form__row">
             <div className="modal-form__group">
-              <label htmlFor="email">Email Address</label>
+              <label htmlFor="email">Email Address <span className="modal-form__required">*</span></label>
               <input
                 type="email"
                 id="email"
@@ -191,7 +191,7 @@ export default function AddCounselModal({ isOpen, onClose, onAdd }: AddCounselMo
               )}
             </div>
             <div className="modal-form__group">
-              <label htmlFor="phone">Phone Number</label>
+              <label htmlFor="phone">Phone Number <span className="modal-form__required">*</span></label>
               <input
                 type="tel"
                 id="phone"

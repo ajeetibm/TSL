@@ -4339,6 +4339,11 @@
   box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12);
 }
 
+.modal-form__required {
+  color: #c10007;
+  margin-left: 2px;
+}
+
 .modal-form__error {
   margin: 2px 0 0;
   font-size: 12px;
