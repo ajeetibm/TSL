@@ -1212,15 +1212,7 @@ export default function FounderAgreementWizardModal({
                     </Field>
                   </div>
 
-                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus === 'rejected' && (
-                    <Banner
-                      type="block"
-                      title="Counsel rejected this public-funding review"
-                      message={`Counsel rejected the request, so you cannot proceed with document generation.${data.publicFundingReviewReason ? ` Reason: ${data.publicFundingReviewReason}` : ''}`}
-                    />
-                  )}
-
-                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' && data.publicFundingReviewStatus !== 'rejected' && (
+                  {data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' && (
                     <Banner
                       type="block"
                       title="Block — publicly funded work, route to Counsel"
@@ -1480,7 +1472,7 @@ export default function FounderAgreementWizardModal({
               {isPreview ? (
                 <><Check size={15} /> Generate Agreement</>
               ) : step === 5 && data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' ? (
-                 <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : '⛔'} {data.publicFundingReviewStatus === 'pending' ? 'Awaiting Counsel Approval' : data.publicFundingReviewStatus === 'rejected' ? 'Counsel Rejected — Generation Blocked' : 'Route to Counsel'}</>
+                 <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : '⛔'} {(data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') ? 'Awaiting Counsel Approval' : 'Route to Counsel'}</>
               ) : step === 6 ? (
                 <><Eye size={15} /> Preview</>
               ) : (
