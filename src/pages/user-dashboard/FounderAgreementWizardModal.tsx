@@ -1387,6 +1387,12 @@ export default function FounderAgreementWizardModal({
                       <PreviewField label="Frequency" value={fmt(data.vestingFrequency)} />
                     </div>
                     <PreviewField label="Acceleration" value={fmt(data.acceleration)} />
+                    {data.vestingApplies === 'Yes' && (
+                      <>
+                        <PreviewField label="Good leaver definition" value={data.goodLeaver.length ? data.goodLeaver.join(', ') : '—'} />
+                        <PreviewField label="Bad leaver consequence" value={fmt(data.badLeaverEffect)} />
+                      </>
+                    )}
                   </PreviewSection>
 
                   <PreviewSection num={4} title="DECISIONS & ROLES" onEdit={() => goTo(4)}>
