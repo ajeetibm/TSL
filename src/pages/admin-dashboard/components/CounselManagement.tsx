@@ -448,30 +448,38 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
                 </b>
               </div>
               <h2>{member.name}</h2>
-              <p>{member.expertise}</p>
+              {member.expertise && <p>{member.expertise}</p>}
             </div>
 
             <div className="admin-counsel__card-body">
               <ul>
-                <li>
-                  <Award size={14} />
-                  {member.experience}
-                </li>
-                <li>
-                  <MapPin size={14} />
-                  {member.location}
-                </li>
+                {member.experience && (
+                  <li>
+                    <Award size={14} />
+                    {member.experience}
+                  </li>
+                )}
+                {member.location && (
+                  <li>
+                    <MapPin size={14} />
+                    {member.location}
+                  </li>
+                )}
               </ul>
 
               <div className="admin-counsel__card-contact">
-                <div>
-                  <Mail size={14} />
-                  <span>{member.email}</span>
-                </div>
-                <div>
-                  <Phone size={14} />
-                  <span>{member.phone}</span>
-                </div>
+                {member.email && (
+                  <div>
+                    <Mail size={14} />
+                    <span>{member.email}</span>
+                  </div>
+                )}
+                {member.phone && (
+                  <div>
+                    <Phone size={14} />
+                    <span>{member.phone}</span>
+                  </div>
+                )}
               </div>
 
               <div className="admin-counsel__completed">
