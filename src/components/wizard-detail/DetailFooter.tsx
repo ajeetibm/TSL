@@ -12,6 +12,7 @@ const sectionAnchors: Record<string, string> = {
   'About Us': 'about',
   'How It Works': 'features',
   Pricing: 'pricing',
+  FAQ: 'faq',
   Contact: 'contact',
 }
 

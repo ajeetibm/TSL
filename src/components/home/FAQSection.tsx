@@ -126,7 +126,7 @@ export function FAQSection() {
   const filtered = faqs.filter((f) => f.category === activeCategory)
 
   return (
-    <section className="bg-white pb-20 pt-[48px] lg:pb-28 lg:pt-[56px]">
+    <section id="faq" className="scroll-mt-24 bg-white pb-20 pt-[48px] lg:pb-28 lg:pt-[56px]">
       <Container>
         {/* Heading */}
         <motion.div

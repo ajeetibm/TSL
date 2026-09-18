@@ -11,6 +11,12 @@ describe('FAQSection', () => {
       expect(container.querySelector('section')).toBeInTheDocument()
     })
 
+    it('provides an offset FAQ anchor for footer navigation', () => {
+      const { container } = render(<FAQSection />)
+
+      expect(container.querySelector('#faq')).toHaveClass('scroll-mt-24')
+    })
+
     it('should render the eyebrow label', () => {
       render(<FAQSection />)
 
@@ -180,7 +186,7 @@ describe('FAQSection', () => {
       )
 
       expect(
-        screen.getByText(/guided wizards, automated document generation/i)
+        screen.getByText(/guided blueprints, automated document generation/i)
       ).toBeInTheDocument()
     })
 
