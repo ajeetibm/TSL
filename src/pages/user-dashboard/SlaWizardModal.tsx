@@ -1179,6 +1179,9 @@ export default function SlaWizardModal({
                 {data.modules.includes('Incident response') && (
                   <PreviewSection num={5} title="Incident Response" onEdit={() => goToScreen('incident')}>
                     <PF label="Model" value={data.useSeverityModel ? 'Standard Sev1–Sev4' : 'Custom narrative'} />
+                    {!data.useSeverityModel && (
+                      <PF label="Incident Handling Description" value={data.incidentNarrative} />
+                    )}
                     <PF label="Escalation Contacts" value={data.escalationContacts.filter((c) => c.name).map((c) => `${c.name} (${c.role})`).join(', ')} />
                   </PreviewSection>
                 )}

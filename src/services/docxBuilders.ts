@@ -440,7 +440,9 @@ export async function buildSlaDocx(d: SlaWizardData, completedAt: string | null)
       sep(),
       h2('6. Incident Response'),
       row('Severity Model', yn(d.useSeverityModel)),
-      ...d.severityTargets.map((t) => row(t.severity, `Response: ${v(t.responseTarget)} | Resolution: ${v(t.resolutionTarget)}`)),
+      ...(d.useSeverityModel
+        ? d.severityTargets.map((t) => row(t.severity, `Response: ${v(t.responseTarget)} | Resolution: ${v(t.resolutionTarget)}`))
+        : [row('Incident Handling Description', v(d.incidentNarrative))]),
       row('Escalation Contacts', d.escalationContacts.map((c) => `${c.name} (${c.role}) ${c.email}`).join('; ') || '—'),
     ] : []),
     ...(d.modules.includes('Maintenance') ? [

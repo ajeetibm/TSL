@@ -1490,7 +1490,9 @@ function buildSlaPdf(d: SlaWizardData, completedAt: string | null): Blob {
       '6. INCIDENT RESPONSE',
       '─────────────────────────────────────────',
       `Severity Model      : ${yn(d.useSeverityModel)}`,
-      ...d.severityTargets.map((t) => `  ${t.severity}  Response: ${t.responseTarget}  Resolution: ${t.resolutionTarget}`),
+      ...(d.useSeverityModel
+        ? d.severityTargets.map((t) => `  ${t.severity}  Response: ${t.responseTarget}  Resolution: ${t.resolutionTarget}`)
+        : [`Incident Handling  : ${v(d.incidentNarrative)}`]),
       `Escalation Contacts : ${d.escalationContacts.map((c) => `${c.name} (${c.role}) ${c.email}`).join('; ') || '—'}`,
       '',
     ] : []),
@@ -1596,7 +1598,9 @@ function buildSlaEvidencePack(d: SlaWizardData, completedAt: string | null): Blo
     ...(d.modules.includes('Incident response') ? [
       '6. INCIDENT RESPONSE',
       `   Severity Model   : ${yn(d.useSeverityModel)}`,
-      ...d.severityTargets.map((t) => `   ${t.severity}: Response ${t.responseTarget}, Resolution ${t.resolutionTarget}`),
+      ...(d.useSeverityModel
+        ? d.severityTargets.map((t) => `   ${t.severity}: Response ${t.responseTarget}, Resolution ${t.resolutionTarget}`)
+        : [`   Incident Handling: ${v(d.incidentNarrative)}`]),
       `   Escalation       : ${d.escalationContacts.map((c) => `${c.name} <${c.email}>`).join('; ') || '—'}`,
       '',
     ] : []),
