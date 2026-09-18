@@ -103,9 +103,10 @@ export { initialCounselMembers }
 interface CounselManagementProps {
   counselMembers: CounselMember[]
   onCounselAdded: (counsel: CounselMember) => void
+  adminRole?: string | null
 }
 
-export default function CounselManagement({ counselMembers, onCounselAdded }: CounselManagementProps) {
+export default function CounselManagement({ counselMembers, onCounselAdded, adminRole }: CounselManagementProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
@@ -415,10 +416,12 @@ export default function CounselManagement({ counselMembers, onCounselAdded }: Co
           )}
         </div>
         
-        <button type="button" className="admin-counsel__add" onClick={() => setIsAddModalOpen(true)}>
-          <Plus size={20} />
-          Add Counsel
-        </button>
+        {adminRole === 'super_admin' && (
+          <button type="button" className="admin-counsel__add" onClick={() => setIsAddModalOpen(true)}>
+            <Plus size={20} />
+            Add Counsel
+          </button>
+        )}
       </div>
 
       <div className="admin-counsel__grid">

@@ -1377,6 +1377,7 @@ export default function AdminDashboard() {
           <CounselManagement
             counselMembers={counselList}
             onCounselAdded={(c) => setCounselList((prev) => [...prev, c])}
+            adminRole={adminRole}
           />
         ) : activeNav === 'counsel-requests' ? (
           <section className="admin-dashboard__all-requests">
