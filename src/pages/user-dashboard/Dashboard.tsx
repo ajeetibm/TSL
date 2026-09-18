@@ -25,7 +25,7 @@ import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { capitalizePlan, formatDate } from '../../services/dashboardTypes'
 import type { CounselCredits, DashboardData, LegalLinks, QuickAccessLinks, SubscriptionData, SubscriptionPlan, SubscriptionUsage } from '../../services/dashboardTypes'
 import { setPageMetadata } from '../../services/metadata'
-import { counselApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
+import { counselApi, dashboardWorkspaceApi, paymentApi, smeApi, subscriptionApi } from '../../services/tslApi'
 import { appendPfReviewRequest } from '../../services/pfReviewStore'
 import type { FounderAgreementFieldMap } from '../../services/founderAgreementFieldMap'
 import { mapPrivacyPolicyFields } from '../../services/privacyPolicyFieldMap'
@@ -1767,9 +1767,8 @@ export default function Dashboard() {
     } catch { return false }
   })
 
-  const [dashboardViewMode, setDashboardViewMode] = useState(() =>
-    localStorage.getItem('tsl-dashboard-view-mode') ?? 'initial',
-  )
+  const [dashboardViewMode, setDashboardViewMode] = useState<'initial' | 'returning'>('initial')
+  const [workspaceLoaded, setWorkspaceLoaded] = useState(false)
   // A wizard may only be started after the server has confirmed subscription status.
   // wizardAccessConfirmed ensures stale localStorage cache never grants access
   // before the API has responded.
@@ -1821,22 +1820,10 @@ export default function Dashboard() {
   //   • Multiple queued items of the same type all appear in New simultaneously
   //   • Starting one moves only that instance to In Progress; the rest stay in New
   //   • Completing a workflow does not remove queued items from New
-  const queueStorageKey = 'tsl-dashboard-queue'
-  const [queuedCounts, setQueuedCounts] = useState<Record<string, number>>(() => {
-    try {
-      // Only restore a previously persisted queue — do NOT auto-seed from
-      // selectedWizards here. Seeding happens only after the user leaves the
-      // first-time landing (dashboardViewMode === 'returning'), so the New tab
-      // starts empty until the user explicitly clicks Start on a wizard.
-      const storedRaw = localStorage.getItem(queueStorageKey)
-      return storedRaw ? (JSON.parse(storedRaw) as Record<string, number>) : {}
-    } catch { return {} }
-  })
-  // A persisted queue is authoritative: a zero count means the user already
+  const [queuedCounts, setQueuedCounts] = useState<Record<string, number>>({})
+  // The mock API is authoritative: a zero count means the user already
   // started every instance of that Blueprint. Do not re-seed it on refresh.
-  const queueWasRestoredRef = useRef((() => {
-    try { return localStorage.getItem(queueStorageKey) !== null } catch { return false }
-  })())
+  const queueWasRestoredRef = useRef(false)
   // Whether the queue has been seeded from the server-authoritative selectedWizards
   const queueSeedRef = useRef(false)
   // The New-tab item is consumed as soon as the user presses Start. The wizard
@@ -1853,20 +1840,13 @@ export default function Dashboard() {
   // multiple runs of the same blueprint type independently of the single-slot
   // wizard hooks. The hook can be reset to start a new run without losing
   // earlier completion records.
-  const completedInstancesKey = 'tsl-dashboard-completed-instances'
-  const [completedInstances, setCompletedInstances] = useState<CompletedInstance[]>(() => {
-    try {
-      const raw = localStorage.getItem(completedInstancesKey)
-      return raw ? (JSON.parse(raw) as CompletedInstance[]) : []
-    } catch { return [] }
-  })
+  const [completedInstances, setCompletedInstances] = useState<CompletedInstance[]>([])
 
   const pushCompletedInstance = (wizardType: string, data: unknown, completedAt: string): string => {
     const id = `${wizardType}:${completedAt}:${Math.random().toString(36).slice(2, 7)}`
     const entry: CompletedInstance = { id, wizardType, completedAt, data }
     setCompletedInstances((prev) => {
       const next = [...prev, entry]
-      localStorage.setItem(completedInstancesKey, JSON.stringify(next))
       return next
     })
     return id
@@ -1875,25 +1855,45 @@ export default function Dashboard() {
   // ── In-progress instances ─────────────────────────────────────────────────
   // Each closed-mid-progress run is stored here so multiple instances of the
   // same blueprint type each appear as a separate card in the In Progress tab.
-  const inProgressInstancesKey = 'tsl-dashboard-inprogress-instances'
-  const [inProgressInstances, setInProgressInstances] = useState<InProgressInstance[]>(() => {
-    try {
-      const raw = localStorage.getItem('tsl-dashboard-inprogress-instances')
-      const saved = raw ? (JSON.parse(raw) as InProgressInstance[]) : []
-      const deduped = dedupeFounderAgreementInstances(saved)
-      if (raw && deduped.length !== saved.length) {
-        localStorage.setItem(inProgressInstancesKey, JSON.stringify(deduped))
-      }
-      return deduped
-    } catch { return [] }
-  })
+  const [inProgressInstances, setInProgressInstances] = useState<InProgressInstance[]>([])
   const inProgressInstancesRef = useRef(inProgressInstances)
 
   const commitInProgressInstances = (next: InProgressInstance[]) => {
     inProgressInstancesRef.current = next
-    localStorage.setItem(inProgressInstancesKey, JSON.stringify(next))
     setInProgressInstances(next)
   }
+
+  // Keep a user's workflow history on the mock server rather than in browser
+  // storage, so closing the browser does not reset the dashboard.
+  useEffect(() => {
+    let cancelled = false
+    dashboardWorkspaceApi.get().then((response) => {
+      if (cancelled || !response.success || !response.data) return
+      const workspace = response.data
+      const restoredInProgress = dedupeFounderAgreementInstances(workspace.inProgressInstances as InProgressInstance[])
+      setDashboardViewMode(workspace.viewMode)
+      setQueuedCounts(workspace.queuedCounts)
+      setCompletedInstances(workspace.completedInstances as CompletedInstance[])
+      inProgressInstancesRef.current = restoredInProgress
+      setInProgressInstances(restoredInProgress)
+      queueWasRestoredRef.current = workspace.viewMode === 'returning' ||
+        Object.keys(workspace.queuedCounts).length > 0 ||
+        workspace.inProgressInstances.length > 0 ||
+        workspace.completedInstances.length > 0
+      setWorkspaceLoaded(true)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    if (!workspaceLoaded) return
+    void dashboardWorkspaceApi.save({
+      viewMode: dashboardViewMode,
+      queuedCounts,
+      inProgressInstances,
+      completedInstances,
+    })
+  }, [workspaceLoaded, dashboardViewMode, queuedCounts, inProgressInstances, completedInstances])
 
   // Ref tracking which in-progress instance is currently being continued so
   // onClose/onComplete handlers can update or remove it.
@@ -1952,7 +1952,6 @@ export default function Dashboard() {
     setQueuedCounts((prev) => {
       const current = prev[title] ?? 0
       const next = { ...prev, [title]: Math.max(0, current - 1) }
-      localStorage.setItem(queueStorageKey, JSON.stringify(next))
       queueWasRestoredRef.current = true
       return next
     })
@@ -2075,7 +2074,6 @@ export default function Dashboard() {
               const quantity = Math.max(1, Number(addedWizard.quantity) || 1)
               next[addedWizard.title] = (next[addedWizard.title] ?? 0) + quantity
             }
-            localStorage.setItem(queueStorageKey, JSON.stringify(next))
             return next
           })
           // This is a one-time return payload. Browser refresh preserves
@@ -2090,7 +2088,7 @@ export default function Dashboard() {
         // On the first-time landing the queue is populated one wizard at a time
         // as the user clicks Start, so auto-seeding all selectedWizards would
         // flood the New tab with every blueprint the account has ever saved.
-        if (!queueSeedRef.current && !queueWasRestoredRef.current && localStorage.getItem('tsl-dashboard-view-mode') === 'returning') {
+        if (!queueSeedRef.current && !queueWasRestoredRef.current && dashboardViewMode === 'returning') {
           queueSeedRef.current = true
           setQueuedCounts((prev) => {
             const next = { ...prev }
@@ -2099,7 +2097,6 @@ export default function Dashboard() {
                 next[w.title] = w.quantity ?? 1
               }
             }
-            localStorage.setItem(queueStorageKey, JSON.stringify(next))
             queueWasRestoredRef.current = true
             return next
           })
@@ -2192,12 +2189,11 @@ export default function Dashboard() {
       if (isInPlaceUpgrade) {
         const clicked = localStorage.getItem('tsl-payment-clicked-wizards')
         const fromDashboardStart = clicked !== null &&
-          localStorage.getItem('tsl-dashboard-view-mode') !== 'returning'
+          dashboardViewMode !== 'returning'
         if (clicked) {
           setQueuedCounts((prev) => {
             if ((prev[clicked] ?? 0) > 0) return prev
             const next = { ...prev, [clicked]: 1 }
-            localStorage.setItem(queueStorageKey, JSON.stringify(next))
             return next
           })
           localStorage.removeItem('tsl-payment-clicked-wizards')
@@ -2205,13 +2201,12 @@ export default function Dashboard() {
         }
         if (fromDashboardStart) {
           setDashboardViewMode('returning')
-          localStorage.setItem('tsl-dashboard-view-mode', 'returning')
         } else {
           // Upgrade happened from Dashboard without a specific wizard Start click
           // (e.g. user clicked Upgrade Plan from the plan card). Reset the view-mode
           // flag so any 'initial' written by confirmUpgrade doesn't persist across
           // future Dashboard mounts for an already-subscribed user.
-          localStorage.setItem('tsl-dashboard-view-mode', 'returning')
+          setDashboardViewMode('returning')
         }
       }
     }
@@ -2290,7 +2285,6 @@ export default function Dashboard() {
       const current = prev[title] ?? 0
       if (current <= 0) return prev
       const next = { ...prev, [title]: current - 1 }
-      localStorage.setItem(queueStorageKey, JSON.stringify(next))
       return next
     })
   }
@@ -2476,7 +2470,6 @@ export default function Dashboard() {
     // wizardAccessConfirmed to false, causing the landing view to flash
     // before the API call re-confirms the subscription.
     setDashboardViewMode('returning')
-    localStorage.setItem('tsl-dashboard-view-mode', 'returning')
   }
 
   const user = dashboardData?.user

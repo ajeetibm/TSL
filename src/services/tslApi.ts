@@ -447,6 +447,33 @@ export const profileApi = {
   update: (payload: JsonRecord) => request('/api/v1/sme/profile', 'PUT', payload),
 }
 
+export interface DashboardWorkspace {
+  viewMode: 'initial' | 'returning'
+  queuedCounts: Record<string, number>
+  inProgressInstances: Array<{
+    id: string
+    wizardType: string
+    step: number
+    progress: number
+    startedAt: string
+    lastUpdatedAt: string
+    data: unknown
+  }>
+  completedInstances: Array<{
+    id: string
+    wizardType: string
+    completedAt: string
+    data: unknown
+  }>
+  updatedAt?: string | null
+}
+
+export const dashboardWorkspaceApi = {
+  get: () => request<DashboardWorkspace>('/api/v1/sme/dashboard/workspace'),
+  save: (workspace: Omit<DashboardWorkspace, 'updatedAt'>) =>
+    request<DashboardWorkspace>('/api/v1/sme/dashboard/workspace', 'PUT', workspace),
+}
+
 export interface ActiveSession {
   id: string
   device: string
