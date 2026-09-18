@@ -91,7 +91,13 @@
 }
 
 .counsel-portal__main {
+  position: relative;
+  z-index: 1;
   min-width: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .counsel-portal__header {
@@ -103,16 +109,17 @@
   padding: 16px 32px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  overflow: visible;
 }
 
 /* ── Back-navigation button — shared by portal header and profile header ─── */
 .counsel-portal__header .dashboard-back-btn,
 .counsel-profile__header .dashboard-back-btn {
-  position: absolute;
-  left: -18px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 10;
+  position: fixed;
+  left: 255px;
+  top: 60px;
+  transform: translateX(-50%);
+  z-index: 200;
   width: 36px;
   height: 36px;
   min-width: 36px;
@@ -127,6 +134,7 @@
   color: #ffffff;
   cursor: pointer;
   transition: background 160ms ease;
+  box-shadow: 0 4px 12px rgba(211, 160, 56, 0.4);
 }
 
 .counsel-portal__header .dashboard-back-btn:hover,
@@ -751,6 +759,10 @@
 
 .counsel-requests {
   padding: 32px;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .counsel-requests__toolbar {
@@ -808,6 +820,10 @@
   padding: 25px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .counsel-requests__heading h3 {
@@ -826,6 +842,9 @@
 .counsel-requests__list {
   display: grid;
   gap: 16px;
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .counsel-requests__row {
