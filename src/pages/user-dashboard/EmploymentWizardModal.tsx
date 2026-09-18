@@ -191,7 +191,7 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
     }
     if (step === 2) {
       if (!data.salary_amount || Number(data.salary_amount) <= 0) e['salary_amount'] = 'Remuneration is required.'
-      if (!data.salary_period) e['salary_period'] = 'Period is required.'
+      if (!data.salary_period || !data.salary_period_confirmed) e['salary_period'] = 'Select the remuneration period.'
       if (data.restraint_flag === null) e['restraint_flag'] = 'Select whether a restraint will apply.'
     }
     if (step === 3) {
@@ -325,8 +325,20 @@ export default function EmploymentWizardModal({ onClose, onComplete, initialStep
                   <input className={`nda-modal__input${e['salary_amount'] ? ' nda-modal__input--error' : ''}`} type="number" min="0" value={data.salary_amount} onChange={(event) => set('salary_amount', event.target.value)} />
                 </Field>
                 <Field label="Period" required error={e['salary_period']}>
-                  <select className={`nda-modal__input${e['salary_period'] ? ' nda-modal__input--error' : ''}`} value={data.salary_period} onChange={(event) => set('salary_period', event.target.value as EmploymentWizardData['salary_period'])}>
-                    <option>Per month</option><option>Per annum</option>
+                  <select
+                    className={`nda-modal__input${e['salary_period'] ? ' nda-modal__input--error' : ''}`}
+                    value={data.salary_period}
+                    onChange={(event) => {
+                      const next = {
+                        ...data,
+                        salary_period: event.target.value as EmploymentWizardData['salary_period'],
+                        salary_period_confirmed: true,
+                      }
+                      setData(next)
+                      onStepChange?.(step, next)
+                    }}
+                  >
+                    <option value="" disabled>Select…</option><option>Per month</option><option>Per annum</option>
                   </select>
                 </Field>
               </div>

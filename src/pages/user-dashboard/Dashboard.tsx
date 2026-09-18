@@ -35,7 +35,7 @@ import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
 import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
-import { useEmploymentWizard } from '../../hooks/useEmploymentWizard'
+import { calcEmploymentProgress, useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
 import { useFounderAgreementWizard } from '../../hooks/useFounderAgreementWizard'
 import { useServiceAgreementWizard } from '../../hooks/useServiceAgreementWizard'
@@ -2820,8 +2820,9 @@ export default function Dashboard() {
             onClose={(step, data) => {
               if (justCompletedRef.current) { justCompletedRef.current = false; return }
               const cid = continuingInstanceRef.current
-              if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round(((( step ?? 1) - 1) / 5) * 100), data); continuingInstanceRef.current = null }
-              else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data) }
+              const progress = data ? calcEmploymentProgress(data) : 0
+              if (cid) { updateInProgressInstance(cid, step ?? 1, progress, data); continuingInstanceRef.current = null }
+              else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, progress, data) }
               setIsEmpModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
@@ -3501,8 +3502,9 @@ export default function Dashboard() {
           onClose={(step, data) => {
             if (justCompletedRef.current) { justCompletedRef.current = false; return }
             const cid = continuingInstanceRef.current
-            if (cid) { updateInProgressInstance(cid, step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data); continuingInstanceRef.current = null }
-            else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, Math.round((((step ?? 1) - 1) / 5) * 100), data) }
+            const progress = data ? calcEmploymentProgress(data) : 0
+            if (cid) { updateInProgressInstance(cid, step ?? 1, progress, data); continuingInstanceRef.current = null }
+            else { decrementQueue('Employment Offer Letter'); pushInProgressInstance('Employment Offer Letter', step ?? 1, progress, data) }
             setIsEmpModalOpen(false)
           }}
           initialStep={continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1}
