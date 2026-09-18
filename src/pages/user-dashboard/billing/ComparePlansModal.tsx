@@ -6,7 +6,7 @@
  * Upgrade Plan / Downgrade buttons on the Billing page.
  */
 
-import { CheckCircle2, FileText, Loader2, ShoppingCart, X, Sparkles } from 'lucide-react'
+import { Briefcase, CheckCircle2, FileText, Loader2, X, Sparkles } from 'lucide-react'
 import type { SubscriptionPlan } from '../../../services/dashboardTypes'
 import './ComparePlansModal.css'
 
@@ -26,11 +26,11 @@ const PLAN_META: Record<string, {
     Icon: FileText,
   },
   operator: {
-    Icon: ShoppingCart,
+    Icon: Briefcase,
     popular: true,
   },
   boardroom: {
-    Icon: ShoppingCart,
+    Icon: Briefcase,
   },
 }
 

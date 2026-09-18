@@ -10,7 +10,6 @@ import {
   ChevronRight,
   CircleDollarSign,
   CreditCard,
-  Crown,
   FileCheck2,
   FileText,
   Lock,
@@ -18,7 +17,6 @@ import {
   Package,
   Play,
   Plus,
-  Rocket,
   Shield,
   ShoppingCart,
   Sparkles,
@@ -157,9 +155,9 @@ const blueprintIdByWizardTitle: Record<string, string> = {
 type PlanKey = string
 
 const PLAN_ICONS: Record<string, LucideIcon> = {
-  launchpad: Rocket,
-  operator: Building2,
-  boardroom: Crown,
+  launchpad: FileText,
+  operator: Briefcase,
+  boardroom: Briefcase,
 }
 
 function getPlanAmount(planId: string, plans: SubscriptionPlan[]) {
@@ -538,7 +536,7 @@ export default function DashboardWizardDetails() {
                 Track your legal workflows and completed documents across all your business operations.
               </p>
               <button type="button" className="user-dashboard__gold-button" onClick={() => navigate('/dashboard/blueprints')}>
-                Browse Wizards
+                Browse Blueprints
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -906,9 +904,9 @@ export default function DashboardWizardDetails() {
               </div>
             ) : (
               <div className="dashboard-wizard-details__empty">
-                <p>No wizards selected yet.</p>
+                <p>No blueprint selected yet.</p>
                 <button type="button" onClick={() => navigate('/dashboard/blueprints')}>
-                  Browse Wizards
+                  Browse Blueprints
                 </button>
               </div>
             )}

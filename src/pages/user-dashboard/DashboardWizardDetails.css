@@ -1335,6 +1335,11 @@
   line-height: 34px;
 }
 
+.dashboard-wizard-details__comparison-card--highlighted h3 svg {
+  color: #c79a3b;
+  flex-shrink: 0;
+}
+
 .dashboard-wizard-details__comparison-price {
   margin-bottom: 28px;
   color: #333333;
