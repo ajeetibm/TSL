@@ -127,6 +127,7 @@ interface InProgressInstance {
   step: number
   progress: number
   startedAt: string
+  lastUpdatedAt: string
   data: unknown
 }
 
@@ -367,7 +368,11 @@ function relativeUpdated(value?: string) {
   if (!value) return 'Updated recently'
   const updated = new Date(value).getTime()
   if (Number.isNaN(updated)) return 'Updated recently'
-  const diffHours = Math.max(1, Math.round((Date.now() - updated) / 36e5))
+  const diffMs = Date.now() - updated
+  const diffMins = Math.round(diffMs / 60e3)
+  if (diffMins < 1) return 'Updated just now'
+  if (diffMins < 60) return `Updated ${diffMins} minute${diffMins === 1 ? '' : 's'} ago`
+  const diffHours = Math.round(diffMs / 36e5)
   if (diffHours < 24) return `Updated ${diffHours} hour${diffHours === 1 ? '' : 's'} ago`
   const days = Math.round(diffHours / 24)
   return `Updated ${days} day${days === 1 ? '' : 's'} ago`
@@ -1908,20 +1913,21 @@ export default function Dashboard() {
     // card to the now-pending Counsel request instead of adding a second one.
     if (existing) {
       commitInProgressInstances(inProgressInstancesRef.current.map((instance) =>
-        instance.id === existing.id ? { ...instance, step, progress, data } : instance,
+        instance.id === existing.id ? { ...instance, step, progress, data, lastUpdatedAt: new Date().toISOString() } : instance,
       ))
       return existing.id
     }
 
     const id = `${wizardType}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`
-    const entry: InProgressInstance = { id, wizardType, step, progress, startedAt: new Date().toISOString(), data }
+    const now = new Date().toISOString()
+    const entry: InProgressInstance = { id, wizardType, step, progress, startedAt: now, lastUpdatedAt: now, data }
     commitInProgressInstances([...inProgressInstancesRef.current, entry])
     return id
   }
 
   const updateInProgressInstance = (id: string, step: number, progress: number, data: unknown) => {
     commitInProgressInstances(inProgressInstancesRef.current.map((inst) =>
-      inst.id === id ? { ...inst, step, progress, data } : inst,
+      inst.id === id ? { ...inst, step, progress, data, lastUpdatedAt: new Date().toISOString() } : inst,
     ))
   }
 
@@ -3192,7 +3198,7 @@ export default function Dashboard() {
                     <span style={{ width: `${inst.progress}%` }} />
                   </div>
                   <div className="user-dashboard__progress-footer">
-                    <span>{relativeUpdated(inst.startedAt)}</span>
+                    <span>{relativeUpdated(inst.lastUpdatedAt ?? inst.startedAt)}</span>
                     <button
                       type="button"
                       onClick={() => {
