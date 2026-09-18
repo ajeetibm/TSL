@@ -108,71 +108,6 @@ const fallbackMonths: EarningsMonth[] = [
   { month: 'Dec', earnings: 3900, target: 3800 },
 ]
 
-const fallbackPending: DashboardRequest[] = []
-
-const fallbackRequests: CounselRequest[] = [
-  {
-    requestId: 'req_77b4',
-    subject: 'Shareholder Agreement Review',
-    fromUser: 'David Brown',
-    userEmail: 'david.brown@tech.com',
-    earnings: 550,
-    status: 'completed',
-    assignedBy: 'Admin John',
-    date: '2026-01-11',
-  },
-  {
-    requestId: 'req_77b5',
-    subject: 'NDA Review & Modification',
-    fromUser: 'Sarah Johnson',
-    userEmail: 'sarah.j@business.co.za',
-    earnings: 500,
-    status: 'completed',
-    assignedBy: 'Admin Sarah',
-    date: '2026-01-10',
-  },
-  {
-    requestId: 'req_77b6',
-    subject: 'Partnership Agreement Draft',
-    fromUser: 'Robert Smith',
-    userEmail: 'robert.s@ventures.com',
-    earnings: 500,
-    status: 'completed',
-    assignedBy: 'Admin John',
-    date: '2026-01-10',
-  },
-  {
-    requestId: 'req_77b7',
-    subject: 'Intellectual Property Review',
-    fromUser: 'Emily Davis',
-    userEmail: 'emily.d@innovation.co.za',
-    earnings: 450,
-    status: 'rejected',
-    assignedBy: 'Admin Sarah',
-    date: '2026-01-09',
-  },
-  {
-    requestId: 'req_77b8',
-    subject: 'Franchise Agreement Analysis',
-    fromUser: 'Thomas Wilson',
-    userEmail: 'thomas.w@franchise.com',
-    earnings: 550,
-    status: 'completed',
-    assignedBy: 'Admin John',
-    date: '2026-01-08',
-  },
-  {
-    requestId: 'req_77b9',
-    subject: 'Director Appointment Documents',
-    fromUser: 'Linda Martinez',
-    userEmail: 'linda.m@corporate.co.za',
-    earnings: 550,
-    status: 'completed',
-    assignedBy: 'Admin Sarah',
-    date: '2026-01-08',
-  },
-]
-
 function formatMoney(value = 0, compact = false) {
   if (compact) return `R${(value / 1000).toFixed(1)}k`
   return `R${Math.round(value).toLocaleString('en-ZA')}`
@@ -209,8 +144,7 @@ function writeStoredAccepted(list: AcceptedEntry[]) {
 function normalizeRequests(payload: unknown): CounselRequest[] {
   const data = payload as { requests?: CounselRequest[] } | CounselRequest[] | undefined
   const raw = Array.isArray(data) ? data : (data?.requests ?? [])
-  const list = raw.length ? raw : fallbackRequests
-  return list.map((r) => {
+  return raw.map((r) => {
     // Support multiple possible field names the API may use for the admin who assigned the request
     const rec = r as Record<string, unknown>
     const assignedBy = (rec.assignedBy ?? rec.adminName ?? rec.assigned_by ?? rec.assignedAdmin ?? 'Admin') as string
@@ -227,7 +161,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const location = useLocation()
   const { availability, toggleAvailability } = useCounselAvailability()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [requests, setRequests] = useState<CounselRequest[]>(fallbackRequests)
+  const [requests, setRequests] = useState<CounselRequest[]>([])
   const [acceptedRequestsState, setAcceptedRequestsState] = useState<AcceptedEntry[]>(() => readStoredAccepted())
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
@@ -304,9 +238,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
 
   const kpis = dashboardData?.kpis ?? {}
   // Derive from live `requests` state so the dashboard reflects completions/rejections immediately
-  const pendingRequests = requests.length > 0
-    ? requests.filter((r) => r.status === 'pending')
-    : (dashboardData ? (dashboardData.pendingRequests ?? []) : fallbackPending)
+  const pendingRequests = requests.filter((r) => r.status === 'pending')
   const acceptedRequests = acceptedRequestsState
   const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
   const chartYear = dashboardData?.earningsChart?.year ?? 2025
