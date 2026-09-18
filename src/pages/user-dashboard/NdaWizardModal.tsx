@@ -1164,7 +1164,9 @@ export default function NdaWizardModal({
                   {data.ci_definition === 'Specified categories only' && data.ci_categories.length > 0 && (
                     <PreviewField label="Categories" value={data.ci_categories.join(', ')} />
                   )}
-                  <PreviewField label="Standard exclusions" value={data.ci_exclusions.join(', ')} />
+                  {data.ci_definition === 'Broad with standard exclusions' && data.ci_exclusions.length > 0 && (
+                    <PreviewField label="Standard exclusions" value={data.ci_exclusions.join(', ')} />
+                  )}
                   <PreviewField label="Information must be marked confidential" value={data.marking_required ? 'Yes' : 'No'} />
                 </PreviewSection>
 
