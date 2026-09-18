@@ -439,9 +439,21 @@ export default function DashboardSettings() {
   const planPrice          = hasSubscription ? (subscription?.price          ?? 0) : 0
   const wizardRuns         = hasSubscription ? (subscription?.wizardRuns     ?? 0) : 0
   const teamMembers        = hasSubscription ? (subscription?.teamMembers    ?? 0) : 0
-  const runsUsed           = hasSubscription ? (subscription?.usage.runsUsed      ?? 0) : 0
-  const runsTotal          = hasSubscription ? (subscription?.usage.runsTotal     ?? 0) : 0
-  const runsRemaining      = hasSubscription ? (subscription?.usage.runsRemaining ?? 0) : 0
+  // Usage This Month must use the same active credit pool shown on the
+  // dashboard. When the user has bought Blueprint top-ups, that pool replaces
+  // the plan allocation for the current billing period. `usage.runsUsed` is a
+  // cumulative figure and must not be compared with the monthly/top-up total.
+  const topUpRunsPurchased = hasSubscription ? (subscription?.usage.topUpRunsPurchased ?? 0) : 0
+  const isUsingTopUpRuns = topUpRunsPurchased > 0
+  const runsTotal = hasSubscription
+    ? (isUsingTopUpRuns ? topUpRunsPurchased : (subscription?.usage.runsTotal ?? 0))
+    : 0
+  const runsRemaining = hasSubscription
+    ? (isUsingTopUpRuns
+      ? (subscription?.usage.topUpRunsRemaining ?? 0)
+      : (subscription?.usage.runsRemaining ?? 0))
+    : 0
+  const runsUsed = Math.max(0, runsTotal - runsRemaining)
   const nextBillingDate    = hasSubscription ? (subscription?.nextBillingDate ?? '') : ''
   const pendingDowngrade   = subscription?.pendingDowngrade ?? null
   const counselCreditsTotal     = hasSubscription ? (subscription?.counselCreditsTotal     ?? 0) : 0
@@ -864,13 +876,15 @@ export default function DashboardSettings() {
               </div>
 
               <div className="dashboard-settings__usage-copy">
-                <span>Runs Used</span>
+                <span>Credits Used</span>
                 <strong>{runsUsed} of {runsTotal}</strong>
               </div>
               <div className="dashboard-settings__progress">
                 <span style={{ width: `${progressPct}%` }} />
               </div>
-              <p className="dashboard-settings__remaining">{runsRemaining} runs remaining</p>
+              <p className="dashboard-settings__remaining">
+                {runsRemaining} credit{runsRemaining !== 1 ? 's' : ''} remaining
+              </p>
 
               {hasSubscription && (
                 <>
