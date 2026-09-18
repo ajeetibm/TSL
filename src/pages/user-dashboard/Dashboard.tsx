@@ -1801,7 +1801,7 @@ export default function Dashboard() {
   const [counselCreditsForGate, setCounselCreditsForGate] = useState<CounselCredits | null>(null)
   const [isNoCounselCreditModalOpen, setIsNoCounselCreditModalOpen] = useState(false)
   const [insufficientUnits, setInsufficientUnits] = useState<{ remaining: number; required: number; blueprintName: string; pricePerUnit: number; iconName?: string } | null>(null)
-  const [pdfConfirm, setPdfConfirm] = useState<{ blueprintId: string; downloadKey: string; filename: string; credits: number; build: () => Blob | Promise<Blob> } | null>(null)
+  const [pdfConfirm, setPdfConfirm] = useState<{ blueprintId: string; downloadKey: string; filename: string; credits: number; fileType: 'PDF' | 'DOCX'; build: () => Blob | Promise<Blob> } | null>(null)
   const pdfDownloadedKey = 'tsl-pdf-downloaded'
   const [pdfDownloaded, setPdfDownloaded] = useState<Set<string>>(() => {
     try {
@@ -2255,15 +2255,21 @@ export default function Dashboard() {
     'founders-agreement-ip': 4,
   }
 
-  const confirmPdfDownload = (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) => {
+  const confirmDownload = (blueprintId: string, downloadKey: string, filename: string, fileType: 'PDF' | 'DOCX', build: () => Blob | Promise<Blob>) => {
     // Skip confirm if already downloaded (credit already deducted)
     if (pdfDownloaded.has(downloadKey)) {
       void downloadFinalBlueprint(blueprintId, downloadKey, filename, build)
       return
     }
     const credits = PDF_CREDITS[blueprintId] ?? 1
-    setPdfConfirm({ blueprintId, downloadKey, filename, credits, build })
+    setPdfConfirm({ blueprintId, downloadKey, filename, credits, fileType, build })
   }
+
+  const confirmPdfDownload = (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) =>
+    confirmDownload(blueprintId, downloadKey, filename, 'PDF', build)
+
+  const confirmDocxDownload = (blueprintId: string, downloadKey: string, filename: string, build: () => Blob | Promise<Blob>) =>
+    confirmDownload(blueprintId, downloadKey, filename, 'DOCX', build)
 
   const showNdaToast = (msg: string) => {
     if (ndaToastTimerRef.current) clearTimeout(ndaToastTimerRef.current)
@@ -3253,7 +3259,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('nda', id, 'NDA-Document.pdf', () => buildNdaPdf(ndaData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('nda', id, 'NDA-Document.docx', () => buildNdaDocx(ndaData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('nda', id, 'NDA-Document.docx', () => buildNdaDocx(ndaData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => void buildNdaEvidencePack(ndaData, completedAt, id).then((pack) => triggerDownload(pack, 'NDA-Evidence-Pack.txt'))}>
@@ -3279,7 +3285,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('employment-offer-letter', id, 'Employment-Offer-Letter.pdf', () => buildEmploymentPdf(resolvedEmpData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(resolvedEmpData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('employment-offer-letter', id, 'Employment-Offer-Letter.docx', () => buildEmploymentDocx(resolvedEmpData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => void buildEmploymentEvidencePack(resolvedEmpData, completedAt, id).then((pack) => triggerDownload(pack, 'Employment-Evidence-Pack.txt'))}>
@@ -3304,7 +3310,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('privacy-policy', id, 'Privacy-Policy.pdf', () => buildPrivacyPolicyPdf(ppData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('privacy-policy', id, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('privacy-policy', id, 'Privacy-Policy.docx', () => buildPrivacyPolicyDocx(ppData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => triggerDownload(buildPrivacyPolicyEvidencePack(ppData, completedAt), 'Privacy-Policy-Evidence-Pack.txt')}>
@@ -3329,7 +3335,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('founders-agreement-ip', id, 'Founders-Agreement.pdf', () => buildFounderAgreementPdf(faData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('founders-agreement-ip', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('founders-agreement-ip', id, 'Founders-Agreement.docx', () => buildFounderAgreementDocx(faData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => void buildFounderAgreementEvidencePack(faData, completedAt, id).then((pack) => triggerDownload(pack, 'Founders-Agreement-Evidence-Pack.txt'))}>
@@ -3354,7 +3360,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('service-agreement', id, 'Service-Agreement.pdf', () => buildServiceAgreementPdf(saData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('service-agreement', id, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('service-agreement', id, 'Service-Agreement.docx', () => buildServiceAgreementDocx(saData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => triggerDownload(buildServiceAgreementEvidencePack(saData, completedAt), 'Service-Agreement-Evidence-Pack.txt')}>
@@ -3379,7 +3385,7 @@ export default function Dashboard() {
                         <button type="button" onClick={() => confirmPdfDownload('service-level-agreement', id, 'Service-Level-Agreement.pdf', () => buildSlaPdf(slaData, completedAt))}>
                           <Download size={16} /> Download PDF
                         </button>
-                        <button type="button" onClick={() => void downloadFinalBlueprint('service-level-agreement', id, 'Service-Level-Agreement.docx', () => buildSlaDocx(slaData, completedAt))}>
+                        <button type="button" onClick={() => confirmDocxDownload('service-level-agreement', id, 'Service-Level-Agreement.docx', () => buildSlaDocx(slaData, completedAt))}>
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => triggerDownload(buildSlaEvidencePack(slaData, completedAt), 'SLA-Evidence-Pack.txt')}>
@@ -3441,9 +3447,9 @@ export default function Dashboard() {
             <div className="pdf-confirm-modal__icon">
               <Download size={24} />
             </div>
-            <h2 id="pdf-confirm-title" className="pdf-confirm-modal__title">Download PDF</h2>
+            <h2 id="pdf-confirm-title" className="pdf-confirm-modal__title">Download {pdfConfirm.fileType}</h2>
             <p className="pdf-confirm-modal__body">
-              Downloading this PDF will deduct <strong>{pdfConfirm.credits} credit{pdfConfirm.credits !== 1 ? 's' : ''}</strong> from your account balance.
+              Downloading this {pdfConfirm.fileType} will deduct <strong>{pdfConfirm.credits} credit{pdfConfirm.credits !== 1 ? 's' : ''}</strong> from your account balance.
             </p>
             <div className="pdf-confirm-modal__actions">
               <button
