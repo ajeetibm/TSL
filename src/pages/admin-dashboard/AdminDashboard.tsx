@@ -79,6 +79,8 @@ type AdminDashboardData = {
     receivedAt: string
     status: string
     assignedCounselName?: string
+    assignedBy?: string | null
+    assignedByRole?: string | null
     rejectionReason?: string
     rejectedAt?: string
     description?: string | null
@@ -631,50 +633,75 @@ export default function AdminDashboard() {
   const revenueLinePoints = buildRevenueLinePoints(revenueMonths, revenueAxis)
 
   const openPreviewModal = (request: AdminCounselRequest) => {
-    setActiveRequest(request)
-    setAssignmentStep('preview')
-    setSelectedCounsel(assignableCounselMembers[0]?.email ?? counselMembers[0].email)
-
-    // Re-fetch counsel statuses so the assign step always reflects the latest
-    // availability set in the counsel portal, without requiring a full page reload.
-    adminApi.counsel().then((response) => {
-      if (!response.success || !response.data) return
-      const data = response.data as { counsel?: Array<Record<string, unknown>> }
-      const members: CounselMember[] = (data.counsel ?? [])
-        .map((member) => {
-          const name = String(member.name || member.fullName || member.email || 'Counsel Member')
-          const initials = name
-            .replace(/^(Dr\.|Adv\.)\s*/i, '')
-            .split(' ')
-            .filter(Boolean)
-            .slice(0, 3)
-            .map((w) => w[0].toUpperCase())
-            .join('')
-          const rawStatus = String(member.status || member.availability || 'available').toLowerCase()
-          const status = rawStatus === 'available' ? 'Available' : 'Not Available'
-          return {
-            initials,
-            name,
-            expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
-            experience: String(member.experience || '5 years exp'),
-            status,
-            location: String(member.location || ''),
-            email: String(member.email || '').toLowerCase(),
-            phone: String(member.phone || ''),
-            completed: 0,
-          }
-        })
-        .filter((member) => member.email)
-      if (members.length > 0) {
-        setAssignableCounselMembers(members)
-        setCounselList((prev) => {
-          const emailToApiMember = new Map(members.map((m) => [m.email, m]))
-          return prev.map((m) => {
-            const live = emailToApiMember.get(m.email)
-            return live ? { ...m, status: live.status } : m
-          })
-        })
+    // A different administrator may have assigned this request after this
+    // dashboard loaded. Refresh it before opening the assignment flow.
+    adminApi.dashboard().then((response) => {
+      if (!response.success || !response.data) {
+        setError(response.message ?? 'Unable to check the current request status.')
+        return
       }
+
+      const latestDashboard = response.data as AdminDashboardData
+      const latestRequest = latestDashboard.recentCounselRequests?.find((item) => item.requestId === request.requestId)
+      const latestStatus = latestRequest?.status.trim().toLowerCase().replace(/_/g, ' ')
+      const reassignmentRequired = latestStatus === 'rejected reassignment needed'
+      const alreadyAssigned = !reassignmentRequired && (
+        Boolean(latestRequest?.assignedCounselName) || ['in progress', 'accepted', 'completed'].includes(latestStatus ?? '')
+      )
+
+      setDashboardData(latestDashboard)
+      if (latestRequest && alreadyAssigned) {
+        const assignedByRole = latestRequest.assignedByRole === 'super_admin' ? 'Super Admin' : 'Sub Admin'
+        const assignedByName = latestRequest.assignedBy ? ` (${latestRequest.assignedBy})` : ''
+        setError(`This request has already been assigned by ${assignedByRole}${assignedByName}.`)
+        return
+      }
+
+      setActiveRequest(latestRequest ?? request)
+      setAssignmentStep('preview')
+      setSelectedCounsel(assignableCounselMembers[0]?.email ?? counselMembers[0].email)
+
+      // Re-fetch counsel statuses so the assign step always reflects the latest
+      // availability set in the counsel portal, without requiring a full page reload.
+      adminApi.counsel().then((counselResponse) => {
+        if (!counselResponse.success || !counselResponse.data) return
+        const data = counselResponse.data as { counsel?: Array<Record<string, unknown>> }
+        const members: CounselMember[] = (data.counsel ?? [])
+          .map((member) => {
+            const name = String(member.name || member.fullName || member.email || 'Counsel Member')
+            const initials = name
+              .replace(/^(Dr\.|Adv\.)\s*/i, '')
+              .split(' ')
+              .filter(Boolean)
+              .slice(0, 3)
+              .map((w) => w[0].toUpperCase())
+              .join('')
+            const rawStatus = String(member.status || member.availability || 'available').toLowerCase()
+            const status = rawStatus === 'available' ? 'Available' : 'Not Available'
+            return {
+              initials,
+              name,
+              expertise: String(member.expertise || member.specialty || 'General Legal Counsel'),
+              experience: String(member.experience || '5 years exp'),
+              status,
+              location: String(member.location || ''),
+              email: String(member.email || '').toLowerCase(),
+              phone: String(member.phone || ''),
+              completed: 0,
+            }
+          })
+          .filter((member) => member.email)
+        if (members.length > 0) {
+          setAssignableCounselMembers(members)
+          setCounselList((prev) => {
+            const emailToApiMember = new Map(members.map((m) => [m.email, m]))
+            return prev.map((m) => {
+              const live = emailToApiMember.get(m.email)
+              return live ? { ...m, status: live.status } : m
+            })
+          })
+        }
+      })
     })
   }
 
@@ -756,6 +783,7 @@ export default function AdminDashboard() {
 
     if (!response.success) {
       setError(response.message ?? 'Unable to assign counsel.')
+      if (response.error === 'COUNSEL_REQUEST_ALREADY_ASSIGNED') closeAssignmentModal()
       return
     }
 
