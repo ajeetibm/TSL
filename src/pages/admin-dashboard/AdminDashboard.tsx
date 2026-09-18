@@ -1377,6 +1377,10 @@ export default function AdminDashboard() {
           <CounselManagement
             counselMembers={counselList}
             onCounselAdded={(c) => setCounselList((prev) => [...prev, c])}
+            onCounselUpdated={(c) => {
+              setCounselList((prev) => prev.map((item) => (item.email === c.email ? c : item)))
+              setAssignableCounselMembers((prev) => prev.map((item) => (item.email === c.email ? c : item)))
+            }}
             adminRole={adminRole}
           />
         ) : activeNav === 'counsel-requests' ? (

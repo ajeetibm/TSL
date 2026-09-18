@@ -103,10 +103,11 @@ export { initialCounselMembers }
 interface CounselManagementProps {
   counselMembers: CounselMember[]
   onCounselAdded: (counsel: CounselMember) => void
+  onCounselUpdated?: (counsel: CounselMember) => void
   adminRole?: string | null
 }
 
-export default function CounselManagement({ counselMembers, onCounselAdded, adminRole }: CounselManagementProps) {
+export default function CounselManagement({ counselMembers, onCounselAdded, onCounselUpdated, adminRole }: CounselManagementProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
   const [selectedCounsel, setSelectedCounsel] = useState<CounselMember | null>(null)
@@ -167,6 +168,20 @@ export default function CounselManagement({ counselMembers, onCounselAdded, admi
     showToast('New Counsel added successfully.')
   }
 
+  const handleUpdateCounsel = (updatedCounsel: { name: string; email: string; phone: string; expertise: string; location: string; experience: string }) => {
+    if (selectedCounsel) {
+      const fullUpdated: CounselMember = {
+        ...selectedCounsel,
+        ...updatedCounsel,
+      }
+      if (onCounselUpdated) {
+        onCounselUpdated(fullUpdated)
+      }
+      setSelectedCounsel(fullUpdated)
+      showToast('Counsel profile updated successfully.')
+    }
+  }
+
   // Filter counsel members based on search and filters
   const filteredCounselMembers = useMemo(() => {
     return counselMembers.filter((member) => {
@@ -210,6 +225,7 @@ export default function CounselManagement({ counselMembers, onCounselAdded, admi
           setSelectedCounsel(null)
         }}
         counsel={selectedCounsel}
+        onSave={handleUpdateCounsel}
       />
     <section className="admin-counsel">
       <div className="admin-counsel__stats" aria-label="Counsel summary">
