@@ -835,7 +835,7 @@ export default function DashboardWizardDetails() {
                   {isPlanManuallySelected && selectedPlan ? (
                     isCovered ? (
                       <span>
-                        Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong> — your <strong>{selectedPlan.name} Plan</strong> includes enough credits to proceed.
+                        Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong>
                       </span>
                     ) : (
                       <span>
@@ -844,7 +844,7 @@ export default function DashboardWizardDetails() {
                     )
                   ) : rec ? (
                     <span>
-                      Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong> — the <strong>{rec.name} Plan</strong> includes enough credits to proceed.
+                      Your selection requires <strong>{totalBlueprintUnits} {selectionCreditsLabel}</strong>
                     </span>
                   ) : null}
                 </div>
