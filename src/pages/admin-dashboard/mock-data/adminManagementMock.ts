@@ -1,6 +1,6 @@
 /**
  * mock-data/adminManagementMock.ts
- * In-memory store for Admin Management records.
+ * Browser-persisted mock store for Admin Management records.
  * PRODUCTION: replace this entire module with real API calls in adminManagementService.ts.
  * The service layer is the only file that needs to change.
  */
@@ -8,7 +8,9 @@
 import type { AdminRecord, UpdateAdminPayload } from '../types/adminManagement'
 
 // ── Seed data ─────────────────────────────────────────────────────────────
-let _admins: AdminRecord[] = [
+const ADMIN_STORAGE_KEY = 'tsl-admin-management-records-v1'
+
+const seedAdmins: AdminRecord[] = [
   {
     id: 'adm_001',
     name: 'John Smith',
@@ -55,6 +57,31 @@ let _admins: AdminRecord[] = [
   },
 ]
 
+function loadAdmins(): AdminRecord[] {
+  if (typeof window === 'undefined') return [...seedAdmins]
+
+  try {
+    const stored = window.localStorage.getItem(ADMIN_STORAGE_KEY)
+    if (!stored) return [...seedAdmins]
+    const parsed = JSON.parse(stored)
+    return Array.isArray(parsed) ? parsed as AdminRecord[] : [...seedAdmins]
+  } catch {
+    return [...seedAdmins]
+  }
+}
+
+function saveAdmins(admins: AdminRecord[]): void {
+  if (typeof window === 'undefined') return
+
+  try {
+    window.localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(admins))
+  } catch {
+    // The mock must remain usable if browser storage is unavailable.
+  }
+}
+
+let _admins = loadAdmins()
+
 // ── Mock "database" operations ────────────────────────────────────────────
 
 export function mockGetAdmins(): AdminRecord[] {
@@ -75,9 +102,17 @@ export function mockUpdateAdmin(payload: UpdateAdminPayload): AdminRecord {
     secondaryAction: payload.status === 'Active' ? 'Revoke' : 'Cancel',
   }
   _admins = _admins.map((a, i) => (i === idx ? updated : a))
+  saveAdmins(_admins)
   return updated
+}
+
+export function mockAddAdmin(record: AdminRecord): void {
+  // Deduplicate by email so double-invites don't sneak in
+  _admins = [record, ..._admins.filter((a) => a.email.toLowerCase() !== record.email.toLowerCase())]
+  saveAdmins(_admins)
 }
 
 export function mockRevokeAdmin(id: string): void {
   _admins = _admins.filter((a) => a.id !== id)
+  saveAdmins(_admins)
 }

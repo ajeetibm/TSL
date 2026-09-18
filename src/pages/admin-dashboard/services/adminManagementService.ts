@@ -13,7 +13,7 @@
 
 import { adminApi } from '../../../services/tslApi'
 import type { AdminManagementApiResponse, AdminRecord, UpdateAdminPayload } from '../types/adminManagement'
-import { mockGetAdmins, mockRevokeAdmin, mockUpdateAdmin } from '../mock-data/adminManagementMock'
+import { mockAddAdmin, mockGetAdmins, mockRevokeAdmin, mockUpdateAdmin } from '../mock-data/adminManagementMock'
 
 export interface InviteAdminPayload {
   fullName: string
@@ -57,11 +57,41 @@ export async function revokeAdmin(id: string): Promise<AdminManagementApiRespons
   }
 }
 
-export async function inviteAdmin(payload: InviteAdminPayload): Promise<AdminManagementApiResponse<{ email: string; invitedAt: string }>> {
+export interface InviteAdminResult {
+  email: string
+  invitedAt: string
+  admin: AdminRecord
+}
+
+export async function inviteAdmin(payload: InviteAdminPayload): Promise<AdminManagementApiResponse<InviteAdminResult>> {
   try {
     const res = await adminApi.inviteAdmin({ fullName: payload.fullName, email: payload.email, message: payload.message ?? '' })
     if (!res.success) return { success: false, message: res.message ?? 'Failed to send invitation.' }
-    return { success: true, message: res.message ?? 'Invitation sent successfully.', data: res.data as { email: string; invitedAt: string } }
+
+    // Persist into the local mock store so getAdmins() returns it on next load
+    const invitedAt = (res.data as { invitedAt?: string } | undefined)?.invitedAt ?? new Date().toISOString()
+    const newRecord: AdminRecord = {
+      id:              `invite-${Date.now()}`,
+      name:            payload.fullName,
+      email:           payload.email,
+      role:            'Sub Admin',
+      status:          'Pending',
+      phone:           '',
+      lastActive:      '—',
+      invitedDate:     new Date(invitedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      secondaryAction: 'Cancel',
+    }
+    mockAddAdmin(newRecord)
+
+    return {
+      success: true,
+      message: res.message ?? 'Invitation sent successfully.',
+      data: {
+        email: payload.email,
+        invitedAt,
+        admin: newRecord,
+      },
+    }
   } catch (e) {
     return { success: false, message: e instanceof Error ? e.message : 'Failed to send invitation.' }
   }

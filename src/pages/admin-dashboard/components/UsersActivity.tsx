@@ -137,6 +137,7 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
   const [isModalOpen, setIsModalOpen]       = useState(false)
   const [selectedUser, setSelectedUser]     = useState<User | null>(null)
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
+  const [inviteEmailError, setInviteEmailError]   = useState<string | null>(null)
   const [apiUsers, setApiUsers]             = useState<User[] | null>(null)
 
   // ── Admin management state ─────────────────────────────────────────────
@@ -523,27 +524,32 @@ export default function UsersActivity({ adminRole }: UsersActivityProps) {
       {/* ── Invite sub-admin modal ── */}
       <InviteSubAdminModal
         isOpen={isInviteModalOpen}
-        onClose={() => setIsInviteModalOpen(false)}
+        onClose={() => { setIsInviteModalOpen(false); setInviteEmailError(null) }}
+        externalEmailError={inviteEmailError}
         onSendInvitation={async (data) => {
-          setIsInviteModalOpen(false)
+          setInviteEmailError(null)
+          // Duplicate email check against current admin list
+          const normalised = data.email.trim().toLowerCase()
+          const isDuplicate = admins.some((a) => a.email.trim().toLowerCase() === normalised)
+          if (isDuplicate) {
+            setInviteEmailError(`An invitation for ${data.email} already exists.`)
+            return
+          }
           const res = await inviteAdmin({ fullName: data.fullName, email: data.email, message: data.message })
           if (res.success) {
-            const newAdmin: AdminRecord = {
-              id: `invite-${Date.now()}`,
-              name: data.fullName,
-              email: data.email,
-              role: 'Sub Admin',
-              status: 'Pending',
-              phone: '',
-              lastActive: '—',
-              invitedDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-              secondaryAction: 'Cancel',
-            }
+            setIsInviteModalOpen(false)
+            setInviteEmailError(null)
+            // Use the persisted record returned by the service. Recreating it
+            // here produced a different id from the stored invitation, so a
+            // refresh could not reliably show or manage the same row.
+            const newAdmin = res.data?.admin
+            if (!newAdmin) return
             setAdmins((prev) => [newAdmin, ...prev])
             setManagementTab('admins')
             showToast(`Invitation sent to ${data.email}. ${data.fullName} will receive an email to join as Sub Admin.`, 'success')
           } else {
-            showToast(res.message ?? 'Failed to send invitation.', 'error')
+            // API returned an error (e.g. duplicate from server) — show inside modal
+            setInviteEmailError(res.message ?? 'Failed to send invitation.')
           }
         }}
       />

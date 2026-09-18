@@ -1,11 +1,12 @@
 import { Mail, User, X } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './InviteSubAdminModal.css'
 
 interface InviteSubAdminModalProps {
   isOpen: boolean
   onClose: () => void
   onSendInvitation: (data: { fullName: string; email: string; message: string }) => void
+  externalEmailError?: string | null
 }
 
 interface FormErrors {
@@ -34,12 +35,23 @@ function validate(fullName: string, email: string): FormErrors {
   return errors
 }
 
-export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation }: InviteSubAdminModalProps) {
+export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation, externalEmailError }: InviteSubAdminModalProps) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail]       = useState('')
   const [message, setMessage]   = useState('')
   const [errors, setErrors]     = useState<FormErrors>({})
   const [touched, setTouched]   = useState<{ fullName?: boolean; email?: boolean }>({})
+
+  // Reset fields when modal closes so next open is always fresh
+  useEffect(() => {
+    if (!isOpen) {
+      setFullName('')
+      setEmail('')
+      setMessage('')
+      setErrors({})
+      setTouched({})
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -60,8 +72,6 @@ export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation 
       return
     }
     onSendInvitation({ fullName: fullName.trim(), email: email.trim(), message })
-    reset()
-    onClose()
   }
 
   const handleCancel = () => {
@@ -152,6 +162,11 @@ export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation 
             {errors.email && touched.email && (
               <p className="invite-admin-modal__error" id="email-error" role="alert">
                 {errors.email}
+              </p>
+            )}
+            {externalEmailError && !errors.email && (
+              <p className="invite-admin-modal__error" id="email-error-external" role="alert">
+                {externalEmailError}
               </p>
             )}
           </div>
