@@ -411,6 +411,8 @@
   padding: 20px;
   background: #ffffff;
   box-shadow: 0 1px 4px rgba(7, 25, 43, 0.08);
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
 }
 
 /* ── Invoice row — 3 columns exactly matching Figma:
