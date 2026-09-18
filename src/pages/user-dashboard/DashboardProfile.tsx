@@ -1,5 +1,5 @@
 import { BackButton } from '../../components/dashboard/BackButton'
-import { BriefcaseBusiness, Camera, CheckCircle2, Loader2, Mail, MapPin, Phone, Trash2, UserRound, X } from 'lucide-react'
+import { BriefcaseBusiness, Camera, CheckCircle2, Eye, EyeOff, Loader2, Mail, MapPin, Phone, Trash2, UserRound, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -14,6 +14,88 @@ import './Dashboard.css'
 import './DashboardProfile.css'
 
 type ProfileTab = 'information' | 'security' | 'preferences'
+
+// ─── Password validation helpers (same rules as SignInModal signup) ───────────
+
+interface PasswordRules {
+  minLength: boolean
+  hasUpper: boolean
+  hasLower: boolean
+  hasNumber: boolean
+  hasSpecial: boolean
+}
+
+function getPasswordRules(v: string): PasswordRules {
+  return {
+    minLength: v.length >= 8,
+    hasUpper:  /[A-Z]/.test(v),
+    hasLower:  /[a-z]/.test(v),
+    hasNumber: /[0-9]/.test(v),
+    hasSpecial: /[^A-Za-z0-9]/.test(v),
+  }
+}
+
+function getPasswordStrength(rules: PasswordRules): 'weak' | 'medium' | 'strong' {
+  const met = Object.values(rules).filter(Boolean).length
+  if (met <= 2) return 'weak'
+  if (met <= 4) return 'medium'
+  return 'strong'
+}
+
+function validateNewPassword(v: string): string {
+  const trimmed = v.trim()
+  if (!trimmed) return 'New password is required.'
+  const rules = getPasswordRules(trimmed)
+  if (!rules.minLength) return 'Password must be at least 8 characters.'
+  if (!rules.hasUpper)  return 'Add at least one uppercase letter.'
+  if (!rules.hasLower)  return 'Add at least one lowercase letter.'
+  if (!rules.hasNumber) return 'Add at least one number.'
+  if (!rules.hasSpecial) return 'Add at least one special character.'
+  return ''
+}
+
+function validateConfirmPassword(newPwd: string, confirm: string): string {
+  if (!confirm.trim()) return 'Please confirm your new password.'
+  if (newPwd.trim() !== confirm.trim()) return 'Passwords do not match.'
+  return ''
+}
+
+function PasswordStrengthBar({ password }: { password: string }) {
+  if (!password) return null
+  const rules = getPasswordRules(password.trim())
+  const strength = getPasswordStrength(rules)
+  const met = Object.values(rules).filter(Boolean).length
+  const ruleLabels: { key: keyof PasswordRules; label: string }[] = [
+    { key: 'minLength',  label: 'At least 8 characters' },
+    { key: 'hasUpper',   label: 'One uppercase letter (A–Z)' },
+    { key: 'hasLower',   label: 'One lowercase letter (a–z)' },
+    { key: 'hasNumber',  label: 'One number (0–9)' },
+    { key: 'hasSpecial', label: 'One special character (!@#$…)' },
+  ]
+  return (
+    <div className="dp-strength">
+      <div className="dp-strength__bar">
+        {[1, 2, 3, 4, 5].map((seg) => (
+          <div
+            key={seg}
+            className={`dp-strength__seg${seg <= met ? ` dp-strength__seg--${strength}` : ''}`}
+          />
+        ))}
+        <span className={`dp-strength__label dp-strength__label--${strength}`}>
+          {strength.charAt(0).toUpperCase() + strength.slice(1)}
+        </span>
+      </div>
+      <ul className="dp-strength__rules">
+        {ruleLabels.map(({ key, label }) => (
+          <li key={key} className={`dp-strength__rule${rules[key] ? ' dp-strength__rule--met' : ''}`}>
+            <span className="dp-strength__rule-icon">{rules[key] ? '✓' : '○'}</span>
+            {label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
 
 function isValidSaId(idNumber: string): boolean {
   if (!/^\d{13}$/.test(idNumber)) return false
@@ -72,6 +154,10 @@ export default function DashboardProfile() {
   const [passwordError, setPasswordError] = useState<string | null>(null)
   const [passwordMessage, setPasswordMessage] = useState<string | null>(null)
   const [showPasswordSuccessModal, setShowPasswordSuccessModal] = useState(false)
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [pwFieldErrors, setPwFieldErrors] = useState({ newPassword: '', confirmPassword: '' })
 
   // ── Two-Factor Authentication ──────────────────────────────────────────────
   // ── Active Sessions ────────────────────────────────────────────────────────
@@ -230,7 +316,24 @@ export default function DashboardProfile() {
   }
 
   const handlePasswordInputChange = (field: keyof typeof passwordData, value: string) => {
-    setPasswordData((prev) => ({ ...prev, [field]: value }))
+    setPasswordData((prev) => {
+      const next = { ...prev, [field]: value }
+      // Real-time field validation
+      if (field === 'newPassword') {
+        setPwFieldErrors((e) => ({
+          ...e,
+          newPassword: value ? validateNewPassword(value) : '',
+          confirmPassword: next.confirmPassword ? validateConfirmPassword(value, next.confirmPassword) : e.confirmPassword,
+        }))
+      }
+      if (field === 'confirmPassword') {
+        setPwFieldErrors((e) => ({
+          ...e,
+          confirmPassword: value ? validateConfirmPassword(next.newPassword, value) : '',
+        }))
+      }
+      return next
+    })
     setPasswordError(null)
     setPasswordMessage(null)
   }
@@ -240,20 +343,15 @@ export default function DashboardProfile() {
     setPasswordError(null)
     setPasswordMessage(null)
 
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      setPasswordError('Enter current password, new password, and confirmation.')
+    if (!passwordData.currentPassword) {
+      setPasswordError('Enter your current password.')
       return
     }
 
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setPasswordError('New password and confirm password must match.')
-      return
-    }
-
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters.')
-      return
-    }
+    const newPwdErr = validateNewPassword(passwordData.newPassword)
+    const confirmErr = validateConfirmPassword(passwordData.newPassword, passwordData.confirmPassword)
+    setPwFieldErrors({ newPassword: newPwdErr, confirmPassword: confirmErr })
+    if (newPwdErr || confirmErr) return
 
     setIsPasswordSaving(true)
     const result = await authApi.changePassword({
@@ -269,11 +367,8 @@ export default function DashboardProfile() {
       return
     }
 
-    setPasswordData({
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    })
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    setPwFieldErrors({ newPassword: '', confirmPassword: '' })
     setShowPasswordSuccessModal(true)
   }
 
@@ -689,35 +784,72 @@ export default function DashboardProfile() {
                 <form className="dashboard-profile__security-form" onSubmit={handlePasswordSave}>
                   <div className="dashboard-profile__field">
                     <label htmlFor="currentPassword">Current Password</label>
-                    <input
-                      type="password"
-                      id="currentPassword"
-                      placeholder="Enter current password"
-                      value={passwordData.currentPassword}
-                      onChange={(event) => handlePasswordInputChange('currentPassword', event.target.value)}
-                    />
+                    <div className="dashboard-profile__password-control">
+                      <input
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        id="currentPassword"
+                        placeholder="Enter current password"
+                        value={passwordData.currentPassword}
+                        onChange={(event) => handlePasswordInputChange('currentPassword', event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="dashboard-profile__password-toggle"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="dashboard-profile__field">
                     <label htmlFor="newPassword">New Password</label>
-                    <input
-                      type="password"
-                      id="newPassword"
-                      placeholder="Enter new password"
-                      value={passwordData.newPassword}
-                      onChange={(event) => handlePasswordInputChange('newPassword', event.target.value)}
-                    />
+                    <div className="dashboard-profile__password-control">
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        id="newPassword"
+                        placeholder="Enter new password"
+                        value={passwordData.newPassword}
+                        onChange={(event) => handlePasswordInputChange('newPassword', event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="dashboard-profile__password-toggle"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        aria-label={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    <PasswordStrengthBar password={passwordData.newPassword} />
+                    {pwFieldErrors.newPassword && (
+                      <p className="dp-field-error" role="alert">{pwFieldErrors.newPassword}</p>
+                    )}
                   </div>
 
                   <div className="dashboard-profile__field">
                     <label htmlFor="confirmPassword">Confirm New Password</label>
-                    <input
-                      type="password"
-                      id="confirmPassword"
-                      placeholder="Confirm new password"
-                      value={passwordData.confirmPassword}
-                      onChange={(event) => handlePasswordInputChange('confirmPassword', event.target.value)}
-                    />
+                    <div className="dashboard-profile__password-control">
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        id="confirmPassword"
+                        placeholder="Confirm new password"
+                        value={passwordData.confirmPassword}
+                        onChange={(event) => handlePasswordInputChange('confirmPassword', event.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="dashboard-profile__password-toggle"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    {pwFieldErrors.confirmPassword && (
+                      <p className="dp-field-error" role="alert">{pwFieldErrors.confirmPassword}</p>
+                    )}
                   </div>
 
                   {passwordError && (

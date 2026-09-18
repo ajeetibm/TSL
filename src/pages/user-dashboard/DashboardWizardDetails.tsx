@@ -668,14 +668,7 @@ export default function DashboardWizardDetails() {
       <DashboardShell activeSection="Blueprints">
         <main className="dashboard-wizard-details dashboard-wizard-details--payment">
           <header className="dashboard-wizard-details__payment-header">
-            <button
-              type="button"
-              className="dashboard-wizard-details__payment-back-btn"
-              aria-label="Back to Wizard Overview"
-              onClick={() => setIsPaymentView(false)}
-            >
-              <ArrowLeft size={18} />
-            </button>
+            <BackButton onClick={() => setIsPaymentView(false)} label="Back to Wizard Overview" />
             <div>
               <h2 className="dashboard-wizard-details__payment-header-title">Payment</h2>
               <p className="dashboard-wizard-details__payment-header-sub">Select a payment method to continue</p>

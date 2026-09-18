@@ -181,8 +181,15 @@ function saveDashboardWorkspace(email: string) {
 }
 
 function restoreDashboardWorkspace(email: string) {
+  // Preserve any cart the guest selected before signing in — it must survive
+  // the workspace restore so DashboardWizardDetails can read it on arrival.
+  const pendingCart = localStorage.getItem('tsl-selected-dashboard-wizards')
+
   clearActiveDashboardWorkspace()
-  if (!email) return
+  if (!email) {
+    if (pendingCart) localStorage.setItem('tsl-selected-dashboard-wizards', pendingCart)
+    return
+  }
   try {
     const workspace = JSON.parse(localStorage.getItem(dashboardWorkspaceKey(email)) ?? '{}') as Record<string, string | null>
     for (const key of DASHBOARD_WORKSPACE_KEYS) {
@@ -190,6 +197,12 @@ function restoreDashboardWorkspace(email: string) {
       if (typeof value === 'string') localStorage.setItem(key, value)
     }
   } catch { /* a malformed snapshot behaves like a new workspace */ }
+
+  // If the restored workspace had no cart of its own, reinstate the pending
+  // guest cart so the user lands on wizard-details with their selection intact.
+  if (pendingCart && !localStorage.getItem('tsl-selected-dashboard-wizards')) {
+    localStorage.setItem('tsl-selected-dashboard-wizards', pendingCart)
+  }
 }
 
 export function saveAuthSession(user?: AuthUser) {
