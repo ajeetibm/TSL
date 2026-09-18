@@ -4,11 +4,57 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { DashboardShell } from '../../components/dashboard/DashboardShell'
 import { paymentApi, subscriptionApi } from '../../services/tslApi'
+import type { BillingHistoryInvoice } from '../../services/dashboardTypes'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
 import { setPageMetadata } from '../../services/metadata'
 import './Dashboard.css'
 import './BlueprintTopUpPayment.css'
+
+const BLUEPRINT_TOPUP_INVOICES_KEY = 'tsl-blueprint-topup-invoices'
+
+function buildBlueprintTopUpInvoice(
+  reference: string,
+  blueprintName: string,
+  qty: number,
+  pricePerUnit: number,
+  total: number,
+): BillingHistoryInvoice {
+  const now = new Date()
+  const dateStr = now.toISOString().slice(0, 10)
+  const seq = String(now.getFullYear()).slice(-2) + String(now.getMonth() + 1).padStart(2, '0')
+  const rand = Math.floor(Math.random() * 900 + 100)
+  return {
+    invoiceId:     `blueprint-topup-${reference}`,
+    invoiceNumber: `INV-${now.getFullYear()}-BP${seq}${rand}`,
+    invoiceDate:   dateStr,
+    transactionId: reference,
+    type:          'blueprint-topup',
+    previousPlan:  blueprintName,
+    newPlan:       blueprintName,
+    billingPeriod: dateStr,
+    plan:          blueprintName,
+    amount:        total,
+    tax:           0,
+    total,
+    status:        'paid',
+    paymentMethod: null,
+    date:          dateStr,
+    creditsTopUp:  qty,
+    ratePerCredit: pricePerUnit,
+  }
+}
+
+function storeBlueprintTopUpInvoice(invoice: BillingHistoryInvoice) {
+  try {
+    const existing: BillingHistoryInvoice[] = (() => {
+      try { return JSON.parse(sessionStorage.getItem(BLUEPRINT_TOPUP_INVOICES_KEY) ?? '[]') as BillingHistoryInvoice[] }
+      catch { return [] }
+    })()
+    const updated = [invoice, ...existing.filter((i) => i.invoiceId !== invoice.invoiceId)]
+    sessionStorage.setItem(BLUEPRINT_TOPUP_INVOICES_KEY, JSON.stringify(updated))
+  } catch { /* storage unavailable */ }
+}
 
 const VAT_RATE = 0
 const MIN_UNITS = 1
@@ -159,6 +205,10 @@ export default function BlueprintTopUpPayment() {
       setIsPaying(false)
       return
     }
+
+    // Persist invoice so it appears in Billing History
+    const invoice = buildBlueprintTopUpInvoice(reference, blueprintName, qty, pricePerUnit, total)
+    storeBlueprintTopUpInvoice(invoice)
 
     setIsPaying(false)
     // Navigate back to where the user came from (default: dashboard Completed tab).

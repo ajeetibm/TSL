@@ -227,7 +227,7 @@ export interface BillingHistoryInvoice {
   invoiceNumber: string
   invoiceDate:   string   // ISO date string  e.g. "2025-12-01"
   transactionId: string
-  type:          'upgrade' | 'downgrade' | 'subscription' | 'counsel-topup'
+  type:          'upgrade' | 'downgrade' | 'subscription' | 'counsel-topup' | 'blueprint-topup'
   previousPlan:  string
   newPlan:       string
   billingPeriod: string   // e.g. "2025-12-01 – 2025-12-31"

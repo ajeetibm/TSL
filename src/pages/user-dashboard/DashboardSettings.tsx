@@ -455,7 +455,7 @@ export default function DashboardSettings() {
   const counselProgressPct = counselCreditsTotal > 0 ? Math.min(100, Math.round((counselCreditsUsed / counselCreditsTotal) * 100)) : 0
 
   // Non-subscribers see no invoices regardless of what the server returns.
-  // Counsel top-up invoices are stored locally in sessionStorage after payment.
+  // Counsel & blueprint top-up invoices are stored locally in sessionStorage after payment.
   const counselTopUpInvoices: BillingHistoryInvoice[] = (() => {
     try {
       const stored = sessionStorage.getItem('tsl-counsel-topup-invoices')
@@ -463,11 +463,20 @@ export default function DashboardSettings() {
     } catch { return [] }
   })()
 
+  const blueprintTopUpInvoices: BillingHistoryInvoice[] = (() => {
+    try {
+      const stored = sessionStorage.getItem('tsl-blueprint-topup-invoices')
+      return stored ? (JSON.parse(stored) as BillingHistoryInvoice[]) : []
+    } catch { return [] }
+  })()
+
+  const localInvoices = [...counselTopUpInvoices, ...blueprintTopUpInvoices]
+
   const visibleInvoices = hasSubscription
-    ? [...counselTopUpInvoices, ...invoices].sort(
+    ? [...localInvoices, ...invoices].sort(
         (a, b) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime(),
       )
-    : counselTopUpInvoices
+    : localInvoices
 
   return (
     <DashboardShell activeSection="Settings">
@@ -794,6 +803,8 @@ export default function DashboardSettings() {
                           <p>
                             {invoice.type === 'counsel-topup'
                               ? `Top Up Credits · ${invoice.invoiceDate}`
+                              : invoice.type === 'blueprint-topup'
+                              ? `Blueprint Top Up · ${invoice.invoiceDate}`
                               : `${invoice.plan} · ${invoice.invoiceDate}`}
                           </p>
                         </div>

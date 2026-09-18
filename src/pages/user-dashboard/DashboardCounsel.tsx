@@ -690,7 +690,7 @@ export default function DashboardCounsel() {
                 ) : null}
 
                 <label className="dashboard-counsel__field">
-                  <span>Subject</span>
+                  <span>Subject <span style={{ color: '#c0392b' }}>*</span></span>
                   <input
                     type="text"
                     aria-label="Subject"
