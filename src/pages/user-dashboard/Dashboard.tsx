@@ -3182,9 +3182,9 @@ export default function Dashboard() {
               {availableWizards.every((w) => w.queuedCount <= 0) && (
                 <div className="user-dashboard__empty-state">
                   <FileText size={32} />
-                  <p>All wizards have been started.</p>
+                  <p>All blueprints have been started.</p>
                   <button type="button" className="user-dashboard__gold-button" onClick={browseWizards}>
-                    Browse More Wizards <ArrowRight size={16} />
+                    Browse More Blueprints <ArrowRight size={16} />
                   </button>
                 </div>
               )}

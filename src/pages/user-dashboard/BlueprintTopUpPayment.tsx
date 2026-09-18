@@ -313,7 +313,6 @@ export default function BlueprintTopUpPayment() {
               {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
             </button>
             <p className="btu-secure-note">
-              Secured via Paystack · ZAR
             </p>
           </div>
 
