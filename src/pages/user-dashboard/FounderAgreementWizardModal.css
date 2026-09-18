@@ -117,6 +117,17 @@
   color: #7f1d1d;
 }
 
+/* ── Public funding pending/in-review banner (golden variant) ── */
+.fa-banner--pending {
+  background: #fff6e7;
+  border: 1px solid rgba(207, 155, 47, 0.28);
+  color: #cf9b2f;
+}
+
+.fa-banner--pending .fa-banner__icon {
+  margin-top: 2px;
+}
+
 /* ── "Nothing to declare" nil checkbox ───────────────────── */
 .fa-nil-checkbox {
   display: flex;
@@ -151,6 +162,17 @@
 
 .fa-btn--counsel:hover {
   background: var(--color-gold-light, #E3C36F);
+}
+
+.fa-btn--counsel:disabled,
+.fa-btn--counsel-pending,
+.fa-btn--counsel-pending:disabled {
+  background: #fff6e7;
+  border: 1px solid rgba(207, 155, 47, 0.28);
+  color: #cf9b2f;
+  box-shadow: none;
+  opacity: 1;
+  cursor: default;
 }
 
 .fa-snapshot-missing-text {
