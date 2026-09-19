@@ -416,8 +416,8 @@ export default function DashboardWizardDetails() {
     localStorage.setItem(wizardAccessCacheKey, JSON.stringify(response.data))
     localStorage.removeItem(selectedWizardStorageKey)
     localStorage.removeItem(blueprintQuantitiesStorageKey)
-    localStorage.setItem('tsl-dashboard-view-mode', 'returning')
-    // Pass the count (for the toast) and the exact list (for the New-tab queue bump)
+    // The API has already written these Blueprints to the user's mock-backed
+    // dashboard workspace. Route state is retained only for the success toast.
     navigate('/dashboard', { state: { addedCount: totalWizards, addedWizards: selectedWizards.map(({ title, quantity }) => ({ title, quantity })) } })
   }
 

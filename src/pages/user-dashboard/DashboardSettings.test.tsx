@@ -39,7 +39,7 @@ vi.mock('../../hooks/useBillingSubscription', () => ({
       wizardRuns: 4,
       teamMembers: 1,
       usage: {
-        // Lifetime usage is deliberately larger than the active top-up pool.
+        // Includes both plan and top-up usage in the active billing period.
         runsUsed: 6,
         runsTotal: 4,
         runsRemaining: 4,
@@ -129,13 +129,13 @@ describe('DashboardSettings Page', () => {
     expect(screen.getByTestId('dashboard-shell')).toBeInTheDocument()
   })
 
-  it('uses the active top-up credit pool for current billing-cycle usage', async () => {
+  it('combines included plan credits and top-up credits for current billing-cycle usage', async () => {
     localStorage.setItem('tsl-wizard-access-cache', JSON.stringify({ hasSubscription: true }))
     renderDashboardSettings()
 
     await waitFor(() => {
       expect(screen.getByText('Credits Used')).toBeInTheDocument()
-      expect(screen.getByText('2 of 6')).toBeInTheDocument()
+      expect(screen.getByText('6 of 10')).toBeInTheDocument()
       expect(screen.getByText('4 credits remaining')).toBeInTheDocument()
     })
   })

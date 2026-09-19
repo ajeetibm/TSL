@@ -2061,21 +2061,13 @@ export default function Dashboard() {
         setWizardAccess(freshAccess)
         localStorage.setItem(wizardAccessCacheKey, JSON.stringify(freshAccess))
 
-        // When the user returns from "Add to Dashboard", add only the quantities
-        // selected in that action. The server response contains every historical
-        // selection, which must not overwrite items already started in New.
+        // Add to Dashboard atomically updates the account's mock workspace.
+        // Do not add the route payload a second time here; this effect only
+        // finalizes the navigation after the workspace hydration catches up.
         if (addedCount > 0 && locationState?.addedWizards) {
-          const addedWizards = locationState.addedWizards
           queueSeedRef.current = true
           queueWasRestoredRef.current = true
-          setQueuedCounts((prev) => {
-            const next = { ...prev }
-            for (const addedWizard of addedWizards) {
-              const quantity = Math.max(1, Number(addedWizard.quantity) || 1)
-              next[addedWizard.title] = (next[addedWizard.title] ?? 0) + quantity
-            }
-            return next
-          })
+          setDashboardViewMode('returning')
           // This is a one-time return payload. Browser refresh preserves
           // history.state, so remove it after seeding; otherwise every reload
           // would restore the original server quantity over the saved queue.
@@ -2510,12 +2502,10 @@ export default function Dashboard() {
   ]
   const topUpRunsPurchased = subscription?.usage.topUpRunsPurchased ?? 0
   const isShowingTopUpBalance = topUpRunsPurchased > 0
-  const paidRunsRemaining = isShowingTopUpBalance
-    ? subscription?.usage.topUpRunsRemaining ?? 0
-    : subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
-  const paidRunsTotal = isShowingTopUpBalance
-    ? topUpRunsPurchased
-    : subscription?.usage.runsTotal ?? user?.runsTotal ?? 0
+  // A Blueprint top-up adds to (rather than replaces) the unused monthly
+  // allocation. For example: 4 included - 2 used + 6 top-up = 8 of 10.
+  const paidRunsRemaining = subscription?.usage.runsRemaining ?? user?.runsRemaining ?? 0
+  const paidRunsTotal = (subscription?.usage.runsTotal ?? user?.runsTotal ?? 0) + topUpRunsPurchased
   const paidRunsUsed = subscription?.usage.runsUsed ?? user?.runsUsed ?? 0
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   const isFreePlan = (subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'
@@ -3036,7 +3026,7 @@ export default function Dashboard() {
               </div>
               <div className="user-dashboard__stat-label">Credits Remaining</div>
               <div className="user-dashboard__stat-sublabel">
-                {isShowingTopUpBalance ? 'Top-up credits this billing period' : 'This billing period'}
+                {isShowingTopUpBalance ? 'Includes top-up credits this billing period' : 'This billing period'}
               </div>
             </div>
           </article>
@@ -3048,7 +3038,9 @@ export default function Dashboard() {
             <div>
               <div className="user-dashboard__stat-number">{paidRunsUsed}</div>
               <div className="user-dashboard__stat-label">Credits Used</div>
-              <div className="user-dashboard__stat-sublabel">Since Dec 1, 2025</div>
+              <div className="user-dashboard__stat-sublabel">
+                {isShowingTopUpBalance ? 'Plan and top-up credits this billing period' : 'Since Dec 1, 2025'}
+              </div>
             </div>
           </article>
 
