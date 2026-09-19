@@ -3039,7 +3039,7 @@ export default function Dashboard() {
               <div className="user-dashboard__stat-number">{paidRunsUsed}</div>
               <div className="user-dashboard__stat-label">Credits Used</div>
               <div className="user-dashboard__stat-sublabel">
-                {isShowingTopUpBalance ? 'Plan and top-up credits this billing period' : 'Since Dec 1, 2025'}
+                {isShowingTopUpBalance ? 'Plan and top-up credits this billing period' : 'This billing period'}
               </div>
             </div>
           </article>
