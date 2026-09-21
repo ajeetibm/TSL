@@ -232,6 +232,7 @@ export default function DashboardSettings() {
     // Step 2 — verify payment server-side
     const verifyRes = await paymentApi.verifyPaystack({
       reference: checkoutResult.reference,
+      plan: planName.toLowerCase(),
       type: 'subscription-upgrade',
     })
 

@@ -1726,7 +1726,7 @@ export default function Dashboard() {
       setUpgradePayError(checkoutResult.message || 'Payment failed. Please try again.')
       return null
     }
-    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, type: 'subscription-upgrade' })
+    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, plan: planName.toLowerCase(), type: 'subscription-upgrade' })
     if (!verifyRes.success || verifyRes.data?.status !== 'success') {
       setUpgradePayError(verifyRes.message || 'Payment could not be verified. Please try again.')
       return null

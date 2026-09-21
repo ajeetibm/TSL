@@ -239,7 +239,7 @@ export default function DashboardCounsel() {
     })
     if (checkoutResult.status === 'cancelled') return null
     if (checkoutResult.status === 'failed') { setUpgradePayError(checkoutResult.message || 'Payment failed.'); return null }
-    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, type: 'subscription-upgrade' })
+    const verifyRes = await paymentApi.verifyPaystack({ reference: checkoutResult.reference, plan: planName.toLowerCase(), type: 'subscription-upgrade' })
     if (!verifyRes.success || verifyRes.data?.status !== 'success') { setUpgradePayError(verifyRes.message || 'Payment could not be verified.'); return null }
     return checkoutResult.reference
   }, [])

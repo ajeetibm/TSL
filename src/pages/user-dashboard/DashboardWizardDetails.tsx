@@ -230,6 +230,11 @@ export default function DashboardWizardDetails() {
   const [isPaymentView, setIsPaymentView] = useState(() => Boolean((location.state as WizardLocationState | null)?.showPayment))
   const [showDashboardView, setShowDashboardView] = useState(false)
   const [isPricingModalOpen, setIsPricingModalOpen] = useState(false)
+  // Freeze the customer's choice as they enter checkout. Plan and catalogue
+  // requests resolve independently, so using the live `activePlan` during
+  // payment could charge a different tier if a background recommendation
+  // updates it after the customer pressed Proceed to Payment.
+  const [checkoutPlanId, setCheckoutPlanId] = useState<PlanKey | null>(null)
   const [activePlan, setActivePlan] = useState<PlanKey>(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { plan?: string; hasSubscription?: boolean } | null
@@ -322,10 +327,9 @@ export default function DashboardWizardDetails() {
     const blueprint = catalogue.find((item) => item.blueprintId === blueprintId)
     return total + (blueprint?.blueprintUnitWeight ?? 0) * wizard.quantity
   }, 0)
-  const recommendedPlan = plans.find((plan) => plan.wizardRuns >= totalBlueprintUnits)?.planId
-    ?? plans.at(-1)?.planId
-    ?? 'launchpad'
   const activePlanDetails = plans.find((plan) => plan.planId === activePlan)
+  const paymentPlanId = checkoutPlanId ?? activePlan
+  const paymentPlanDetails = plans.find((plan) => plan.planId === paymentPlanId)
 
   useEffect(() => {
     let hasLoadedAuthoritativeSubscription = false
@@ -355,14 +359,10 @@ export default function DashboardWizardDetails() {
 
 
 
-  // A new customer is offered the smallest plan that covers the combined
-  // Document Catalogue unit cost. Paid subscriptions and manual tab choices
-  // are intentionally never overridden.
-  useEffect(() => {
-    if (!accountPlan && !isPlanManuallySelected && totalBlueprintUnits > 0) {
-      setActivePlan(recommendedPlan)
-    }
-  }, [accountPlan, upgradeJourney, isPlanManuallySelected, recommendedPlan, totalBlueprintUnits])
+  // Recommendations shown alongside the selection are advisory only. They
+  // must never silently replace the plan visible in the pricing tab: a new
+  // customer who proceeds with the default Launchpad choice must be charged
+  // for Launchpad, not Operator.
   // This also handles a guest returning from sign-in with showPayment in the
   // navigation state: the authenticated plan always wins over guest intent.
   const existingWizardTitles = new Set(wizardAccess?.selectedWizards.map((wizard) => wizard.title) ?? [])
@@ -442,11 +442,11 @@ export default function DashboardWizardDetails() {
     setIsInitializingPayment(true)
 
     const paymentPayload = {
-      amount: getPlanAmount(activePlan, plans),
+      amount: getPlanAmount(paymentPlanId, plans),
       currency: 'ZAR',
       email: getStoredUserEmail(),
       paymentMethod: selectedPaymentMethod,
-      plan: activePlan,
+      plan: paymentPlanId,
       selectedWizards: activeWizardSelection.map(({ title, quantity }) => ({ title, quantity })),
       totalWizards: totalActiveWizardCount,
     }
@@ -495,7 +495,7 @@ export default function DashboardWizardDetails() {
       ]
       const access: WizardAccess = {
         hasSubscription: true,
-        plan: activePlan.toLowerCase(),
+        plan: paymentPlanId.toLowerCase(),
         wizardLimit,
         selectedWizards: allWizards,
         remainingWizards: Math.max(0, wizardLimit - allWizards.length),
@@ -673,7 +673,7 @@ export default function DashboardWizardDetails() {
       <DashboardShell activeSection="Blueprints">
         <main className="dashboard-wizard-details dashboard-wizard-details--payment">
           <header className="dashboard-wizard-details__payment-header">
-            <BackButton onClick={() => setIsPaymentView(false)} label="Back to Wizard Overview" />
+            <BackButton onClick={() => { setCheckoutPlanId(null); setIsPaymentView(false) }} label="Back to Wizard Overview" />
             <div>
               <h2 className="dashboard-wizard-details__payment-header-title">Payment</h2>
               <p className="dashboard-wizard-details__payment-header-sub">Select a payment method to continue</p>
@@ -713,7 +713,7 @@ export default function DashboardWizardDetails() {
                     <h2>{title}</h2>
                     {selectedPaymentMethod === title ? (
                       <div className="dashboard-wizard-details__card-pay-action">
-                        <span>{activePlanDetails ? `${activePlanDetails.name} Plan - R${activePlanDetails.price.toLocaleString('en-ZA')}/month` : 'Loading plan…'}</span>
+                        <span>{paymentPlanDetails ? `${paymentPlanDetails.name} Plan - R${paymentPlanDetails.price.toLocaleString('en-ZA')}/month` : 'Loading plan…'}</span>
                         <button
                           type="button"
                           className="dashboard-wizard-details__pay-now"
@@ -721,7 +721,7 @@ export default function DashboardWizardDetails() {
                             event.stopPropagation()
                             handlePayNow()
                           }}
-                          disabled={isInitializingPayment || selectedWizards.length === 0 || !activePlanDetails}
+                          disabled={isInitializingPayment || selectedWizards.length === 0 || !paymentPlanDetails}
                         >
                           {isInitializingPayment ? 'Preparing...' : 'Pay Now'}
                           <ArrowRight size={18} />
@@ -800,6 +800,7 @@ export default function DashboardWizardDetails() {
             disabled={selectedWizards.length === 0 || isWizardAccessLoading}
             onClick={() => {
               if (canAddToDashboard) { void addToDashboard(); return }
+              setCheckoutPlanId(activePlan)
               setIsPaymentView(true)
             }}
           >
