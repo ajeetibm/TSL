@@ -494,7 +494,14 @@ function RequestDetailsModal({
             {request.attachments?.length
               ? <div className="counsel-request-modal__files">
                   <h4>Uploaded documents</h4>
-                  {request.attachments.map((file) => <p key={file.name}><FileText size={16} />{file.name}</p>)}
+                  {request.attachments.map((file) => (
+                    <p key={file.name}>
+                      <FileText size={16} />
+                      {file.dataUrl
+                        ? <a href={file.dataUrl} download={file.name} target="_blank" rel="noreferrer">{file.name}</a>
+                        : file.name}
+                    </p>
+                  ))}
                 </div>
               : null}
           </section>
@@ -542,6 +549,20 @@ function RequestDetailsModal({
           </div>
           <section className="counsel-request-modal__response">
             <h3>Counsel response</h3>
+
+            {request.attachments?.length ? (
+              <div className="counsel-request-modal__files" style={{ marginBottom: '1rem' }}>
+                <h4>Documents from user</h4>
+                {request.attachments.map((file) => (
+                  <p key={file.name}>
+                    <FileText size={16} />
+                    {file.dataUrl
+                      ? <a href={file.dataUrl} download={file.name} target="_blank" rel="noreferrer">{file.name}</a>
+                      : file.name}
+                  </p>
+                ))}
+              </div>
+            ) : null}
 
             <label className="counsel-request-modal__field-label">
               Comments / recommendations

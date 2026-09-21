@@ -159,6 +159,15 @@ function writeSessionCredits(credits: CounselCredits) {
 
 const fallbackHistory: CounselHistoryRequest[] = []
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 function formatRequestDate(value?: string) {
   if (!value) return 'Today'
   const date = new Date(value)
@@ -504,11 +513,20 @@ export default function DashboardCounsel() {
     setIsSubmitting(true)
 
     try {
+      const attachmentPayload = await Promise.all(
+        attachments.map(async (file) => ({
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          dataUrl: await readFileAsDataUrl(file),
+        }))
+      )
+
       const response = await counselApi.createRequest({
         subject,
         description,
         relatedWizard: formData.relatedWizard || undefined,
-        attachments: attachments.map((file) => ({ name: file.name, size: file.size, type: file.type })),
+        attachments: attachmentPayload,
       })
 
       if (!response.success) {
@@ -526,7 +544,7 @@ export default function DashboardCounsel() {
         // Carry the fields the user typed/uploaded so the modal shows them immediately
         description: created?.description ?? description,
         relatedWizard: created?.relatedWizard ?? (formData.relatedWizard || undefined),
-        attachments: created?.attachments ?? attachments.map((f) => ({ name: f.name, size: f.size, type: f.type })),
+        attachments: created?.attachments ?? attachmentPayload,
       })
 
       // Save attachments so admin Preview modal can access them
