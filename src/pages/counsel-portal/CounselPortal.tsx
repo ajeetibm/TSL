@@ -263,38 +263,42 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const openLogout  = useCallback(() => setShowLogoutModal(true),  [])
   const closeLogout = useCallback(() => setShowLogoutModal(false), [])
 
-  const setRequestStatus = async (requestId: string, status: RequestStatus, rejectionReason = 'Unavailable') => {
+  const setRequestStatus = async (requestId: string, status: RequestStatus, rejectionReason = 'Unavailable'): Promise<boolean> => {
     const normStatus = normalizeStatus(status)
-    setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status: normStatus } : item)))
 
     if (normStatus === 'in_progress') {
       const response = await counselPortalApi.acceptRequest(requestId)
-      if (response.success) {
-        setSelectedRequest((current) => current?.requestId === requestId ? { ...current, status: 'in_progress' } : current)
-        // Push the accepted request into the dashboard Requests Accepted list
-        const accepted = requests.find((r) => r.requestId === requestId)
-        if (accepted) {
-          setAcceptedRequestsState((current) => {
-            const alreadyIn = current.some((r) => r.requestId === requestId)
-            if (alreadyIn) return current
-            const newEntry = {
-              requestId: accepted.requestId,
-              subject: accepted.subject,
-              relatedWizard: accepted.relatedWizard ?? null,
-              company: accepted.company ?? accepted.fromUser ?? '',
-              date: new Date().toISOString().slice(0, 10),
-              earnings: accepted.earnings ?? 500,
-              currency: accepted.currency ?? 'ZAR',
-            }
-            const updated = [newEntry, ...current].slice(0, 10)
-            writeStoredAccepted(updated)
-            return updated
-          })
-        }
+      if (!response.success) return false
+      setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status: 'in_progress' } : item)))
+      setSelectedRequest((current) => current?.requestId === requestId ? { ...current, status: 'in_progress' } : current)
+      // Push the accepted request into the dashboard Requests Accepted list
+      const accepted = requests.find((r) => r.requestId === requestId)
+      if (accepted) {
+        setAcceptedRequestsState((current) => {
+          const alreadyIn = current.some((r) => r.requestId === requestId)
+          if (alreadyIn) return current
+          const newEntry = {
+            requestId: accepted.requestId,
+            subject: accepted.subject,
+            relatedWizard: accepted.relatedWizard ?? null,
+            company: accepted.company ?? accepted.fromUser ?? '',
+            date: new Date().toISOString().slice(0, 10),
+            earnings: accepted.earnings ?? 500,
+            currency: accepted.currency ?? 'ZAR',
+          }
+          const updated = [newEntry, ...current].slice(0, 10)
+          writeStoredAccepted(updated)
+          return updated
+        })
       }
+      return true
     } else if (normStatus === 'rejected') {
-      await counselPortalApi.rejectRequest(requestId, rejectionReason)
+      const response = await counselPortalApi.rejectRequest(requestId, rejectionReason)
+      if (!response.success) return false
+      setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status: normStatus } : item)))
+      return true
     }
+    return true
   }
 
   const completeRequest = async (requestId: string, response: string, supportingDocuments: Array<{ name: string; size?: number; type?: string; dataUrl?: string }>) => {
@@ -400,7 +404,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
             onOpenRequest={setSelectedRequest}
           />
         )}
-        {selectedRequest ? <RequestDetailsModal request={selectedRequest} initialView={((selectedRequest as CounselRequest & { _initialView?: string })._initialView as 'overview' | 'accept' | 'reject') ?? 'overview'} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => setRequestStatus(id, 'rejected', reason)} /> : null}
+        {selectedRequest ? <RequestDetailsModal request={selectedRequest} initialView={((selectedRequest as CounselRequest & { _initialView?: string })._initialView as 'overview' | 'accept' | 'reject') ?? 'overview'} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => { void setRequestStatus(id, 'rejected', reason) }} /> : null}
       </main>
     </div>
   )
@@ -424,7 +428,7 @@ function RequestDetailsModal({
   onClose: () => void
   onComplete: (id: string, response: string, documents: DocMeta[]) => Promise<string>
   onReject: (id: string, reason: string) => void
-  onStartReview: (id: string) => void
+  onStartReview: (id: string) => Promise<boolean>
   initialView?: 'overview' | 'accept' | 'reject'
 }) {
   // 'overview' | 'accept' | 'reject'
@@ -452,7 +456,10 @@ function RequestDetailsModal({
   const finish = async () => {
     if (!response.trim()) return setError('Please add your review comments before marking this request as done.')
     // If still pending, promote to in_progress first, then complete
-    if (request.status === 'pending') onStartReview(request.requestId)
+    if (request.status === 'pending') {
+      const accepted = await onStartReview(request.requestId)
+      if (!accepted) return setError('Unable to start the review. Please try again.')
+    }
     setError(await onComplete(request.requestId, response.trim(), documents))
   }
   const reject = () => {
