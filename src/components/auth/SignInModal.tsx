@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 import { authApi, saveAuthSession } from '../../services/tslApi'
+import { preloadUserDashboard } from '../../routes/dashboardPreload'
 import './SignInModal.css'
 
 type AuthenticatedRouteUser = {
@@ -397,9 +398,11 @@ function SignInModalContent({
         : response.data
 
       saveAuthSession(authenticatedUser)
+      const destination = getAuthenticatedRoute(authenticatedUser, redirectTo)
+      if (destination.startsWith('/dashboard')) await preloadUserDashboard().catch(() => undefined)
       onAuthenticated?.()
       onClose()
-      navigate(getAuthenticatedRoute(authenticatedUser, redirectTo), {
+      navigate(destination, {
         state: authenticatedUser?.mustResetPassword
           ? { email: authenticatedUser.email, token: authenticatedUser.token }
           : undefined,
@@ -424,9 +427,11 @@ function SignInModalContent({
         }
 
         saveAuthSession(response.data)
+        const destination = getAuthenticatedRoute(response.data, redirectTo)
+        if (destination.startsWith('/dashboard')) await preloadUserDashboard().catch(() => undefined)
         onAuthenticated?.()
         onClose()
-        navigate(getAuthenticatedRoute(response.data, redirectTo), {
+        navigate(destination, {
           state: response.data?.mustResetPassword
             ? { email: response.data.email, token: response.data.token }
             : undefined,

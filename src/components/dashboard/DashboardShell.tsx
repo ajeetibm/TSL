@@ -24,7 +24,7 @@ function getCounselUnreadCount(): number {
   } catch { return 0 }
 }
 
-type DashboardSection = 'Dashboard' | 'Blueprints' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
+export type DashboardSection = 'Dashboard' | 'Blueprints' | 'Counsel' | 'Playbooks' | 'Notifications' | 'Settings' | 'Profile'
 
 interface DashboardShellProps {
   activeSection: DashboardSection

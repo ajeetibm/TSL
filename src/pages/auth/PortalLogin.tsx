@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import type { Portal } from '../../config/portals'
 import { getPortalDashboardPath } from '../../config/portals'
 import { authApi, saveAuthSession } from '../../services/tslApi'
+import { preloadUserDashboard } from '../../routes/dashboardPreload'
 import './Auth.css'
 
 type LoginPortal = Exclude<Portal, 'marketing'>
@@ -48,6 +49,7 @@ export default function PortalLogin({ portal }: { portal: LoginPortal }) {
         return
       }
       saveAuthSession(response.data)
+      if (portal === 'sme' && !response.data.mustResetPassword) await preloadUserDashboard().catch(() => undefined)
       navigate(response.data.mustResetPassword ? '/counsel/reset-password' : getPortalDashboardPath(portal), {
         replace: true,
         state: response.data.mustResetPassword ? { email: response.data.email, token: response.data.token } : undefined,

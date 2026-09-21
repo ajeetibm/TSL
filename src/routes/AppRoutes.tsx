@@ -1,11 +1,15 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { NotificationProvider } from '../context/NotificationContext'
 import { UserProfileProvider } from '../context/UserProfileContext'
 import { CounselAvailabilityProvider } from '../context/CounselAvailabilityContext'
 import { CounselRequestProvider } from '../context/CounselRequestContext'
 import { RootLayout } from '../layouts/RootLayout'
 import { ProtectedRoute } from './ProtectedRoute'
+import { preloadUserDashboard } from './dashboardPreload'
+import { DashboardShell, type DashboardSection } from '../components/dashboard/DashboardShell'
+import '../pages/user-dashboard/Dashboard.css'
 
 const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'))
 const ResetPassword  = lazy(() => import('../pages/auth/ResetPassword'))
@@ -23,7 +27,7 @@ const CounselEmailSent = lazy(() => import('../pages/counsel-portal/CounselEmail
 const CounselPortal = lazy(() => import('../pages/counsel-portal/CounselPortal'))
 const CounselProfile = lazy(() => import('../pages/counsel-portal/CounselProfile'))
 const CounselResetPassword = lazy(() => import('../pages/counsel-portal/CounselResetPassword'))
-const Dashboard = lazy(() => import('../pages/user-dashboard/Dashboard'))
+const Dashboard = lazy(preloadUserDashboard)
 const DashboardCounsel = lazy(() => import('../pages/user-dashboard/DashboardCounsel'))
 const DashboardNotifications = lazy(() => import('../pages/user-dashboard/DashboardNotifications'))
 const DashboardPlaybooks = lazy(() => import('../pages/user-dashboard/DashboardPlaybooks'))
@@ -53,17 +57,55 @@ function HomeOrRedirect() {
   return <Home />
 }
 
+function getDashboardSection(pathname: string): DashboardSection {
+  if (pathname.startsWith('/dashboard/counsel')) return 'Counsel'
+  if (pathname.startsWith('/dashboard/notifications')) return 'Notifications'
+  if (pathname.startsWith('/dashboard/playbooks')) return 'Playbooks'
+  if (pathname.startsWith('/dashboard/profile')) return 'Profile'
+  if (pathname.startsWith('/dashboard/settings')) return 'Settings'
+  if (pathname.startsWith('/dashboard/blueprints') || pathname.startsWith('/dashboard/wizard-details')) return 'Blueprints'
+  return 'Dashboard'
+}
+
+/**
+ * Lazy route chunks are not immediately available after a hard refresh. Render
+ * the destination portal's chrome while that code is downloaded, rather than
+ * briefly replacing the current route with the generic blue application splash.
+ */
+function RouteLoadingFallback() {
+  const { pathname } = useLocation()
+
+  if (pathname.startsWith('/dashboard')) {
+    const section = getDashboardSection(pathname)
+    return (
+      <DashboardShell activeSection={section}>
+        <main className="user-dashboard__loading-page" aria-busy="true" aria-live="polite">
+          <div className="user-dashboard__loading-card" role="status">
+            <span className="user-dashboard__loading-icon" aria-hidden="true"><Loader2 size={32} /></span>
+            <div>
+              <h2>Loading {section}</h2>
+              <p>Preparing your page…</p>
+            </div>
+          </div>
+        </main>
+      </DashboardShell>
+    )
+  }
+
+  return (
+    <div className="grid min-h-screen place-items-center bg-white text-slate-800">
+      <span className="rounded-full bg-slate-100 px-5 py-3 text-sm font-bold">Loading TSL…</span>
+    </div>
+  )
+}
+
 export function AppRoutes() {
   return (
     <CounselRequestProvider>
     <UserProfileProvider>
     <NotificationProvider>
     <Suspense
-      fallback={
-        <div className="grid min-h-screen place-items-center bg-navy-primary text-white">
-          <span className="rounded-full bg-white/10 px-5 py-3 text-sm font-bold">Loading TSL...</span>
-        </div>
-      }
+      fallback={<RouteLoadingFallback />}
     >
       <Routes>
         <Route element={<RootLayout />}>

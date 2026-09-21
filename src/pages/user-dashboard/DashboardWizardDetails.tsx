@@ -38,6 +38,7 @@ import type { SubscriptionPlan } from '../../services/dashboardTypes'
 import { useSubscriptionPlans } from '../../hooks/useSubscriptionPlans'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import { openMockPaymentCheckout } from '../../services/mockPaymentClient'
+import { preloadUserDashboard } from '../../routes/dashboardPreload'
 import './Dashboard.css'
 import './DashboardWizardDetails.css'
 
@@ -475,9 +476,12 @@ export default function DashboardWizardDetails() {
       }
     }
 
-    setIsInitializingPayment(false)
-
     if (result.status === 'success') {
+      // Preload the dashboard before changing routes. In UAT this prevents
+      // the public marketing screen from remaining visible while its chunk is
+      // downloaded after a successful first-plan payment.
+      await preloadUserDashboard().catch(() => undefined)
+      setIsInitializingPayment(false)
       const wizardLimit = 0
       // Fix: all selected wizards must be saved — not just a slice.
       // De-duplicate by title so existing wizards from a prior subscription
@@ -516,6 +520,7 @@ export default function DashboardWizardDetails() {
       return
     }
 
+    setIsInitializingPayment(false)
     setPaymentMessage({
       tone: result.status === 'cancelled' ? 'info' : 'error',
       text:

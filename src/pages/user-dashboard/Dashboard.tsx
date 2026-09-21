@@ -1757,15 +1757,9 @@ export default function Dashboard() {
   const [wizardAccess, setWizardAccess] = useState<WizardAccess | null>(() => {
     try { return JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as WizardAccess | null } catch { return null }
   })
-  // Pre-confirm from cache when the cache was written by a verified payment —
-  // avoids a blank/landing flash while the API call is still in flight.
-  // The API response will always overwrite with the authoritative value.
-  const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(() => {
-    try {
-      const cached = JSON.parse(localStorage.getItem(wizardAccessCacheKey) ?? 'null') as { hasSubscription?: boolean } | null
-      return Boolean(cached?.hasSubscription)
-    } catch { return false }
-  })
+  // Cache may make navigation feel faster, but it must not be rendered as
+  // fact. Wait for the account-scoped API response before showing a dashboard.
+  const [wizardAccessConfirmed, setWizardAccessConfirmed] = useState(false)
 
   const [dashboardViewMode, setDashboardViewMode] = useState<'initial' | 'returning'>('initial')
   const [workspaceLoaded, setWorkspaceLoaded] = useState(false)
@@ -1867,21 +1861,25 @@ export default function Dashboard() {
   // storage, so closing the browser does not reset the dashboard.
   useEffect(() => {
     let cancelled = false
-    dashboardWorkspaceApi.get().then((response) => {
-      if (cancelled || !response.success || !response.data) return
-      const workspace = response.data
-      const restoredInProgress = dedupeFounderAgreementInstances(workspace.inProgressInstances as InProgressInstance[])
-      setDashboardViewMode(workspace.viewMode)
-      setQueuedCounts(workspace.queuedCounts)
-      setCompletedInstances(workspace.completedInstances as CompletedInstance[])
-      inProgressInstancesRef.current = restoredInProgress
-      setInProgressInstances(restoredInProgress)
-      queueWasRestoredRef.current = workspace.viewMode === 'returning' ||
-        Object.keys(workspace.queuedCounts).length > 0 ||
-        workspace.inProgressInstances.length > 0 ||
-        workspace.completedInstances.length > 0
-      setWorkspaceLoaded(true)
-    })
+    dashboardWorkspaceApi.get()
+      .then((response) => {
+        if (cancelled || !response.success || !response.data) return
+        const workspace = response.data
+        const restoredInProgress = dedupeFounderAgreementInstances(workspace.inProgressInstances as InProgressInstance[])
+        setDashboardViewMode(workspace.viewMode)
+        setQueuedCounts(workspace.queuedCounts)
+        setCompletedInstances(workspace.completedInstances as CompletedInstance[])
+        inProgressInstancesRef.current = restoredInProgress
+        setInProgressInstances(restoredInProgress)
+        queueWasRestoredRef.current = workspace.viewMode === 'returning' ||
+          Object.keys(workspace.queuedCounts).length > 0 ||
+          workspace.inProgressInstances.length > 0 ||
+          workspace.completedInstances.length > 0
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setWorkspaceLoaded(true)
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -2019,6 +2017,7 @@ export default function Dashboard() {
   // ── Live subscription + plan data (drives the plan card benefits) ────────
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null)
   const [currentPlan, setCurrentPlan] = useState<SubscriptionPlan | undefined>(undefined)
+  const [subscriptionLoaded, setSubscriptionLoaded] = useState(false)
 
   setPageMetadata(
     'Dashboard',
@@ -2028,18 +2027,25 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false
 
-    smeApi.dashboard().then((response) => {
-      if (cancelled) return
-      if (!response.success) {
-        setError(response.message ?? 'Failed to load dashboard data.')
+    smeApi.dashboard()
+      .then((response) => {
+        if (cancelled) return
+        if (!response.success) {
+          setError(response.message ?? 'Failed to load dashboard data.')
+          setLoading(false)
+          return
+        }
+        if (response.data) {
+          setDashboardData(response.data)
+        }
         setLoading(false)
-        return
-      }
-      if (response.data) {
-        setDashboardData(response.data)
-      }
-      setLoading(false)
-    })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError('Failed to load dashboard data.')
+          setLoading(false)
+        }
+      })
 
     return () => {
       cancelled = true
@@ -2094,6 +2100,8 @@ export default function Dashboard() {
           })
         }
       }
+    }).catch(() => {
+      if (!cancelled) setWizardAccessConfirmed(true)
     })
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2134,18 +2142,23 @@ export default function Dashboard() {
   // and the plans list (storage, features[]) so the plan card is fully dynamic.
   useEffect(() => {
     let cancelled = false
-    Promise.all([subscriptionApi.get(), subscriptionApi.plans()]).then(([subRes, plansRes]) => {
-      if (cancelled) return
-      if (subRes.success && subRes.data) {
-        setSubscription(subRes.data)
-        if (plansRes.success && plansRes.data) {
-          const matched = plansRes.data.find(
-            (p) => p.planId.toLowerCase() === subRes.data!.planId.toLowerCase(),
-          )
-          setCurrentPlan(matched)
+    Promise.all([subscriptionApi.get(), subscriptionApi.plans()])
+      .then(([subRes, plansRes]) => {
+        if (cancelled) return
+        if (subRes.success && subRes.data) {
+          setSubscription(subRes.data)
+          if (plansRes.success && plansRes.data) {
+            const matched = plansRes.data.find(
+              (p) => p.planId.toLowerCase() === subRes.data!.planId.toLowerCase(),
+            )
+            setCurrentPlan(matched)
+          }
         }
-      }
-    })
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setSubscriptionLoaded(true)
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -2510,6 +2523,27 @@ export default function Dashboard() {
   const hasExhaustedWizardRuns = paidRunsRemaining <= 0
   const isFreePlan = (subscription?.planId?.toLowerCase() ?? user?.plan?.toLowerCase()) === 'free'
   const isPaidPlan = Boolean(wizardAccess?.hasSubscription) && !isFreePlan
+
+  // Avoid presenting an apparently empty dashboard (0 of 0 units and an empty
+  // New tab) while the account's independent dashboard endpoints are loading.
+  const isDashboardHydrating = loading || !workspaceLoaded || !wizardAccessConfirmed || !subscriptionLoaded
+  if (isDashboardHydrating) {
+    return (
+      <DashboardShell activeSection="Dashboard">
+        <main className="user-dashboard__loading-page" aria-busy="true" aria-live="polite">
+          <div className="user-dashboard__loading-card" role="status">
+            <span className="user-dashboard__loading-icon" aria-hidden="true">
+              <Loader2 size={32} />
+            </span>
+            <div>
+              <h2>Loading your dashboard</h2>
+              <p>Getting your plan, credits, and Blueprints ready…</p>
+            </div>
+          </div>
+        </main>
+      </DashboardShell>
+    )
+  }
 
   if (!isPaidDashboard) {
     return (
