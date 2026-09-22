@@ -1,3 +1,4 @@
+import { PageLoader } from '../../components/ui/PageLoader'
 import { BackButton } from '../../components/dashboard/BackButton'
 import { CheckCircle2, ChevronRight, CircleDot, DollarSign, FileText, MessageSquare, Upload, X } from 'lucide-react'
 import { formatDate } from '../../services/dashboardTypes'
@@ -584,6 +585,7 @@ export default function DashboardCounsel() {
 
   return (
     <DashboardShell activeSection="Counsel">
+      {isSubmitting && <PageLoader message="Submitting your request…" />}
       <main className="dashboard-counsel">
         <header className="dashboard-counsel__header">
           <BackButton to="/dashboard" label="Back to Dashboard" />
