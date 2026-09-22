@@ -292,9 +292,6 @@ export default function CounselTopUpPayment() {
                 <CheckCircle2 size={18} />
                 {isPaying ? 'Processing…' : `Pay ${fmtZAR(total)}`}
               </button>
-              <p className="counsel-topup-payment__secure-note">
-                Secured via Paystack · ZAR
-              </p>
             </div>
 
           </div>

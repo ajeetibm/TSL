@@ -3661,6 +3661,31 @@ export default function Dashboard() {
         }}
       />
 
+      {billingActiveModal === 'upgrade-plans' && (
+        <UpgradePlansModal
+          currentPlanId={billingSubscription?.planId ?? 'free'}
+          plans={billingPlans}
+          plansLoading={billingPlansLoading}
+          plansError={billingPlansError}
+          onSelectUpgrade={(plan) => void billingSelectPlan(plan, 'upgrade')}
+          onSelectDowngrade={(plan) => void billingSelectPlan(plan, 'downgrade')}
+          onClose={billingCloseModal}
+        />
+      )}
+
+      {billingActiveModal === 'upgrade-confirm' && billingSelectedPlan && (
+        <UpgradeConfirmModal
+          plan={billingSelectedPlan}
+          preview={billingUpgradePreview}
+          previewLoading={billingPreviewLoading}
+          previewError={billingPreviewError}
+          actionLoading={billingActionLoading}
+          actionError={upgradePayError ?? billingActionError}
+          onConfirm={() => void billingConfirmUpgrade()}
+          onCancel={billingCancelUpgradeConfirm}
+        />
+      )}
+
     </DashboardShell>
   )
 }
