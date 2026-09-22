@@ -1,3 +1,4 @@
+import { PageLoader } from '../../components/ui/PageLoader'
 import { BackButton } from '../../components/dashboard/BackButton'
 import {
   AlertTriangle,
@@ -306,6 +307,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState('')
   const [activeRequest, setActiveRequest] = useState<AdminCounselRequest | null>(null)
   const [assignmentStep, setAssignmentStep] = useState<'preview' | 'assign'>('preview')
+  const [isAssigning, setIsAssigning] = useState(false)
   const [assignableCounselMembers, setAssignableCounselMembers] = useState(counselMembers)
   const [selectedCounsel, setSelectedCounsel] = useState(counselMembers[0].email)
   const { pathname } = useLocation()
@@ -761,6 +763,8 @@ export default function AdminDashboard() {
       return
     }
 
+    setIsAssigning(true)
+
     // Resolve the admin's display name: prefer loaded profile, fall back to localStorage auth user
     const adminFullName = (() => {
       const fromProfile = [adminProfile.firstName, adminProfile.lastName].filter(Boolean).join(' ').trim()
@@ -781,6 +785,7 @@ export default function AdminDashboard() {
       adminName: adminFullName,
     })
 
+    setIsAssigning(false)
     if (!response.success) {
       setError(response.message ?? 'Unable to assign counsel.')
       if (response.error === 'COUNSEL_REQUEST_ALREADY_ASSIGNED') closeAssignmentModal()
@@ -1940,12 +1945,13 @@ export default function AdminDashboard() {
                   </label>
                 </section>
 
+                {isAssigning && <PageLoader message="Assigning counsel…" />}
                 <footer className="admin-assignment__footer">
-                  <button type="button" className="admin-assignment__secondary admin-assignment__secondary--outlined" onClick={() => setAssignmentStep('preview')}>
+                  <button type="button" className="admin-assignment__secondary admin-assignment__secondary--outlined" disabled={isAssigning} onClick={() => setAssignmentStep('preview')}>
                     <ArrowLeft size={17} /> Previous
                   </button>
-                  <button type="button" className="admin-assignment__primary" onClick={() => assignToCounsel()}>
-                    Assign to Counsel
+                  <button type="button" className="admin-assignment__primary" disabled={isAssigning} onClick={() => assignToCounsel()}>
+                    {isAssigning ? 'Assigning…' : 'Assign to Counsel'}
                   </button>
                 </footer>
               </>
