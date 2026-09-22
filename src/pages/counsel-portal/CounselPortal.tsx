@@ -137,6 +137,8 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const { availability, toggleAvailability } = useCounselAvailability()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [requests, setRequests] = useState<CounselRequest[]>([])
+  const [isDashboardLoading, setIsDashboardLoading] = useState(true)
+  const [isRequestsLoading, setIsRequestsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
   const [selectedRequest, setSelectedRequest] = useState<CounselRequest | null>(null)
@@ -167,6 +169,7 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   }, [navigate])
 
   useEffect(() => {
+    let isCurrent = true
     let storedEmail = ''
     try {
       const storedUser = JSON.parse(localStorage.getItem('tsl-auth-user') ?? '{}') as { email?: string }
@@ -175,15 +178,23 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       storedEmail = ''
     }
 
-    counselPortalApi.dashboard(storedEmail).then((response) => {
-      if (!response.success) return
-      const data = (response.data ?? null) as DashboardData | null
-      setDashboardData(data)
-    })
-    counselPortalApi.requests(storedEmail).then((response) => {
-      if (!response.success) return
-      setRequests(normalizeRequests(response.data))
-    })
+    counselPortalApi.dashboard(storedEmail)
+      .then((response) => {
+        if (!isCurrent || !response.success) return
+        setDashboardData((response.data ?? null) as DashboardData | null)
+      })
+      .catch(() => undefined)
+      .finally(() => { if (isCurrent) setIsDashboardLoading(false) })
+
+    counselPortalApi.requests(storedEmail)
+      .then((response) => {
+        if (!isCurrent || !response.success) return
+        setRequests(normalizeRequests(response.data))
+      })
+      .catch(() => undefined)
+      .finally(() => { if (isCurrent) setIsRequestsLoading(false) })
+
+    return () => { isCurrent = false }
   }, [])
 
   useEffect(() => {
@@ -329,17 +340,21 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
         </header>
 
         {mode === 'dashboard' ? (
-          <DashboardView
-            acceptedRequests={acceptedRequests}
-            kpis={kpis}
-            chartYear={chartYear}
-            months={months}
-            pendingRequests={pendingRequests}
-            requests={requests}
-            setRequestStatus={setRequestStatus}
-            onOpenRequest={setSelectedRequest}
-            summary={summary}
-          />
+          isDashboardLoading || isRequestsLoading ? (
+            <CounselDashboardLoading />
+          ) : (
+            <DashboardView
+              acceptedRequests={acceptedRequests}
+              kpis={kpis}
+              chartYear={chartYear}
+              months={months}
+              pendingRequests={pendingRequests}
+              requests={requests}
+              setRequestStatus={setRequestStatus}
+              onOpenRequest={setSelectedRequest}
+              summary={summary}
+            />
+          )
         ) : (
           <RequestsView
             requests={filteredRequests}
@@ -352,6 +367,21 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
         )}
         {selectedRequest ? <RequestDetailsModal request={selectedRequest} initialView={((selectedRequest as CounselRequest & { _initialView?: string })._initialView as 'overview' | 'accept' | 'reject') ?? 'overview'} onClose={() => setSelectedRequest(null)} onComplete={completeRequest} onStartReview={(id) => setRequestStatus(id, 'in_progress')} onReject={(id, reason) => { void setRequestStatus(id, 'rejected', reason) }} /> : null}
       </main>
+    </div>
+  )
+}
+
+function CounselDashboardLoading() {
+  return (
+    <div className="counsel-dashboard-loading" role="status" aria-live="polite" aria-label="Loading counsel dashboard">
+      <span className="counsel-dashboard-loading__label">Loading dashboard…</span>
+      <section className="counsel-dashboard-loading__kpis" aria-hidden="true">
+        {Array.from({ length: 4 }).map((_, index) => <div className="counsel-dashboard-loading__kpi" key={index} />)}
+      </section>
+      <section className="counsel-dashboard-loading__content" aria-hidden="true">
+        <div className="counsel-dashboard-loading__panel" />
+        <div className="counsel-dashboard-loading__panel counsel-dashboard-loading__panel--narrow" />
+      </section>
     </div>
   )
 }

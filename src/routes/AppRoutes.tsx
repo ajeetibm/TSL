@@ -10,6 +10,8 @@ import { ProtectedRoute } from './ProtectedRoute'
 import { preloadUserDashboard } from './dashboardPreload'
 import { DashboardShell, type DashboardSection } from '../components/dashboard/DashboardShell'
 import '../pages/user-dashboard/Dashboard.css'
+import '../pages/user-dashboard/DashboardCounsel.css'
+import '../pages/counsel-portal/CounselPortal.css'
 
 const ForgotPassword = lazy(() => import('../pages/auth/ForgotPassword'))
 const ResetPassword  = lazy(() => import('../pages/auth/ResetPassword'))
@@ -77,6 +79,13 @@ function RouteLoadingFallback() {
 
   if (pathname.startsWith('/dashboard')) {
     const section = getDashboardSection(pathname)
+    if (section === 'Counsel') {
+      return (
+        <DashboardShell activeSection={section}>
+          <DashboardCounselRouteLoadingFallback />
+        </DashboardShell>
+      )
+    }
     return (
       <DashboardShell activeSection={section}>
         <main className="user-dashboard__loading-page" aria-busy="true" aria-live="polite">
@@ -92,9 +101,97 @@ function RouteLoadingFallback() {
     )
   }
 
+  if (pathname.startsWith('/counsel/')) {
+    return <CounselRouteLoadingFallback mode={pathname.startsWith('/counsel/requests') ? 'requests' : 'dashboard'} />
+  }
+
   return (
     <div className="grid min-h-screen place-items-center bg-white text-slate-800">
       <span className="rounded-full bg-slate-100 px-5 py-3 text-sm font-bold">Loading TSL…</span>
+    </div>
+  )
+}
+
+function DashboardCounselRouteLoadingFallback() {
+  return (
+    <main className="dashboard-counsel dashboard-counsel--loading" aria-busy="true" aria-live="polite">
+      <header className="dashboard-counsel__header">
+        <div>
+          <h1>Counsel</h1>
+          <p>Connect with experienced attorneys for expert guidance</p>
+        </div>
+      </header>
+      <div className="dashboard-counsel__content" role="status">
+        <span className="dashboard-counsel__loading-label">Loading Counsel…</span>
+        <section className="dashboard-counsel__stats" aria-hidden="true">
+          <div className="dashboard-counsel__loading-block dashboard-counsel__loading-stat" />
+          <div className="dashboard-counsel__loading-block dashboard-counsel__loading-stat" />
+        </section>
+        <div className="dashboard-counsel__loading-block dashboard-counsel__loading-topup" aria-hidden="true" />
+        <section className="dashboard-counsel__loading-workspace" aria-hidden="true">
+          <div className="dashboard-counsel__loading-tabs" />
+          <div className="dashboard-counsel__loading-block dashboard-counsel__loading-form" />
+        </section>
+      </div>
+    </main>
+  )
+}
+
+function CounselRouteLoadingFallback({ mode }: { mode: 'dashboard' | 'requests' }) {
+  const dashboard = mode === 'dashboard'
+  return (
+    <div className="counsel-portal" aria-busy="true" aria-live="polite">
+      <aside className="counsel-portal__sidebar" aria-label="Counsel navigation">
+        <div className="counsel-portal__brand">
+          <h1>Counsel Portal</h1>
+          <p>Legal Review Platform</p>
+        </div>
+        <div className="counsel-portal__nav">
+          <div className={`counsel-portal__nav-item${dashboard ? ' counsel-portal__nav-item--active' : ''}`}>Dashboard</div>
+          <div className={`counsel-portal__nav-item${!dashboard ? ' counsel-portal__nav-item--active' : ''}`}>My Requests</div>
+        </div>
+        <div className="counsel-portal__sidebar-footer">
+          <div className="counsel-portal__nav-item">Profile</div>
+          <div className="counsel-portal__nav-item">Sign Out</div>
+        </div>
+      </aside>
+      <main className="counsel-portal__main">
+        <header className="counsel-portal__header">
+          <div className="counsel-portal__header-row">
+            <div><h2>Welcome, Counsel</h2><p>Review and manage your legal requests</p></div>
+            <div className="counsel-portal__status"><span><small>Status</small><strong>Loading</strong></span></div>
+          </div>
+          <div className="counsel-portal__notice counsel-portal__notice--loading">Loading your Counsel portal…</div>
+        </header>
+        {dashboard ? <CounselDashboardRouteSkeleton /> : <CounselRequestsRouteSkeleton />}
+      </main>
+    </div>
+  )
+}
+
+function CounselDashboardRouteSkeleton() {
+  return (
+    <div className="counsel-dashboard-loading" role="status">
+      <span className="counsel-dashboard-loading__label">Loading dashboard…</span>
+      <section className="counsel-dashboard-loading__kpis" aria-hidden="true">
+        {Array.from({ length: 4 }).map((_, index) => <div className="counsel-dashboard-loading__kpi" key={index} />)}
+      </section>
+      <section className="counsel-dashboard-loading__content" aria-hidden="true">
+        <div className="counsel-dashboard-loading__panel" />
+        <div className="counsel-dashboard-loading__panel" />
+      </section>
+    </div>
+  )
+}
+
+function CounselRequestsRouteSkeleton() {
+  return (
+    <div className="counsel-dashboard-loading" role="status">
+      <span className="counsel-dashboard-loading__label">Loading requests…</span>
+      <section className="counsel-dashboard-loading__content" aria-hidden="true">
+        <div className="counsel-dashboard-loading__panel" />
+        <div className="counsel-dashboard-loading__panel" />
+      </section>
     </div>
   )
 }
