@@ -116,15 +116,12 @@ export function UpgradePlansModal({
                   )}
 
                   <article
-                    className={
-                      isCurrent
-                        ? 'bs-compare-card bs-compare-card--current'
-                        : popular
-                          ? 'bs-compare-card bs-compare-card--popular'
-                          : key === 'launchpad'
-                            ? 'bs-compare-card bs-compare-card--launchpad'
-                            : 'bs-compare-card'
-                    }
+                    className={[
+                      'bs-compare-card',
+                      isCurrent ? 'bs-compare-card--current' : '',
+                      key === 'launchpad' ? 'bs-compare-card--launchpad' : '',
+                      !isCurrent && popular ? 'bs-compare-card--popular' : '',
+                    ].filter(Boolean).join(' ')}
                   >
                     {/* Plan name + icon */}
                     <h3 className="bs-compare-card__name">
