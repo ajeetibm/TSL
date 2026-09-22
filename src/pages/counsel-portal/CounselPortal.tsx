@@ -93,20 +93,8 @@ type DashboardData = {
   }
 }
 
-const fallbackMonths: EarningsMonth[] = [
-  { month: 'Jan', earnings: 1800, target: 2000 },
-  { month: 'Feb', earnings: 2100, target: 2200 },
-  { month: 'Mar', earnings: 1950, target: 2100 },
-  { month: 'Apr', earnings: 2300, target: 2300 },
-  { month: 'May', earnings: 2200, target: 2400 },
-  { month: 'Jun', earnings: 2500, target: 2500 },
-  { month: 'Jul', earnings: 2700, target: 2700 },
-  { month: 'Aug', earnings: 2850, target: 2850 },
-  { month: 'Sep', earnings: 3000, target: 3000 },
-  { month: 'Oct', earnings: 3400, target: 3300 },
-  { month: 'Nov', earnings: 3650, target: 3600 },
-  { month: 'Dec', earnings: 3900, target: 3800 },
-]
+const emptyMonths: EarningsMonth[] = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  .map((month) => ({ month, earnings: 0, target: 0 }))
 
 function formatMoney(value = 0, compact = false) {
   if (compact) return `R${(value / 1000).toFixed(1)}k`
@@ -127,19 +115,6 @@ function normalizeStatus(status: RequestStatus | string): RequestStatus {
 }
 
 type AcceptedEntry = NonNullable<DashboardData['acceptedRequests']>[number]
-
-const ACCEPTED_STORAGE_KEY = 'tsl-counsel-accepted-requests'
-
-function readStoredAccepted(): AcceptedEntry[] {
-  try {
-    const raw = localStorage.getItem(ACCEPTED_STORAGE_KEY)
-    return raw ? (JSON.parse(raw) as AcceptedEntry[]) : []
-  } catch { return [] }
-}
-
-function writeStoredAccepted(list: AcceptedEntry[]) {
-  try { localStorage.setItem(ACCEPTED_STORAGE_KEY, JSON.stringify(list)) } catch { /* ignore */ }
-}
 
 function normalizeRequests(payload: unknown): CounselRequest[] {
   const data = payload as { requests?: CounselRequest[] } | CounselRequest[] | undefined
@@ -162,7 +137,6 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const { availability, toggleAvailability } = useCounselAvailability()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [requests, setRequests] = useState<CounselRequest[]>([])
-  const [acceptedRequestsState, setAcceptedRequestsState] = useState<AcceptedEntry[]>(() => readStoredAccepted())
   const [statusFilter, setStatusFilter] = useState<'all' | RequestStatus>('all')
   const [search, setSearch] = useState('')
   const [selectedRequest, setSelectedRequest] = useState<CounselRequest | null>(null)
@@ -205,32 +179,12 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       if (!response.success) return
       const data = (response.data ?? null) as DashboardData | null
       setDashboardData(data)
-      // Merge API accepted requests with locally-stored ones, deduplicating by requestId.
-      // Local entries (accepted in this session before the API refreshed) take precedence.
-      if ((data?.acceptedRequests?.length ?? 0) > 0) {
-        setAcceptedRequestsState((current) => {
-          const merged = [...current]
-          for (const entry of data!.acceptedRequests!) {
-            if (!merged.some((r) => r.requestId === entry.requestId)) {
-              merged.push(entry)
-            }
-          }
-          writeStoredAccepted(merged)
-          return merged
-        })
-      }
     })
     counselPortalApi.requests(storedEmail).then((response) => {
       if (!response.success) return
       setRequests(normalizeRequests(response.data))
     })
   }, [])
-
-  // Persist accepted list to localStorage whenever it changes so a page
-  // refresh restores the full list without a round-trip.
-  useEffect(() => {
-    writeStoredAccepted(acceptedRequestsState)
-  }, [acceptedRequestsState])
 
   useEffect(() => {
     document.title = 'Counsel Portal | The Startup Legal'
@@ -239,14 +193,26 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
   const kpis = dashboardData?.kpis ?? {}
   // Derive from live `requests` state so the dashboard reflects completions/rejections immediately
   const pendingRequests = requests.filter((r) => r.status === 'pending')
-  const acceptedRequests = acceptedRequestsState
-  const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : fallbackMonths
-  const chartYear = dashboardData?.earningsChart?.year ?? 2025
+  // Keep the dashboard tied to current server data. Persisted browser entries
+  // can belong to an earlier session and incorrectly inflate these totals.
+  const acceptedRequests: AcceptedEntry[] = requests
+    .filter((request) => request.status === 'in_progress' || request.status === 'completed')
+    .map((request) => ({
+      requestId: request.requestId,
+      subject: request.subject,
+      relatedWizard: request.relatedWizard ?? null,
+      company: request.company ?? request.fromUser ?? '',
+      date: request.date,
+      earnings: request.status === 'completed' ? (request.earnings ?? 0) : 0,
+      currency: request.currency ?? 'ZAR',
+    }))
+  const months = dashboardData?.earningsChart?.months?.length === 12 ? dashboardData.earningsChart.months : emptyMonths
+  const chartYear = dashboardData?.earningsChart?.year ?? new Date().getFullYear()
   const summary = dashboardData?.earningsChart?.summary ?? {
-    totalEarnings: 32800,
-    avgMonthly: 2700,
-    bestMonth: 3900,
-    growthRate: '108.1%',
+    totalEarnings: 0,
+    avgMonthly: 0,
+    bestMonth: 0,
+    growthRate: '0%',
   }
 
   const filteredRequests = useMemo(() => {
@@ -271,26 +237,6 @@ export default function CounselPortal({ mode }: { mode: CounselMode }) {
       if (!response.success) return false
       setRequests((current) => current.map((item) => (item.requestId === requestId ? { ...item, status: 'in_progress' } : item)))
       setSelectedRequest((current) => current?.requestId === requestId ? { ...current, status: 'in_progress' } : current)
-      // Push the accepted request into the dashboard Requests Accepted list
-      const accepted = requests.find((r) => r.requestId === requestId)
-      if (accepted) {
-        setAcceptedRequestsState((current) => {
-          const alreadyIn = current.some((r) => r.requestId === requestId)
-          if (alreadyIn) return current
-          const newEntry = {
-            requestId: accepted.requestId,
-            subject: accepted.subject,
-            relatedWizard: accepted.relatedWizard ?? null,
-            company: accepted.company ?? accepted.fromUser ?? '',
-            date: new Date().toISOString().slice(0, 10),
-            earnings: accepted.earnings ?? 500,
-            currency: accepted.currency ?? 'ZAR',
-          }
-          const updated = [newEntry, ...current].slice(0, 10)
-          writeStoredAccepted(updated)
-          return updated
-        })
-      }
       return true
     } else if (normStatus === 'rejected') {
       const response = await counselPortalApi.rejectRequest(requestId, rejectionReason)
