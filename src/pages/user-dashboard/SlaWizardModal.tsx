@@ -236,9 +236,9 @@ type ScreenKey = 'basics' | 'modules' | 'availability' | 'support' | 'incident'
   | 'maintenance' | 'backups' | 'security' | 'credits' | 'legal'
 
 const SCREEN_LABELS: Record<ScreenKey, string> = {
-  basics: 'BASICS', modules: 'MODULES', availability: 'Availability',
-  support: 'Support', incident: 'Incident response', maintenance: 'Maintenance',
-  backups: 'Backups', security: 'Security', credits: 'Service credits', legal: 'LEGAL & SIGNING',
+  basics: 'BASICS', modules: 'MODULES', availability: 'AVAILABILITY',
+  support: 'SUPPORT', incident: 'INCIDENT RESPONSE', maintenance: 'MAINTENANCE',
+  backups: 'BACKUPS', security: 'SECURITY', credits: 'SERVICE CREDITS', legal: 'LEGAL & SIGNING',
 }
 
 const MODULE_SCREEN: Record<ModuleName, ScreenKey> = {

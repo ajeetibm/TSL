@@ -585,6 +585,12 @@ function buildNdaPdf(data: import('./NdaWizardModal').NdaWizardData, completedAt
     '─────────────────────────────────────────',
     `Purpose      : ${data.purpose || '—'}`,
     `CI Definition: ${data.ci_definition || '—'}`,
+    ...(data.ci_definition === 'Specified categories only'
+      ? [`Categories: ${data.ci_categories.length ? data.ci_categories.join(', ') : '—'}`]
+      : []),
+    ...(data.ci_definition === 'Broad with standard exclusions'
+      ? [`Standard Exclusions: ${data.ci_exclusions.length ? data.ci_exclusions.join(', ') : '—'}`]
+      : []),
     `Information must be marked confidential: ${data.marking_required ? 'Yes' : 'No'}`,
     '',
     '─────────────────────────────────────────',

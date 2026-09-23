@@ -112,6 +112,12 @@ export async function buildNdaDocx(data: NdaWizardData, completedAt: string | nu
     h2('2. Purpose & Scope'),
     row('Purpose', data.purpose),
     row('CI Definition', data.ci_definition),
+    ...(data.ci_definition === 'Specified categories only'
+      ? [row('Categories', data.ci_categories.length ? data.ci_categories.join(', ') : '—')]
+      : []),
+    ...(data.ci_definition === 'Broad with standard exclusions'
+      ? [row('Standard Exclusions', data.ci_exclusions.length ? data.ci_exclusions.join(', ') : '—')]
+      : []),
     row('Information must be marked confidential', yn(data.marking_required)),
     sep(),
     h2('3. Obligations'),
