@@ -470,12 +470,13 @@ function buildLegalDocumentPdf(lines: string[]): Blob {
     if (separatorIndex > 0 && separatorIndex < 40) {
       const label = line.slice(0, separatorIndex).trim()
       const value = line.slice(separatorIndex + 1).trim() || '-'
-      if (label.length > 25) {
-        // Long label: shrink font to 8pt so the full label fits, value inline after it
-        const labelWidth = label.length * 4.6
-        const valueX = MARGIN + labelWidth + 8
+      if (label.length > 30) {
+        // Only exceptionally long labels need a wider value column. Labels such as
+        // "Who may receive information" still fit the standard column and must
+        // align with the other obligation values.
+        const valueX = MARGIN + 220
         operations = addToPage(operations, 18)
-        addText(operations, label, MARGIN, cursorY, 8, '/F2', muted)
+        addText(operations, label, MARGIN, cursorY, 9, '/F2', muted)
         addText(operations, value, valueX, cursorY, 9.5, '/F1', ink)
         cursorY -= 18
       } else {
