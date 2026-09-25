@@ -1976,7 +1976,7 @@ export default function Dashboard() {
     }
   }
 
-  // Toast shown after a wizard is added to dashboard without payment
+  // Toast shown after a blueprint is added to dashboard without payment
   const locationState = location.state as DashboardLocationState | null
   const addedCount = locationState?.addedCount ?? 0
   const [addToast, setAddToast] = useState(() => {
@@ -1984,7 +1984,7 @@ export default function Dashboard() {
       return `${locationState.unitsAdded} Blueprint Credit${locationState.unitsAdded !== 1 ? 's' : ''} added successfully.`
     }
     return addedCount > 0
-      ? `${addedCount} wizard${addedCount !== 1 ? 's' : ''} added to your dashboard.`
+      ? `${addedCount} blueprint${addedCount !== 1 ? 's' : ''} added to your dashboard.`
       : ''
   })
   const addToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -410,7 +410,7 @@ export default function DashboardWizardDetails() {
     // Existing titles are included so a completed Blueprint can be added as a new run.
     const response = await paymentApi.addWizardsToDashboard(selectedWizards.map(({ title, quantity }) => ({ title, quantity })))
     if (!response.success || !response.data) {
-      setWizardAccessWarning(response.message || 'Unable to add these wizards to your dashboard.')
+      setWizardAccessWarning(response.message || 'Unable to add these blueprints to your dashboard.')
       return
     }
     setWizardAccess(response.data)
