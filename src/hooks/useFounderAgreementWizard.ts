@@ -281,7 +281,7 @@ function draftToState(draft: WizardDraft<FounderAgreementWizardData>): FounderAg
       ? raw.founders
       : FA_EMPTY_DATA.founders,
     priorIp: Array.isArray(raw.priorIp) && raw.priorIp.length >= 1
-      ? raw.priorIp
+      ? raw.priorIp.map((p: Partial<FAPriorIp>) => ({ ...makePriorIp(p.id ?? ''), ...p }))
       : FA_EMPTY_DATA.priorIp,
     digitalAssets: Array.isArray(raw.digitalAssets) ? raw.digitalAssets : [],
     reservedMatters: Array.isArray(raw.reservedMatters) ? raw.reservedMatters : [],

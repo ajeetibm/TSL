@@ -1,0 +1,139 @@
+/* ── Founder Employment Wizard ──────────────────────────────── */
+
+/* Prior IP rows */
+.fec-prior-row {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 16px 18px 16px;
+  margin-bottom: 12px;
+}
+.fec-prior-row + .fec-prior-row {
+  margin-top: 4px;
+}
+
+.fec-remove-btn {
+  background: none;
+  border: none;
+  color: #57606a;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: inherit;
+  padding: 0 0 4px;
+  display: block;
+  margin-left: auto;
+}
+.fec-remove-btn:hover {
+  color: #c0392b;
+}
+
+.fec-add-row-btn {
+  border: 1.5px dashed #c9c9c9;
+  background: transparent;
+  border-radius: 14px;
+  padding: 14px 22px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  margin-bottom: 12px;
+  width: 100%;
+  color: #1f2328;
+}
+.fec-add-row-btn:hover {
+  border-color: #c49b45;
+  color: #c49b45;
+}
+
+/* Votes row (reuse pattern from Board Resolution) */
+.fec-three-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+@media (max-width: 640px) {
+  .fec-three-col {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep form blocks content-sized so warning banners do not fill the modal */
+.cnr-body > .nda-modal__party-block {
+  flex: 0 0 auto;
+  align-content: start;
+}
+
+.cnr-banner {
+  height: auto;
+  align-self: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cnr-body .nda-modal__party-block input[type="checkbox"],
+.cnr-body .nda-modal__party-block input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: #c79a3b;
+}
+
+.fec-leaver-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+  width: 100%;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.fec-leaver-ack span {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* Counsel gate banner override — red block */
+.cnr-banner.block.counsel-gate {
+  background: #fdecea;
+  border-color: #f3b7b0;
+  color: #7d2318;
+}
+
+/* ── Route-to-Counsel button (mirrors fa-btn--counsel) ──────── */
+.fec-btn--counsel {
+  background: var(--color-gold, #D4A437);
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(212, 164, 55, 0.35);
+}
+
+.fec-btn--counsel:hover {
+  background: var(--color-gold-light, #E3C36F);
+}
+
+.fec-btn--counsel-pending,
+.fec-btn--counsel-pending:disabled {
+  background: #fff6e7;
+  border: 1px solid rgba(207, 155, 47, 0.28);
+  color: #cf9b2f;
+  box-shadow: none;
+  opacity: 1;
+  cursor: default;
+}
+
+/* ── Public funding pending/in-review banner (golden/amber variant) ── */
+.fa-banner--pending {
+  background: #fff6e7;
+  border: 1px solid rgba(207, 155, 47, 0.28);
+  color: #cf9b2f;
+}
+
+.fa-banner--pending .fa-banner__icon {
+  margin-top: 2px;
+}

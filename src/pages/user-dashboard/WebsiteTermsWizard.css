@@ -1,0 +1,154 @@
+/* ── WebsiteTermsWizard — component-scoped styles ─────────── */
+
+/* Modal width override (same as other single-step blueprints) */
+.wt-modal {
+  max-width: 780px;
+}
+
+/* ── Toggle button group ───────────────────────────────────── */
+.wt-toggle-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.wt-toggle-btn {
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  border-radius: 14px;
+  padding: 11px 22px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  user-select: none;
+  min-width: 80px;
+  text-align: center;
+  color: #0f1b2a;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.wt-toggle-btn--active {
+  background: #0f1b2a;
+  border-color: #0f1b2a;
+  color: #fff;
+}
+
+.wt-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Chip multi-select ────────────────────────────────────── */
+.wt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.wt-chip {
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  user-select: none;
+  color: #0f1b2a;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.wt-chip--selected {
+  background: #0f1b2a;
+  border-color: #0f1b2a;
+  color: #fff;
+}
+
+.wt-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Domain row ──────────────────────────────────────────── */
+.wt-domain-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.wt-domain-input {
+  flex: 1;
+}
+
+.wt-remove-btn {
+  background: none;
+  border: none;
+  color: #57606a;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  white-space: nowrap;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.wt-remove-btn:hover {
+  color: #c0392b;
+}
+
+/* ── Add-row dashed button ───────────────────────────────── */
+.wt-add-row-btn {
+  border: 1.5px dashed #c9c9c9;
+  background: transparent;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  color: #57606a;
+  display: inline-block;
+  margin-top: 4px;
+  margin-bottom: 4px;
+  transition: border-color 0.12s, color 0.12s;
+}
+
+.wt-add-row-btn:hover {
+  border-color: #0f1b2a;
+  color: #0f1b2a;
+}
+
+.wt-add-row-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ── Date input — constrain width ───────────────────────── */
+.wt-date-input {
+  max-width: 220px;
+}
+
+/* ── Read-only / snapshot-locked fields ─────────────────────── */
+.nda-modal__input:disabled,
+.nda-modal__input[readonly] {
+  background: #f3f4f6;
+  color: #57606a;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+  opacity: 1; /* override browser default opacity fade */
+}
+
+/* ── Snapshot warning banner ─────────────────────────────────── */
+.nda-modal__banner--warning {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #f0c060;
+  background: #fff8ec;
+  color: #7a5200;
+  font-size: 14px;
+  line-height: 1.5;
+}

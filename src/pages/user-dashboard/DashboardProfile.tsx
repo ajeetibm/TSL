@@ -384,7 +384,7 @@ export default function DashboardProfile() {
       idNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
-    if (formData.entityType === 'Individual' && !isValidSaId(formData.idNumber)) {
+    if (formData.idNumber && !isValidSaId(formData.idNumber)) {
       setIdNumberError('Enter a valid 13-digit South African ID number.')
       idNumberRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
@@ -628,6 +628,46 @@ export default function DashboardProfile() {
                         <input type="text" maxLength={150} value={formData.tradingName} onChange={(e) => handleInputChange('tradingName', e.target.value)} />
                       </div>
                     </label>
+                  </>
+                )}
+
+                {formData.entityType && formData.entityType !== 'Individual' && (
+                  <>
+                    <div className="dashboard-profile__snapshot-heading dashboard-profile__field--wide">
+                      CIPC applicant
+                    </div>
+                    <p className="dashboard-profile__section-description dashboard-profile__field--wide">
+                      The individual who submits CIPC filings for this entity. These details are used for Company Name Reservation.
+                    </p>
+                    <label className="dashboard-profile__field">
+                      <span>Applicant full names</span>
+                      <div className="dashboard-profile__input-wrap">
+                        <UserRound size={18} />
+                        <input
+                          type="text"
+                          maxLength={100}
+                          value={formData.individualFullNames}
+                          onChange={(e) => handleInputChange('individualFullNames', e.target.value)}
+                        />
+                      </div>
+                    </label>
+                    <div className="dashboard-profile__field" ref={idNumberRef}>
+                      <label className="dashboard-profile__field-label">
+                        <span>Applicant South African ID number</span>
+                        <div className={`dashboard-profile__input-wrap${idNumberError ? ' dashboard-profile__input-wrap--error' : ''}`}>
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={13}
+                            value={formData.idNumber}
+                            onChange={(e) => { handleInputChange('idNumber', e.target.value.replace(/\D/g, '')); if (idNumberError) setIdNumberError(null) }}
+                          />
+                        </div>
+                      </label>
+                      {idNumberError && (
+                        <p className="dashboard-profile__field-error" role="alert">{idNumberError}</p>
+                      )}
+                    </div>
                   </>
                 )}
 

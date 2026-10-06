@@ -1,5 +1,5 @@
 import {
-  AlertCircle, ArrowLeft, ArrowRight, Check, CircleDot, Eye, Loader2, Pencil, X,
+  AlertCircle, ArrowLeft, ArrowRight, Check, Eye, Loader2, Pencil, X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useUserProfile } from '../../context/UserProfileContext'
@@ -1238,7 +1238,7 @@ export default function FounderAgreementWizardModal({
                     <Banner
                       type="block"
                       className={data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected' ? 'fa-banner--pending' : undefined}
-                      icon={data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected' ? <CircleDot size={18} color="#cf9b2f" /> : undefined}
+                      icon={data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected' ? <span>⏳</span> : undefined}
                       title="Block — publicly funded work, route to Counsel"
                       message="Where prior IP was publicly funded (including university or state grant funded work), the statutory licensing position cannot be contracted away on the platform. This Blueprint is blocked until it's resolved through Counsel."
                     />
@@ -1520,7 +1520,7 @@ export default function FounderAgreementWizardModal({
               {isPreview ? (
                 <><Check size={15} /> Generate Agreement</>
               ) : step === 5 && data.publiclyFunded === 'Yes' && data.publicFundingReviewStatus !== 'approved' ? (
-                 <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : (data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') ? <CircleDot size={16} color="#cf9b2f" strokeWidth={2.2} /> : '⛔'} {(data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') ? 'Awaiting Counsel Approval' : 'Route to Counsel'}</>
+                <>{isRoutingToCounsel ? <Loader2 size={15} className="nda-modal__generating-spinner" /> : (data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') ? '⏳' : '⛔'} {(data.publicFundingReviewStatus === 'pending' || data.publicFundingReviewStatus === 'rejected') ? 'Awaiting Counsel Approval' : 'Route to Counsel'}</>
               ) : step === 6 ? (
                 <><Eye size={15} /> Preview</>
               ) : (

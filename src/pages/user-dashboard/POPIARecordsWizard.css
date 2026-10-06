@@ -1,0 +1,272 @@
+/* ── POPIARecordsWizard — component-scoped styles ─────────────── */
+
+/* Wider modal to accommodate the processing register rows */
+.popia-modal {
+  max-width: 860px;
+}
+
+/* ── Section group heading (e.g. "Who you are") ──────────────── */
+.popia-section-group {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #57606a;
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  margin: 20px 0 14px;
+}
+
+.popia-section-group:first-of-type {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 6px;
+}
+
+/* ── Processing-activity / operator row card ─────────────────── */
+.popia-row-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px 22px 16px;
+  margin-bottom: 14px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.popia-row-card--blocked {
+  border-color: #f3b7b0;
+  background: #fffafa;
+}
+
+/* ── Kill default margin on form elements inside the card so gap alone controls spacing ── */
+.popia-row-card .nda-modal__form-group,
+.popia-row-card .nda-modal__two-col {
+  margin: 0;
+}
+
+/* Two-col rows inside the card already carry a 16px column gap; no extra changes needed */
+.popia-row-card .nda-modal__two-col {
+  gap: 18px;
+}
+
+/* Chips inside the card need a little more breathing room above the chip strip */
+.popia-row-card .wt-chips {
+  margin-top: 2px;
+}
+
+/* Block gate banner inside a row card — pull it tight to the adjacent field */
+.popia-row-card .nda-modal__banner {
+  margin: 0;
+}
+
+/* ── Remove row button ───────────────────────────────────────── */
+.popia-remove-btn {
+  background: none;
+  border: none;
+  color: #57606a;
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 0 0;
+  display: block;
+  margin-left: auto;
+  transition: color 0.12s;
+}
+
+.popia-remove-btn:hover {
+  color: #c0392b;
+}
+
+/* ── Contact person sub-block ────────────────────────────────── */
+.popia-contact-block {
+  background: #f7f8fa;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px 20px 12px;
+  margin-bottom: 20px;
+}
+
+.popia-contact-block__title {
+  font-size: 14.5px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* ── Inherited-inputs info banner ────────────────────────── */
+.popia-inherited-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #eef5ff;
+  border: 1.5px solid #bdd5f5;
+  border-left: 4px solid #3b82d4;
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #174b82;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.popia-inherited-banner__icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #3b82d4;
+}
+
+/* ── Inherited-data card ─────────────────────────────────── */
+.popia-inherited-card {
+  background: #ffffff;
+  border: 1.5px solid #d0d7de;
+  border-radius: 16px;
+  padding: 4px 0 0;
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.popia-inherited-card__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Each field cell */
+.popia-inherited-field {
+  padding: 16px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  border-right: 1px solid #f0f0f0;
+}
+
+/* Even columns lose the right border */
+.popia-inherited-field:nth-child(even) {
+  border-right: none;
+}
+
+/* Full-width row */
+.popia-inherited-field--full {
+  grid-column: 1 / -1;
+  border-right: none;
+}
+
+/* Last row cells — no bottom border */
+.popia-inherited-card__grid > .popia-inherited-field:last-child,
+.popia-inherited-card__grid > .popia-inherited-field:nth-last-child(2):not(.popia-inherited-field--full) {
+  border-bottom: none;
+}
+
+/* The label (e.g. RESPONSIBLE PARTY) */
+.popia-inherited-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #57606a;
+  margin-bottom: 6px;
+}
+
+/* The value text */
+.popia-inherited-value {
+  display: block;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #0f1b2a;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Sub-line (e.g. transfer basis under cross-border) */
+.popia-inherited-sub {
+  display: block;
+  font-size: 12.5px;
+  color: #57606a;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* ── Confirm checkbox row ─────────────────────────────────── */
+.popia-confirm-row {
+  margin-bottom: 4px;
+}
+
+.popia-confirm-label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 14.5px;
+  font-weight: 400;
+  cursor: pointer;
+  color: #0f1b2a;
+  line-height: 1.5;
+}
+
+.popia-confirm-checkbox {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #0f1b2a;
+  cursor: pointer;
+}
+
+.popia-confirm-row--error .nda-modal__field-error {
+  display: block;
+}
+
+
+/* ── Confirm checkbox error state ────────────────────────────── */
+.popia-confirm-error .nda-modal__field-error {
+  display: block;
+}
+
+/* ── Read-only snapshot fields (inherited from NdaWizardModal) ── */
+.popia-modal .nda-modal__input:disabled,
+.popia-modal .nda-modal__input[readonly] {
+  background: #f3f4f6;
+  color: #57606a;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+  opacity: 1;
+}
+
+/* ── Date input — constrain width ─────────────────────────────── */
+.popia-modal .wt-date-input {
+  max-width: 220px;
+}
+
+/* ── Preview activity/operator row separators ─────────────────── */
+.popia-modal .nda-modal__preview-body .nda-modal__preview-field + .nda-modal__preview-field {
+  border-top: none;
+}
+
+/* ── Responsive ───────────────────────────────────────────────── */
+@media (max-width: 680px) {
+  .popia-row-card {
+    padding: 16px 16px 12px;
+    gap: 14px;
+  }
+
+  .popia-contact-block {
+    padding: 14px 14px 10px;
+  }
+
+  .popia-inherited-card__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .popia-inherited-field,
+  .popia-inherited-field:nth-child(even) {
+    border-right: none;
+  }
+
+  .popia-inherited-field--full {
+    grid-column: 1;
+  }
+
+  .popia-inherited-card__grid > .popia-inherited-field:nth-last-child(2):not(.popia-inherited-field--full) {
+    border-bottom: 1px solid #f0f0f0;
+  }
+}

@@ -1,0 +1,14 @@
+/* ── Three-column votes row ───────────────────────────────── */
+.br-votes-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 4px;
+}
+
+@media (max-width: 640px) {
+  .br-votes-row {
+    grid-template-columns: 1fr;
+  }
+}

@@ -22,6 +22,14 @@ import type { PrivacyPolicyWizardData } from '../pages/user-dashboard/PrivacyPol
 import type { FounderAgreementWizardData } from '../pages/user-dashboard/FounderAgreementWizardModal'
 import type { ServiceAgreementWizardData } from '../pages/user-dashboard/ServiceAgreementWizardModal'
 import type { SlaWizardData } from '../pages/user-dashboard/SlaWizardModal'
+import type { ShareCertificateData } from '../pages/user-dashboard/ShareCertificateWizard'
+import type { BoardResolutionData } from '../pages/user-dashboard/BoardResolutionWizard'
+import type { FounderEmploymentData } from '../pages/user-dashboard/FounderEmploymentWizard'
+import type { WebsiteTermsData } from '../pages/user-dashboard/WebsiteTermsWizard'
+import type { POPIARecordsData } from '../pages/user-dashboard/POPIARecordsWizard'
+import type { RefundsPolicyData } from '../pages/user-dashboard/RefundsPolicyWizard'
+
+
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -486,6 +494,272 @@ export async function buildSlaDocx(d: SlaWizardData, completedAt: string | null)
     row('Dispute Forum', d.disputeForum),
     ...(d.disputeForum === 'South African courts' ? [row('Jurisdiction', d.jurisdictionCity)] : []),
     row('Signatories', d.signatories.filter((s) => s.name).map((s) => `${s.name} (${s.title})`).join(', ') || '—'),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+export async function buildShareCertificateDocx(data: ShareCertificateData, completedAt: string | null): Promise<Blob> {
+  const shareholder = data.shareholder === '__new' ? data.newPartyName : data.shareholder
+  const consideration = data.considerationType === 'cash'
+    ? `Cash: R ${data.amount || '—'}`
+    : `Non-cash: ${data.description || '—'}`
+  return pack([
+    h1('SHARE CERTIFICATE'),
+    row('Certificate number', data.certNumber),
+    row('Date of issue', data.issueDate || fmtDate(completedAt)),
+    row('Company', data.company),
+    sep(),
+    h2('Share issue'),
+    row('Shareholder', shareholder),
+    row('Share class', data.shareClass),
+    row('Number of shares', data.shareCount),
+    row('Consideration', consideration),
+    row('Fully paid', data.fullyPaid === 'yes' ? 'Yes' : 'No - certificate records the shares as not fully paid.'),
+    sep(),
+    h2('Authorisation'),
+    row('Authorising resolution', data.resolution === '__upload' ? `Uploaded: ${data.uploadedResolutionName || 'signed resolution'}` : data.resolution),
+    row('Signatories', data.signatories.join(', ') || '—'),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+export async function buildBoardResolutionDocx(data: BoardResolutionData, completedAt: string | null): Promise<Blob> {
+  return pack([
+    h1('BOARD RESOLUTION'),
+    row('Company', data.company),
+    row('Resolution type', data.resolutionType),
+    row('Date', data.meetingDate || fmtDate(completedAt)),
+    sep(),
+    h2(data.subject),
+    new Paragraph({ children: [new TextRun({ text: data.wording || '—' })] }),
+    sep(),
+    h2('Meeting record'),
+    row('Passed at', data.meetingType === 'rr' ? 'Round robin' : 'A meeting'),
+    ...(data.meetingType === 'meeting' ? [row('Time', data.meetingTime), row('Venue', data.meetingVenue), row('Chairperson', data.chairperson)] : []),
+    row('Present', data.attendees.join(', ') || '—'),
+    row('Votes', `For: ${data.votesFor}; Against: ${data.votesAgainst}; Abstained: ${data.votesAbstain}`),
+    sep(),
+    h2('Signatories'),
+    ...data.signatories.map((name) => new Paragraph({ children: [new TextRun({ text: `${name}  ____________________` })], spacing: { after: 220 } })),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+export async function buildFounderEmploymentDocx(data: FounderEmploymentData, completedAt: string | null): Promise<Blob> {
+  const address = [data.street, data.suburb, data.city, data.province, data.postalCode].filter(Boolean).join(', ')
+  return pack([
+    h1('FOUNDER EMPLOYMENT CONTRACT'),
+    row('Company', data.company),
+    row('Date', fmtDate(completedAt)),
+    sep(),
+    h2('Role'),
+    row('Founder', data.fullNames),
+    row('Identity number', data.idNumber),
+    row('Email', data.email),
+    ...(data.phone ? [row('Telephone', data.phone)] : []),
+    row('Address', address),
+    row('Job title', data.jobTitle),
+    row('Time commitment', data.timeCommitment + (data.timeCommitment === 'Part time with stated hours' && data.hoursPerWeek ? ` (${data.hoursPerWeek} hours per week)` : '')),
+    row('Also a director', data.isDirector),
+    ...(data.otherVentures === 'Yes' ? [row('Other ventures disclosed', data.venturesText)] : []),
+    sep(),
+    h2('Pay and equity'),
+    row('Remuneration', data.salaryAmount ? `R ${parseFloat(data.salaryAmount).toLocaleString('en-ZA')} per month` : '—'),
+    ...(data.salaryDeferral === 'Yes' ? [row('Deferral terms', data.deferralTerms)] : []),
+    row('Review mechanism', data.salaryReview),
+    row('Shareholding', data.shareholdingRef),
+    row('Vesting linked to employment', data.vestingLinked),
+    ...(data.vestingLinked === 'Yes' ? [
+      row('Good leaver events', data.goodLeaver.join(', ') || '—'),
+      row('Bad leaver consequence', data.badLeaverEffect),
+    ] : []),
+    sep(),
+    h2('Intellectual property and exit'),
+    row('IP assignment', data.ipAssignment),
+    row('Prior IP', data.nothingToDeclare ? 'Nothing to declare' : data.priorIp.map(r => `${r.description} (${r.treatment})`).join('; ') || '—'),
+    row('Publicly funded work', data.publiclyFunded),
+    row('Restraint of trade', data.restraint),
+    ...(data.restraint === 'Yes' ? [
+      row('Restraint duration', `${data.restraintMonths} months`),
+      row('Restraint area', data.restraintArea),
+      row('Restricted activities', data.restraintActivities),
+    ] : []),
+    row('Resignation ends directorship', data.resignBoth),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+// ── Website Terms of Use ──────────────────────────────────────────────────────
+
+export async function buildWebsiteTermsDocx(data: WebsiteTermsData, completedAt: string | null): Promise<Blob> {
+  const address = [data.street, data.suburb, data.city, data.province, data.postalCode, data.country].filter(Boolean).join(', ')
+  const isIndividual = data.entityType === 'Individual'
+  return pack([
+    h1('WEBSITE TERMS OF USE'),
+    row('Effective date', data.effectiveDate ? new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${data.effectiveDate}T00:00:00`)) : fmtDate(completedAt)),
+    row('Domains', data.domains.filter(d => d.domain.trim()).map(d => d.domain).join(', ') || '—'),
+    sep(),
+    h2('Operator'),
+    row('Entity type', data.entityType),
+    ...(isIndividual
+      ? [row('Full names', data.fullNames), row('Identity number', data.idNumber)]
+      : [row('Registered name', data.legalName), row('Registration number', data.regNumber), ...(data.tradingName ? [row('Trading name', data.tradingName)] : [])]),
+    row('Address', address),
+    row('Email', data.email),
+    ...(data.phone ? [row('Telephone', data.phone)] : []),
+    ...(!isIndividual ? [row('Signatory', `${data.signatoryName} (${data.signatoryCapacity})`)] : []),
+    row('Contact email', data.contactEmail),
+    row('Site purpose', data.sitePurpose),
+    ...(data.sitePurpose === 'Provides a platform between users' ? [row('Platform acknowledgement', data.platformAcknowledged ? 'Recorded — user chose to proceed without Counsel review' : 'Not acknowledged')] : []),
+    sep(),
+    h2('Features'),
+    row('User accounts', data.hasAccounts),
+    ...(data.hasAccounts === 'Yes' ? [row('Suspension grounds', data.accountSuspensionGrounds.join(', ') || '—')] : []),
+    row('User-generated content', data.hasUgc),
+    ...(data.hasUgc === 'Yes' ? [row('UGC licence', data.ugcLicence), row('Moderation and takedown', data.ugcTakedown)] : []),
+    row('Payments', data.hasPayments),
+    ...(data.hasPayments === 'Yes' && data.refundsRef ? [row('Linked refunds policy', data.refundsRef)] : []),
+    row('Third-party links', data.hasThirdPartyLinks),
+    sep(),
+    h2('Disclaimers and legal'),
+    row('Professional advice disclaimer', data.adviceDisclaimer),
+    row('Acceptable use restrictions', data.acceptableUse.join('; ') || '—'),
+    row('Limitation of liability', data.liabilityCap + (data.liabilityCap === 'A stated amount' && data.liabilityAmount ? ` — R ${parseFloat(data.liabilityAmount).toLocaleString('en-ZA')}` : '')),
+    row('Governing law', data.governingLaw),
+    row('Jurisdiction', data.jurisdictionCity),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+// ── POPIA Records Starter Kit ─────────────────────────────────────────────────
+
+export async function buildPopiaRecordsDocx(d: POPIARecordsData, completedAt: string | null): Promise<Blob> {
+  const fmtAddr = (p: POPIARecordsData['breachOwner']) =>
+    [p.street, p.building, p.streetName, p.suburb, p.city, p.province, p.postalCode, p.country].filter(Boolean).join(', ')
+
+  const activityRows = d.activities.flatMap((a, i) => [
+    h2(`Activity ${i + 1}: ${a.activity || '—'}`),
+    row('Purpose', a.purpose),
+    row('Categories', a.categories.join(', ') || '—'),
+    row('Lawful basis', a.basis),
+    row('Recipients', a.recipients),
+    row('Retention', a.retention),
+    row('Cross-border', a.crossBorder),
+    row('Security measures', a.security.join(', ') || '—'),
+  ])
+
+  const operatorRows = d.operators.flatMap((o, i) => [
+    h2(`Operator ${i + 1}: ${o.name || '—'}`),
+    row('Service', o.service),
+    row('Country', o.country),
+    row('Written agreement', o.hasAgreement),
+  ])
+
+  return pack([
+    h1('POPIA RECORDS STARTER KIT'),
+    row('Responsible party', d.responsibleParty),
+    row('Information officer', d.infoOfficer),
+    row('Effective date', d.effectiveDate ? new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${d.effectiveDate}T00:00:00`)) : fmtDate(completedAt)),
+    row('Generated by', 'The Startup Legal'),
+    sep(),
+
+    h2('1. Shared Inputs'),
+    row('Privacy contact email', d.privacyEmail),
+    row('Domains and applications', d.domains),
+    row('PI categories', d.piCategories.join(', ') || '—'),
+    row('Special PI', d.specialPi.join(', ') || 'None'),
+    ...(d.specialPi.length ? [row('Special PI justification', d.specialPiBasis)] : []),
+    row('Children\'s data', d.childrenData),
+    ...(d.childrenData === 'Yes' ? [row('Children consent mechanism', d.childrenConsent)] : []),
+    row('Purposes', d.purposes),
+    row('Lawful basis', d.purposesBasis),
+    row('Retention', d.retention),
+    row('Third parties', d.thirdParties),
+    row('Cross-border transfers', d.crossBorder),
+    ...(d.crossBorder === 'Yes' ? [row('Countries', d.crossBorderCountries), row('Transfer basis', d.transferBasis)] : []),
+    row('Direct marketing', d.directMarketing),
+    row('Cookies', d.cookies),
+    row('Cookie consent', d.cookieConsent),
+    ...(d.analyticsProvider ? [row('Analytics provider', d.analyticsProvider)] : []),
+    row('DSR channel', d.dsrChannel),
+    row('DSR response days', d.dsrDays),
+    row('Security measures', d.securitySummary.join(', ') || '—'),
+    sep(),
+
+    h2('2. Processing Register'),
+    ...activityRows,
+    sep(),
+
+    h2('3. Operators'),
+    ...operatorRows,
+    ...(d.operators.some(o => o.hasAgreement === 'No') ? [row('Generate missing operator agreements', d.generateOperatorAgreements)] : []),
+    sep(),
+
+    h2('4. Incidents and Requests'),
+    h2('Breach response owner'),
+    row('Full names', d.breachOwner.fullNames),
+    row('Identity number', d.breachOwner.idNumber),
+    row('Address', fmtAddr(d.breachOwner)),
+    row('Email', d.breachOwner.email),
+    ...(d.breachOwner.phone ? [row('Telephone', d.breachOwner.phone)] : []),
+    h2('Escalation contact'),
+    row('Full names', d.breachEscalation.fullNames),
+    row('Identity number', d.breachEscalation.idNumber),
+    row('Address', fmtAddr(d.breachEscalation)),
+    row('Email', d.breachEscalation.email),
+    ...(d.breachEscalation.phone ? [row('Telephone', d.breachEscalation.phone)] : []),
+    row('Request handling owner', d.dsrOwner),
+    row('Security measures in place', d.securityMeasures.join(', ') || '—'),
+    row('PAIA manual required', d.paiaManual),
+    sep(),
+
+    disclaimer(),
+  ])
+}
+
+// ── Refunds Policy ────────────────────────────────────────────────────────────
+
+export async function buildRefundsPolicyDocx(data: RefundsPolicyData, completedAt: string | null): Promise<Blob> {
+  const isSubscriptions = data.productTypes.includes('Subscriptions')
+  return pack([
+    h1('REFUNDS AND CANCELLATION POLICY'),
+    row('Effective date', data.effectiveDate ? new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(`${data.effectiveDate}T00:00:00`)) : fmtDate(completedAt)),
+    row('Business', data.company || '—'),
+    row('Contact email', data.refundsEmail || '—'),
+    sep(),
+    h2('Business and Products'),
+    row('What you sell', data.productTypes.join(', ') || '—'),
+    row('Sales channel', data.salesChannel || '—'),
+    sep(),
+    h2('Refund Rules'),
+    row('Refunds offered', data.offersRefunds),
+    ...(data.offersRefunds === 'No'
+      ? [row('Statutory rights', 'Customers retain all statutory rights under applicable consumer protection legislation to return faulty, defective or unsuitable goods.')]
+      : [
+          row('Refund window', `${data.refundDays} days from delivery or purchase`),
+          row('Conditions for a refund', data.refundCondition.join('; ') || '—'),
+        ]),
+    ...(data.productTypes.includes('Digital downloads') ? [row('Digital download exclusions', data.digitalExclusions.join('; ') || 'None')] : []),
+    ...(data.productTypes.includes('Services') ? [row('Services already performed', data.servicesExclusion === 'Yes' ? 'No refund for work already performed (pro rata for unperformed work)' : 'Standard terms')] : []),
+    ...(data.productTypes.includes('Physical goods') ? [row('Who pays return shipping', data.returnShipping)] : []),
+    ...(isSubscriptions ? [
+      sep(),
+      h2('Cancellations'),
+      row('Cancellation approach', data.cancellationApproach),
+      ...(data.cancellationApproach === 'Cancel with notice' && data.cancellationNoticeDays ? [row('Notice period', `${data.cancellationNoticeDays} days`)] : []),
+      row('Pro rata refund on cancellation', data.prorataRefund),
+    ] : []),
+    sep(),
+    h2('Refund Process'),
+    row('How to request a refund', data.refundProcess),
+    row('Information required', data.refundInfoRequired.join('; ') || '—'),
+    row('Processing time', `${data.refundProcessingDays} business days`),
+    row('Refund method', data.refundMethod),
     sep(),
     disclaimer(),
   ])

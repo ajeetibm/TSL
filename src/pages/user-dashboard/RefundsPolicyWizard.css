@@ -1,0 +1,100 @@
+/* ── RefundsPolicyWizard — component-scoped styles ─────────── */
+
+/* Modal width override (same as other single-step blueprints) */
+.rf-modal {
+  max-width: 780px;
+}
+
+/* ── Toggle button group ───────────────────────────────────── */
+.rf-toggle-group {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.rf-toggle-btn {
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  border-radius: 14px;
+  padding: 11px 22px;
+  font-size: 15px;
+  font-family: inherit;
+  cursor: pointer;
+  user-select: none;
+  min-width: 80px;
+  text-align: center;
+  color: #0f1b2a;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.rf-toggle-btn--active {
+  background: #0f1b2a;
+  border-color: #0f1b2a;
+  color: #fff;
+}
+
+.rf-toggle-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Chip multi-select ────────────────────────────────────── */
+.rf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rf-chip {
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  user-select: none;
+  color: #0f1b2a;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.rf-chip--selected {
+  background: #0f1b2a;
+  border-color: #0f1b2a;
+  color: #fff;
+}
+
+.rf-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Callout / Notice banners ────────────────────────────── */
+.rf-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.rf-banner--warn {
+  background: #fbf3e2;
+  border: 1px solid #e8cf98;
+  color: #7a5a12;
+}
+
+.rf-banner--info {
+  background: #eaf1fb;
+  border: 1px solid #c3d8f0;
+  color: #1c4a7a;
+}
+
+.rf-banner strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 14px;
+}

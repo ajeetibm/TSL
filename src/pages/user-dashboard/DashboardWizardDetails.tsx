@@ -151,6 +151,11 @@ const blueprintIdByWizardTitle: Record<string, string> = {
   'Service Level Agreement (SLA)': 'service-level-agreement',
   'Founders Agreement & IP Assignment': 'founders-agreement-ip',
   'Founders Agreement and IP Assignment': 'founders-agreement-ip',
+  'Company Name Reservation': 'name-reservation',
+  'Share Certificate Issuance': 'share-certificate',
+  'POPIA Records Starter Kit': 'popia-records-starter-kit',
+  'Refunds Policy': 'refunds-policy',
+  'Refunds and Cancellation Policy': 'refunds-policy',
 }
 
 type PlanKey = string
@@ -391,6 +396,8 @@ export default function DashboardWizardDetails() {
         'Employment Contract Pack': 'UsersRound',
         'Company Registration': 'Building2',
         'Shareholders Agreement': 'UsersRound',
+        'Refunds Policy': 'RotateCcw',
+        'Refunds and Cancellation Policy': 'RotateCcw',
       }
       setInsufficientUnits({
         remaining,

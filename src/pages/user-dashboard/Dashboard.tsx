@@ -33,7 +33,7 @@ import { mapSlaFields } from '../../services/slaFieldMap'
 import { useUserProfile } from '../../context/UserProfileContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
-import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx } from '../../services/docxBuilders'
+import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx, buildShareCertificateDocx, buildBoardResolutionDocx, buildFounderEmploymentDocx, buildWebsiteTermsDocx, buildPopiaRecordsDocx, buildRefundsPolicyDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { calcEmploymentProgress, useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
@@ -51,6 +51,20 @@ import FounderAgreementWizardModal from './FounderAgreementWizardModal'
 import type { FounderAgreementWizardData } from './FounderAgreementWizardModal'
 import ServiceAgreementWizardModal from './ServiceAgreementWizardModal'
 import SlaWizardModal from './SlaWizardModal'
+import CompanyNameReservationWizard from './CompanyNameReservationWizard'
+import type { CompanyNameReservationData } from './CompanyNameReservationWizard'
+import ShareCertificateWizard from './ShareCertificateWizard'
+import type { ShareCertificateData } from './ShareCertificateWizard'
+import BoardResolutionWizard from './BoardResolutionWizard'
+import type { BoardResolutionData } from './BoardResolutionWizard'
+import FounderEmploymentWizard from './FounderEmploymentWizard'
+import type { FounderEmploymentData } from './FounderEmploymentWizard'
+import WebsiteTermsWizard from './WebsiteTermsWizard'
+import type { WebsiteTermsData } from './WebsiteTermsWizard'
+import POPIARecordsWizard from './POPIARecordsWizard'
+import type { POPIARecordsData } from './POPIARecordsWizard'
+import RefundsPolicyWizard from './RefundsPolicyWizard'
+import type { RefundsPolicyData } from './RefundsPolicyWizard'
 import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import type { SlaWizardData } from './SlaWizardModal'
@@ -78,11 +92,9 @@ function writeSessionCounselCredits(credits: CounselCredits) {
 
 type DashboardTab = 'new' | 'inProgress' | 'completed'
 
-type CounselBlueprintReturn = {
-  wizard: 'founder-agreement'
-  step: number
-  data: FounderAgreementWizardData
-}
+type CounselBlueprintReturn =
+  | { wizard: 'founder-agreement'; step: number; data: FounderAgreementWizardData }
+  | { wizard: 'founder-employment'; step: number; data: FounderEmploymentData; inProgressInstanceId?: string }
 
 type DashboardLocationState = {
   addedCount?: number
@@ -136,27 +148,45 @@ interface InProgressInstance {
  * before payment and a request id after payment; both identify one Founder
  * Agreement run and must never create separate In Progress cards.
  */
-function founderAgreementReviewIdentity(data: unknown): string | null {
+function publicFundingReviewIdentity(wizardType: string, data: unknown): string | null {
   if (!data || typeof data !== 'object') return null
   const review = data as {
     publicFundingReviewRequestId?: unknown
     publicFundingReviewDraftKey?: unknown
+    publiclyFunded?: unknown
+    companyId?: unknown
+    founder?: unknown
   }
-  const value = review.publicFundingReviewRequestId ?? review.publicFundingReviewDraftKey
-  return typeof value === 'string' && value.trim() ? value : null
+  const stored = review.publicFundingReviewRequestId ?? review.publicFundingReviewDraftKey
+  if (typeof stored === 'string' && stored.trim()) return stored
+
+  // Founder Employment drafts created before the persisted review fields still
+  // have a stable company/founder identity when they are blocked for funding.
+  if (
+    wizardType === 'Founder Employment Contract' &&
+    review.publiclyFunded === 'Yes' &&
+    typeof review.companyId === 'string' && review.companyId.trim() &&
+    typeof review.founder === 'string' && review.founder.trim()
+  ) return `founder-employment:${review.companyId}:${review.founder}`
+  return null
 }
 
-function dedupeFounderAgreementInstances(instances: InProgressInstance[]): InProgressInstance[] {
+function dedupePublicFundingInstances(instances: InProgressInstance[]): InProgressInstance[] {
   const seenReviewIdentities = new Set<string>()
+  const publicFundingWizards = new Set([
+    'Founders agreement and IP assignment',
+    'Founder Employment Contract',
+  ])
 
-  // Retain the newest saved snapshot. This also removes duplicates saved by
-  // older versions of the top-up return flow.
+  // Retain the newest saved snapshot. This also removes historical duplicate
+  // cards from retries through the top-up return flow.
   return [...instances].reverse().filter((instance) => {
-    if (instance.wizardType !== 'Founders agreement and IP assignment') return true
-    const identity = founderAgreementReviewIdentity(instance.data)
+    if (!publicFundingWizards.has(instance.wizardType)) return true
+    const identity = publicFundingReviewIdentity(instance.wizardType, instance.data)
     if (!identity) return true
-    if (seenReviewIdentities.has(identity)) return false
-    seenReviewIdentities.add(identity)
+    const key = `${instance.wizardType}:${identity}`
+    if (seenReviewIdentities.has(key)) return false
+    seenReviewIdentities.add(key)
     return true
   }).reverse()
 }
@@ -1656,6 +1686,479 @@ function buildSlaEvidencePack(d: SlaWizardData, completedAt: string | null): Blo
   return new Blob([lines.join('\n')], { type: 'text/plain' })
 }
 
+function buildShareCertificatePdf(data: ShareCertificateData, completedAt: string | null): Blob {
+  const shareholder = data.shareholder === '__new' ? data.newPartyName : data.shareholder
+  const consideration = data.considerationType === 'cash'
+    ? `Cash consideration: R ${data.amount || '—'}`
+    : `Non-cash consideration: ${data.description || '—'}`
+  return buildLegalDocumentPdf([
+    'SHARE CERTIFICATE',
+    `Certificate number: ${data.certNumber}`,
+    `Date of issue: ${data.issueDate || completedAt || ''}`,
+    '',
+    'ISSUE',
+    `Company: ${data.company}`,
+    `Shareholder: ${shareholder}`,
+    `Share class: ${data.shareClass}`,
+    `Number of shares: ${data.shareCount}`,
+    '',
+    'CONSIDERATION',
+    consideration,
+    `Fully paid: ${data.fullyPaid === 'yes' ? 'Yes' : 'No'}`,
+    '',
+    'AUTHORISATION',
+    `Authorising resolution: ${data.resolution === '__upload' ? `Uploaded: ${data.uploadedResolutionName || 'signed resolution'}` : data.resolution}`,
+    `Signatories: ${data.signatories.join(', ')}`,
+    '',
+    'This certificate records the share issue set out above.',
+  ])
+}
+
+function buildBoardResolutionPdf(data: BoardResolutionData, completedAt: string | null): Blob {
+  return buildLegalDocumentPdf([
+    'BOARD RESOLUTION',
+    `Company: ${data.company || '—'}`,
+    `Resolution type: ${data.resolutionType || '—'}`,
+    `Date: ${data.meetingDate || formatDate(completedAt || new Date().toISOString())}`,
+    '',
+    data.subject || 'Resolution',
+    data.wording || '—',
+    '',
+    `Passed at: ${data.meetingType === 'rr' ? 'Round robin' : 'A meeting'}`,
+    `Present: ${data.attendees.join(', ') || '—'}`,
+    `Votes — For: ${data.votesFor}; Against: ${data.votesAgainst}; Abstained: ${data.votesAbstain}`,
+    '',
+    'SIGNATORIES',
+    ...(data.signatories.length ? data.signatories.map((name) => `${name}  ____________________`) : ['—']),
+  ])
+}
+
+function buildBoardResolutionEvidencePack(data: BoardResolutionData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const lines = [
+    'TSL EVIDENCE PACK - BOARD RESOLUTION',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: board-resolution',
+    'Schema version: 1.0',
+    `Generation timestamp: ${issuedAt}`,
+    '',
+    '── SUBJECT ─────────────────────────────────',
+    `Company          : ${data.company || '—'}`,
+    `Resolution type  : ${data.resolutionType || '—'}`,
+    `Subject          : ${data.subject || '—'}`,
+    `Resolution wording: ${data.wording || '—'}`,
+    '',
+    '── MEETING ─────────────────────────────────',
+    `Passed at        : ${data.meetingType === 'rr' ? 'Round robin' : 'A meeting'}`,
+    `Date             : ${data.meetingDate || '—'}`,
+    ...(data.meetingType === 'meeting' ? [
+      `Time             : ${data.meetingTime || '—'}`,
+      `Venue            : ${data.meetingVenue || '—'}`,
+      `Chairperson      : ${data.chairperson || '—'}`,
+    ] : []),
+    `Present          : ${data.attendees.join(', ') || '—'}`,
+    `Votes for        : ${data.votesFor || '0'}`,
+    `Votes against    : ${data.votesAgainst || '0'}`,
+    `Votes abstained  : ${data.votesAbstain || '0'}`,
+    `Signatories      : ${data.signatories.join(', ') || '—'}`,
+    '',
+    '── AUDIT LOG ───────────────────────────────',
+    `${issuedAt}  WIZARD_COMPLETED`,
+    `${issuedAt}  DOCUMENT_GENERATED`,
+    `${issuedAt}  EVIDENCE_PACK_EXPORTED`,
+    '',
+    'DISCLAIMER: For reference purposes only. Not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
+function buildShareCertificateEvidencePack(data: ShareCertificateData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const audit = [
+    'TSL EVIDENCE PACK - SHARE CERTIFICATE ISSUANCE',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: share-certificate',
+    'Schema version: 2.0',
+    `Generation timestamp: ${issuedAt}`,
+    `Certificate number: ${data.certNumber}`,
+    `Company: ${data.company}`,
+    `Share class: ${data.shareClass}`,
+    `Share count: ${data.shareCount}`,
+    `Authorising resolution: ${data.resolution === '__upload' ? data.uploadedResolutionName : data.resolution}`,
+    `Signatories: ${data.signatories.join(', ')}`,
+  ]
+  return new Blob([audit.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
+function buildFounderEmploymentPdf(data: FounderEmploymentData, completedAt: string | null): Blob {
+  const address = [data.street, data.suburb, data.city, data.province, data.postalCode].filter(Boolean).join(', ')
+  return buildLegalDocumentPdf([
+    'FOUNDER EMPLOYMENT CONTRACT',
+    `Company: ${data.company || '—'}`,
+    `Date: ${formatDate(completedAt || new Date().toISOString())}`,
+    '',
+    'ROLE',
+    `Founder: ${data.fullNames || '—'}`,
+    `Identity number: ${data.idNumber || '—'}`,
+    `Job title: ${data.jobTitle || '—'}`,
+    `Time commitment: ${data.timeCommitment || '—'}${data.timeCommitment === 'Part time with stated hours' && data.hoursPerWeek ? ` (${data.hoursPerWeek} hrs/wk)` : ''}`,
+    `Address: ${address || '—'}`,
+    '',
+    'PAY AND EQUITY',
+    `Remuneration: R ${data.salaryAmount || '—'} per month`,
+    `Review mechanism: ${data.salaryReview || '—'}`,
+    `Shareholding: ${data.shareholdingRef || '—'}`,
+    `Vesting linked: ${data.vestingLinked || '—'}`,
+    ...(data.vestingLinked === 'Yes' ? [
+      `Good leaver events: ${data.goodLeaver.join(', ') || '—'}`,
+      `Bad leaver consequence: ${data.badLeaverEffect || '—'}`,
+    ] : []),
+    '',
+    'IP AND EXIT',
+    `IP assignment: ${data.ipAssignment || '—'}`,
+    `Prior IP: ${data.nothingToDeclare ? 'Nothing to declare' : data.priorIp.map(r => `${r.description} (${r.treatment})`).join('; ') || '—'}`,
+    `Publicly funded: ${data.publiclyFunded || '—'}`,
+    `Restraint of trade: ${data.restraint || '—'}`,
+    ...(data.restraint === 'Yes' ? [`Restraint: ${data.restraintMonths} months, ${data.restraintArea}`] : []),
+    `Resignation ends directorship: ${data.resignBoth || '—'}`,
+  ])
+}
+
+function buildFounderEmploymentEvidencePack(data: FounderEmploymentData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const lines = [
+    'TSL EVIDENCE PACK - FOUNDER EMPLOYMENT CONTRACT',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: founder-employment-contract',
+    'Schema version: 1.0',
+    `Generation timestamp: ${issuedAt}`,
+    '',
+    '── ROLE ─────────────────────────────────────',
+    `Company          : ${data.company || '—'}`,
+    `Founder          : ${data.fullNames || '—'}`,
+    `Identity number  : ${data.idNumber || '—'}`,
+    `Job title        : ${data.jobTitle || '—'}`,
+    `Time commitment  : ${data.timeCommitment || '—'}`,
+    '',
+    '── PAY AND EQUITY ───────────────────────────',
+    `Remuneration     : R ${data.salaryAmount || '—'}`,
+    `Shareholding     : ${data.shareholdingRef || '—'}`,
+    `Vesting linked   : ${data.vestingLinked || '—'}`,
+    ...(data.vestingLinked === 'Yes' ? [
+      `Good leaver      : ${data.goodLeaver.join(', ') || '—'}`,
+      `Bad leaver       : ${data.badLeaverEffect || '—'}`,
+      `Leaver ack       : ${data.leaverAcknowledged ? 'Yes' : 'No'}`,
+    ] : []),
+    '',
+    '── IP AND EXIT ──────────────────────────────',
+    `IP assignment    : ${data.ipAssignment || '—'}`,
+    `Prior IP         : ${data.nothingToDeclare ? 'Nothing to declare' : data.priorIp.map(r => `${r.description} (${r.treatment})`).join('; ') || '—'}`,
+    `Publicly funded  : ${data.publiclyFunded || '—'}`,
+    `Restraint        : ${data.restraint || '—'}`,
+    ...(data.restraint === 'Yes' ? [
+      `Restraint months : ${data.restraintMonths}`,
+      `Restraint area   : ${data.restraintArea}`,
+    ] : []),
+    `Resign + leave   : ${data.resignBoth || '—'}`,
+    '',
+    '── AUDIT LOG ────────────────────────────────',
+    `${issuedAt}  WIZARD_COMPLETED`,
+    `${issuedAt}  DOCUMENT_GENERATED`,
+    `${issuedAt}  EVIDENCE_PACK_EXPORTED`,
+    '',
+    'DISCLAIMER: For reference purposes only. Not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
+function buildWebsiteTermsPdf(data: WebsiteTermsData, completedAt: string | null): Blob {
+  const isIndividual = data.entityType === 'Individual'
+  const address = [data.street, data.suburb, data.city, data.province, data.postalCode, data.country].filter(Boolean).join(', ')
+  return buildLegalDocumentPdf([
+    'WEBSITE TERMS OF USE',
+    `Effective date: ${data.effectiveDate || formatDate(completedAt || new Date().toISOString())}`,
+    `Domains: ${data.domains.filter(d => d.domain.trim()).map(d => d.domain).join(', ') || '—'}`,
+    '',
+    'OPERATOR',
+    `Entity type: ${data.entityType || '—'}`,
+    isIndividual
+      ? `Full names: ${data.fullNames || '—'}`
+      : `Registered name: ${data.legalName || '—'}`,
+    ...((!isIndividual && data.tradingName) ? [`Trading name: ${data.tradingName}`] : []),
+    `Address: ${address || '—'}`,
+    `Email: ${data.email || '—'}`,
+    `Contact email: ${data.contactEmail || '—'}`,
+    `Site purpose: ${data.sitePurpose || '—'}`,
+    '',
+    'FEATURES',
+    `User accounts: ${data.hasAccounts || '—'}`,
+    ...(data.hasAccounts === 'Yes' ? [`Suspension grounds: ${data.accountSuspensionGrounds.join(', ') || '—'}`] : []),
+    `User-generated content: ${data.hasUgc || '—'}`,
+    `Payments: ${data.hasPayments || '—'}`,
+    `Third-party links: ${data.hasThirdPartyLinks || '—'}`,
+    '',
+    'DISCLAIMERS AND LEGAL',
+    `Advice disclaimer: ${data.adviceDisclaimer || '—'}`,
+    `Acceptable use: ${data.acceptableUse.join('; ') || '—'}`,
+    `Liability cap: ${data.liabilityCap || '—'}${data.liabilityCap === 'A stated amount' && data.liabilityAmount ? ` — R ${parseFloat(data.liabilityAmount).toLocaleString('en-ZA')}` : ''}`,
+    `Governing law: ${data.governingLaw || '—'}`,
+    `Jurisdiction: ${data.jurisdictionCity || '—'}`,
+  ])
+}
+
+function buildWebsiteTermsEvidencePack(data: WebsiteTermsData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const isIndividual = data.entityType === 'Individual'
+  const address = [data.street, data.suburb, data.city, data.province, data.postalCode, data.country].filter(Boolean).join(', ')
+  const lines = [
+    'TSL EVIDENCE PACK - WEBSITE TERMS OF USE',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: website-terms-of-use',
+    'Schema version: 1.0',
+    `Generation timestamp: ${issuedAt}`,
+    '',
+    '── OPERATOR ─────────────────────────────────',
+    `Entity type      : ${data.entityType || '—'}`,
+    isIndividual
+      ? `Full names       : ${data.fullNames || '—'}`
+      : `Registered name  : ${data.legalName || '—'}`,
+    ...((!isIndividual && data.regNumber) ? [`Reg number       : ${data.regNumber}`] : []),
+    ...((!isIndividual && data.signatoryName) ? [`Signatory        : ${data.signatoryName} (${data.signatoryCapacity})`] : []),
+    `Address          : ${address || '—'}`,
+    `Email            : ${data.email || '—'}`,
+    `Contact email    : ${data.contactEmail || '—'}`,
+    `Site purpose     : ${data.sitePurpose || '—'}`,
+    `Platform ack     : ${data.platformAcknowledged ? 'Yes — recorded' : 'N/A'}`,
+    '',
+    '── DOMAINS ──────────────────────────────────',
+    ...data.domains.filter(d => d.domain.trim()).map(d => `  ${d.domain}`),
+    '',
+    '── FEATURES ─────────────────────────────────',
+    `User accounts    : ${data.hasAccounts || '—'}`,
+    ...(data.hasAccounts === 'Yes' ? [`Suspension grounds: ${data.accountSuspensionGrounds.join(', ') || '—'}`] : []),
+    `User content     : ${data.hasUgc || '—'}`,
+    ...(data.hasUgc === 'Yes' ? [`UGC licence      : ${data.ugcLicence || '—'}`, `Takedown         : ${data.ugcTakedown || '—'}`] : []),
+    `Payments         : ${data.hasPayments || '—'}`,
+    ...(data.hasPayments === 'Yes' && data.refundsRef ? [`Refunds ref      : ${data.refundsRef}`] : []),
+    `Third-party links: ${data.hasThirdPartyLinks || '—'}`,
+    '',
+    '── LEGAL ────────────────────────────────────',
+    `Advice disclaimer: ${data.adviceDisclaimer || '—'}`,
+    `Acceptable use   : ${data.acceptableUse.join('; ') || '—'}`,
+    `Liability cap    : ${data.liabilityCap || '—'}${data.liabilityCap === 'A stated amount' && data.liabilityAmount ? ` — R ${data.liabilityAmount}` : ''}`,
+    `Governing law    : ${data.governingLaw || '—'}`,
+    `Jurisdiction     : ${data.jurisdictionCity || '—'}`,
+    `Effective date   : ${data.effectiveDate || '—'}`,
+    '',
+    '── AUDIT LOG ────────────────────────────────',
+    `${issuedAt}  WIZARD_COMPLETED`,
+    `${issuedAt}  DOCUMENT_GENERATED`,
+    `${issuedAt}  EVIDENCE_PACK_EXPORTED`,
+    '',
+    'DISCLAIMER: For reference purposes only. Not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
+function buildPopiaRecordsPdf(data: POPIARecordsData, completedAt: string | null): Blob {
+  const fmtAddr = (p: POPIARecordsData['breachOwner']) =>
+    [p.street, p.building, p.streetName, p.suburb, p.city, p.province, p.postalCode, p.country].filter(Boolean).join(', ')
+  return buildLegalDocumentPdf([
+    'POPIA RECORDS STARTER KIT',
+    `Responsible party: ${data.responsibleParty || '—'}`,
+    `Information officer: ${data.infoOfficer || '—'}`,
+    `Effective date: ${data.effectiveDate || formatDate(completedAt || new Date().toISOString())}`,
+    '',
+    '1. SHARED INPUTS',
+    `Privacy email: ${data.privacyEmail || '—'}`,
+    `Domains: ${data.domains || '—'}`,
+    `PI categories: ${data.piCategories.join(', ') || '—'}`,
+    ...(data.specialPi.length ? [`Special PI: ${data.specialPi.join(', ')}`] : []),
+    `Cross-border: ${data.crossBorder || '—'}`,
+    ...(data.crossBorder === 'Yes' ? [`Countries: ${data.crossBorderCountries || '—'}`, `Transfer basis: ${data.transferBasis || '—'}`] : []),
+    '',
+    '2. PROCESSING REGISTER',
+    ...data.activities.flatMap((a, i) => [
+      `Activity ${i + 1}: ${a.activity || '—'}`,
+      `Purpose: ${a.purpose || '—'}`,
+      `Categories: ${a.categories.join(', ') || '—'}`,
+      `Basis: ${a.basis || '—'}`,
+      `Recipients: ${a.recipients || '—'}`,
+      `Retention: ${a.retention || '—'}`,
+      `Cross-border: ${a.crossBorder || '—'}`,
+      '',
+    ]),
+    '3. OPERATORS',
+    ...data.operators.flatMap((o, i) => [
+      `Operator ${i + 1}: ${o.name || '—'} (${o.service || '—'})`,
+      `Country: ${o.country || '—'}`,
+      `Written agreement: ${o.hasAgreement || '—'}`,
+      '',
+    ]),
+    '4. INCIDENTS AND REQUESTS',
+    `Breach response owner: ${data.breachOwner.fullNames || '—'}`,
+    `Address: ${fmtAddr(data.breachOwner) || '—'}`,
+    `Escalation contact: ${data.breachEscalation.fullNames || '—'}`,
+    `DSR owner: ${data.dsrOwner || '—'}`,
+    `Security measures: ${data.securityMeasures.join(', ') || '—'}`,
+    `PAIA manual: ${data.paiaManual || '—'}`,
+  ])
+}
+
+function buildPopiaRecordsEvidencePack(data: POPIARecordsData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const lines = [
+    'TSL EVIDENCE PACK - POPIA RECORDS STARTER KIT',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: popia-records-starter-kit',
+    'Schema version: 2.0',
+    `Generation timestamp: ${issuedAt}`,
+    '',
+    '── RESPONSIBLE PARTY ────────────────────────',
+    `Party                : ${data.responsibleParty || '—'}`,
+    `Information officer  : ${data.infoOfficer || '—'}`,
+    `Privacy email        : ${data.privacyEmail || '—'}`,
+    `Domains              : ${data.domains || '—'}`,
+    `Effective date       : ${data.effectiveDate || '—'}`,
+    '',
+    '── WHAT YOU COLLECT ─────────────────────────',
+    `PI categories        : ${data.piCategories.join(', ') || '—'}`,
+    `Special PI           : ${data.specialPi.join(', ') || 'None'}`,
+    `Children data        : ${data.childrenData || '—'}`,
+    `Cross-border         : ${data.crossBorder || '—'}`,
+    ...(data.crossBorder === 'Yes' ? [
+      `Countries            : ${data.crossBorderCountries || '—'}`,
+      `Transfer basis       : ${data.transferBasis || '—'}`,
+    ] : []),
+    `Direct marketing     : ${data.directMarketing || '—'}`,
+    '',
+    '── PROCESSING REGISTER ──────────────────────',
+    ...data.activities.flatMap((a, i) => [
+      `Activity ${i + 1}          : ${a.activity || '—'} — ${a.purpose || '—'}`,
+      `  Categories           : ${a.categories.join(', ') || '—'}`,
+      `  Basis                : ${a.basis || '—'}`,
+      `  Recipients           : ${a.recipients || '—'}`,
+      `  Retention            : ${a.retention || '—'}`,
+      `  Cross-border         : ${a.crossBorder || '—'}`,
+      `  Security             : ${a.security.join(', ') || '—'}`,
+      '',
+    ]),
+    '── OPERATORS ────────────────────────────────',
+    ...data.operators.flatMap((o, i) => [
+      `Operator ${i + 1}           : ${o.name || '—'} (${o.service || '—'})`,
+      `  Country              : ${o.country || '—'}`,
+      `  Written agreement    : ${o.hasAgreement || '—'}`,
+      '',
+    ]),
+    ...(data.operators.some(o => o.hasAgreement === 'No') ? [`Generate missing      : ${data.generateOperatorAgreements || '—'}`, ''] : []),
+    '── INCIDENTS AND REQUESTS ───────────────────',
+    `Breach owner         : ${data.breachOwner.fullNames || '—'}`,
+    `Escalation contact   : ${data.breachEscalation.fullNames || '—'}`,
+    `DSR owner            : ${data.dsrOwner || '—'}`,
+    `Security measures    : ${data.securityMeasures.join(', ') || '—'}`,
+    `PAIA manual          : ${data.paiaManual || '—'}`,
+    '',
+    '── AUDIT LOG ────────────────────────────────',
+    `${issuedAt}  WIZARD_COMPLETED`,
+    `${issuedAt}  DOCUMENT_GENERATED`,
+    `${issuedAt}  EVIDENCE_PACK_EXPORTED`,
+    '',
+    'DISCLAIMER: For reference purposes only. Not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
+function buildRefundsPolicyPdf(data: RefundsPolicyData, completedAt: string | null): Blob {
+  const isSubscriptions = data.productTypes.includes('Subscriptions')
+  return buildLegalDocumentPdf([
+    'REFUNDS AND CANCELLATION POLICY',
+    `Effective date: ${data.effectiveDate || formatDate(completedAt || new Date().toISOString())}`,
+    `Business: ${data.company || '—'}`,
+    `Contact email: ${data.refundsEmail || '—'}`,
+    '',
+    'BUSINESS AND PRODUCTS',
+    `What you sell: ${data.productTypes.join(', ') || '—'}`,
+    `Sales channel: ${data.salesChannel || '—'}`,
+    '',
+    'REFUND RULES',
+    `Refunds offered: ${data.offersRefunds || '—'}`,
+    ...(data.offersRefunds === 'No'
+      ? ['Statutory rights: Customers retain all statutory rights under applicable consumer protection legislation to return faulty, defective or unsuitable goods regardless of this policy.']
+      : [
+          `Refund window: ${data.refundDays || '—'} days from delivery or purchase`,
+          `Conditions: ${data.refundCondition.join(', ') || '—'}`,
+        ]),
+    ...(data.productTypes.includes('Digital downloads') ? [`Digital download exclusions: ${data.digitalExclusions.join(', ') || 'None'}`] : []),
+    ...(data.productTypes.includes('Services') ? [`Services already performed: ${data.servicesExclusion === 'Yes' ? 'No refund for work already performed (pro rata for unperformed work)' : 'Standard terms apply'}`] : []),
+    ...(data.productTypes.includes('Physical goods') ? [`Return shipping: ${data.returnShipping || '—'}`] : []),
+    '',
+    ...(isSubscriptions ? [
+      'CANCELLATIONS',
+      `Approach: ${data.cancellationApproach || '—'}`,
+      ...(data.cancellationApproach === 'Cancel with notice' && data.cancellationNoticeDays ? [`Notice period: ${data.cancellationNoticeDays} days`] : []),
+      `Pro rata refund on cancellation: ${data.prorataRefund || '—'}`,
+      '',
+    ] : []),
+    'PROCESS',
+    `How to request: ${data.refundProcess || '—'}`,
+    `Information required: ${data.refundInfoRequired.join(', ') || '—'}`,
+    `Processing time: ${data.refundProcessingDays || '—'} business days`,
+    `Refund method: ${data.refundMethod || '—'}`,
+  ])
+}
+
+function buildRefundsPolicyEvidencePack(data: RefundsPolicyData, completedAt: string | null, instanceId: string): Blob {
+  const issuedAt = completedAt || new Date().toISOString()
+  const isSubscriptions = data.productTypes.includes('Subscriptions')
+  const lines = [
+    'TSL EVIDENCE PACK - REFUNDS POLICY',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: refunds-policy',
+    'Schema version: 1.0',
+    `Generation timestamp: ${issuedAt}`,
+    '',
+    '── BUSINESS & PRODUCTS ───────────────────────',
+    `Business         : ${data.company || '—'}`,
+    `Contact email    : ${data.refundsEmail || '—'}`,
+    `What you sell    : ${data.productTypes.join(', ') || '—'}`,
+    `Sales channel    : ${data.salesChannel || '—'}`,
+    '',
+    '── REFUND RULES ──────────────────────────────',
+    `Refunds offered  : ${data.offersRefunds || '—'}`,
+    ...(data.offersRefunds === 'No'
+      ? ['Statutory rights : Preserved per CPA requirements (faulty or unsuitable goods cannot be excluded)']
+      : [
+          `Refund window    : ${data.refundDays || '—'} days`,
+          `Conditions       : ${data.refundCondition.join(', ') || '—'}`,
+        ]),
+    ...(data.productTypes.includes('Digital downloads') ? [`Digital exclusions: ${data.digitalExclusions.join(', ') || 'None'}`] : []),
+    ...(data.productTypes.includes('Services') ? [`Services exclusion: ${data.servicesExclusion || '—'}`] : []),
+    ...(data.productTypes.includes('Physical goods') ? [`Return shipping  : ${data.returnShipping || '—'}`] : []),
+    '',
+    ...(isSubscriptions ? [
+      '── CANCELLATIONS ─────────────────────────────',
+      `Approach         : ${data.cancellationApproach || '—'}`,
+      ...(data.cancellationApproach === 'Cancel with notice' && data.cancellationNoticeDays ? [`Notice period    : ${data.cancellationNoticeDays} days`] : []),
+      `Pro rata refund  : ${data.prorataRefund || '—'}`,
+      '',
+    ] : []),
+    '── PROCESS ───────────────────────────────────',
+    `How to request   : ${data.refundProcess || '—'}`,
+    `Info required    : ${data.refundInfoRequired.join(', ') || '—'}`,
+    `Processing time  : ${data.refundProcessingDays || '—'} business days`,
+    `Refund method    : ${data.refundMethod || '—'}`,
+    `Effective date   : ${data.effectiveDate || '—'}`,
+    '',
+    '── AUDIT LOG ────────────────────────────────',
+    `${issuedAt}  WIZARD_COMPLETED`,
+    `${issuedAt}  DOCUMENT_GENERATED`,
+    `${issuedAt}  EVIDENCE_PACK_EXPORTED`,
+    '',
+    'DISCLAIMER: For reference purposes only. Not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -1800,6 +2303,15 @@ export default function Dashboard() {
   )
   const [isSAModalOpen, setIsSAModalOpen] = useState(false)
   const [isSLAModalOpen, setIsSLAModalOpen] = useState(false)
+  const [isCnrModalOpen, setIsCnrModalOpen] = useState(false)
+  const [isScModalOpen, setIsScModalOpen] = useState(false)
+  const [isBrModalOpen, setIsBrModalOpen] = useState(false)
+  const [isFecModalOpen, setIsFecModalOpen] = useState(
+    () => counselBlueprintReturn?.wizard === 'founder-employment',
+  )
+  const [isWtModalOpen, setIsWtModalOpen] = useState(false)
+  const [isPopiaModalOpen, setIsPopiaModalOpen] = useState(false)
+  const [isRefundsModalOpen, setIsRefundsModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
   const [counselCreditsForGate, setCounselCreditsForGate] = useState<CounselCredits | null>(null)
@@ -1860,8 +2372,11 @@ export default function Dashboard() {
   const inProgressInstancesRef = useRef(inProgressInstances)
 
   const commitInProgressInstances = (next: InProgressInstance[]) => {
-    inProgressInstancesRef.current = next
-    setInProgressInstances(next)
+    // Final guard for every save path, including a close event after a
+    // counsel top-up return.
+    const deduplicated = dedupePublicFundingInstances(next)
+    inProgressInstancesRef.current = deduplicated
+    setInProgressInstances(deduplicated)
   }
 
   // Keep a user's workflow history on the mock server rather than in browser
@@ -1872,7 +2387,7 @@ export default function Dashboard() {
       .then((response) => {
         if (cancelled || !response.success || !response.data) return
         const workspace = response.data
-        const restoredInProgress = dedupeFounderAgreementInstances(workspace.inProgressInstances as InProgressInstance[])
+        const restoredInProgress = dedupePublicFundingInstances(workspace.inProgressInstances as InProgressInstance[])
         setDashboardViewMode(workspace.viewMode)
         setQueuedCounts(workspace.queuedCounts)
         setCompletedInstances(workspace.completedInstances as CompletedInstance[])
@@ -1903,18 +2418,23 @@ export default function Dashboard() {
   // Ref tracking which in-progress instance is currently being continued so
   // onClose/onComplete handlers can update or remove it.
   const continuingInstanceRef = useRef<string | null>(null)
+  // Keeps a public-funding Founder Employment draft attached while the modal
+  // is closed for a counsel top-up and reopened afterwards.
+  const founderEmploymentCounselInstanceRef = useRef<string | null>(
+    counselBlueprintReturn?.wizard === 'founder-employment'
+      ? counselBlueprintReturn.inProgressInstanceId ?? null
+      : null,
+  )
   // Flag set by onComplete so the subsequent onClose call (fired by all modals
   // after generation) knows not to push a new in-progress instance.
   const justCompletedRef = useRef(false)
 
   const pushInProgressInstance = (wizardType: string, step: number, progress: number, data: unknown): string => {
-    const reviewIdentity = wizardType === 'Founders agreement and IP assignment'
-      ? founderAgreementReviewIdentity(data)
-      : null
+    const reviewIdentity = publicFundingReviewIdentity(wizardType, data)
     const existing = reviewIdentity
       ? inProgressInstancesRef.current.find((instance) =>
           instance.wizardType === wizardType &&
-          founderAgreementReviewIdentity(instance.data) === reviewIdentity,
+          publicFundingReviewIdentity(instance.wizardType, instance.data) === reviewIdentity,
         )
       : undefined
 
@@ -1944,6 +2464,31 @@ export default function Dashboard() {
     commitInProgressInstances(inProgressInstancesRef.current.filter((inst) => inst.id !== id))
   }
 
+  const saveFounderEmploymentInProgress = (step: number, data: FounderEmploymentData, retainForCounsel = false) => {
+    const progress = Math.round(((step - 1) / 3) * 100)
+    const instanceId = founderEmploymentCounselInstanceRef.current ?? continuingInstanceRef.current
+    const storedInstanceExists = Boolean(instanceId && inProgressInstancesRef.current.some((instance) => instance.id === instanceId))
+    // A top-up navigates away and remounts the dashboard. If the saved id is
+    // present, update it directly; otherwise resolve it by its stable review
+    // identity before creating anything new.
+    const id = storedInstanceExists && instanceId
+      ? (updateInProgressInstance(instanceId, step, progress, data), instanceId)
+      : (decrementQueue('Founder Employment Contract'), pushInProgressInstance('Founder Employment Contract', step, progress, data))
+
+    founderEmploymentCounselInstanceRef.current = retainForCounsel ? id : null
+    continuingInstanceRef.current = null
+    return id
+  }
+
+  const completeFounderEmploymentInProgress = (data: FounderEmploymentData) => {
+    const instanceId = founderEmploymentCounselInstanceRef.current ?? continuingInstanceRef.current
+    if (instanceId) removeInProgressInstance(instanceId)
+    else decrementQueue('Founder Employment Contract')
+    founderEmploymentCounselInstanceRef.current = null
+    continuingInstanceRef.current = null
+    pushCompletedInstance('Founder Employment Contract', data, new Date().toISOString())
+  }
+
   // Decrement one instance from the New queue and open the corresponding modal.
   const handleStart = (title: string) => {
     // Do NOT flip the view yet — the landing page stays visible behind the
@@ -1971,6 +2516,20 @@ export default function Dashboard() {
       resetFA(); startFA(); setIsFAModalOpen(true)
     } else if (title === 'Service Level Agreement (SLA)') {
       resetSLA(); startSLA(); setIsSLAModalOpen(true)
+    } else if (title === 'Company Name Reservation') {
+      setIsCnrModalOpen(true)
+    } else if (title === 'Share Certificate Issuance') {
+      setIsScModalOpen(true)
+    } else if (title === 'Board Resolution') {
+      setIsBrModalOpen(true)
+    } else if (title === 'Founder Employment Contract') {
+      setIsFecModalOpen(true)
+    } else if (title === 'Website Terms of Use') {
+      setIsWtModalOpen(true)
+    } else if (title === 'POPIA Records Starter Kit') {
+      setIsPopiaModalOpen(true)
+    } else if (title === 'Refunds Policy' || title === 'Refunds and Cancellation Policy') {
+      setIsRefundsModalOpen(true)
     } else {
       setComingSoonTitle(title)
     }
@@ -2234,6 +2793,17 @@ export default function Dashboard() {
     const alreadyCharged = localStorage.getItem(chargeKey) === 'true'
     const response = await subscriptionApi.consumeBlueprintRun(blueprintId, alreadyCharged)
     if (!response.success || !response.data) {
+      const failure = response as { error?: string; data?: unknown; message?: string }
+      // Blueprint not yet registered in the catalogue — still allow the download
+      if (failure.error === 'UNKNOWN_BLUEPRINT') {
+        triggerDownload(blob, filename)
+        setPdfDownloaded((prev) => {
+          const next = new Set([...prev, downloadKey])
+          localStorage.setItem(pdfDownloadedKey, JSON.stringify([...next]))
+          return next
+        })
+        return
+      }
       const shortage = response.data as { remainingBlueprintUnits?: number; requiredBlueprintUnits?: number; blueprint?: { name: string }; blueprintRunTopUpRate?: number } | undefined
       if (shortage?.remainingBlueprintUnits !== undefined && shortage.requiredBlueprintUnits !== undefined) {
         const bpName = shortage.blueprint?.name ?? 'Blueprint'
@@ -2259,10 +2829,16 @@ export default function Dashboard() {
   }
   const PDF_CREDITS: Record<string, number> = {
     'nda': 1,
+    'board-resolution': 1,
+    'share-certificate': 1,
     'employment-offer-letter': 2,
     'privacy-policy': 2,
+    'website-terms-of-use': 2,
+    'founder-employment': 2,
     'service-agreement': 2,
+    'refunds-policy': 1,
     'service-level-agreement': 3,
+    'popia-records-starter-kit': 3,
     'founders-agreement-ip': 4,
   }
 
@@ -2403,6 +2979,71 @@ export default function Dashboard() {
     return response.data
   }, [saveFAProgress])
 
+  const routeFounderEmploymentPublicFundingToCounsel = useCallback(async (data: FounderEmploymentData) => {
+    const reviewDraftKey = data.publicFundingReviewDraftKey || `founder-employment:${data.companyId}:${data.founder}`
+    const draft = { ...data, publicFundingReviewDraftKey: reviewDraftKey }
+    const persistDraft = (next: FounderEmploymentData) => {
+      // Retain this id until the modal is explicitly closed. That close must
+      // update the routed card instead of creating another in-progress run.
+      return saveFounderEmploymentInProgress(3, next, true)
+    }
+
+    if (draft.publicFundingReviewRequestId && draft.publicFundingReviewStatus !== 'not_required') {
+      persistDraft(draft)
+      return draft
+    }
+
+    let credits = readSessionCounselCredits()
+    if (!credits) {
+      const creditsRes = await counselApi.credits()
+      credits = creditsRes.success && creditsRes.data ? creditsRes.data : null
+      if (credits) writeSessionCounselCredits(credits)
+    }
+    if (!credits || credits.creditsRemaining < 1) {
+      persistDraft(draft)
+      setCounselCreditsForGate(credits)
+      setIsNoCounselCreditModalOpen(true)
+      return
+    }
+
+    const response = await counselApi.createPublicFundingReview({
+      subject: 'Founder Employment Contract - Publicly Funded IP Review',
+      company: draft.company || 'Founder company',
+      wizard_data: draft as unknown as Record<string, unknown>,
+      review_draft_key: reviewDraftKey,
+      related_wizard: 'founder-employment',
+    })
+    if (!response.success || !response.data) {
+      throw new Error(response.message || 'Unable to submit this review to Counsel.')
+    }
+    if (response.data.duplicate) {
+      const creditsRes = await counselApi.credits()
+      if (creditsRes.success && creditsRes.data) writeSessionCounselCredits(creditsRes.data)
+    } else {
+      appendPfReviewRequest({
+        requestId: response.data.requestId,
+        subject: 'Founder Employment Contract - Publicly Funded IP Review',
+        status: response.data.status ?? 'pending',
+        submittedAt: new Date().toISOString(),
+      })
+      writeSessionCounselCredits({
+        ...credits,
+        creditsRemaining: Math.max(credits.creditsRemaining - 1, 0),
+        creditsUsed: credits.creditsUsed + 1,
+        usageThisMonth: credits.usageThisMonth + 1,
+      })
+    }
+    const routed: FounderEmploymentData = {
+      ...draft,
+      publicFundingReviewRequestId: response.data.requestId,
+      publicFundingReviewStatus: response.data.status ?? 'pending',
+      publicFundingReviewReason: response.data.rejectionReason ?? null,
+    }
+    persistDraft(routed)
+    showNdaToast('Your publicly funded IP review has been sent to Counsel for assignment.')
+    return routed
+  }, [])
+
   const refreshFounderPublicFundingReview = useCallback(async (requestId: string) => {
     const response = await counselApi.publicFundingReviewStatus(requestId)
     return response.success && response.data ? response.data : null
@@ -2482,6 +3123,30 @@ export default function Dashboard() {
     // wizardAccessConfirmed to false, causing the landing view to flash
     // before the API call re-confirms the subscription.
     setDashboardViewMode('returning')
+  }
+
+  const openBoardResolutionFromShareCertificate = (step: number, data: ShareCertificateData) => {
+    const continuingId = continuingInstanceRef.current
+    const progress = Math.round(((step - 1) / 2) * 100)
+    if (continuingId) {
+      updateInProgressInstance(continuingId, step, progress, data)
+      continuingInstanceRef.current = null
+    } else {
+      decrementQueue('Share Certificate Issuance')
+      pushInProgressInstance('Share Certificate Issuance', step, progress, data)
+    }
+
+    setIsScModalOpen(false)
+    setActiveTab('inProgress')
+    openReturningDashboard()
+    // Save before leaving this page so the draft survives the navigation.
+    void dashboardWorkspaceApi.save({
+      viewMode: 'returning',
+      queuedCounts,
+      inProgressInstances: inProgressInstancesRef.current,
+      completedInstances,
+    })
+    navigate('/dashboard/blueprints', { state: { returnTab: 'inProgress' } })
   }
 
   const user = dashboardData?.user
@@ -2904,7 +3569,7 @@ export default function Dashboard() {
               setIsFAModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
             }}
             initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
-            initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
+            initialData={counselBlueprintReturn?.wizard === 'founder-agreement' ? counselBlueprintReturn.data : (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
             onStepChange={persistFounderAgreementStep}
             onComplete={(data) => {
               const cid = continuingInstanceRef.current
@@ -2956,6 +3621,160 @@ export default function Dashboard() {
               justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
               else { decrementQueue('Service Level Agreement (SLA)') }
               handleSLAComplete(data); setIsSLAModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isCnrModalOpen && (
+          <CompanyNameReservationWizard
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 2) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data); continuingInstanceRef.current = null }
+              else { decrementQueue('Company Name Reservation'); pushInProgressInstance('Company Name Reservation', step, progress, data) }
+              setIsCnrModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as CompanyNameReservationData | undefined) : undefined}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Company Name Reservation') }
+              pushCompletedInstance('Company Name Reservation', data, new Date().toISOString())
+              showNdaToast('Company Name Reservation submitted to CIPC successfully.')
+              setIsCnrModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isScModalOpen && (
+          <ShareCertificateWizard
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 2) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as ShareCertificateData); continuingInstanceRef.current = null }
+              else { decrementQueue('Share Certificate Issuance'); pushInProgressInstance('Share Certificate Issuance', step, progress, data as unknown as ShareCertificateData) }
+              setIsScModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ShareCertificateData | undefined) : undefined}
+            onOfferBoardResolution={openBoardResolutionFromShareCertificate}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Share Certificate Issuance') }
+              pushCompletedInstance('Share Certificate Issuance', data as unknown as ShareCertificateData, new Date().toISOString())
+              showNdaToast('Share certificate generated successfully.')
+              setIsScModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isBrModalOpen && (
+          <BoardResolutionWizard
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as BoardResolutionData | undefined) : undefined}
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 2) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as BoardResolutionData); continuingInstanceRef.current = null }
+              else { decrementQueue('Board Resolution'); pushInProgressInstance('Board Resolution', step, progress, data as unknown as BoardResolutionData) }
+              setIsBrModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Board Resolution') }
+              pushCompletedInstance('Board Resolution', data as unknown as BoardResolutionData, new Date().toISOString())
+              showNdaToast('Board resolution generated successfully.')
+              setIsBrModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isFecModalOpen && (workspaceLoaded || !counselBlueprintReturn) && (
+          <FounderEmploymentWizard
+            initialStep={counselBlueprintReturn?.wizard === 'founder-employment' ? counselBlueprintReturn.step : continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={counselBlueprintReturn?.wizard === 'founder-employment' ? counselBlueprintReturn.data : continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderEmploymentData | undefined) : undefined}
+            onClose={(step, data) => {
+              saveFounderEmploymentInProgress(step, data)
+              setCounselBlueprintReturn(undefined)
+              setIsFecModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              completeFounderEmploymentInProgress(data)
+              setCounselBlueprintReturn(undefined)
+              showNdaToast('Founder employment contract generated successfully.')
+              setIsFecModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+            onRouteToCounsel={routeFounderEmploymentPublicFundingToCounsel}
+          />
+        )}
+
+        {isWtModalOpen && (
+          <WebsiteTermsWizard
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as WebsiteTermsData | undefined) : undefined}
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 2) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as WebsiteTermsData); continuingInstanceRef.current = null }
+              else { decrementQueue('Website Terms of Use'); pushInProgressInstance('Website Terms of Use', step, progress, data as unknown as WebsiteTermsData) }
+              setIsWtModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Website Terms of Use') }
+              pushCompletedInstance('Website Terms of Use', data as unknown as WebsiteTermsData, new Date().toISOString())
+              showNdaToast('Website Terms of Use generated successfully.')
+              setIsWtModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isPopiaModalOpen && (
+          <POPIARecordsWizard
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as POPIARecordsData | undefined) : undefined}
+            privacyPolicyData={[...completedInstances].reverse().find((instance) => instance.wizardType === 'Privacy & Cookies Policy')?.data as PrivacyPolicyWizardData | undefined}
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 3) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as POPIARecordsData); continuingInstanceRef.current = null }
+              else { decrementQueue('POPIA Records Starter Kit'); pushInProgressInstance('POPIA Records Starter Kit', step, progress, data as unknown as POPIARecordsData) }
+              setIsPopiaModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('POPIA Records Starter Kit') }
+              pushCompletedInstance('POPIA Records Starter Kit', data as unknown as POPIARecordsData, new Date().toISOString())
+              showNdaToast('POPIA Records Starter Kit generated successfully.')
+              setIsPopiaModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
+        {isRefundsModalOpen && (
+          <RefundsPolicyWizard
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as RefundsPolicyData | undefined) : undefined}
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const totalSteps = data.productTypes.includes('Subscriptions') ? 4 : 3
+              const progress = Math.round(((step - 1) / (totalSteps - 1)) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as RefundsPolicyData); continuingInstanceRef.current = null }
+              else { decrementQueue('Refunds Policy'); pushInProgressInstance('Refunds Policy', step, progress, data as unknown as RefundsPolicyData) }
+              setIsRefundsModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Refunds Policy') }
+              pushCompletedInstance('Refunds Policy', data as unknown as RefundsPolicyData, new Date().toISOString())
+              showNdaToast('Refunds Policy generated successfully.')
+              setIsRefundsModalOpen(false); setActiveTab('completed'); openReturningDashboard()
             }}
           />
         )}
@@ -3246,6 +4065,13 @@ export default function Dashboard() {
                         else if (inst.wizardType === 'Founders agreement and IP assignment') { resetFA(); startFA(); setIsFAModalOpen(true) }
                         else if (inst.wizardType === 'Service Agreement') { resetSA(); startSA(); setIsSAModalOpen(true) }
                         else if (inst.wizardType === 'Service Level Agreement (SLA)') { resetSLA(); startSLA(); setIsSLAModalOpen(true) }
+                        else if (inst.wizardType === 'Company Name Reservation') { setIsCnrModalOpen(true) }
+                        else if (inst.wizardType === 'Share Certificate Issuance') { setIsScModalOpen(true) }
+                        else if (inst.wizardType === 'Board Resolution') { setIsBrModalOpen(true) }
+                        else if (inst.wizardType === 'Founder Employment Contract') { founderEmploymentCounselInstanceRef.current = null; setIsFecModalOpen(true) }
+                        else if (inst.wizardType === 'Website Terms of Use') { setIsWtModalOpen(true) }
+                        else if (inst.wizardType === 'POPIA Records Starter Kit') { setIsPopiaModalOpen(true) }
+                        else if (inst.wizardType === 'Refunds Policy' || inst.wizardType === 'Refunds and Cancellation Policy') { setIsRefundsModalOpen(true) }
                       }}
                     >
                       Continue <ArrowRight size={15} />
@@ -3427,6 +4253,156 @@ export default function Dashboard() {
                   )
                 }
 
+                if (wizardType === 'Share Certificate Issuance') {
+                  const shareCertificateData = data as ShareCertificateData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Share Certificate Issuance</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('share-certificate', id, 'Share-Certificate.pdf', () => buildShareCertificatePdf(shareCertificateData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('share-certificate', id, 'Share-Certificate.docx', () => buildShareCertificateDocx(shareCertificateData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildShareCertificateEvidencePack(shareCertificateData, completedAt, id), 'Share-Certificate-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'Board Resolution') {
+                  const boardResolutionData = data as BoardResolutionData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Board Resolution</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('board-resolution', id, 'Board-Resolution.pdf', () => buildBoardResolutionPdf(boardResolutionData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('board-resolution', id, 'Board-Resolution.docx', () => buildBoardResolutionDocx(boardResolutionData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildBoardResolutionEvidencePack(boardResolutionData, completedAt, id), 'Board-Resolution-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'Founder Employment Contract') {
+                  const fecData = data as FounderEmploymentData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Founder Employment Contract</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('founder-employment', id, 'Founder-Employment-Contract.pdf', () => buildFounderEmploymentPdf(fecData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('founder-employment', id, 'Founder-Employment-Contract.docx', () => buildFounderEmploymentDocx(fecData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildFounderEmploymentEvidencePack(fecData, completedAt, id), 'Founder-Employment-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'Website Terms of Use') {
+                  const wtData = data as WebsiteTermsData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Website Terms of Use</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('website-terms-of-use', id, 'Website-Terms-of-Use.pdf', () => buildWebsiteTermsPdf(wtData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('website-terms-of-use', id, 'Website-Terms-of-Use.docx', () => buildWebsiteTermsDocx(wtData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildWebsiteTermsEvidencePack(wtData, completedAt, id), 'Website-Terms-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'POPIA Records Starter Kit') {
+                  const popiaData = data as POPIARecordsData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>POPIA Records Starter Kit</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('popia-records-starter-kit', id, 'POPIA-Records-Starter-Kit.pdf', () => buildPopiaRecordsPdf(popiaData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('popia-records-starter-kit', id, 'POPIA-Records-Starter-Kit.docx', () => buildPopiaRecordsDocx(popiaData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildPopiaRecordsEvidencePack(popiaData, completedAt, id), 'POPIA-Records-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'Refunds Policy' || wizardType === 'Refunds and Cancellation Policy') {
+                  const rfData = data as RefundsPolicyData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Refunds Policy</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('refunds-policy', id, 'Refunds-Policy.pdf', () => buildRefundsPolicyPdf(rfData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('refunds-policy', id, 'Refunds-Policy.docx', () => buildRefundsPolicyDocx(rfData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildRefundsPolicyEvidencePack(rfData, completedAt, id), 'Refunds-Policy-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
                 // Fallback for coming-soon wizard types that were somehow completed
                 return (
                   <article className="user-dashboard__completed-card" key={id}>
@@ -3586,7 +4562,7 @@ export default function Dashboard() {
             setIsFAModalOpen(false)
           }}
           initialStep={counselBlueprintReturn?.step ?? (continuingInstanceRef.current ? ((inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1)) : 1)}
-          initialData={counselBlueprintReturn?.data ?? (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
+          initialData={counselBlueprintReturn?.wizard === 'founder-agreement' ? counselBlueprintReturn.data : (continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderAgreementWizardData | undefined) : undefined)}
           onStepChange={persistFounderAgreementStep}
           onComplete={(data) => {
             const cid = continuingInstanceRef.current
@@ -3638,6 +4614,160 @@ export default function Dashboard() {
             justCompletedRef.current = true; if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
             else { decrementQueue('Service Level Agreement (SLA)') }
             handleSLAComplete(data); setIsSLAModalOpen(false)
+          }}
+        />
+      )}
+
+      {isCnrModalOpen && (
+        <CompanyNameReservationWizard
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 2) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data); continuingInstanceRef.current = null }
+            else { decrementQueue('Company Name Reservation'); pushInProgressInstance('Company Name Reservation', step, progress, data) }
+            setIsCnrModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as CompanyNameReservationData | undefined) : undefined}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Company Name Reservation') }
+            pushCompletedInstance('Company Name Reservation', data, new Date().toISOString())
+            showNdaToast('Company Name Reservation submitted to CIPC successfully.')
+            setIsCnrModalOpen(false)
+          }}
+        />
+      )}
+
+      {isScModalOpen && (
+        <ShareCertificateWizard
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 2) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as ShareCertificateData); continuingInstanceRef.current = null }
+            else { decrementQueue('Share Certificate Issuance'); pushInProgressInstance('Share Certificate Issuance', step, progress, data as unknown as ShareCertificateData) }
+            setIsScModalOpen(false)
+          }}
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ShareCertificateData | undefined) : undefined}
+          onOfferBoardResolution={openBoardResolutionFromShareCertificate}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Share Certificate Issuance') }
+            pushCompletedInstance('Share Certificate Issuance', data as unknown as ShareCertificateData, new Date().toISOString())
+            showNdaToast('Share certificate generated successfully.')
+            setIsScModalOpen(false)
+          }}
+        />
+      )}
+
+      {isBrModalOpen && (
+        <BoardResolutionWizard
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as BoardResolutionData | undefined) : undefined}
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 2) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as BoardResolutionData); continuingInstanceRef.current = null }
+            else { decrementQueue('Board Resolution'); pushInProgressInstance('Board Resolution', step, progress, data as unknown as BoardResolutionData) }
+            setIsBrModalOpen(false)
+          }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Board Resolution') }
+            pushCompletedInstance('Board Resolution', data as unknown as BoardResolutionData, new Date().toISOString())
+            showNdaToast('Board resolution generated successfully.')
+            setIsBrModalOpen(false)
+          }}
+        />
+      )}
+
+      {isFecModalOpen && (workspaceLoaded || !counselBlueprintReturn) && (
+        <FounderEmploymentWizard
+          initialStep={counselBlueprintReturn?.wizard === 'founder-employment' ? counselBlueprintReturn.step : continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={counselBlueprintReturn?.wizard === 'founder-employment' ? counselBlueprintReturn.data : continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as FounderEmploymentData | undefined) : undefined}
+          onClose={(step, data) => {
+            saveFounderEmploymentInProgress(step, data)
+            setCounselBlueprintReturn(undefined)
+            setIsFecModalOpen(false)
+          }}
+          onComplete={(data) => {
+            completeFounderEmploymentInProgress(data)
+            setCounselBlueprintReturn(undefined)
+            showNdaToast('Founder employment contract generated successfully.')
+            setIsFecModalOpen(false)
+          }}
+          onRouteToCounsel={routeFounderEmploymentPublicFundingToCounsel}
+        />
+      )}
+
+      {isWtModalOpen && (
+        <WebsiteTermsWizard
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as WebsiteTermsData | undefined) : undefined}
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 2) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as WebsiteTermsData); continuingInstanceRef.current = null }
+            else { decrementQueue('Website Terms of Use'); pushInProgressInstance('Website Terms of Use', step, progress, data as unknown as WebsiteTermsData) }
+            setIsWtModalOpen(false)
+          }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Website Terms of Use') }
+            pushCompletedInstance('Website Terms of Use', data as unknown as WebsiteTermsData, new Date().toISOString())
+            showNdaToast('Website Terms of Use generated successfully.')
+            setIsWtModalOpen(false)
+          }}
+        />
+      )}
+
+      {isPopiaModalOpen && (
+        <POPIARecordsWizard
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as POPIARecordsData | undefined) : undefined}
+            privacyPolicyData={[...completedInstances].reverse().find((instance) => instance.wizardType === 'Privacy & Cookies Policy')?.data as PrivacyPolicyWizardData | undefined}
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 3) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as POPIARecordsData); continuingInstanceRef.current = null }
+            else { decrementQueue('POPIA Records Starter Kit'); pushInProgressInstance('POPIA Records Starter Kit', step, progress, data as unknown as POPIARecordsData) }
+            setIsPopiaModalOpen(false)
+          }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('POPIA Records Starter Kit') }
+            pushCompletedInstance('POPIA Records Starter Kit', data as unknown as POPIARecordsData, new Date().toISOString())
+            showNdaToast('POPIA Records Starter Kit generated successfully.')
+            setIsPopiaModalOpen(false)
+          }}
+        />
+      )}
+
+      {isRefundsModalOpen && (
+        <RefundsPolicyWizard
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as RefundsPolicyData | undefined) : undefined}
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const totalSteps = data.productTypes.includes('Subscriptions') ? 4 : 3
+            const progress = Math.round(((step - 1) / (totalSteps - 1)) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data as unknown as RefundsPolicyData); continuingInstanceRef.current = null }
+            else { decrementQueue('Refunds Policy'); pushInProgressInstance('Refunds Policy', step, progress, data as unknown as RefundsPolicyData) }
+            setIsRefundsModalOpen(false)
+          }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Refunds Policy') }
+            pushCompletedInstance('Refunds Policy', data as unknown as RefundsPolicyData, new Date().toISOString())
+            showNdaToast('Refunds Policy generated successfully.')
+            setIsRefundsModalOpen(false)
           }}
         />
       )}

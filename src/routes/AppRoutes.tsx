@@ -37,6 +37,7 @@ const DashboardProfile = lazy(() => import('../pages/user-dashboard/DashboardPro
 const DashboardSettings = lazy(() => import('../pages/user-dashboard/DashboardSettings'))
 const DashboardWizards = lazy(() => import('../pages/user-dashboard/DashboardWizards'))
 const DashboardWizardDetails = lazy(() => import('../pages/user-dashboard/DashboardWizardDetails'))
+const CompanyNameReservationPage = lazy(() => import('../pages/user-dashboard/CompanyNameReservationPage'))
 const CounselTopUpPayment = lazy(() => import('../pages/user-dashboard/CounselTopUpPayment'))
 const BlueprintTopUpPayment = lazy(() => import('../pages/user-dashboard/BlueprintTopUpPayment'))
 const WizardCatalogue = lazy(() => import('../pages/WizardCatalogue'))
@@ -239,6 +240,7 @@ export function AppRoutes() {
             <Route path="dashboard/settings" element={<DashboardSettings />} />
             <Route path="dashboard/blueprints" element={<DashboardWizards />} />
             <Route path="dashboard/wizard-details" element={<DashboardWizardDetails />} />
+            <Route path="dashboard/name-reservation" element={<CompanyNameReservationPage />} />
             <Route path="admin/dashboard" element={<AdminDashboard />} />
             <Route path="admin/dashboard/users" element={<AdminDashboard />} />
             <Route path="admin/dashboard/counsel" element={<AdminDashboard />} />
