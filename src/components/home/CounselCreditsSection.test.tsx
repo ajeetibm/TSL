@@ -209,4 +209,3 @@ describe('CounselCreditsSection', () => {
   })
 })
 
-// Made with Bob

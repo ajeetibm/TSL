@@ -48,4 +48,3 @@ describe('About Page', () => {
   })
 })
 
-// Made with Bob

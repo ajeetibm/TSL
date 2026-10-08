@@ -365,4 +365,3 @@ describe('WizardCatalogueHeader', () => {
   })
 })
 
-// Made with Bob

@@ -128,4 +128,3 @@ describe('WizardCatalogue Page', () => {
   })
 })
 
-// Made with Bob

@@ -28,4 +28,3 @@ describe('Contact Page', () => {
   })
 })
 
-// Made with Bob

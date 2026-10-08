@@ -11,4 +11,3 @@ export { default as Notifications } from './Notifications'
 export { default as Security } from './Security'
 export { default as UsersActivity } from './UsersActivity'
 
-// Made with Bob

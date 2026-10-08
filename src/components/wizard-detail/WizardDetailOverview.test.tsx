@@ -481,4 +481,3 @@ describe('WizardDetailOverview', () => {
   })
 })
 
-// Made with Bob

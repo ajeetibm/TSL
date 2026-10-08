@@ -42,4 +42,3 @@ describe('Features Page', () => {
   })
 })
 
-// Made with Bob

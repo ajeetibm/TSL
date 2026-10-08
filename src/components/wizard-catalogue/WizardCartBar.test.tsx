@@ -545,4 +545,3 @@ describe('WizardCartBar', () => {
   })
 })
 
-// Made with Bob

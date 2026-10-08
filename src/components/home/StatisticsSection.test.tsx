@@ -332,4 +332,3 @@ describe('StatisticsSection', () => {
   })
 })
 
-// Made with Bob

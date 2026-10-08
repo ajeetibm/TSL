@@ -362,4 +362,3 @@ describe('HeroSection', () => {
   })
 })
 
-// Made with Bob

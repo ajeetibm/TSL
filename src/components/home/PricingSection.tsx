@@ -469,4 +469,3 @@ export function PricingSection() {
   )
 }
 
-// Made with Bob

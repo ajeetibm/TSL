@@ -203,4 +203,3 @@ export default function InviteSubAdminModal({ isOpen, onClose, onSendInvitation,
   )
 }
 
-// Made with Bob

@@ -28,4 +28,3 @@ describe('Pricing Page', () => {
   })
 })
 
-// Made with Bob

@@ -220,7 +220,7 @@ export default function CompanyNameReservationWizard({ onClose, onComplete, init
   const validateApplicant = () => {
     const errs: Record<string, string> = {}
     if (!applicantSnapshotId) {
-      errs.confirmed = 'Complete your Company Snapshot before continuing.'
+      errs.confirmed = 'Complete your company snapshot before confirming'
     } else if (!confirmed) {
       errs.confirmed = 'Confirm the Company Snapshot applicant details before continuing.'
     }
@@ -390,13 +390,19 @@ export default function CompanyNameReservationWizard({ onClose, onComplete, init
               <h3 className="nda-modal__party-title">Applicant</h3>
               <div className="nda-modal__form-group">
                 <label className="nda-modal__label">Applicant from Company Snapshot</label>
-                <div className={`nda-modal__snapshot-confirm${applicantSnapshotComplete && errors.confirmed ? ' nda-modal__snapshot-confirm--error' : ''}`}>
+                <div className={`nda-modal__snapshot-confirm${errors.confirmed ? ' nda-modal__snapshot-confirm--error' : ''}`}>
                   <span>{fullNames || 'Complete your Company Snapshot'}</span>
                   <button
                     type="button"
                     className={`nda-modal__snapshot-btn${confirmed ? ' nda-modal__snapshot-btn--confirmed' : ''}`}
-                    disabled={!applicantSnapshotComplete}
                     onClick={() => {
+                      if (!applicantSnapshotId) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          confirmed: 'Complete your company snapshot before confirming',
+                        }))
+                        return
+                      }
                       setConfirmed(true)
                       setErrors((prev) => {
                         const updated = { ...prev }
@@ -408,7 +414,7 @@ export default function CompanyNameReservationWizard({ onClose, onComplete, init
                     {confirmed ? 'Confirmed' : 'CONFIRM'}
                   </button>
                 </div>
-                {applicantSnapshotComplete && errors.confirmed && (
+                {errors.confirmed && (
                   <p className="nda-modal__field-error">{errors.confirmed}</p>
                 )}
                 {!applicantSnapshotComplete ? (

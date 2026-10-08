@@ -503,4 +503,3 @@ describe('DetailFooter', () => {
   })
 })
 
-// Made with Bob

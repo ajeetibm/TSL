@@ -355,4 +355,3 @@ describe('DetailContactSection', () => {
   })
 })
 
-// Made with Bob

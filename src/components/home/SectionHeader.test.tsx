@@ -283,4 +283,3 @@ describe('SectionHeader', () => {
   })
 })
 
-// Made with Bob

@@ -371,4 +371,3 @@ describe('HowItWorks', () => {
   })
 })
 
-// Made with Bob

@@ -477,4 +477,3 @@ describe('WizardCatalogueHero', () => {
   })
 })
 
-// Made with Bob

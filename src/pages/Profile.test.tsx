@@ -175,5 +175,3 @@ describe('Profile Page', () => {
     expect(screen.getByTestId('dashboard-shell')).toBeInTheDocument()
   })
 })
-
-// Made with Bob

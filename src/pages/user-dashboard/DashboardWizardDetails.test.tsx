@@ -72,4 +72,3 @@ describe('DashboardWizardDetails Page', () => {
   })
 })
 
-// Made with Bob

@@ -421,4 +421,3 @@ describe('FeaturesSection', () => {
   })
 })
 
-// Made with Bob

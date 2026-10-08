@@ -534,4 +534,3 @@ export default function CounselManagement({ counselMembers, onCounselAdded, onCo
   )
 }
 
-// Made with Bob

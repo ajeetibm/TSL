@@ -140,4 +140,3 @@ export default function CounselProfileModal({ isOpen, onClose, counsel, onSave }
   )
 }
 
-// Made with Bob

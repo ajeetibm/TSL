@@ -622,4 +622,3 @@ describe('Navbar', () => {
   })
 })
 
-// Made with Bob

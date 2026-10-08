@@ -227,4 +227,3 @@ describe('FloatingAIButton', () => {
   })
 })
 
-// Made with Bob

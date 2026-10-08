@@ -430,4 +430,3 @@ describe('PricingSection', () => {
   })
 })
 
-// Made with Bob

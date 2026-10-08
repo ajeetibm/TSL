@@ -530,4 +530,3 @@ describe('Queue-based workflow', () => {
   })
 })
 
-// Made with Bob

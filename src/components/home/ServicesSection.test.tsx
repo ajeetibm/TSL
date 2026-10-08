@@ -299,4 +299,3 @@ describe('ServicesSection', () => {
   })
 })
 
-// Made with Bob

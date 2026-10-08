@@ -481,4 +481,3 @@ describe('Footer', () => {
   })
 })
 
-// Made with Bob

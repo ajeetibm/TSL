@@ -90,4 +90,3 @@ describe('Home Page', () => {
   })
 })
 
-// Made with Bob

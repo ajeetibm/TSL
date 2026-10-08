@@ -452,4 +452,3 @@ describe('ApproachSection', () => {
   })
 })
 
-// Made with Bob

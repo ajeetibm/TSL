@@ -440,4 +440,3 @@ describe('SignInModal', () => {
   })
 })
 
-// Made with Bob

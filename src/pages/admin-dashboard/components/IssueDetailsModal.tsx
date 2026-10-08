@@ -126,4 +126,3 @@ export default function IssueDetailsModal({ isOpen, onClose, issue }: IssueDetai
   )
 }
 
-// Made with Bob

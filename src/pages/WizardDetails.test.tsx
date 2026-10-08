@@ -53,4 +53,3 @@ describe('WizardDetails Page', () => {
   })
 })
 
-// Made with Bob

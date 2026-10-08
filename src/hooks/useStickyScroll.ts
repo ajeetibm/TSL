@@ -33,4 +33,3 @@ export function useStickyScroll(options: UseStickyScrollOptions = {}) {
   return { sectionRef, isSticky }
 }
 
-// Made with Bob
