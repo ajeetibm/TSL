@@ -52,6 +52,7 @@ const LIVE_BLUEPRINTS = new Set([
   'POPIA Records Starter Kit',
   'Refunds Policy',
   'Refunds and Cancellation Policy',
+  'Contractor Agreement',
 ])
 
 const wizardCards = [
@@ -166,6 +167,15 @@ const wizardCards = [
     icon: RotateCcw,
     fallbackWeight: 1,
   },
+  {
+    title: 'Contractor Agreement',
+    description: 'Draft an independent contractor agreement with classification check, commercial terms, IP assignment and tax confirmation.',
+    time: '10-15 minutes',
+    audience: 'Businesses engaging independent contractors',
+    included: ['Employment classification gate', 'Personal service provider warning', 'IP & confidentiality terms'],
+    icon: Briefcase,
+    fallbackWeight: 2,
+  },
 ]
 
 // UI labels are mapped to stable Document Catalogue identifiers. Unit weights
@@ -184,6 +194,7 @@ const blueprintIdByTitle: Record<string, string> = {
   'POPIA Records Starter Kit': 'popia-records-starter-kit',
   'Refunds Policy': 'refunds-policy',
   'Refunds and Cancellation Policy': 'refunds-policy',
+  'Contractor Agreement': 'contractor-agreement',
 }
 
 const selectedWizardStorageKey = 'tsl-selected-dashboard-wizards'

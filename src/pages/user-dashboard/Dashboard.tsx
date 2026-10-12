@@ -33,7 +33,7 @@ import { mapSlaFields } from '../../services/slaFieldMap'
 import { useUserProfile } from '../../context/UserProfileContext'
 import { openPaystackCheckout } from '../../services/paystackClient'
 import type { WizardAccess } from '../../services/tslApi'
-import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx, buildShareCertificateDocx, buildBoardResolutionDocx, buildFounderEmploymentDocx, buildWebsiteTermsDocx, buildPopiaRecordsDocx, buildRefundsPolicyDocx } from '../../services/docxBuilders'
+import { buildNdaDocx, buildEmploymentDocx, buildPrivacyPolicyDocx, buildFounderAgreementDocx, buildServiceAgreementDocx, buildSlaDocx, buildShareCertificateDocx, buildBoardResolutionDocx, buildFounderEmploymentDocx, buildWebsiteTermsDocx, buildPopiaRecordsDocx, buildRefundsPolicyDocx, buildContractorAgreementDocx } from '../../services/docxBuilders'
 import { useNdaWizard } from '../../hooks/useNdaWizard'
 import { calcEmploymentProgress, useEmploymentWizard } from '../../hooks/useEmploymentWizard'
 import { usePrivacyPolicyWizard } from '../../hooks/usePrivacyPolicyWizard'
@@ -65,6 +65,8 @@ import POPIARecordsWizard from './POPIARecordsWizard'
 import type { POPIARecordsData } from './POPIARecordsWizard'
 import RefundsPolicyWizard from './RefundsPolicyWizard'
 import type { RefundsPolicyData } from './RefundsPolicyWizard'
+import ContractorAgreementWizard from './ContractorAgreementWizard'
+import type { ContractorAgreementData } from './ContractorAgreementWizard'
 import InsufficientBlueprintUnitsModal from './InsufficientBlueprintUnitsModal'
 import type { ServiceAgreementWizardData } from './ServiceAgreementWizardModal'
 import type { SlaWizardData } from './SlaWizardModal'
@@ -2068,6 +2070,82 @@ function buildPopiaRecordsEvidencePack(data: POPIARecordsData, completedAt: stri
   return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
 }
 
+function buildContractorAgreementPdf(data: ContractorAgreementData, completedAt: string | null): Blob {
+  const contractorName = data.contractorLegalName || data.contractorFullNames || '—'
+  const address = [data.addressStreetNumber, data.addressBuilding, data.addressStreetName, data.addressSuburb, data.addressCity, data.addressProvince, data.addressPostalCode, data.addressCountry].filter(Boolean).join(', ')
+  return buildLegalDocumentPdf([
+    'INDEPENDENT CONTRACTOR AGREEMENT',
+    `Date generated: ${formatDate(completedAt || new Date().toISOString())}`,
+    'Prepared by: The Startup Legal',
+    '',
+    '1. PARTIES',
+    `Client: ${data.clientCompanyName || '—'}`,
+    `Contractor type: ${data.contractorType || '—'}`,
+    `Contractor: ${contractorName}`,
+    ...(data.contractorTradingName ? [`Trading name: ${data.contractorTradingName}`] : []),
+    ...(data.contractorRegNumber ? [`Registration number: ${data.contractorRegNumber}`] : []),
+    ...(data.contractorFullNames ? [`Full names: ${data.contractorFullNames}`, `Identity number: ${data.contractorIdNumber}`] : []),
+    ...(data.contractorSignatoryName ? [`Signatory: ${data.contractorSignatoryName}`, `Signatory capacity: ${data.contractorSignatoryCapacity}`] : []),
+    ...(data.performerName ? [`Individual performing work: ${data.performerName}`] : []),
+    `Contractor address: ${address || '—'}`,
+    `Contractor email: ${data.contractorEmail || '—'}`,
+    `Contractor telephone: ${data.contractorPhone || '—'}`,
+    '',
+    '2. CLASSIFICATION CHECK',
+    `Client controls when work is done: ${data.ctrlHours || '—'}`,
+    `Client supervises how work is done: ${data.ctrlMethod || '—'}`,
+    `Contractor works only for this client: ${data.exclusive || '—'}`,
+    `Client provides tools and equipment: ${data.clientTools || '—'}`,
+    `Contractor integrated into organisation: ${data.integrated || '—'}`,
+    `Contractor may send a substitute: ${data.substitution || '—'}`,
+    `Engagement exceeds three months: ${data.overThreeMonths || '—'}`,
+    '',
+    '3. SERVICES AND COMMERCIAL TERMS',
+    `Services and deliverables: ${data.services || '—'}`,
+    `Fee basis: ${data.feeBasis || '—'}`,
+    `Fee amount (R): ${data.feeAmount || '—'}`,
+    `Invoicing frequency: ${data.invoiceFrequency || '—'}`,
+    `Payment period (days from invoice): ${data.paymentDays || '—'}`,
+    `Start date: ${data.startDate || '—'}`,
+    `End date: ${data.endDate || '—'}`,
+    `Termination notice (days): ${data.terminationDays || '—'}`,
+    '',
+    '4. PROTECTIONS',
+    `Intellectual property treatment: ${data.ipTreatment || '—'}`,
+    `Confidentiality: ${data.confidentiality || '—'}`,
+    `Insurance required: ${data.insurance || '—'}`,
+    ...(data.insurance === 'Yes' ? [`Insurance type: ${data.insuranceType || '—'}`, `Minimum cover (R): ${data.insuranceCover || '—'}`] : []),
+    `Contractor responsible for own tax: ${data.taxConfirmation ? 'Confirmed' : 'Not confirmed'}`,
+    '',
+    'DISCLAIMER: Generated for reference purposes. This document is not legal advice.',
+  ])
+}
+
+function buildContractorAgreementEvidencePack(data: ContractorAgreementData, completedAt: string | null, instanceId: string): Blob {
+  const lines = [
+    'TSL EVIDENCE PACK - CONTRACTOR AGREEMENT',
+    `Blueprint instance ID: ${instanceId}`,
+    'Blueprint ID: contractor-agreement',
+    `Completed: ${completedAt || new Date().toISOString()}`,
+    '',
+    `Client: ${data.clientCompanyName || '—'}`,
+    `Client Snapshot ID: ${data.clientCompanyId || '—'}`,
+    `Contractor type: ${data.contractorType || '—'}`,
+    `Contractor: ${data.contractorLegalName || data.contractorFullNames || '—'}`,
+    `Classification answers: control hours=${data.ctrlHours}; control method=${data.ctrlMethod}; exclusive=${data.exclusive}; client tools=${data.clientTools}; integrated=${data.integrated}; substitution=${data.substitution}; over three months=${data.overThreeMonths}`,
+    `Services: ${data.services || '—'}`,
+    `Fee: ${data.feeBasis || '—'} R ${data.feeAmount || '—'}`,
+    `Term: ${data.startDate || '—'} to ${data.endDate || '—'}`,
+    `IP treatment: ${data.ipTreatment || '—'}`,
+    `Confidentiality: ${data.confidentiality || '—'}`,
+    `Insurance: ${data.insurance || '—'}${data.insurance === 'Yes' ? ` (${data.insuranceType}, R ${data.insuranceCover})` : ''}`,
+    `Own tax confirmed: ${data.taxConfirmation ? 'Yes' : 'No'}`,
+    '',
+    'DISCLAIMER: Generated for reference purposes. This document is not legal advice.',
+  ]
+  return new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' })
+}
+
 function buildRefundsPolicyPdf(data: RefundsPolicyData, completedAt: string | null): Blob {
   const isSubscriptions = data.productTypes.includes('Subscriptions')
   return buildLegalDocumentPdf([
@@ -2312,6 +2390,7 @@ export default function Dashboard() {
   const [isWtModalOpen, setIsWtModalOpen] = useState(false)
   const [isPopiaModalOpen, setIsPopiaModalOpen] = useState(false)
   const [isRefundsModalOpen, setIsRefundsModalOpen] = useState(false)
+  const [isContractorModalOpen, setIsContractorModalOpen] = useState(false)
   const [comingSoonTitle, setComingSoonTitle] = useState<string | null>(null)
   const [ndaToast, setNdaToast] = useState('')
   const [counselCreditsForGate, setCounselCreditsForGate] = useState<CounselCredits | null>(null)
@@ -2530,6 +2609,8 @@ export default function Dashboard() {
       setIsPopiaModalOpen(true)
     } else if (title === 'Refunds Policy' || title === 'Refunds and Cancellation Policy') {
       setIsRefundsModalOpen(true)
+    } else if (title === 'Contractor Agreement') {
+      setIsContractorModalOpen(true)
     } else {
       setComingSoonTitle(title)
     }
@@ -2836,6 +2917,7 @@ export default function Dashboard() {
     'website-terms-of-use': 2,
     'founder-employment': 2,
     'service-agreement': 2,
+    'contractor-agreement': 2,
     'refunds-policy': 1,
     'service-level-agreement': 3,
     'popia-records-starter-kit': 3,
@@ -3779,6 +3861,28 @@ export default function Dashboard() {
           />
         )}
 
+        {isContractorModalOpen && (
+          <ContractorAgreementWizard
+            initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+            initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ContractorAgreementData | undefined) : undefined}
+            onClose={(step, data) => {
+              const cid = continuingInstanceRef.current
+              const progress = Math.round(((step - 1) / 4) * 100)
+              if (cid) { updateInProgressInstance(cid, step, progress, data); continuingInstanceRef.current = null }
+              else { decrementQueue('Contractor Agreement'); pushInProgressInstance('Contractor Agreement', step, progress, data) }
+              setIsContractorModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+            }}
+            onComplete={(data) => {
+              const cid = continuingInstanceRef.current
+              if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+              else { decrementQueue('Contractor Agreement') }
+              pushCompletedInstance('Contractor Agreement', data, new Date().toISOString())
+              showNdaToast('Contractor Agreement generated successfully.')
+              setIsContractorModalOpen(false); setActiveTab('completed'); openReturningDashboard()
+            }}
+          />
+        )}
+
         <CounselCreditsModal
           isOpen={isNoCounselCreditModalOpen}
           onClose={() => setIsNoCounselCreditModalOpen(false)}
@@ -4072,6 +4176,7 @@ export default function Dashboard() {
                         else if (inst.wizardType === 'Website Terms of Use') { setIsWtModalOpen(true) }
                         else if (inst.wizardType === 'POPIA Records Starter Kit') { setIsPopiaModalOpen(true) }
                         else if (inst.wizardType === 'Refunds Policy' || inst.wizardType === 'Refunds and Cancellation Policy') { setIsRefundsModalOpen(true) }
+                        else if (inst.wizardType === 'Contractor Agreement') { setIsContractorModalOpen(true) }
                       }}
                     >
                       Continue <ArrowRight size={15} />
@@ -4396,6 +4501,31 @@ export default function Dashboard() {
                           <Download size={16} /> Download DOCX
                         </button>
                         <button type="button" onClick={() => triggerDownload(buildRefundsPolicyEvidencePack(rfData, completedAt, id), 'Refunds-Policy-Evidence-Pack.txt')}>
+                          <FolderOpen size={16} /> Evidence Pack
+                        </button>
+                      </div>
+                    </article>
+                  )
+                }
+
+                if (wizardType === 'Contractor Agreement') {
+                  const contractorData = data as ContractorAgreementData
+                  return (
+                    <article className="user-dashboard__completed-card" key={id}>
+                      <span className={`user-dashboard__completed-icon${isPdfDownloaded ? ' user-dashboard__completed-icon--downloaded' : ''}`}><CircleCheckBig size={28} /></span>
+                      <div className="user-dashboard__completed-copy">
+                        <h3>Contractor Agreement</h3>
+                        <p>Completed {displayDate}</p>
+                        {isPdfDownloaded && <p className="user-dashboard__downloaded-label">Downloaded</p>}
+                      </div>
+                      <div className="user-dashboard__completed-actions">
+                        <button type="button" onClick={() => confirmPdfDownload('contractor-agreement', id, 'Contractor-Agreement.pdf', () => buildContractorAgreementPdf(contractorData, completedAt))}>
+                          <Download size={16} /> Download PDF
+                        </button>
+                        <button type="button" onClick={() => confirmDocxDownload('contractor-agreement', id, 'Contractor-Agreement.docx', () => buildContractorAgreementDocx(contractorData, completedAt))}>
+                          <Download size={16} /> Download DOCX
+                        </button>
+                        <button type="button" onClick={() => triggerDownload(buildContractorAgreementEvidencePack(contractorData, completedAt, id), 'Contractor-Agreement-Evidence-Pack.txt')}>
                           <FolderOpen size={16} /> Evidence Pack
                         </button>
                       </div>
@@ -4768,6 +4898,28 @@ export default function Dashboard() {
             pushCompletedInstance('Refunds Policy', data as unknown as RefundsPolicyData, new Date().toISOString())
             showNdaToast('Refunds Policy generated successfully.')
             setIsRefundsModalOpen(false)
+          }}
+        />
+      )}
+
+      {isContractorModalOpen && (
+        <ContractorAgreementWizard
+          initialStep={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.step ?? 1) : 1}
+          initialData={continuingInstanceRef.current ? (inProgressInstances.find(i => i.id === continuingInstanceRef.current)?.data as ContractorAgreementData | undefined) : undefined}
+          onClose={(step, data) => {
+            const cid = continuingInstanceRef.current
+            const progress = Math.round(((step - 1) / 4) * 100)
+            if (cid) { updateInProgressInstance(cid, step, progress, data); continuingInstanceRef.current = null }
+            else { decrementQueue('Contractor Agreement'); pushInProgressInstance('Contractor Agreement', step, progress, data) }
+            setIsContractorModalOpen(false); setActiveTab('inProgress'); openReturningDashboard()
+          }}
+          onComplete={(data) => {
+            const cid = continuingInstanceRef.current
+            if (cid) { removeInProgressInstance(cid); continuingInstanceRef.current = null }
+            else { decrementQueue('Contractor Agreement') }
+            pushCompletedInstance('Contractor Agreement', data, new Date().toISOString())
+            showNdaToast('Contractor Agreement generated successfully.')
+            setIsContractorModalOpen(false); setActiveTab('completed'); openReturningDashboard()
           }}
         />
       )}

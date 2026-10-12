@@ -28,6 +28,7 @@ import type { FounderEmploymentData } from '../pages/user-dashboard/FounderEmplo
 import type { WebsiteTermsData } from '../pages/user-dashboard/WebsiteTermsWizard'
 import type { POPIARecordsData } from '../pages/user-dashboard/POPIARecordsWizard'
 import type { RefundsPolicyData } from '../pages/user-dashboard/RefundsPolicyWizard'
+import type { ContractorAgreementData } from '../pages/user-dashboard/ContractorAgreementWizard'
 
 
 
@@ -760,6 +761,60 @@ export async function buildRefundsPolicyDocx(data: RefundsPolicyData, completedA
     row('Information required', data.refundInfoRequired.join('; ') || '—'),
     row('Processing time', `${data.refundProcessingDays} business days`),
     row('Refund method', data.refundMethod),
+    sep(),
+    disclaimer(),
+  ])
+}
+
+
+// ── Contractor Agreement ──────────────────────────────────────────────────────
+
+export async function buildContractorAgreementDocx(d: ContractorAgreementData, completedAt: string | null): Promise<Blob> {
+  const address = [d.addressStreetNumber, d.addressBuilding, d.addressStreetName, d.addressSuburb, d.addressCity, d.addressProvince, d.addressPostalCode, d.addressCountry].filter(Boolean).join(', ')
+  const contractorName = d.contractorLegalName || d.contractorFullNames
+  return pack([
+    h1('INDEPENDENT CONTRACTOR AGREEMENT'),
+    row('Date generated', fmtDate(completedAt)),
+    row('Prepared by', 'The Startup Legal'),
+    sep(),
+    h2('1. Parties'),
+    row('Client', d.clientCompanyName),
+    row('Contractor type', d.contractorType),
+    row('Contractor', contractorName),
+    ...(d.contractorTradingName ? [row('Trading name', d.contractorTradingName)] : []),
+    ...(d.contractorRegNumber ? [row('Registration number', d.contractorRegNumber)] : []),
+    ...(d.contractorFullNames ? [row('Full names', d.contractorFullNames), row('Identity number', d.contractorIdNumber)] : []),
+    ...(d.contractorSignatoryName ? [row('Signatory', d.contractorSignatoryName), row('Signatory capacity', d.contractorSignatoryCapacity)] : []),
+    ...(d.performerName ? [row('Individual performing work', d.performerName)] : []),
+    row('Contractor address', address),
+    row('Contractor email', d.contractorEmail),
+    row('Contractor telephone', d.contractorPhone),
+    sep(),
+    h2('2. Classification check'),
+    row('Client controls when work is done', d.ctrlHours),
+    row('Client supervises how work is done', d.ctrlMethod),
+    row('Contractor works only for this client', d.exclusive),
+    row('Client provides tools and equipment', d.clientTools),
+    row('Contractor integrated into organisation', d.integrated),
+    row('Contractor may send a substitute', d.substitution),
+    row('Engagement exceeds three months', d.overThreeMonths),
+    sep(),
+    h2('3. Services and commercial terms'),
+    row('Services and deliverables', d.services),
+    row('Fee basis', d.feeBasis),
+    row('Fee amount (R)', d.feeAmount),
+    row('Invoicing frequency', d.invoiceFrequency),
+    row('Payment period (days from invoice)', d.paymentDays),
+    row('Start date', d.startDate),
+    row('End date', d.endDate),
+    row('Termination notice (days)', d.terminationDays),
+    sep(),
+    h2('4. Protections'),
+    row('Intellectual property treatment', d.ipTreatment),
+    row('Confidentiality', d.confidentiality),
+    row('Insurance required', d.insurance),
+    ...(d.insurance === 'Yes' ? [row('Insurance type', d.insuranceType), row('Minimum cover (R)', d.insuranceCover)] : []),
+    row('Contractor responsible for own tax', d.taxConfirmation ? 'Confirmed' : 'Not confirmed'),
     sep(),
     disclaimer(),
   ])
