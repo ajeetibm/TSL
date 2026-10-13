@@ -384,7 +384,20 @@ export default function POPIARecordsWizard({
   const snapshotEmail = (profile.businessEmail || profile.email).trim()
 
   const inherited = inheritedPrivacyInputs(privacyPolicyData)
-  const seed = initialData ?? { ...defaultData(), ...inherited }
+  // A saved draft may predate the Privacy & Cookies Policy run (e.g. POPIA was
+  // started first), so its inherited fields can be empty or stale. Always
+  // refresh them from the latest completed policy, and require re-confirmation
+  // when they differ from what the draft held.
+  const seed: POPIARecordsData = initialData
+    ? {
+        ...initialData,
+        ...inherited,
+        inheritedConfirmed: initialData.inheritedConfirmed &&
+          (Object.keys(inherited) as (keyof POPIARecordsData)[]).every(
+            (key) => JSON.stringify(initialData[key]) === JSON.stringify(inherited[key]),
+          ),
+      }
+    : { ...defaultData(), ...inherited }
   const bodyRef = useRef<HTMLDivElement>(null)
   const [step, setStep]         = useState<1|2|3|4>(
     initialStep === 2 ? 2 : initialStep === 3 ? 3 : initialStep === 4 ? 4 : 1
